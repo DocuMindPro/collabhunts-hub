@@ -9,6 +9,9 @@ import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
 import Brand from "./pages/Brand";
 import Creator from "./pages/Creator";
+import BrandSignup from "./pages/BrandSignup";
+import CreatorSignup from "./pages/CreatorSignup";
+import CreatorProfile from "./pages/CreatorProfile";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -28,6 +31,9 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/brand" element={<Brand />} />
           <Route path="/creator" element={<Creator />} />
+          <Route path="/brand-signup" element={<BrandSignup />} />
+          <Route path="/creator-signup" element={<CreatorSignup />} />
+          <Route path="/creator/:id" element={<CreatorProfile />} />
           <Route 
             path="/admin" 
             element={

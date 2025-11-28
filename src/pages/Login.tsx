@@ -218,11 +218,11 @@ const Login = () => {
             <div className="mt-8 text-center">
               <p className="text-sm text-muted-foreground">
                 Don't have an account?{" "}
-                <Link to="/brand" className="text-primary hover:underline font-medium">
+                <Link to="/brand-signup" className="text-primary hover:underline font-medium">
                   Join as Brand
                 </Link>
                 {" or "}
-                <Link to="/creator" className="text-primary hover:underline font-medium">
+                <Link to="/creator-signup" className="text-primary hover:underline font-medium">
                   Join as Creator
                 </Link>
               </p>
