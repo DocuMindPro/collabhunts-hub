@@ -23,6 +23,7 @@ const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isApprovedCreator, setIsApprovedCreator] = useState(false);
+  const [hasBrandProfile, setHasBrandProfile] = useState(false);
 
   const navLinks = [
     { to: "/influencers", label: "Search" },
@@ -36,6 +37,7 @@ const Navbar = () => {
       if (session?.user) {
         checkAdminRole(session.user.id);
         checkCreatorStatus(session.user.id);
+        checkBrandProfile(session.user.id);
       }
     });
 
@@ -45,10 +47,12 @@ const Navbar = () => {
         setTimeout(() => {
           checkAdminRole(session.user.id);
           checkCreatorStatus(session.user.id);
+          checkBrandProfile(session.user.id);
         }, 0);
       } else {
         setIsAdmin(false);
         setIsApprovedCreator(false);
+        setHasBrandProfile(false);
       }
     });
 
@@ -72,6 +76,15 @@ const Navbar = () => {
       .eq('user_id', userId)
       .maybeSingle();
     setIsApprovedCreator(data?.status === 'approved');
+  };
+
+  const checkBrandProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from('brand_profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    setHasBrandProfile(!!data);
   };
 
   const handleLogout = async () => {
@@ -118,6 +131,14 @@ const Navbar = () => {
                     <Button variant="outline" size="sm" className="gap-2">
                       <LayoutDashboard className="h-4 w-4" />
                       Creator Dashboard
+                    </Button>
+                  </Link>
+                )}
+                {hasBrandProfile && (
+                  <Link to="/brand-dashboard">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <LayoutDashboard className="h-4 w-4" />
+                      Brand Dashboard
                     </Button>
                   </Link>
                 )}
@@ -197,6 +218,14 @@ const Navbar = () => {
                           <Button variant="outline" className="w-full gap-2">
                             <LayoutDashboard className="h-4 w-4" />
                             Creator Dashboard
+                          </Button>
+                        </Link>
+                      )}
+                      {hasBrandProfile && (
+                        <Link to="/brand-dashboard" onClick={() => setIsOpen(false)}>
+                          <Button variant="outline" className="w-full gap-2">
+                            <LayoutDashboard className="h-4 w-4" />
+                            Brand Dashboard
                           </Button>
                         </Link>
                       )}

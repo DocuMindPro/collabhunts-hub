@@ -6,7 +6,8 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Star, Instagram, Youtube, Twitter, DollarSign } from "lucide-react";
+import { MapPin, Star, Instagram, Youtube, Twitter } from "lucide-react";
+import BookingDialog from "@/components/BookingDialog";
 
 interface CreatorData {
   id: string;
@@ -23,6 +24,7 @@ interface CreatorData {
     profile_url: string | null;
   }>;
   services: Array<{
+    id: string;
     service_type: string;
     price_cents: number;
     description: string | null;
@@ -34,6 +36,13 @@ const CreatorProfile = () => {
   const { id } = useParams<{ id: string }>();
   const [creator, setCreator] = useState<CreatorData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedService, setSelectedService] = useState<any>(null);
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+
+  const handleBookService = (service: any) => {
+    setSelectedService(service);
+    setIsBookingDialogOpen(true);
+  };
 
   useEffect(() => {
     if (id) {
@@ -81,7 +90,7 @@ const CreatorProfile = () => {
 
       const { data: servicesData } = await supabase
         .from("creator_services")
-        .select("*")
+        .select("id, service_type, price_cents, description, delivery_days")
         .eq("creator_profile_id", creatorId)
         .eq("is_active", true);
 
@@ -268,7 +277,10 @@ const CreatorProfile = () => {
                             </div>
                           </div>
                         </div>
-                        <Button className="w-full gradient-hero hover:opacity-90">
+                        <Button 
+                          className="w-full gradient-hero hover:opacity-90"
+                          onClick={() => handleBookService(service)}
+                        >
                           Book Now
                         </Button>
                       </div>
@@ -327,6 +339,16 @@ const CreatorProfile = () => {
       </main>
 
       <Footer />
+
+      <BookingDialog
+        isOpen={isBookingDialogOpen}
+        onClose={() => {
+          setIsBookingDialogOpen(false);
+          setSelectedService(null);
+        }}
+        service={selectedService}
+        creatorProfileId={id || ""}
+      />
     </div>
   );
 };

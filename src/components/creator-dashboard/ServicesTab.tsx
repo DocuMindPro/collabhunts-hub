@@ -13,6 +13,7 @@ interface Service {
   description: string | null;
   delivery_days: number;
   is_active: boolean;
+  creator_profile_id: string;
 }
 
 const ServicesTab = () => {

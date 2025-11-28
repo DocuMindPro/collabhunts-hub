@@ -13,10 +13,12 @@ import BrandSignup from "./pages/BrandSignup";
 import CreatorSignup from "./pages/CreatorSignup";
 import CreatorProfile from "./pages/CreatorProfile";
 import CreatorDashboard from "./pages/CreatorDashboard";
+import BrandDashboard from "./pages/BrandDashboard";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorProtectedRoute from "./components/CreatorProtectedRoute";
+import BrandProtectedRoute from "./components/BrandProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +44,14 @@ const App = () => (
               <CreatorProtectedRoute>
                 <CreatorDashboard />
               </CreatorProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/brand-dashboard" 
+            element={
+              <BrandProtectedRoute>
+                <BrandDashboard />
+              </BrandProtectedRoute>
             } 
           />
           <Route 
