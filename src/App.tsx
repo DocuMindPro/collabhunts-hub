@@ -12,9 +12,11 @@ import Creator from "./pages/Creator";
 import BrandSignup from "./pages/BrandSignup";
 import CreatorSignup from "./pages/CreatorSignup";
 import CreatorProfile from "./pages/CreatorProfile";
+import CreatorDashboard from "./pages/CreatorDashboard";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import CreatorProtectedRoute from "./components/CreatorProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,14 @@ const App = () => (
           <Route path="/brand-signup" element={<BrandSignup />} />
           <Route path="/creator-signup" element={<CreatorSignup />} />
           <Route path="/creator/:id" element={<CreatorProfile />} />
+          <Route 
+            path="/creator-dashboard" 
+            element={
+              <CreatorProtectedRoute>
+                <CreatorDashboard />
+              </CreatorProtectedRoute>
+            } 
+          />
           <Route 
             path="/admin" 
             element={

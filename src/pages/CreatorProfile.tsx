@@ -38,8 +38,28 @@ const CreatorProfile = () => {
   useEffect(() => {
     if (id) {
       fetchCreatorProfile(id);
+      trackProfileView(id);
     }
   }, [id]);
+
+  const trackProfileView = async (creatorId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from("profile_views")
+        .insert({
+          creator_profile_id: creatorId,
+          viewer_id: user?.id || null,
+        });
+
+      if (error && !error.message.includes("duplicate")) {
+        console.error("Error tracking view:", error);
+      }
+    } catch (error) {
+      console.error("Error tracking view:", error);
+    }
+  };
 
   const fetchCreatorProfile = async (creatorId: string) => {
     try {
