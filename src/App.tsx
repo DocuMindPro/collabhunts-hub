@@ -9,7 +9,9 @@ import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
 import Brand from "./pages/Brand";
 import Creator from "./pages/Creator";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +28,14 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/brand" element={<Brand />} />
           <Route path="/creator" element={<Creator />} />
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute requireAdmin>
+                <Admin />
+              </ProtectedRoute>
+            } 
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
