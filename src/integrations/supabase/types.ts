@@ -14,6 +14,169 @@ export type Database = {
   }
   public: {
     Tables: {
+      brand_profiles: {
+        Row: {
+          company_name: string
+          company_size: string | null
+          created_at: string | null
+          id: string
+          industry: string | null
+          logo_url: string | null
+          updated_at: string | null
+          user_id: string
+          website_url: string | null
+        }
+        Insert: {
+          company_name: string
+          company_size?: string | null
+          created_at?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          updated_at?: string | null
+          user_id: string
+          website_url?: string | null
+        }
+        Update: {
+          company_name?: string
+          company_size?: string | null
+          created_at?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          updated_at?: string | null
+          user_id?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      creator_profiles: {
+        Row: {
+          bio: string | null
+          categories: string[] | null
+          created_at: string | null
+          display_name: string
+          id: string
+          location_city: string | null
+          location_country: string | null
+          location_state: string | null
+          profile_image_url: string | null
+          rejection_reason: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          categories?: string[] | null
+          created_at?: string | null
+          display_name: string
+          id?: string
+          location_city?: string | null
+          location_country?: string | null
+          location_state?: string | null
+          profile_image_url?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          categories?: string[] | null
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          location_city?: string | null
+          location_country?: string | null
+          location_state?: string | null
+          profile_image_url?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      creator_services: {
+        Row: {
+          created_at: string | null
+          creator_profile_id: string
+          delivery_days: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          price_cents: number
+          service_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          creator_profile_id: string
+          delivery_days?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          price_cents: number
+          service_type: string
+        }
+        Update: {
+          created_at?: string | null
+          creator_profile_id?: string
+          delivery_days?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          price_cents?: number
+          service_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_services_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creator_social_accounts: {
+        Row: {
+          created_at: string | null
+          creator_profile_id: string
+          follower_count: number | null
+          id: string
+          platform: string
+          profile_url: string | null
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          creator_profile_id: string
+          follower_count?: number | null
+          id?: string
+          platform: string
+          profile_url?: string | null
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          creator_profile_id?: string
+          follower_count?: number | null
+          id?: string
+          platform?: string
+          profile_url?: string | null
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_social_accounts_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
