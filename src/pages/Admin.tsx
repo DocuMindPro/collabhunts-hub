@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface Profile {
@@ -120,6 +120,9 @@ const Admin = () => {
   const [selectedCreator, setSelectedCreator] = useState<CreatorProfile | null>(null);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [resetPasswordUser, setResetPasswordUser] = useState<Profile | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   
   // Filters
   const [userSearch, setUserSearch] = useState("");
@@ -467,6 +470,52 @@ const Admin = () => {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!resetPasswordUser || !newPassword) return;
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Invalid Password",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsResettingPassword(true);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+        body: {
+          userId: resetPasswordUser.id,
+          newPassword: newPassword,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password Reset",
+        description: `Password successfully reset for ${resetPasswordUser.email}`,
+      });
+
+      setResetPasswordUser(null);
+      setNewPassword("");
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reset password",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
@@ -648,13 +697,23 @@ const Admin = () => {
                               {new Date(profile.created_at).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSelectedUser(profile)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setSelectedUser(profile)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setResetPasswordUser(profile)}
+                                  title="Reset Password"
+                                >
+                                  <KeyRound className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1009,6 +1068,57 @@ const Admin = () => {
           </Tabs>
         </div>
       </main>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={!!resetPasswordUser} onOpenChange={(open) => {
+        if (!open) {
+          setResetPasswordUser(null);
+          setNewPassword("");
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+          </DialogHeader>
+          {resetPasswordUser && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Reset password for <span className="font-semibold">{resetPasswordUser.email}</span>
+                </p>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">New Password</label>
+                  <Input
+                    type="password"
+                    placeholder="Enter new password (min 6 characters)"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={isResettingPassword}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setResetPasswordUser(null);
+                    setNewPassword("");
+                  }}
+                  disabled={isResettingPassword}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleResetPassword}
+                  disabled={isResettingPassword || !newPassword || newPassword.length < 6}
+                >
+                  {isResettingPassword ? "Resetting..." : "Reset Password"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* User Details Dialog */}
       <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
