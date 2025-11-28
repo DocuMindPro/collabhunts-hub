@@ -24,6 +24,8 @@ interface Creator {
   services: Array<{
     price_cents: number;
   }>;
+  avgRating: number;
+  totalReviews: number;
 }
 
 const CATEGORIES = ["Fashion", "Beauty", "Fitness", "Food", "Travel", "Tech", "Gaming", "Lifestyle", "Business", "Art"];
@@ -64,7 +66,7 @@ const BrandCreatorsTab = () => {
 
       const creatorsWithDetails = await Promise.all(
         (profilesData || []).map(async (profile) => {
-          const [socialData, servicesData] = await Promise.all([
+          const [socialData, servicesData, reviewsData] = await Promise.all([
             supabase
               .from("creator_social_accounts")
               .select("follower_count")
@@ -74,7 +76,16 @@ const BrandCreatorsTab = () => {
               .select("price_cents")
               .eq("creator_profile_id", profile.id)
               .eq("is_active", true),
+            supabase
+              .from("reviews")
+              .select("rating")
+              .eq("creator_profile_id", profile.id),
           ]);
+
+          const reviews = reviewsData.data || [];
+          const avgRating = reviews.length > 0 
+            ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
+            : 5.0;
 
           return {
             id: profile.id,
@@ -85,6 +96,8 @@ const BrandCreatorsTab = () => {
             categories: profile.categories,
             social_accounts: socialData.data || [],
             services: servicesData.data || [],
+            avgRating,
+            totalReviews: reviews.length
           };
         })
       );
@@ -360,7 +373,10 @@ const BrandCreatorsTab = () => {
                   </div>
                   <div className="flex items-center gap-1 bg-white/90 backdrop-blur px-2 py-1 rounded-full">
                     <Star className="h-3 w-3 fill-primary text-primary" />
-                    <span className="text-xs font-semibold">5.0</span>
+                    <span className="text-xs font-semibold">{creator.avgRating.toFixed(1)}</span>
+                    {creator.totalReviews > 0 && (
+                      <span className="text-xs text-primary/70">({creator.totalReviews})</span>
+                    )}
                   </div>
                 </div>
               </CardHeader>

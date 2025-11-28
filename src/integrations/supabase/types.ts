@@ -528,6 +528,61 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          booking_id: string
+          brand_profile_id: string
+          created_at: string
+          creator_profile_id: string
+          id: string
+          rating: number
+          review_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          booking_id: string
+          brand_profile_id: string
+          created_at?: string
+          creator_profile_id: string
+          id?: string
+          rating: number
+          review_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string
+          brand_profile_id?: string
+          created_at?: string
+          creator_profile_id?: string
+          id?: string
+          rating?: number
+          review_text?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null

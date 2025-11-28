@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,17 @@ interface CreatorData {
     description: string | null;
     delivery_days: number;
   }>;
+  reviews: Array<{
+    id: string;
+    rating: number;
+    review_text: string | null;
+    created_at: string;
+    brand_profiles: {
+      company_name: string;
+    };
+  }>;
+  avgRating: number;
+  totalReviews: number;
 }
 
 const CreatorProfile = () => {
@@ -94,6 +106,23 @@ const CreatorProfile = () => {
         .eq("creator_profile_id", creatorId)
         .eq("is_active", true);
 
+      const { data: reviewsData } = await supabase
+        .from("reviews")
+        .select(`
+          id,
+          rating,
+          review_text,
+          created_at,
+          brand_profiles(company_name)
+        `)
+        .eq("creator_profile_id", creatorId)
+        .order("created_at", { ascending: false });
+
+      const reviews = reviewsData || [];
+      const avgRating = reviews.length > 0 
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
+        : 5.0;
+
       setCreator({
         id: profileData.id,
         display_name: profileData.display_name,
@@ -103,7 +132,10 @@ const CreatorProfile = () => {
         location_country: profileData.location_country,
         categories: profileData.categories,
         social_accounts: socialData || [],
-        services: servicesData || []
+        services: servicesData || [],
+        reviews,
+        avgRating,
+        totalReviews: reviews.length
       });
     } catch (error: any) {
       console.error("Error fetching creator:", error.message);
@@ -182,7 +214,8 @@ const CreatorProfile = () => {
                 </div>
                 <div className="flex items-center gap-2 bg-white/90 backdrop-blur px-4 py-2 rounded-full">
                   <Star className="h-5 w-5 fill-primary text-primary" />
-                  <span className="font-semibold">5.0</span>
+                  <span className="font-semibold">{creator.avgRating.toFixed(1)}</span>
+                  <span className="text-sm text-muted-foreground">({creator.totalReviews})</span>
                 </div>
               </div>
 
@@ -245,6 +278,47 @@ const CreatorProfile = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Reviews */}
+              {creator.reviews.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Reviews ({creator.totalReviews})</CardTitle>
+                    <CardDescription>What brands say about working with {creator.display_name}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {creator.reviews.slice(0, 5).map((review) => (
+                        <div key={review.id} className="border-b last:border-0 pb-4 last:pb-0">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <p className="font-semibold">{review.brand_profiles.company_name}</p>
+                              <div className="flex gap-1 my-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`h-4 w-4 ${
+                                      star <= review.rating
+                                        ? "fill-primary text-primary"
+                                        : "text-muted-foreground"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(review.created_at), "MMM dd, yyyy")}
+                            </span>
+                          </div>
+                          {review.review_text && (
+                            <p className="text-sm text-muted-foreground">{review.review_text}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Services & Pricing */}
               <Card>
