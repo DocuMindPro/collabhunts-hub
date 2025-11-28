@@ -10,6 +10,7 @@ import { Check, X, Clock } from "lucide-react";
 interface Booking {
   id: string;
   status: string;
+  payment_status: string;
   message: string | null;
   booking_date: string | null;
   total_price_cents: number;
@@ -91,6 +92,16 @@ const BookingsTab = () => {
     }
   };
 
+  const getPaymentStatusColor = (paymentStatus: string) => {
+    switch (paymentStatus) {
+      case "pending": return "bg-yellow-500";
+      case "paid": return "bg-green-500";
+      case "failed": return "bg-red-500";
+      case "refunded": return "bg-gray-500";
+      default: return "bg-gray-500";
+    }
+  };
+
   const filteredBookings = bookings.filter(b => 
     filter === "all" || b.status === filter
   );
@@ -144,9 +155,14 @@ const BookingsTab = () => {
                       {booking.creator_services?.service_type.replace(/_/g, " ") || "Service removed"}
                     </CardDescription>
                   </div>
-                  <Badge className={`${getStatusColor(booking.status)} text-white capitalize`}>
-                    {booking.status}
-                  </Badge>
+                  <div className="flex gap-2">
+                    <Badge className={`${getStatusColor(booking.status)} text-white capitalize`}>
+                      {booking.status}
+                    </Badge>
+                    <Badge className={`${getPaymentStatusColor(booking.payment_status)} text-white capitalize`}>
+                      {booking.payment_status}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
