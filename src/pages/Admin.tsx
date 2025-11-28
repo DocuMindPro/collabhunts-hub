@@ -1079,6 +1079,9 @@ const Admin = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reset Password</DialogTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Set a new password for this user account
+            </p>
           </DialogHeader>
           {resetPasswordUser && (
             <div className="space-y-4">

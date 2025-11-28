@@ -17,12 +17,13 @@ Deno.serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseAnonKey = Deno.env.get('SUPABASE_PUBLISHABLE_KEY')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     
-    // Create client with user's JWT for checking admin role
-    const supabase = createClient(
+    // Create client with anon key and user's JWT to verify the user
+    const userClient = createClient(
       supabaseUrl,
-      supabaseServiceKey,
+      supabaseAnonKey,
       {
         global: {
           headers: { Authorization: authHeader },
@@ -31,14 +32,16 @@ Deno.serve(async (req) => {
     )
 
     // Get the current user from JWT
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const { data: { user }, error: userError } = await userClient.auth.getUser()
     if (userError || !user) {
       console.error('Error getting user:', userError)
       throw new Error('Unauthorized')
     }
 
+    console.log('User authenticated:', user.email)
+
     // Check if user has admin role using the has_role function
-    const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
+    const { data: isAdmin, error: roleError } = await userClient.rpc('has_role', {
       _user_id: user.id,
       _role: 'admin'
     })
@@ -47,6 +50,8 @@ Deno.serve(async (req) => {
       console.error('Admin check failed:', roleError)
       throw new Error('Unauthorized - Admin access required')
     }
+
+    console.log('Admin verified:', user.email)
 
     // Parse request body
     const { userId, newPassword } = await req.json()
@@ -61,8 +66,13 @@ Deno.serve(async (req) => {
 
     console.log(`Admin ${user.email} resetting password for user ${userId}`)
 
-    // Create admin client to update user password
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey)
+    // Create admin client with service role key to update user password
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
 
     // Update user password
     const { data: updateData, error: updateError } = await adminClient.auth.admin.updateUserById(
