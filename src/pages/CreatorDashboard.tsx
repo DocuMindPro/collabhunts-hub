@@ -8,7 +8,8 @@ import ServicesTab from "@/components/creator-dashboard/ServicesTab";
 import BookingsTab from "@/components/creator-dashboard/BookingsTab";
 import MessagesTab from "@/components/creator-dashboard/MessagesTab";
 import CampaignsTab from "@/components/creator-dashboard/CampaignsTab";
-import { BarChart3, User, Package, Calendar, MessageSquare, Megaphone } from "lucide-react";
+import PayoutsTab from "@/components/creator-dashboard/PayoutsTab";
+import { BarChart3, User, Package, Calendar, MessageSquare, Megaphone, Wallet } from "lucide-react";
 
 const CreatorDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -25,7 +26,7 @@ const CreatorDashboard = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-flex">
+            <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-flex">
               <TabsTrigger value="overview" className="gap-2">
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
@@ -45,6 +46,10 @@ const CreatorDashboard = () => {
               <TabsTrigger value="bookings" className="gap-2">
                 <Calendar className="h-4 w-4" />
                 <span className="hidden sm:inline">Bookings</span>
+              </TabsTrigger>
+              <TabsTrigger value="payouts" className="gap-2">
+                <Wallet className="h-4 w-4" />
+                <span className="hidden sm:inline">Payouts</span>
               </TabsTrigger>
               <TabsTrigger value="messages" className="gap-2">
                 <MessageSquare className="h-4 w-4" />
@@ -70,6 +75,10 @@ const CreatorDashboard = () => {
 
             <TabsContent value="bookings" className="space-y-6">
               <BookingsTab />
+            </TabsContent>
+
+            <TabsContent value="payouts" className="space-y-6">
+              <PayoutsTab />
             </TabsContent>
 
             <TabsContent value="messages" className="space-y-6">

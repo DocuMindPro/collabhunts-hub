@@ -83,3 +83,59 @@ export const cancelSubscription = async (
     message: 'Subscription will be canceled at period end'
   };
 };
+
+// Mock Stripe Connect account creation
+export const createConnectAccount = async (
+  creatorProfileId: string
+): Promise<{ success: boolean; accountId: string; message: string }> => {
+  await new Promise(resolve => setTimeout(resolve, 1200));
+  
+  const mockAccountId = `acct_mock_${creatorProfileId.substring(0, 8)}`;
+  
+  return {
+    success: true,
+    accountId: mockAccountId,
+    message: 'Mock Stripe Connect account created'
+  };
+};
+
+// Mock Stripe Connect account link creation (for onboarding)
+export const createAccountLink = async (
+  accountId: string,
+  returnUrl: string,
+  refreshUrl: string
+): Promise<{ success: boolean; url: string; message: string }> => {
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // In real implementation, this would return a Stripe-hosted onboarding URL
+  return {
+    success: true,
+    url: `https://connect.stripe.com/setup/mock/${accountId}`,
+    message: 'Mock onboarding link created'
+  };
+};
+
+// Mock payout creation
+export const createPayout = async (
+  accountId: string,
+  amountCents: number,
+  bookingIds: string[]
+): Promise<{ success: boolean; payoutId: string; message: string }> => {
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  const mockPayoutId = `po_mock_${Date.now()}`;
+  
+  return {
+    success: true,
+    payoutId: mockPayoutId,
+    message: `Mock payout of ${formatPrice(amountCents)} created`
+  };
+};
+
+// Calculate creator earnings from a booking (total - platform fee)
+export const calculateCreatorEarnings = (
+  totalPriceCents: number,
+  platformFeeCents: number
+): number => {
+  return totalPriceCents - platformFeeCents;
+};
