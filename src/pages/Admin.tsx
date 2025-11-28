@@ -15,7 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, Eye } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface Profile {
   id: string;
@@ -24,6 +25,12 @@ interface Profile {
   user_type: string | null;
   created_at: string;
   roles: string[];
+  is_creator: boolean;
+  is_brand: boolean;
+  creator_status?: string;
+  brand_name?: string;
+  total_earned_cents?: number;
+  total_spent_cents?: number;
 }
 
 interface CreatorProfile {
@@ -52,12 +59,49 @@ interface CreatorProfile {
   }>;
 }
 
+interface Booking {
+  id: string;
+  created_at: string;
+  booking_date: string | null;
+  total_price_cents: number;
+  platform_fee_cents: number;
+  status: string;
+  creator_profile_id: string;
+  brand_profile_id: string;
+  creator_profiles?: {
+    display_name: string;
+  };
+  brand_profiles?: {
+    company_name: string;
+  };
+  creator_services?: {
+    service_type: string;
+  };
+}
+
+interface RevenueStats {
+  totalRevenue: number;
+  totalVolume: number;
+  activeBookings: number;
+  completedBookings: number;
+  avgBookingValue: number;
+}
+
 const Admin = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [pendingCreators, setPendingCreators] = useState<CreatorProfile[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingCreators, setLoadingCreators] = useState(true);
+  const [loadingRevenue, setLoadingRevenue] = useState(true);
   const [stats, setStats] = useState({ total: 0, brands: 0, creators: 0, admins: 0, pendingCreators: 0 });
+  const [revenueStats, setRevenueStats] = useState<RevenueStats>({
+    totalRevenue: 0,
+    totalVolume: 0,
+    activeBookings: 0,
+    completedBookings: 0,
+    avgBookingValue: 0,
+  });
   const [selectedCreator, setSelectedCreator] = useState<CreatorProfile | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const { toast } = useToast();
@@ -65,6 +109,7 @@ const Admin = () => {
   useEffect(() => {
     fetchProfiles();
     fetchPendingCreators();
+    fetchBookingsAndRevenue();
   }, []);
 
   const fetchProfiles = async () => {
@@ -78,25 +123,70 @@ const Admin = () => {
 
       if (profilesError) throw profilesError;
 
+      // Fetch roles
       const { data: rolesData, error: rolesError } = await supabase
         .from("user_roles")
         .select("user_id, role");
 
       if (rolesError) throw rolesError;
 
-      const profilesWithRoles = (profilesData || []).map((profile) => ({
-        ...profile,
-        roles: (rolesData || [])
+      // Fetch creator profiles
+      const { data: creatorProfilesData } = await supabase
+        .from("creator_profiles")
+        .select("id, user_id, display_name, status");
+
+      // Fetch brand profiles
+      const { data: brandProfilesData } = await supabase
+        .from("brand_profiles")
+        .select("id, user_id, company_name");
+
+      // Fetch all bookings for stats calculations
+      const { data: allBookingsData } = await supabase
+        .from("bookings")
+        .select("creator_profile_id, brand_profile_id, total_price_cents, status");
+
+      const profilesWithDetails = (profilesData || []).map((profile) => {
+        const roles = (rolesData || [])
           .filter((role) => role.user_id === profile.id)
-          .map((role) => role.role),
-      }));
+          .map((role) => role.role);
 
-      setProfiles(profilesWithRoles);
+        const creatorProfile = creatorProfilesData?.find((cp) => cp.user_id === profile.id);
+        const brandProfile = brandProfilesData?.find((bp) => bp.user_id === profile.id);
 
-      const total = profilesWithRoles.length;
-      const brands = profilesWithRoles.filter((p) => p.user_type === "brand").length;
-      const creators = profilesWithRoles.filter((p) => p.user_type === "creator").length;
-      const admins = profilesWithRoles.filter((p) => p.roles.includes("admin")).length;
+        // Calculate earnings for creators (85% of completed bookings)
+        let totalEarned = 0;
+        if (creatorProfile) {
+          totalEarned = (allBookingsData || [])
+            .filter((b) => b.creator_profile_id === creatorProfile.id && b.status === "completed")
+            .reduce((sum, b) => sum + (b.total_price_cents * 0.85), 0);
+        }
+
+        // Calculate spending for brands (100% of completed bookings)
+        let totalSpent = 0;
+        if (brandProfile) {
+          totalSpent = (allBookingsData || [])
+            .filter((b) => b.brand_profile_id === brandProfile.id && b.status === "completed")
+            .reduce((sum, b) => sum + b.total_price_cents, 0);
+        }
+
+        return {
+          ...profile,
+          roles,
+          is_creator: !!creatorProfile,
+          is_brand: !!brandProfile,
+          creator_status: creatorProfile?.status,
+          brand_name: brandProfile?.company_name,
+          total_earned_cents: totalEarned,
+          total_spent_cents: totalSpent,
+        };
+      });
+
+      setProfiles(profilesWithDetails);
+
+      const total = profilesWithDetails.length;
+      const brands = profilesWithDetails.filter((p) => p.is_brand).length;
+      const creators = profilesWithDetails.filter((p) => p.is_creator).length;
+      const admins = profilesWithDetails.filter((p) => p.roles.includes("admin")).length;
 
       setStats(prev => ({ ...prev, total, brands, creators, admins }));
     } catch (error: any) {
@@ -235,6 +325,62 @@ const Admin = () => {
     }
   };
 
+  const fetchBookingsAndRevenue = async () => {
+    try {
+      setLoadingRevenue(true);
+
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from("bookings")
+        .select(`
+          *,
+          creator_profiles(display_name),
+          brand_profiles(company_name),
+          creator_services(service_type)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (bookingsError) throw bookingsError;
+
+      setBookings(bookingsData || []);
+
+      // Calculate revenue stats
+      const completedBookings = (bookingsData || []).filter((b) => b.status === "completed");
+      const activeBookings = (bookingsData || []).filter(
+        (b) => b.status === "pending" || b.status === "accepted"
+      );
+
+      const totalRevenue = completedBookings.reduce(
+        (sum, b) => sum + (b.platform_fee_cents || 0),
+        0
+      );
+
+      const totalVolume = completedBookings.reduce(
+        (sum, b) => sum + b.total_price_cents,
+        0
+      );
+
+      const avgBookingValue = completedBookings.length > 0
+        ? totalVolume / completedBookings.length
+        : 0;
+
+      setRevenueStats({
+        totalRevenue,
+        totalVolume,
+        activeBookings: activeBookings.length,
+        completedBookings: completedBookings.length,
+        avgBookingValue,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingRevenue(false);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
@@ -259,19 +405,28 @@ const Admin = () => {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
             <Card>
               <CardHeader className="pb-3">
-                <CardDescription>Total Users</CardDescription>
+                <CardDescription className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Total Users
+                </CardDescription>
                 <CardTitle className="text-3xl">{stats.total}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader className="pb-3">
-                <CardDescription>Brands</CardDescription>
+                <CardDescription className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Brands
+                </CardDescription>
                 <CardTitle className="text-3xl">{stats.brands}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader className="pb-3">
-                <CardDescription>Creators</CardDescription>
+                <CardDescription className="flex items-center gap-2">
+                  <Palette className="h-4 w-4" />
+                  Creators
+                </CardDescription>
                 <CardTitle className="text-3xl">{stats.creators}</CardTitle>
               </CardHeader>
             </Card>
@@ -301,6 +456,7 @@ const Admin = () => {
                   </Badge>
                 )}
               </TabsTrigger>
+              <TabsTrigger value="revenue">Revenue & Analytics</TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -321,8 +477,9 @@ const Admin = () => {
                         <TableRow>
                           <TableHead>Email</TableHead>
                           <TableHead>Full Name</TableHead>
-                          <TableHead>User Type</TableHead>
-                          <TableHead>Roles</TableHead>
+                          <TableHead>Account Type</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Total Activity</TableHead>
                           <TableHead>Joined</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -332,22 +489,58 @@ const Admin = () => {
                             <TableCell className="font-medium">{profile.email}</TableCell>
                             <TableCell>{profile.full_name || "—"}</TableCell>
                             <TableCell>
-                              {profile.user_type ? (
-                                <Badge variant="outline" className="capitalize">
-                                  {profile.user_type}
+                              <div className="flex flex-wrap gap-1">
+                                {profile.is_creator && (
+                                  <Badge variant="outline" className="gap-1">
+                                    <Palette className="h-3 w-3" />
+                                    Creator
+                                  </Badge>
+                                )}
+                                {profile.is_brand && (
+                                  <Badge variant="outline" className="gap-1">
+                                    <Building2 className="h-3 w-3" />
+                                    Brand
+                                  </Badge>
+                                )}
+                                {profile.roles.includes("admin") && (
+                                  <Badge variant="secondary" className="gap-1">
+                                    Admin
+                                  </Badge>
+                                )}
+                                {!profile.is_creator && !profile.is_brand && profile.roles.length === 0 && "—"}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {profile.is_creator && profile.creator_status && (
+                                <Badge
+                                  variant={
+                                    profile.creator_status === "approved"
+                                      ? "default"
+                                      : profile.creator_status === "pending"
+                                      ? "secondary"
+                                      : "destructive"
+                                  }
+                                  className="capitalize"
+                                >
+                                  {profile.creator_status}
                                 </Badge>
-                              ) : (
-                                "—"
+                              )}
+                              {profile.is_brand && !profile.is_creator && (
+                                <Badge variant="default">Active</Badge>
                               )}
                             </TableCell>
                             <TableCell>
-                              <div className="flex gap-1">
-                                {profile.roles.map((role) => (
-                                  <Badge key={role} variant="secondary" className="capitalize">
-                                    {role}
-                                  </Badge>
-                                ))}
-                              </div>
+                              {profile.is_creator && profile.total_earned_cents && profile.total_earned_cents > 0 ? (
+                                <span className="text-green-600 font-medium">
+                                  ${(profile.total_earned_cents / 100).toFixed(2)} earned
+                                </span>
+                              ) : profile.is_brand && profile.total_spent_cents && profile.total_spent_cents > 0 ? (
+                                <span className="text-blue-600 font-medium">
+                                  ${(profile.total_spent_cents / 100).toFixed(2)} spent
+                                </span>
+                              ) : (
+                                "—"
+                              )}
                             </TableCell>
                             <TableCell>
                               {new Date(profile.created_at).toLocaleDateString()}
@@ -496,6 +689,143 @@ const Admin = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Revenue & Analytics Tab */}
+            <TabsContent value="revenue">
+              <div className="space-y-6">
+                {/* Revenue Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardDescription className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-green-600" />
+                        Platform Revenue (15%)
+                      </CardDescription>
+                      <CardTitle className="text-3xl text-green-600">
+                        ${(revenueStats.totalRevenue / 100).toFixed(2)}
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardDescription className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        Total Volume
+                      </CardDescription>
+                      <CardTitle className="text-3xl">
+                        ${(revenueStats.totalVolume / 100).toFixed(2)}
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardDescription>Active Bookings</CardDescription>
+                      <CardTitle className="text-3xl">{revenueStats.activeBookings}</CardTitle>
+                    </CardHeader>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardDescription>Completed</CardDescription>
+                      <CardTitle className="text-3xl">{revenueStats.completedBookings}</CardTitle>
+                    </CardHeader>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardDescription>Avg Booking Value</CardDescription>
+                      <CardTitle className="text-3xl">
+                        ${(revenueStats.avgBookingValue / 100).toFixed(2)}
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+                </div>
+
+                {/* Transactions Table */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>All Transactions</CardTitle>
+                    <CardDescription>
+                      Complete transaction history with platform fees
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingRevenue ? (
+                      <div className="flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      </div>
+                    ) : bookings.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No transactions yet
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Date</TableHead>
+                              <TableHead>Creator</TableHead>
+                              <TableHead>Brand</TableHead>
+                              <TableHead>Service</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead className="text-right">Total Amount</TableHead>
+                              <TableHead className="text-right">Platform Fee (15%)</TableHead>
+                              <TableHead className="text-right">Creator Payout (85%)</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {bookings.map((booking) => {
+                              const creatorPayout = booking.total_price_cents - (booking.platform_fee_cents || 0);
+                              return (
+                                <TableRow key={booking.id}>
+                                  <TableCell>
+                                    {new Date(booking.created_at).toLocaleDateString()}
+                                  </TableCell>
+                                  <TableCell className="font-medium">
+                                    {booking.creator_profiles?.display_name || "N/A"}
+                                  </TableCell>
+                                  <TableCell>
+                                    {booking.brand_profiles?.company_name || "N/A"}
+                                  </TableCell>
+                                  <TableCell>
+                                    <span className="capitalize">
+                                      {booking.creator_services?.service_type?.replace(/_/g, " ") || "N/A"}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge
+                                      variant={
+                                        booking.status === "completed"
+                                          ? "default"
+                                          : booking.status === "pending"
+                                          ? "secondary"
+                                          : booking.status === "accepted"
+                                          ? "outline"
+                                          : "destructive"
+                                      }
+                                      className="capitalize"
+                                    >
+                                      {booking.status}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-right font-medium">
+                                    ${(booking.total_price_cents / 100).toFixed(2)}
+                                  </TableCell>
+                                  <TableCell className="text-right text-green-600 font-medium">
+                                    ${((booking.platform_fee_cents || 0) / 100).toFixed(2)}
+                                  </TableCell>
+                                  <TableCell className="text-right font-medium">
+                                    ${(creatorPayout / 100).toFixed(2)}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
