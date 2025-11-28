@@ -164,6 +164,110 @@ export type Database = {
           },
         ]
       }
+      campaign_applications: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          creator_profile_id: string
+          id: string
+          message: string | null
+          proposed_price_cents: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          creator_profile_id: string
+          id?: string
+          message?: string | null
+          proposed_price_cents: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          creator_profile_id?: string
+          id?: string
+          message?: string | null
+          proposed_price_cents?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_applications_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_applications_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          brand_profile_id: string
+          budget_cents: number
+          campaign_type: string
+          created_at: string
+          deadline: string
+          description: string
+          id: string
+          requirements: string | null
+          spots_available: number
+          spots_filled: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          brand_profile_id: string
+          budget_cents: number
+          campaign_type: string
+          created_at?: string
+          deadline: string
+          description: string
+          id?: string
+          requirements?: string | null
+          spots_available?: number
+          spots_filled?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          brand_profile_id?: string
+          budget_cents?: number
+          campaign_type?: string
+          created_at?: string
+          deadline?: string
+          description?: string
+          id?: string
+          requirements?: string | null
+          spots_available?: number
+          spots_filled?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           brand_profile_id: string
