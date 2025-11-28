@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, Shield, LogOut } from "lucide-react";
+import { Menu, Shield, LogOut, LayoutDashboard } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   Sheet,
@@ -22,6 +22,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isApprovedCreator, setIsApprovedCreator] = useState(false);
 
   const navLinks = [
     { to: "/influencers", label: "Search" },
@@ -32,15 +33,22 @@ const Navbar = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) checkAdminRole(session.user.id);
+      if (session?.user) {
+        checkAdminRole(session.user.id);
+        checkCreatorStatus(session.user.id);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        setTimeout(() => checkAdminRole(session.user.id), 0);
+        setTimeout(() => {
+          checkAdminRole(session.user.id);
+          checkCreatorStatus(session.user.id);
+        }, 0);
       } else {
         setIsAdmin(false);
+        setIsApprovedCreator(false);
       }
     });
 
@@ -55,6 +63,15 @@ const Navbar = () => {
       .eq('role', 'admin')
       .maybeSingle();
     setIsAdmin(!!data);
+  };
+
+  const checkCreatorStatus = async (userId: string) => {
+    const { data } = await supabase
+      .from('creator_profiles')
+      .select('status')
+      .eq('user_id', userId)
+      .maybeSingle();
+    setIsApprovedCreator(data?.status === 'approved');
   };
 
   const handleLogout = async () => {
@@ -93,6 +110,14 @@ const Navbar = () => {
                     <Button variant="outline" size="sm" className="gap-2">
                       <Shield className="h-4 w-4" />
                       Admin Dashboard
+                    </Button>
+                  </Link>
+                )}
+                {isApprovedCreator && (
+                  <Link to="/creator-dashboard">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <LayoutDashboard className="h-4 w-4" />
+                      Creator Dashboard
                     </Button>
                   </Link>
                 )}
@@ -164,6 +189,14 @@ const Navbar = () => {
                           <Button variant="outline" className="w-full gap-2">
                             <Shield className="h-4 w-4" />
                             Admin Dashboard
+                          </Button>
+                        </Link>
+                      )}
+                      {isApprovedCreator && (
+                        <Link to="/creator-dashboard" onClick={() => setIsOpen(false)}>
+                          <Button variant="outline" className="w-full gap-2">
+                            <LayoutDashboard className="h-4 w-4" />
+                            Creator Dashboard
                           </Button>
                         </Link>
                       )}

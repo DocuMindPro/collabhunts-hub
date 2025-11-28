@@ -14,6 +14,67 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          booking_date: string | null
+          brand_profile_id: string
+          created_at: string | null
+          creator_profile_id: string
+          id: string
+          message: string | null
+          service_id: string | null
+          status: string | null
+          total_price_cents: number
+          updated_at: string | null
+        }
+        Insert: {
+          booking_date?: string | null
+          brand_profile_id: string
+          created_at?: string | null
+          creator_profile_id: string
+          id?: string
+          message?: string | null
+          service_id?: string | null
+          status?: string | null
+          total_price_cents: number
+          updated_at?: string | null
+        }
+        Update: {
+          booking_date?: string | null
+          brand_profile_id?: string
+          created_at?: string | null
+          creator_profile_id?: string
+          id?: string
+          message?: string | null
+          service_id?: string | null
+          status?: string | null
+          total_price_cents?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "creator_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_profiles: {
         Row: {
           company_name: string
@@ -49,6 +110,45 @@ export type Database = {
           website_url?: string | null
         }
         Relationships: []
+      }
+      conversations: {
+        Row: {
+          brand_profile_id: string
+          created_at: string | null
+          creator_profile_id: string
+          id: string
+          last_message_at: string | null
+        }
+        Insert: {
+          brand_profile_id: string
+          created_at?: string | null
+          creator_profile_id: string
+          id?: string
+          last_message_at?: string | null
+        }
+        Update: {
+          brand_profile_id?: string
+          created_at?: string | null
+          creator_profile_id?: string
+          id?: string
+          last_message_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       creator_profiles: {
         Row: {
@@ -170,6 +270,73 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "creator_social_accounts_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_views: {
+        Row: {
+          created_at: string | null
+          creator_profile_id: string
+          id: string
+          view_date: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_profile_id: string
+          id?: string
+          view_date?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_profile_id?: string
+          id?: string
+          view_date?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_views_creator_profile_id_fkey"
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
