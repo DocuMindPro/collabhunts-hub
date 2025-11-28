@@ -310,6 +310,44 @@ export type Database = {
           },
         ]
       }
+      creator_payout_settings: {
+        Row: {
+          account_status: string
+          created_at: string | null
+          creator_profile_id: string
+          id: string
+          payout_enabled: boolean
+          stripe_account_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_status?: string
+          created_at?: string | null
+          creator_profile_id: string
+          id?: string
+          payout_enabled?: boolean
+          stripe_account_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_status?: string
+          created_at?: string | null
+          creator_profile_id?: string
+          id?: string
+          payout_enabled?: boolean
+          stripe_account_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_payout_settings_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: true
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_profiles: {
         Row: {
           bio: string | null
@@ -468,6 +506,50 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payouts: {
+        Row: {
+          amount_cents: number
+          booking_ids: string[]
+          created_at: string | null
+          creator_profile_id: string
+          id: string
+          payout_date: string | null
+          status: string
+          stripe_payout_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount_cents: number
+          booking_ids?: string[]
+          created_at?: string | null
+          creator_profile_id: string
+          id?: string
+          payout_date?: string | null
+          status?: string
+          stripe_payout_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          booking_ids?: string[]
+          created_at?: string | null
+          creator_profile_id?: string
+          id?: string
+          payout_date?: string | null
+          status?: string
+          stripe_payout_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
             referencedColumns: ["id"]
           },
         ]
