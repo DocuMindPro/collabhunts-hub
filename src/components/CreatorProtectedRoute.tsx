@@ -90,20 +90,6 @@ const CreatorProtectedRoute = ({ children }: CreatorProtectedRouteProps) => {
     );
   }
 
-  if (creatorStatus === "pending") {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <h1 className="text-3xl font-heading font-bold mb-4">Profile Under Review</h1>
-          <p className="text-muted-foreground">
-            Your creator profile is currently being reviewed by our team. 
-            You'll receive an email once it's approved.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   if (creatorStatus === "rejected") {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">

@@ -22,7 +22,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isApprovedCreator, setIsApprovedCreator] = useState(false);
+  const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
 
   const navLinks = [
@@ -51,7 +51,7 @@ const Navbar = () => {
         }, 0);
       } else {
         setIsAdmin(false);
-        setIsApprovedCreator(false);
+        setHasCreatorProfile(false);
         setHasBrandProfile(false);
       }
     });
@@ -72,10 +72,10 @@ const Navbar = () => {
   const checkCreatorStatus = async (userId: string) => {
     const { data } = await supabase
       .from('creator_profiles')
-      .select('status')
+      .select('id')
       .eq('user_id', userId)
       .maybeSingle();
-    setIsApprovedCreator(data?.status === 'approved');
+    setHasCreatorProfile(!!data);
   };
 
   const checkBrandProfile = async (userId: string) => {
@@ -126,7 +126,7 @@ const Navbar = () => {
                     </Button>
                   </Link>
                 )}
-                {isApprovedCreator && (
+                {hasCreatorProfile && (
                   <Link to="/creator-dashboard">
                     <Button variant="outline" size="sm" className="gap-2">
                       <LayoutDashboard className="h-4 w-4" />
@@ -213,7 +213,7 @@ const Navbar = () => {
                           </Button>
                         </Link>
                       )}
-                      {isApprovedCreator && (
+                      {hasCreatorProfile && (
                         <Link to="/creator-dashboard" onClick={() => setIsOpen(false)}>
                           <Button variant="outline" className="w-full gap-2">
                             <LayoutDashboard className="h-4 w-4" />
