@@ -7,7 +7,8 @@ import ProfileTab from "@/components/creator-dashboard/ProfileTab";
 import ServicesTab from "@/components/creator-dashboard/ServicesTab";
 import BookingsTab from "@/components/creator-dashboard/BookingsTab";
 import MessagesTab from "@/components/creator-dashboard/MessagesTab";
-import { BarChart3, User, Package, Calendar, MessageSquare } from "lucide-react";
+import CampaignsTab from "@/components/creator-dashboard/CampaignsTab";
+import { BarChart3, User, Package, Calendar, MessageSquare, Megaphone } from "lucide-react";
 
 const CreatorDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -24,10 +25,14 @@ const CreatorDashboard = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
+            <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-flex">
               <TabsTrigger value="overview" className="gap-2">
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="campaigns" className="gap-2">
+                <Megaphone className="h-4 w-4" />
+                <span className="hidden sm:inline">Campaigns</span>
               </TabsTrigger>
               <TabsTrigger value="profile" className="gap-2">
                 <User className="h-4 w-4" />
@@ -49,6 +54,10 @@ const CreatorDashboard = () => {
 
             <TabsContent value="overview" className="space-y-6">
               <OverviewTab />
+            </TabsContent>
+
+            <TabsContent value="campaigns" className="space-y-6">
+              <CampaignsTab />
             </TabsContent>
 
             <TabsContent value="profile" className="space-y-6">

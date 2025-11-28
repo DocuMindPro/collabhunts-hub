@@ -7,7 +7,8 @@ import BrandBookingsTab from "@/components/brand-dashboard/BrandBookingsTab";
 import BrandMessagesTab from "@/components/brand-dashboard/BrandMessagesTab";
 import BrandCreatorsTab from "@/components/brand-dashboard/BrandCreatorsTab";
 import BrandSubscriptionTab from "@/components/brand-dashboard/BrandSubscriptionTab";
-import { BarChart3, Calendar, MessageSquare, Users, CreditCard } from "lucide-react";
+import BrandCampaignsTab from "@/components/brand-dashboard/BrandCampaignsTab";
+import { BarChart3, Calendar, MessageSquare, Users, CreditCard, Megaphone } from "lucide-react";
 
 const BrandDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -24,10 +25,14 @@ const BrandDashboard = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
+            <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-flex">
               <TabsTrigger value="overview" className="gap-2">
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="campaigns" className="gap-2">
+                <Megaphone className="h-4 w-4" />
+                <span className="hidden sm:inline">Campaigns</span>
               </TabsTrigger>
               <TabsTrigger value="bookings" className="gap-2">
                 <Calendar className="h-4 w-4" />
@@ -49,6 +54,10 @@ const BrandDashboard = () => {
 
             <TabsContent value="overview" className="space-y-6">
               <BrandOverviewTab />
+            </TabsContent>
+
+            <TabsContent value="campaigns" className="space-y-6">
+              <BrandCampaignsTab />
             </TabsContent>
 
             <TabsContent value="bookings" className="space-y-6">
