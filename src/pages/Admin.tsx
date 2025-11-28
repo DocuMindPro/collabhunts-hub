@@ -15,8 +15,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface Profile {
   id: string;
@@ -29,8 +32,10 @@ interface Profile {
   is_brand: boolean;
   creator_status?: string;
   brand_name?: string;
+  creator_display_name?: string;
   total_earned_cents?: number;
   total_spent_cents?: number;
+  booking_count?: number;
 }
 
 interface CreatorProfile {
@@ -87,10 +92,20 @@ interface RevenueStats {
   avgBookingValue: number;
 }
 
+interface MonthlyData {
+  month: string;
+  revenue: number;
+  volume: number;
+  bookings: number;
+}
+
 const Admin = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
   const [pendingCreators, setPendingCreators] = useState<CreatorProfile[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingCreators, setLoadingCreators] = useState(true);
   const [loadingRevenue, setLoadingRevenue] = useState(true);
@@ -103,7 +118,14 @@ const Admin = () => {
     avgBookingValue: 0,
   });
   const [selectedCreator, setSelectedCreator] = useState<CreatorProfile | null>(null);
+  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  
+  // Filters
+  const [userSearch, setUserSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [transactionSearch, setTransactionSearch] = useState("");
+  
   const { toast } = useToast();
 
   useEffect(() => {
@@ -111,6 +133,36 @@ const Admin = () => {
     fetchPendingCreators();
     fetchBookingsAndRevenue();
   }, []);
+
+  useEffect(() => {
+    // Filter profiles based on search
+    const filtered = profiles.filter(profile => 
+      profile.email.toLowerCase().includes(userSearch.toLowerCase()) ||
+      profile.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
+      profile.brand_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
+      profile.creator_display_name?.toLowerCase().includes(userSearch.toLowerCase())
+    );
+    setFilteredProfiles(filtered);
+  }, [userSearch, profiles]);
+
+  useEffect(() => {
+    // Filter bookings based on status and search
+    let filtered = bookings;
+    
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(b => b.status === statusFilter);
+    }
+    
+    if (transactionSearch) {
+      filtered = filtered.filter(b =>
+        b.creator_profiles?.display_name?.toLowerCase().includes(transactionSearch.toLowerCase()) ||
+        b.brand_profiles?.company_name?.toLowerCase().includes(transactionSearch.toLowerCase()) ||
+        b.creator_services?.service_type?.toLowerCase().includes(transactionSearch.toLowerCase())
+      );
+    }
+    
+    setFilteredBookings(filtered);
+  }, [statusFilter, transactionSearch, bookings]);
 
   const fetchProfiles = async () => {
     try {
@@ -155,18 +207,24 @@ const Admin = () => {
 
         // Calculate earnings for creators (85% of completed bookings)
         let totalEarned = 0;
+        let creatorBookingCount = 0;
         if (creatorProfile) {
-          totalEarned = (allBookingsData || [])
-            .filter((b) => b.creator_profile_id === creatorProfile.id && b.status === "completed")
-            .reduce((sum, b) => sum + (b.total_price_cents * 0.85), 0);
+          const creatorBookings = (allBookingsData || []).filter(
+            b => b.creator_profile_id === creatorProfile.id && b.status === "completed"
+          );
+          totalEarned = creatorBookings.reduce((sum, b) => sum + (b.total_price_cents * 0.85), 0);
+          creatorBookingCount = creatorBookings.length;
         }
 
         // Calculate spending for brands (100% of completed bookings)
         let totalSpent = 0;
+        let brandBookingCount = 0;
         if (brandProfile) {
-          totalSpent = (allBookingsData || [])
-            .filter((b) => b.brand_profile_id === brandProfile.id && b.status === "completed")
-            .reduce((sum, b) => sum + b.total_price_cents, 0);
+          const brandBookings = (allBookingsData || []).filter(
+            b => b.brand_profile_id === brandProfile.id && b.status === "completed"
+          );
+          totalSpent = brandBookings.reduce((sum, b) => sum + b.total_price_cents, 0);
+          brandBookingCount = brandBookings.length;
         }
 
         return {
@@ -175,13 +233,16 @@ const Admin = () => {
           is_creator: !!creatorProfile,
           is_brand: !!brandProfile,
           creator_status: creatorProfile?.status,
+          creator_display_name: creatorProfile?.display_name,
           brand_name: brandProfile?.company_name,
           total_earned_cents: totalEarned,
           total_spent_cents: totalSpent,
+          booking_count: creatorProfile ? creatorBookingCount : brandBookingCount,
         };
       });
 
       setProfiles(profilesWithDetails);
+      setFilteredProfiles(profilesWithDetails);
 
       const total = profilesWithDetails.length;
       const brands = profilesWithDetails.filter((p) => p.is_brand).length;
@@ -221,20 +282,17 @@ const Admin = () => {
       // Fetch related data for each creator
       const creatorsWithDetails = await Promise.all(
         creatorsData.map(async (creator) => {
-          // Fetch profile email
           const { data: profileData } = await supabase
             .from("profiles")
             .select("email")
             .eq("id", creator.user_id)
             .single();
 
-          // Fetch social accounts
           const { data: socialData } = await supabase
             .from("creator_social_accounts")
             .select("*")
             .eq("creator_profile_id", creator.id);
 
-          // Fetch services
           const { data: servicesData } = await supabase
             .from("creator_services")
             .select("*")
@@ -342,6 +400,7 @@ const Admin = () => {
       if (bookingsError) throw bookingsError;
 
       setBookings(bookingsData || []);
+      setFilteredBookings(bookingsData || []);
 
       // Calculate revenue stats
       const completedBookings = (bookingsData || []).filter((b) => b.status === "completed");
@@ -370,6 +429,33 @@ const Admin = () => {
         completedBookings: completedBookings.length,
         avgBookingValue,
       });
+
+      // Calculate monthly data for chart
+      const monthlyMap = new Map<string, { revenue: number; volume: number; bookings: number }>();
+      
+      completedBookings.forEach(booking => {
+        const date = new Date(booking.created_at);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        const existing = monthlyMap.get(monthKey) || { revenue: 0, volume: 0, bookings: 0 };
+        monthlyMap.set(monthKey, {
+          revenue: existing.revenue + (booking.platform_fee_cents || 0),
+          volume: existing.volume + booking.total_price_cents,
+          bookings: existing.bookings + 1
+        });
+      });
+
+      const monthly = Array.from(monthlyMap.entries())
+        .map(([month, data]) => ({
+          month: new Date(month + "-01").toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          revenue: data.revenue / 100,
+          volume: data.volume / 100,
+          bookings: data.bookings
+        }))
+        .sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime())
+        .slice(-6); // Last 6 months
+
+      setMonthlyData(monthly);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -463,8 +549,23 @@ const Admin = () => {
             <TabsContent value="users">
               <Card>
                 <CardHeader>
-                  <CardTitle>All Users</CardTitle>
-                  <CardDescription>View and manage platform users</CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>All Users</CardTitle>
+                      <CardDescription>View and manage platform users</CardDescription>
+                    </div>
+                    <div className="w-72">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search users..."
+                          value={userSearch}
+                          onChange={(e) => setUserSearch(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -481,10 +582,11 @@ const Admin = () => {
                           <TableHead>Status</TableHead>
                           <TableHead>Total Activity</TableHead>
                           <TableHead>Joined</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {profiles.map((profile) => (
+                        {filteredProfiles.map((profile) => (
                           <TableRow key={profile.id}>
                             <TableCell className="font-medium">{profile.email}</TableCell>
                             <TableCell>{profile.full_name || "—"}</TableCell>
@@ -544,6 +646,15 @@ const Admin = () => {
                             </TableCell>
                             <TableCell>
                               {new Date(profile.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedUser(profile)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -740,22 +851,90 @@ const Admin = () => {
                   </Card>
                 </div>
 
+                {/* Revenue Chart */}
+                {monthlyData.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Revenue Trends</CardTitle>
+                      <CardDescription>Monthly platform revenue and booking volume</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={monthlyData}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                          <XAxis dataKey="month" className="text-xs" />
+                          <YAxis className="text-xs" />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--card))',
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px'
+                            }}
+                          />
+                          <Legend />
+                          <Line 
+                            type="monotone" 
+                            dataKey="revenue" 
+                            stroke="hsl(var(--primary))" 
+                            strokeWidth={2}
+                            name="Platform Revenue ($)"
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="volume" 
+                            stroke="hsl(var(--chart-2))" 
+                            strokeWidth={2}
+                            name="Total Volume ($)"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Transactions Table */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>All Transactions</CardTitle>
-                    <CardDescription>
-                      Complete transaction history with platform fees
-                    </CardDescription>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>All Transactions</CardTitle>
+                        <CardDescription>
+                          Complete transaction history with platform fees
+                        </CardDescription>
+                      </div>
+                      <div className="flex gap-3">
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className="w-36">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="accepted">Accepted</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="relative w-64">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search transactions..."
+                            value={transactionSearch}
+                            onChange={(e) => setTransactionSearch(e.target.value)}
+                            className="pl-9"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {loadingRevenue ? (
                       <div className="flex justify-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                       </div>
-                    ) : bookings.length === 0 ? (
+                    ) : filteredBookings.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
-                        No transactions yet
+                        No transactions found
                       </div>
                     ) : (
                       <div className="overflow-x-auto">
@@ -773,7 +952,7 @@ const Admin = () => {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {bookings.map((booking) => {
+                            {filteredBookings.map((booking) => {
                               const creatorPayout = booking.total_price_cents - (booking.platform_fee_cents || 0);
                               return (
                                 <TableRow key={booking.id}>
@@ -830,6 +1009,116 @@ const Admin = () => {
           </Tabs>
         </div>
       </main>
+
+      {/* User Details Dialog */}
+      <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Email</h4>
+                  <p className="font-medium">{selectedUser.email}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Full Name</h4>
+                  <p className="font-medium">{selectedUser.full_name || "—"}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Joined</h4>
+                  <p className="font-medium">{new Date(selectedUser.created_at).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Account Type</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedUser.is_creator && (
+                      <Badge variant="outline" className="gap-1">
+                        <Palette className="h-3 w-3" />
+                        Creator
+                      </Badge>
+                    )}
+                    {selectedUser.is_brand && (
+                      <Badge variant="outline" className="gap-1">
+                        <Building2 className="h-3 w-3" />
+                        Brand
+                      </Badge>
+                    )}
+                    {selectedUser.roles.includes("admin") && (
+                      <Badge variant="secondary">Admin</Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {selectedUser.is_creator && (
+                <div className="border-t pt-4">
+                  <h3 className="font-semibold mb-3">Creator Profile</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Display Name</h4>
+                      <p className="font-medium">{selectedUser.creator_display_name || "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Status</h4>
+                      <Badge
+                        variant={
+                          selectedUser.creator_status === "approved"
+                            ? "default"
+                            : selectedUser.creator_status === "pending"
+                            ? "secondary"
+                            : "destructive"
+                        }
+                        className="capitalize"
+                      >
+                        {selectedUser.creator_status}
+                      </Badge>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Total Earned</h4>
+                      <p className="font-medium text-green-600">
+                        ${((selectedUser.total_earned_cents || 0) / 100).toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Completed Bookings</h4>
+                      <p className="font-medium">{selectedUser.booking_count || 0}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedUser.is_brand && (
+                <div className="border-t pt-4">
+                  <h3 className="font-semibold mb-3">Brand Profile</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Company Name</h4>
+                      <p className="font-medium">{selectedUser.brand_name || "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Status</h4>
+                      <Badge variant="default">Active</Badge>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Total Spent</h4>
+                      <p className="font-medium text-blue-600">
+                        ${((selectedUser.total_spent_cents || 0) / 100).toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Completed Bookings</h4>
+                      <p className="font-medium">{selectedUser.booking_count || 0}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
