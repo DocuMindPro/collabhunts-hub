@@ -6,7 +6,8 @@ import BrandOverviewTab from "@/components/brand-dashboard/BrandOverviewTab";
 import BrandBookingsTab from "@/components/brand-dashboard/BrandBookingsTab";
 import BrandMessagesTab from "@/components/brand-dashboard/BrandMessagesTab";
 import BrandCreatorsTab from "@/components/brand-dashboard/BrandCreatorsTab";
-import { BarChart3, Calendar, MessageSquare, Users } from "lucide-react";
+import BrandSubscriptionTab from "@/components/brand-dashboard/BrandSubscriptionTab";
+import { BarChart3, Calendar, MessageSquare, Users, CreditCard } from "lucide-react";
 
 const BrandDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -23,7 +24,7 @@ const BrandDashboard = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
               <TabsTrigger value="overview" className="gap-2">
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
@@ -35,6 +36,10 @@ const BrandDashboard = () => {
               <TabsTrigger value="creators" className="gap-2">
                 <Users className="h-4 w-4" />
                 <span className="hidden sm:inline">Creators</span>
+              </TabsTrigger>
+              <TabsTrigger value="subscription" className="gap-2">
+                <CreditCard className="h-4 w-4" />
+                <span className="hidden sm:inline">Subscription</span>
               </TabsTrigger>
               <TabsTrigger value="messages" className="gap-2">
                 <MessageSquare className="h-4 w-4" />
@@ -52,6 +57,10 @@ const BrandDashboard = () => {
 
             <TabsContent value="creators" className="space-y-6">
               <BrandCreatorsTab />
+            </TabsContent>
+
+            <TabsContent value="subscription" className="space-y-6">
+              <BrandSubscriptionTab />
             </TabsContent>
 
             <TabsContent value="messages" className="space-y-6">

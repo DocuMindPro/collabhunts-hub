@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { calculatePlatformFee, formatPrice, type PlanType } from "@/lib/stripe-mock";
 
 interface BookingDialogProps {
   isOpen: boolean;
@@ -54,6 +55,17 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId }: BookingDi
         return;
       }
 
+      // Get brand's subscription to calculate platform fee
+      const { data: subscription } = await supabase
+        .from("brand_subscriptions")
+        .select("plan_type")
+        .eq("brand_profile_id", brandProfile.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      const planType = (subscription?.plan_type || "basic") as PlanType;
+      const platformFeeCents = calculatePlatformFee(service.price_cents, planType);
+
       // Create booking
       const { error: bookingError } = await supabase
         .from("bookings")
@@ -62,6 +74,7 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId }: BookingDi
           brand_profile_id: brandProfile.id,
           service_id: service.id,
           total_price_cents: service.price_cents,
+          platform_fee_cents: platformFeeCents,
           message: message.trim() || null,
           status: "pending",
         });
