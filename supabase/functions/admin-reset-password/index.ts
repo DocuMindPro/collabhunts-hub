@@ -17,31 +17,30 @@ Deno.serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     
-    // Create client with anon key and user's JWT to verify the user
-    const userClient = createClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
+    // Create service role client to verify JWT and perform admin operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
       }
-    )
+    })
 
-    // Get the current user from JWT
-    const { data: { user }, error: userError } = await userClient.auth.getUser()
+    // Extract JWT token from Authorization header
+    const token = authHeader.replace('Bearer ', '')
+    
+    // Verify the JWT token and get user
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token)
     if (userError || !user) {
-      console.error('Error getting user:', userError)
-      throw new Error('Unauthorized')
+      console.error('Error verifying user token:', userError)
+      throw new Error('Unauthorized - Invalid token')
     }
 
     console.log('User authenticated:', user.email)
 
     // Check if user has admin role using the has_role function
-    const { data: isAdmin, error: roleError } = await userClient.rpc('has_role', {
+    const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
       _user_id: user.id,
       _role: 'admin'
     })
@@ -66,16 +65,8 @@ Deno.serve(async (req) => {
 
     console.log(`Admin ${user.email} resetting password for user ${userId}`)
 
-    // Create admin client with service role key to update user password
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    })
-
-    // Update user password
-    const { data: updateData, error: updateError } = await adminClient.auth.admin.updateUserById(
+    // Update user password using admin API
+    const { data: updateData, error: updateError } = await supabase.auth.admin.updateUserById(
       userId,
       { password: newPassword }
     )
