@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Clock, MessageSquare } from "lucide-react";
+import { Clock, Star } from "lucide-react";
+import { ReviewDialog } from "@/components/ReviewDialog";
 
 interface Booking {
   id: string;
@@ -21,12 +22,20 @@ interface Booking {
   creator_services: {
     service_type: string;
   } | null;
+  reviews?: Array<{
+    id: string;
+    rating: number;
+    review_text: string | null;
+  }>;
 }
 
 const BrandBookingsTab = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [brandProfileId, setBrandProfileId] = useState<string>("");
 
   useEffect(() => {
     fetchBookings();
@@ -44,19 +53,28 @@ const BrandBookingsTab = () => {
         .single();
 
       if (!profile) return;
+      setBrandProfileId(profile.id);
 
       const { data, error } = await supabase
         .from("bookings")
         .select(`
           *,
           creator_profiles!inner(display_name, id),
-          creator_services(service_type)
+          creator_services(service_type),
+          reviews!left(id, rating, review_text)
         `)
         .eq("brand_profile_id", profile.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setBookings(data || []);
+      
+      // Transform the data to ensure reviews is always an array
+      const bookingsWithReviews = (data || []).map(booking => ({
+        ...booking,
+        reviews: booking.reviews ? [booking.reviews].flat() : []
+      }));
+      
+      setBookings(bookingsWithReviews as any);
     } catch (error) {
       console.error("Error fetching bookings:", error);
       toast.error("Failed to load bookings");
@@ -190,11 +208,42 @@ const BrandBookingsTab = () => {
                       Cancel Request
                     </Button>
                   )}
+                  {booking.status === "completed" && (
+                    <Button
+                      variant={booking.reviews && booking.reviews.length > 0 ? "outline" : "default"}
+                      onClick={() => {
+                        setSelectedBooking(booking);
+                        setReviewDialogOpen(true);
+                      }}
+                      className="flex-1 gap-2"
+                    >
+                      <Star className="h-4 w-4" />
+                      {booking.reviews && booking.reviews.length > 0 ? "Edit Review" : "Leave Review"}
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+      )}
+
+      {selectedBooking && (
+        <ReviewDialog
+          open={reviewDialogOpen}
+          onOpenChange={(open) => {
+            setReviewDialogOpen(open);
+            if (!open) {
+              setSelectedBooking(null);
+              fetchBookings();
+            }
+          }}
+          bookingId={selectedBooking.id}
+          creatorName={selectedBooking.creator_profiles.display_name}
+          creatorProfileId={selectedBooking.creator_profiles.id}
+          brandProfileId={brandProfileId}
+          existingReview={selectedBooking.reviews?.[0]}
+        />
       )}
     </div>
   );
