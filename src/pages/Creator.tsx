@@ -68,7 +68,11 @@ const Creator = () => {
                     className="border-0 focus-visible:ring-0 px-0"
                   />
                 </div>
-                <Button size="lg" className="gradient-hero hover:opacity-90">
+                <Button 
+                  size="lg" 
+                  className="gradient-hero hover:opacity-90"
+                  onClick={() => window.location.href = '/creator-signup'}
+                >
                   Claim
                 </Button>
               </div>
@@ -187,9 +191,11 @@ const Creator = () => {
               Create your profile in minutes and start getting paid
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="gradient-hero hover:opacity-90">
-                Create Your Profile
-              </Button>
+              <Link to="/creator-signup">
+                <Button size="lg" className="gradient-hero hover:opacity-90">
+                  Create Your Profile
+                </Button>
+              </Link>
               <Link to="/#how-it-works">
                 <Button size="lg" variant="outline">
                   Learn How It Works

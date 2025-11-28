@@ -63,7 +63,7 @@ const Brand = () => {
             <p className="text-xl text-muted-foreground mb-8">
               Search influencers, post campaigns, track analytics, and get unique content for your brand in seconds
             </p>
-            <Link to="/influencers">
+            <Link to="/brand-signup">
               <Button size="lg" className="gradient-hero hover:opacity-90 text-lg px-8 py-6">
                 Join for Free
               </Button>
@@ -148,9 +148,9 @@ const Brand = () => {
               Join thousands of brands already using CollabHunts
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/influencers">
+              <Link to="/brand-signup">
                 <Button size="lg" className="gradient-hero hover:opacity-90">
-                  Browse Influencers
+                  Get Started
                 </Button>
               </Link>
               <Link to="/pricing">
