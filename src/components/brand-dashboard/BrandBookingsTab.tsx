@@ -11,6 +11,7 @@ import { ReviewDialog } from "@/components/ReviewDialog";
 interface Booking {
   id: string;
   status: string;
+  payment_status: string;
   message: string | null;
   booking_date: string | null;
   total_price_cents: number;
@@ -208,7 +209,7 @@ const BrandBookingsTab = () => {
                       Cancel Request
                     </Button>
                   )}
-                  {booking.status === "completed" && (
+                  {booking.status === "completed" && booking.payment_status === "paid" && (
                     <Button
                       variant={booking.reviews && booking.reviews.length > 0 ? "outline" : "default"}
                       onClick={() => {

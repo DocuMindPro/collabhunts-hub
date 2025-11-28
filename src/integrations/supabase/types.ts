@@ -22,6 +22,7 @@ export type Database = {
           creator_profile_id: string
           id: string
           message: string | null
+          payment_status: string
           platform_fee_cents: number | null
           service_id: string | null
           status: string | null
@@ -35,6 +36,7 @@ export type Database = {
           creator_profile_id: string
           id?: string
           message?: string | null
+          payment_status?: string
           platform_fee_cents?: number | null
           service_id?: string | null
           status?: string | null
@@ -48,6 +50,7 @@ export type Database = {
           creator_profile_id?: string
           id?: string
           message?: string | null
+          payment_status?: string
           platform_fee_cents?: number | null
           service_id?: string | null
           status?: string | null
