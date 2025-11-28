@@ -12,15 +12,16 @@ const Pricing = () => {
       period: "",
       description: "Perfect for getting started",
       features: [
-        { text: "Search Influencers on the marketplace", included: true },
-        { text: "10% marketplace fee", included: true },
-        { text: "Post campaigns", included: false },
-        { text: "Track live analytics", included: false },
-        { text: "Advanced filters", included: false },
-        { text: "Chat & Negotiate with creators", included: false },
-        { text: "Influencer reports", included: false },
+        { text: "Search influencers on the marketplace", included: true },
+        { text: "Chat & negotiate with creators", included: true },
+        { text: "15% marketplace fee on bookings", included: true },
+        { text: "Post campaigns (Coming Soon)", included: false },
+        { text: "Track live analytics (Coming Soon)", included: false },
+        { text: "Advanced filters (Coming Soon)", included: false },
+        { text: "Influencer reports (Coming Soon)", included: false },
       ],
       cta: "Get Started",
+      link: "/brand-signup",
       popular: false,
     },
     {
@@ -30,14 +31,15 @@ const Pricing = () => {
       description: "For growing brands",
       features: [
         { text: "Everything in Basic", included: true },
-        { text: "Post 1 campaign per month", included: true },
-        { text: "Track live analytics for 5 posts", included: true },
-        { text: "Advanced filters", included: true },
-        { text: "Chat & Negotiate with creators", included: true },
-        { text: "20 Influencer engagement reports", included: true },
+        { text: "10% marketplace fee on bookings", included: true },
+        { text: "Post 1 campaign per month (Coming Soon)", included: true },
+        { text: "Track live analytics for 5 posts (Coming Soon)", included: true },
+        { text: "Advanced filters (Coming Soon)", included: true },
+        { text: "20 Influencer engagement reports (Coming Soon)", included: true },
         { text: "Priority support", included: false },
       ],
-      cta: "Start Pro",
+      cta: "Coming Soon",
+      link: "#",
       popular: true,
     },
     {
@@ -47,14 +49,15 @@ const Pricing = () => {
       description: "For established businesses",
       features: [
         { text: "Everything in Pro", included: true },
-        { text: "Post unlimited campaigns", included: true },
-        { text: "Track live analytics for 15 posts", included: true },
-        { text: "5% marketplace fee", included: true },
-        { text: "Priority customer support", included: true },
-        { text: "50 Influencer engagement reports", included: true },
-        { text: "Dedicated account manager", included: true },
+        { text: "5% marketplace fee on bookings", included: true },
+        { text: "Post unlimited campaigns (Coming Soon)", included: true },
+        { text: "Track live analytics for 15 posts (Coming Soon)", included: true },
+        { text: "50 Influencer engagement reports (Coming Soon)", included: true },
+        { text: "Priority customer support (Coming Soon)", included: true },
+        { text: "Dedicated account manager (Coming Soon)", included: true },
       ],
-      cta: "Start Premium",
+      cta: "Coming Soon",
+      link: "#",
       popular: false,
     },
   ];
@@ -138,16 +141,32 @@ const Pricing = () => {
                     ))}
                   </ul>
 
-                  <Button
-                    className={`w-full ${
-                      plan.popular
-                        ? "gradient-hero hover:opacity-90"
-                        : "bg-secondary hover:bg-secondary/80 text-secondary-foreground"
-                    }`}
-                    size="lg"
-                  >
-                    {plan.cta}
-                  </Button>
+                  {plan.link === "#" ? (
+                    <Button
+                      className={`w-full ${
+                        plan.popular
+                          ? "gradient-hero hover:opacity-90"
+                          : "bg-secondary hover:bg-secondary/80 text-secondary-foreground"
+                      }`}
+                      size="lg"
+                      disabled
+                    >
+                      {plan.cta}
+                    </Button>
+                  ) : (
+                    <Link to={plan.link}>
+                      <Button
+                        className={`w-full ${
+                          plan.popular
+                            ? "gradient-hero hover:opacity-90"
+                            : "bg-secondary hover:bg-secondary/80 text-secondary-foreground"
+                        }`}
+                        size="lg"
+                      >
+                        {plan.cta}
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               ))}
             </div>
