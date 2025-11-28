@@ -3,10 +3,11 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OverviewTab from "@/components/creator-dashboard/OverviewTab";
+import ProfileTab from "@/components/creator-dashboard/ProfileTab";
 import ServicesTab from "@/components/creator-dashboard/ServicesTab";
 import BookingsTab from "@/components/creator-dashboard/BookingsTab";
 import MessagesTab from "@/components/creator-dashboard/MessagesTab";
-import { BarChart3, Package, Calendar, MessageSquare } from "lucide-react";
+import { BarChart3, User, Package, Calendar, MessageSquare } from "lucide-react";
 
 const CreatorDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -23,10 +24,14 @@ const CreatorDashboard = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
               <TabsTrigger value="overview" className="gap-2">
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="profile" className="gap-2">
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">Profile</span>
               </TabsTrigger>
               <TabsTrigger value="services" className="gap-2">
                 <Package className="h-4 w-4" />
@@ -44,6 +49,10 @@ const CreatorDashboard = () => {
 
             <TabsContent value="overview" className="space-y-6">
               <OverviewTab />
+            </TabsContent>
+
+            <TabsContent value="profile" className="space-y-6">
+              <ProfileTab />
             </TabsContent>
 
             <TabsContent value="services" className="space-y-6">
