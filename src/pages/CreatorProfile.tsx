@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Star, Instagram, Youtube, Twitter } from "lucide-react";
 import BookingDialog from "@/components/BookingDialog";
+import MessageDialog from "@/components/MessageDialog";
 
 interface CreatorData {
   id: string;
@@ -53,6 +54,8 @@ const CreatorProfile = () => {
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<any>(null);
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   const handleBookService = (service: any) => {
     setSelectedService(service);
@@ -100,30 +103,27 @@ const CreatorProfile = () => {
         .single();
 
       if (existingConversation) {
-        // Navigate to messages tab with existing conversation
-        navigate("/brand-dashboard?tab=messages");
+        // Open dialog with existing conversation
+        setConversationId(existingConversation.id);
+        setIsMessageDialogOpen(true);
         return;
       }
 
       // Create new conversation
-      const { error: conversationError } = await supabase
+      const { data: newConversation, error: conversationError } = await supabase
         .from("conversations")
         .insert({
           brand_profile_id: brandProfile.id,
           creator_profile_id: id
-        });
+        })
+        .select("id")
+        .single();
 
       if (conversationError) throw conversationError;
 
-      toast({
-        title: "Success",
-        description: "Conversation started! Redirecting to messages..."
-      });
-
-      // Navigate to messages tab
-      setTimeout(() => {
-        navigate("/brand-dashboard?tab=messages");
-      }, 1000);
+      // Open dialog with new conversation
+      setConversationId(newConversation.id);
+      setIsMessageDialogOpen(true);
 
     } catch (error: any) {
       console.error("Error creating conversation:", error);
@@ -504,6 +504,13 @@ const CreatorProfile = () => {
         }}
         service={selectedService}
         creatorProfileId={id || ""}
+      />
+
+      <MessageDialog
+        isOpen={isMessageDialogOpen}
+        onClose={() => setIsMessageDialogOpen(false)}
+        conversationId={conversationId}
+        recipientName={creator.display_name}
       />
     </div>
   );
