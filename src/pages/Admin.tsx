@@ -18,8 +18,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone } from "lucide-react";
 import AdminBrandSubscriptionsTab from "@/components/brand-dashboard/AdminBrandSubscriptionsTab";
+import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface Profile {
@@ -592,6 +593,10 @@ const Admin = () => {
                   </Badge>
                 )}
               </TabsTrigger>
+              <TabsTrigger value="campaigns">
+                <Megaphone className="h-4 w-4 mr-2" />
+                Campaigns
+              </TabsTrigger>
               <TabsTrigger value="subscriptions">
                 <CreditCard className="h-4 w-4 mr-2" />
                 Subscriptions
@@ -866,6 +871,16 @@ const Admin = () => {
               </Card>
             </TabsContent>
 
+            {/* Campaigns Tab */}
+            <TabsContent value="campaigns">
+              <AdminCampaignsTab />
+            </TabsContent>
+
+            {/* Brand Subscriptions Tab */}
+            <TabsContent value="subscriptions">
+              <AdminBrandSubscriptionsTab />
+            </TabsContent>
+
             {/* Revenue & Analytics Tab */}
             <TabsContent value="revenue">
               <div className="space-y-6">
@@ -1069,11 +1084,6 @@ const Admin = () => {
                   </CardContent>
                 </Card>
               </div>
-            </TabsContent>
-
-            {/* Brand Subscriptions Tab */}
-            <TabsContent value="subscriptions">
-              <AdminBrandSubscriptionsTab />
             </TabsContent>
           </Tabs>
         </div>

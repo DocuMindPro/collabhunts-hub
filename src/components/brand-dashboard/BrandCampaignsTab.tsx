@@ -124,11 +124,12 @@ const BrandCampaignsTab = () => {
           spots_available: parseInt(formData.spots_available),
           deadline: new Date(formData.deadline).toISOString(),
           requirements: formData.requirements || null,
+          status: 'pending',
         });
 
       if (error) throw error;
 
-      toast.success('Campaign created successfully!');
+      toast.success('Campaign created! Pending admin approval.');
       setCreateDialogOpen(false);
       setFormData({
         title: "",

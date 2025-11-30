@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, Shield, LogOut, LayoutDashboard } from "lucide-react";
+import Notifications from "@/components/Notifications";
 import { useState, useEffect } from "react";
 import {
   Sheet,
@@ -27,6 +28,7 @@ const Navbar = () => {
 
   const navLinks = [
     { to: "/influencers", label: "Search" },
+    { to: "/campaigns", label: "Campaigns" },
     { to: "/#how-it-works", label: "How It Works" },
     { to: "/pricing", label: "Pricing" },
   ];
@@ -118,6 +120,7 @@ const Navbar = () => {
             
             {user ? (
               <>
+                <Notifications />
                 {isAdmin && (
                   <Link to="/admin">
                     <Button variant="outline" size="sm" className="gap-2">
