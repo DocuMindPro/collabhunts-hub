@@ -1,0 +1,276 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Building2, CreditCard } from "lucide-react";
+import { format } from "date-fns";
+
+interface BrandSubscription {
+  id: string;
+  brand_profile_id: string;
+  plan_type: string;
+  status: string;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end: boolean;
+  brand_profiles: {
+    company_name: string;
+    user_id: string;
+  };
+}
+
+const AdminBrandSubscriptionsTab = () => {
+  const [subscriptions, setSubscriptions] = useState<BrandSubscription[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedSubscription, setSelectedSubscription] = useState<BrandSubscription | null>(null);
+  const [newPlanType, setNewPlanType] = useState("");
+  const [periodEndDate, setPeriodEndDate] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, []);
+
+  const fetchSubscriptions = async () => {
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from("brand_subscriptions")
+        .select(`
+          *,
+          brand_profiles(company_name, user_id)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setSubscriptions(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateSubscription = async () => {
+    if (!selectedSubscription || !newPlanType) return;
+
+    try {
+      setIsUpdating(true);
+
+      const updates: any = {
+        plan_type: newPlanType,
+      };
+
+      if (periodEndDate) {
+        updates.current_period_end = new Date(periodEndDate).toISOString();
+      }
+
+      const { error } = await supabase
+        .from("brand_subscriptions")
+        .update(updates)
+        .eq("id", selectedSubscription.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Subscription updated successfully"
+      });
+
+      fetchSubscriptions();
+      setSelectedSubscription(null);
+      setNewPlanType("");
+      setPeriodEndDate("");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const openEditDialog = (subscription: BrandSubscription) => {
+    setSelectedSubscription(subscription);
+    setNewPlanType(subscription.plan_type);
+    setPeriodEndDate(subscription.current_period_end.split("T")[0]);
+  };
+
+  const getPlanBadge = (planType: string) => {
+    const colors: Record<string, string> = {
+      basic: "bg-gray-500",
+      pro: "bg-blue-500",
+      premium: "bg-purple-500"
+    };
+    return <Badge className={colors[planType] || "bg-gray-500"}>{planType.toUpperCase()}</Badge>;
+  };
+
+  const getMarketplaceFee = (planType: string) => {
+    const fees: Record<string, string> = {
+      basic: "15%",
+      pro: "10%",
+      premium: "5%"
+    };
+    return fees[planType] || "15%";
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Subscriptions</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{subscriptions.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pro Subscribers</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {subscriptions.filter(s => s.plan_type === "pro").length}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Premium Subscribers</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {subscriptions.filter(s => s.plan_type === "premium").length}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Brand Subscriptions</CardTitle>
+          <CardDescription>Manage all brand subscription plans</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Company</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Marketplace Fee</TableHead>
+                <TableHead>Period End</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {subscriptions.map((subscription) => (
+                <TableRow key={subscription.id}>
+                  <TableCell className="font-medium">
+                    {subscription.brand_profiles.company_name}
+                  </TableCell>
+                  <TableCell>{getPlanBadge(subscription.plan_type)}</TableCell>
+                  <TableCell>
+                    <Badge variant={subscription.status === "active" ? "default" : "secondary"}>
+                      {subscription.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{getMarketplaceFee(subscription.plan_type)}</TableCell>
+                  <TableCell>
+                    {format(new Date(subscription.current_period_end), "MMM dd, yyyy")}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditDialog(subscription)}
+                    >
+                      Edit
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!selectedSubscription} onOpenChange={() => setSelectedSubscription(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Subscription</DialogTitle>
+            <DialogDescription>
+              Change the subscription plan for {selectedSubscription?.brand_profiles.company_name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="planType">Subscription Plan</Label>
+              <Select value={newPlanType} onValueChange={setNewPlanType}>
+                <SelectTrigger id="planType">
+                  <SelectValue placeholder="Select plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="basic">Basic (15% fee)</SelectItem>
+                  <SelectItem value="pro">Pro (10% fee)</SelectItem>
+                  <SelectItem value="premium">Premium (5% fee)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="periodEnd">Period End Date</Label>
+              <Input
+                id="periodEnd"
+                type="date"
+                value={periodEndDate}
+                onChange={(e) => setPeriodEndDate(e.target.value)}
+              />
+            </div>
+
+            <Button
+              onClick={handleUpdateSubscription}
+              disabled={isUpdating || !newPlanType}
+              className="w-full"
+            >
+              {isUpdating ? "Updating..." : "Update Subscription"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default AdminBrandSubscriptionsTab;
