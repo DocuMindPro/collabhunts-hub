@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,11 +37,40 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    
     if (isOpen && conversationId) {
       fetchMessages();
-      setupRealtimeSubscription();
       getUserId();
+      
+      channel = supabase
+        .channel(`conversation-${conversationId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          (payload) => {
+            // Only add if not already in messages (avoid duplicates from optimistic update)
+            setMessages((prev) => {
+              const exists = prev.some(m => m.id === payload.new.id);
+              if (exists) return prev;
+              return [...prev, payload.new as Message];
+            });
+            scrollToBottom();
+          }
+        )
+        .subscribe();
     }
+    
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
   }, [isOpen, conversationId]);
 
   const getUserId = async () => {
@@ -48,28 +78,6 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
     if (user) setUserId(user.id);
   };
 
-  const setupRealtimeSubscription = () => {
-    const channel = supabase
-      .channel(`conversation-${conversationId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
-          scrollToBottom();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
 
   const fetchMessages = async () => {
     if (!conversationId) return;
@@ -113,18 +121,32 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
   const sendMessage = async () => {
     if (!newMessage.trim() || !conversationId || !userId) return;
 
+    const messageContent = newMessage.trim();
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      sender_id: userId,
+      content: messageContent,
+      created_at: new Date().toISOString(),
+      is_read: false,
+    };
+
+    // Optimistic update - show immediately
+    setMessages((prev) => [...prev, tempMessage]);
+    setNewMessage("");
+    scrollToBottom();
+
     try {
       const { error } = await supabase.from("messages").insert({
         conversation_id: conversationId,
         sender_id: userId,
-        content: newMessage.trim(),
+        content: messageContent,
       });
 
       if (error) throw error;
-      setNewMessage("");
-      scrollToBottom();
     } catch (error) {
       console.error("Error sending message:", error);
+      // Rollback on error
+      setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
       toast.error("Failed to send message");
     }
   };
@@ -141,6 +163,9 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
       <DialogContent className="max-w-2xl h-[600px] flex flex-col">
         <DialogHeader>
           <DialogTitle>Message {recipientName}</DialogTitle>
+          <DialogDescription>
+            Send a message to {recipientName}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 flex flex-col min-h-0">
