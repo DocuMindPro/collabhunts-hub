@@ -26,7 +26,7 @@ interface Campaign {
   brand_profiles: {
     company_name: string;
     logo_url: string;
-  };
+  } | null;
 }
 
 interface MyApplication {
@@ -185,14 +185,14 @@ const CampaignsTab = () => {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex gap-3">
-                      {campaign.brand_profiles.logo_url && (
+                      {campaign.brand_profiles?.logo_url && (
                         <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                           <img src={campaign.brand_profiles.logo_url} alt="" className="h-full w-full object-cover" />
                         </div>
                       )}
                       <div>
                         <CardTitle>{campaign.title}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{campaign.brand_profiles.company_name}</p>
+                        <p className="text-sm text-muted-foreground">{campaign.brand_profiles?.company_name || 'Brand'}</p>
                       </div>
                     </div>
                     <Badge className="capitalize">{campaign.campaign_type.replace(/_/g, ' ')}</Badge>
@@ -265,7 +265,7 @@ const CampaignsTab = () => {
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle>{app.campaigns.title}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{app.campaigns.brand_profiles.company_name}</p>
+                      <p className="text-sm text-muted-foreground">{app.campaigns.brand_profiles?.company_name || 'Brand'}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(app.status)}
