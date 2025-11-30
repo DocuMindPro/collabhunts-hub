@@ -145,6 +145,9 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
       });
 
       if (error) throw error;
+      
+      // Remove temp message after successful insert - real-time will add the actual message
+      setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
     } catch (error) {
       console.error("Error sending message:", error);
       // Rollback on error
