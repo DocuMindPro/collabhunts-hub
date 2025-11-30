@@ -31,7 +31,7 @@ const BrandMessagesTab = () => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchConversations();
@@ -71,10 +71,12 @@ const BrandMessagesTab = () => {
   }, [selectedConversation]);
 
   const scrollToBottom = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const fetchConversations = async () => {
     try {
@@ -220,7 +222,7 @@ const BrandMessagesTab = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <ScrollArea className="h-[400px] pr-4" ref={scrollRef}>
+              <ScrollArea className="h-[400px] pr-4">
                 <div className="space-y-4">
                   {messages.map((msg) => (
                     <div
@@ -241,6 +243,7 @@ const BrandMessagesTab = () => {
                       </div>
                     </div>
                   ))}
+                  <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
 

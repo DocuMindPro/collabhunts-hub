@@ -34,7 +34,7 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
   const [newMessage, setNewMessage] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -113,10 +113,12 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
   };
 
   const scrollToBottom = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !conversationId || !userId) return;
@@ -175,7 +177,7 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
             </div>
           ) : (
             <>
-              <ScrollArea className="flex-1 pr-4 mb-4" ref={scrollRef}>
+              <ScrollArea className="flex-1 pr-4 mb-4">
                 <div className="space-y-4 py-4">
                   {messages.length === 0 ? (
                     <div className="text-center text-muted-foreground py-12">
@@ -202,6 +204,7 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
                       </div>
                     ))
                   )}
+                  <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
 
