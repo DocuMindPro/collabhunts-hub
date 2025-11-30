@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import Navbar from "@/components/Navbar";
@@ -46,6 +47,8 @@ interface CreatorData {
 
 const CreatorProfile = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [creator, setCreator] = useState<CreatorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<any>(null);
@@ -54,6 +57,82 @@ const CreatorProfile = () => {
   const handleBookService = (service: any) => {
     setSelectedService(service);
     setIsBookingDialogOpen(true);
+  };
+
+  const handleContactCreator = async () => {
+    try {
+      // Check if user is logged in
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Login Required",
+          description: "Please login to contact creators",
+          variant: "destructive"
+        });
+        navigate("/login");
+        return;
+      }
+
+      // Check if user has a brand profile
+      const { data: brandProfile, error: brandError } = await supabase
+        .from("brand_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (brandError || !brandProfile) {
+        toast({
+          title: "Brand Profile Required",
+          description: "Please create a brand profile to contact creators",
+          variant: "destructive"
+        });
+        navigate("/brand-signup");
+        return;
+      }
+
+      // Check if conversation already exists
+      const { data: existingConversation } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("brand_profile_id", brandProfile.id)
+        .eq("creator_profile_id", id)
+        .single();
+
+      if (existingConversation) {
+        // Navigate to messages tab with existing conversation
+        navigate("/brand-dashboard?tab=messages");
+        return;
+      }
+
+      // Create new conversation
+      const { error: conversationError } = await supabase
+        .from("conversations")
+        .insert({
+          brand_profile_id: brandProfile.id,
+          creator_profile_id: id
+        });
+
+      if (conversationError) throw conversationError;
+
+      toast({
+        title: "Success",
+        description: "Conversation started! Redirecting to messages..."
+      });
+
+      // Navigate to messages tab
+      setTimeout(() => {
+        navigate("/brand-dashboard?tab=messages");
+      }, 1000);
+
+    } catch (error: any) {
+      console.error("Error creating conversation:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start conversation",
+        variant: "destructive"
+      });
+    }
   };
 
   useEffect(() => {
@@ -402,7 +481,10 @@ const CreatorProfile = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full bg-white text-primary hover:bg-white/90">
+                  <Button 
+                    className="w-full bg-white text-primary hover:bg-white/90"
+                    onClick={handleContactCreator}
+                  >
                     Contact Creator
                   </Button>
                 </CardContent>
