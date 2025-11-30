@@ -47,7 +47,12 @@ const BrandMessagesTab = () => {
         },
         (payload) => {
           if (payload.new.conversation_id === selectedConversation) {
-            setMessages((prev) => [...prev, payload.new as Message]);
+            // Only add if not already in messages (avoid duplicates from optimistic update)
+            setMessages((prev) => {
+              const exists = prev.some(m => m.id === payload.new.id);
+              if (exists) return prev;
+              return [...prev, payload.new as Message];
+            });
             scrollToBottom();
           }
         }
@@ -131,17 +136,32 @@ const BrandMessagesTab = () => {
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !userId) return;
 
+    const messageContent = newMessage.trim();
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      sender_id: userId,
+      content: messageContent,
+      created_at: new Date().toISOString(),
+      is_read: false,
+    };
+
+    // Optimistic update - show immediately
+    setMessages((prev) => [...prev, tempMessage]);
+    setNewMessage("");
+    scrollToBottom();
+
     try {
       const { error } = await supabase.from("messages").insert({
         conversation_id: selectedConversation,
         sender_id: userId,
-        content: newMessage.trim(),
+        content: messageContent,
       });
 
       if (error) throw error;
-      setNewMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
+      // Rollback on error
+      setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
       toast.error("Failed to send message");
     }
   };
