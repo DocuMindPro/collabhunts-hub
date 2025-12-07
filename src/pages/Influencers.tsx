@@ -40,7 +40,7 @@ const Influencers = () => {
   const [creators, setCreators] = useState<CreatorWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
-  const [loadingImages, setLoadingImages] = useState<Set<string>>(new Set());
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   const platforms = ["All", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch"];
   const categories = [
@@ -229,7 +229,7 @@ const Influencers = () => {
                         {/* Taller Image Container - 4:5 aspect ratio like Collabstr */}
                         <div className="relative aspect-[4/5] overflow-hidden bg-muted">
                           {/* Skeleton shown while image is loading */}
-                          {creator.profile_image_url && !failedImages.has(creator.id) && loadingImages.has(creator.id) && (
+                          {creator.profile_image_url && !failedImages.has(creator.id) && !loadedImages.has(creator.id) && (
                             <Skeleton className="absolute inset-0 w-full h-full" />
                           )}
                           
@@ -237,29 +237,12 @@ const Influencers = () => {
                             <img 
                               src={creator.profile_image_url} 
                               alt={creator.display_name}
-                              className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
-                                loadingImages.has(creator.id) ? 'opacity-0' : 'opacity-100'
+                              loading="lazy"
+                              className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300 ${
+                                loadedImages.has(creator.id) ? 'opacity-100' : 'opacity-0'
                               }`}
-                              onLoad={() => {
-                                setLoadingImages(prev => {
-                                  const next = new Set(prev);
-                                  next.delete(creator.id);
-                                  return next;
-                                });
-                              }}
-                              onError={() => {
-                                setFailedImages(prev => new Set(prev).add(creator.id));
-                                setLoadingImages(prev => {
-                                  const next = new Set(prev);
-                                  next.delete(creator.id);
-                                  return next;
-                                });
-                              }}
-                              ref={(el) => {
-                                if (el && !el.complete) {
-                                  setLoadingImages(prev => new Set(prev).add(creator.id));
-                                }
-                              }}
+                              onLoad={() => setLoadedImages(prev => new Set(prev).add(creator.id))}
+                              onError={() => setFailedImages(prev => new Set(prev).add(creator.id))}
                             />
                           ) : (
                             <div className="absolute inset-0 bg-gradient-accent flex items-center justify-center">
