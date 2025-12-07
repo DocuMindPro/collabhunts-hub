@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Check, Crown, Zap, Shield } from "lucide-react";
+import { Check, Crown, Zap, Shield, Lock, MessageCircle, Filter, Megaphone } from "lucide-react";
 import { SUBSCRIPTION_PLANS, PlanType, formatPrice, createCheckoutSession, cancelSubscription } from "@/lib/stripe-mock";
 
 interface Subscription {
@@ -128,6 +128,29 @@ const BrandSubscriptionTab = () => {
     }
   };
 
+  const getPlanHighlights = (plan: PlanType) => {
+    switch (plan) {
+      case 'basic':
+        return [
+          { icon: <Lock className="h-4 w-4" />, text: "Cannot contact creators", locked: true },
+          { icon: <Lock className="h-4 w-4" />, text: "Cannot post campaigns", locked: true },
+          { icon: <Lock className="h-4 w-4" />, text: "No advanced filters", locked: true },
+        ];
+      case 'pro':
+        return [
+          { icon: <MessageCircle className="h-4 w-4" />, text: "Chat with creators", locked: false },
+          { icon: <Megaphone className="h-4 w-4" />, text: "1 campaign/month", locked: false },
+          { icon: <Filter className="h-4 w-4" />, text: "Advanced filters", locked: false },
+        ];
+      case 'premium':
+        return [
+          { icon: <MessageCircle className="h-4 w-4" />, text: "Chat with creators", locked: false },
+          { icon: <Megaphone className="h-4 w-4" />, text: "Unlimited campaigns", locked: false },
+          { icon: <Filter className="h-4 w-4" />, text: "Advanced filters", locked: false },
+        ];
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading subscription details...</div>;
   }
@@ -193,6 +216,7 @@ const BrandSubscriptionTab = () => {
             currentPlan === 'basic' || 
             (currentPlan === 'pro' && planKey === 'premium')
           );
+          const highlights = getPlanHighlights(planKey);
 
           return (
             <Card 
@@ -213,7 +237,21 @@ const BrandSubscriptionTab = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="text-center p-3 bg-muted rounded-lg">
+                  <span className="text-2xl font-bold">{(plan.marketplaceFee * 100).toFixed(0)}%</span>
+                  <span className="text-sm text-muted-foreground ml-1">marketplace fee</span>
+                </div>
+
                 <div className="space-y-2">
+                  {highlights.map((highlight, idx) => (
+                    <div key={idx} className={`flex items-center gap-2 ${highlight.locked ? 'text-muted-foreground' : ''}`}>
+                      {highlight.icon}
+                      <span className="text-sm">{highlight.text}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-2 pt-2 border-t">
                   {plan.features.map((feature, idx) => (
                     <div key={idx} className="flex items-start gap-2">
                       <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />

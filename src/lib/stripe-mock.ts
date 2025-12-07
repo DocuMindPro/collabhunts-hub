@@ -6,39 +6,53 @@ export const SUBSCRIPTION_PLANS = {
     name: 'Basic',
     price: 0,
     priceId: 'price_basic_free',
-    marketplaceFee: 0.15, // 15%
+    marketplaceFee: 0.20, // 20%
+    campaignLimit: 0,
+    canContactCreators: false,
+    hasAdvancedFilters: false,
     features: [
-      'Browse creator profiles',
-      'Direct messaging',
-      'Basic booking system',
-      '15% marketplace fee'
+      'Search influencers on the marketplace',
+      '20% marketplace fee on bookings',
+    ],
+    lockedFeatures: [
+      'Chat & negotiate with creators',
+      'Post campaigns',
+      'Advanced filters for age, language, and more',
     ]
   },
   pro: {
     name: 'Pro',
-    price: 29900, // $299 in cents
+    price: 9900, // $99 in cents
     priceId: 'price_pro_monthly',
-    marketplaceFee: 0.10, // 10%
+    marketplaceFee: 0.15, // 15%
+    campaignLimit: 1,
+    canContactCreators: true,
+    hasAdvancedFilters: true,
     features: [
-      'All Basic features',
-      'Priority support',
-      'Advanced analytics',
-      '10% marketplace fee',
-      'Campaign management'
-    ]
+      'Everything in Basic',
+      'Chat & negotiate with creators before hiring',
+      'Post 1 campaign per month',
+      'Advanced filters for age, ethnicity, language and more',
+      '15% marketplace fee on bookings',
+    ],
+    lockedFeatures: []
   },
   premium: {
     name: 'Premium',
-    price: 39900, // $399 in cents
+    price: 29900, // $299 in cents
     priceId: 'price_premium_monthly',
     marketplaceFee: 0.05, // 5%
+    campaignLimit: Infinity,
+    canContactCreators: true,
+    hasAdvancedFilters: true,
     features: [
-      'All Pro features',
-      'Dedicated account manager',
-      'Custom contracts',
-      '5% marketplace fee',
-      'Priority placement'
-    ]
+      'Everything in Pro',
+      'Post unlimited campaigns',
+      '5% marketplace fee on bookings',
+      'Priority customer support (Coming Soon)',
+      'Dedicated account manager (Coming Soon)',
+    ],
+    lockedFeatures: []
   }
 } as const;
 
@@ -46,6 +60,18 @@ export type PlanType = keyof typeof SUBSCRIPTION_PLANS;
 
 export const getMarketplaceFee = (planType: PlanType): number => {
   return SUBSCRIPTION_PLANS[planType].marketplaceFee;
+};
+
+export const canContactCreators = (planType: PlanType): boolean => {
+  return SUBSCRIPTION_PLANS[planType].canContactCreators;
+};
+
+export const getCampaignLimit = (planType: PlanType): number => {
+  return SUBSCRIPTION_PLANS[planType].campaignLimit;
+};
+
+export const hasAdvancedFilters = (planType: PlanType): boolean => {
+  return SUBSCRIPTION_PLANS[planType].hasAdvancedFilters;
 };
 
 export const calculatePlatformFee = (totalPriceCents: number, planType: PlanType): number => {

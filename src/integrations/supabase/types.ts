@@ -458,54 +458,69 @@ export type Database = {
       creator_profiles: {
         Row: {
           bio: string | null
+          birth_date: string | null
           categories: string[] | null
           cover_image_url: string | null
           cover_image_url_2: string | null
           cover_image_url_3: string | null
           created_at: string | null
           display_name: string
+          ethnicity: string | null
+          gender: string | null
           id: string
           location_city: string | null
           location_country: string | null
           location_state: string | null
+          primary_language: string | null
           profile_image_url: string | null
           rejection_reason: string | null
+          secondary_languages: string[] | null
           status: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           bio?: string | null
+          birth_date?: string | null
           categories?: string[] | null
           cover_image_url?: string | null
           cover_image_url_2?: string | null
           cover_image_url_3?: string | null
           created_at?: string | null
           display_name: string
+          ethnicity?: string | null
+          gender?: string | null
           id?: string
           location_city?: string | null
           location_country?: string | null
           location_state?: string | null
+          primary_language?: string | null
           profile_image_url?: string | null
           rejection_reason?: string | null
+          secondary_languages?: string[] | null
           status?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           bio?: string | null
+          birth_date?: string | null
           categories?: string[] | null
           cover_image_url?: string | null
           cover_image_url_2?: string | null
           cover_image_url_3?: string | null
           created_at?: string | null
           display_name?: string
+          ethnicity?: string | null
+          gender?: string | null
           id?: string
           location_city?: string | null
           location_country?: string | null
           location_state?: string | null
+          primary_language?: string | null
           profile_image_url?: string | null
           rejection_reason?: string | null
+          secondary_languages?: string[] | null
           status?: string | null
           updated_at?: string | null
           user_id?: string
