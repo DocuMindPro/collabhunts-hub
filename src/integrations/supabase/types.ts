@@ -826,6 +826,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      record_profile_view: {
+        Args: { p_creator_profile_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "brand" | "creator"
