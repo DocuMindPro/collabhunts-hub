@@ -67,6 +67,7 @@ const CreatorProfile = () => {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [galleryStartIndex, setGalleryStartIndex] = useState(0);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [avatarFailed, setAvatarFailed] = useState(false);
 
   const handleBookService = (service: any) => {
     setSelectedService(service);
@@ -408,7 +409,13 @@ const CreatorProfile = () => {
             {/* Avatar and Basic Info - Stack on mobile */}
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
               <Avatar className="h-24 w-24 md:h-28 md:w-28 border-4 border-background shadow-lg flex-shrink-0">
-                <AvatarImage src={creator.profile_image_url || undefined} className="object-cover" />
+                {creator.profile_image_url && !avatarFailed ? (
+                  <AvatarImage 
+                    src={creator.profile_image_url} 
+                    className="object-cover" 
+                    onError={() => setAvatarFailed(true)}
+                  />
+                ) : null}
                 <AvatarFallback className="text-2xl md:text-3xl bg-gradient-accent text-white">
                   {creator.display_name.charAt(0)}
                 </AvatarFallback>
