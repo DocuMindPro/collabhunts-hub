@@ -16,6 +16,7 @@ import CreatorProfile from "./pages/CreatorProfile";
 import CreatorDashboard from "./pages/CreatorDashboard";
 import BrandDashboard from "./pages/BrandDashboard";
 import Admin from "./pages/Admin";
+import BackupHistory from "./pages/BackupHistory";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorProtectedRoute from "./components/CreatorProtectedRoute";
@@ -61,6 +62,14 @@ const App = () => (
             element={
               <ProtectedRoute requireAdmin>
                 <Admin />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/backup-history" 
+            element={
+              <ProtectedRoute requireAdmin>
+                <BackupHistory />
               </ProtectedRoute>
             } 
           />
