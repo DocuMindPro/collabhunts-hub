@@ -23,6 +23,64 @@ serve(async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    // Verify authentication - require admin role
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.error("No authorization header provided");
+      return new Response(
+        JSON.stringify({ success: false, error: "Unauthorized: No authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    const token = authHeader.replace("Bearer ", "");
+    
+    // Initialize Supabase client with the user's token
+    const supabaseClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || supabaseServiceKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    });
+    
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    
+    if (authError || !user) {
+      console.error("Authentication failed:", authError?.message);
+      return new Response(
+        JSON.stringify({ success: false, error: "Unauthorized: Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    console.log(`User ${user.id} attempting to optimize image`);
+    
+    // Initialize service role client to check admin role
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Verify admin role using has_role function
+    const { data: isAdmin, error: roleError } = await supabaseAdmin.rpc("has_role", {
+      _user_id: user.id,
+      _role: "admin"
+    });
+    
+    if (roleError) {
+      console.error("Role check error:", roleError.message);
+      return new Response(
+        JSON.stringify({ success: false, error: "Failed to verify admin role" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    if (!isAdmin) {
+      console.error(`User ${user.id} is not an admin`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Forbidden: Admin access required" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    console.log(`Admin user ${user.id} authorized for image optimization`);
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { bucket, path, maxWidth = 1200, maxHeight = 1200, quality = 80 }: OptimizeRequest = await req.json();
