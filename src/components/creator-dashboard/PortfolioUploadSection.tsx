@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, X, Play, Image as ImageIcon, Video } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface PortfolioMedia {
   id: string;
@@ -28,6 +29,8 @@ const PortfolioUploadSection = ({ creatorProfileId, compact = false }: Portfolio
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingType, setUploadingType] = useState<"image" | "video" | null>(null);
   const [media, setMedia] = useState<PortfolioMedia[]>([]);
 
   useEffect(() => {
@@ -57,6 +60,39 @@ const PortfolioUploadSection = ({ creatorProfileId, compact = false }: Portfolio
   };
 
   const videoCount = media.filter((m) => m.media_type === "video").length;
+
+  // Upload with progress tracking using XMLHttpRequest
+  const uploadWithProgress = async (file: File, filePath: string, accessToken: string): Promise<void> => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percentComplete);
+        }
+      });
+      
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`Upload failed with status ${xhr.status}`));
+        }
+      });
+      
+      xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+      xhr.addEventListener('abort', () => reject(new Error('Upload aborted')));
+      
+      const url = `${supabaseUrl}/storage/v1/object/portfolio-media/${filePath}`;
+      xhr.open('POST', url);
+      xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.send(file);
+    });
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "image" | "video") => {
     const file = e.target.files?.[0];
@@ -103,20 +139,19 @@ const PortfolioUploadSection = ({ creatorProfileId, compact = false }: Portfolio
     }
 
     setUploading(true);
+    setUploadProgress(0);
+    setUploadingType(type);
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session found");
 
-      // Upload file
+      // Upload file with progress
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}-${type}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
+      const filePath = `${session.user.id}/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("portfolio-media")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
+      await uploadWithProgress(file, filePath, session.access_token);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
@@ -163,6 +198,8 @@ const PortfolioUploadSection = ({ creatorProfileId, compact = false }: Portfolio
       });
     } finally {
       setUploading(false);
+      setUploadProgress(0);
+      setUploadingType(null);
       // Reset input
       e.target.value = "";
     }
@@ -270,6 +307,24 @@ const PortfolioUploadSection = ({ creatorProfileId, compact = false }: Portfolio
             disabled={uploading || videoCount >= MAX_VIDEOS}
           />
         </div>
+
+        {/* Upload Progress */}
+        {uploading && (
+          <div className="space-y-2 p-4 bg-muted/50 rounded-lg border">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">
+                Uploading {uploadingType === "video" ? "video" : "image"}...
+              </span>
+              <span className="font-medium text-foreground">{uploadProgress}%</span>
+            </div>
+            <Progress value={uploadProgress} className="h-2" />
+            <p className="text-xs text-muted-foreground">
+              {uploadingType === "video" 
+                ? "Large videos may take a few minutes. Please don't close this page."
+                : "Almost there..."}
+            </p>
+          </div>
+        )}
 
         <p className="text-xs text-muted-foreground">
           Images: JPG, PNG, WEBP (max 5MB) • Videos: MP4, MOV, WEBM (max 100MB)
