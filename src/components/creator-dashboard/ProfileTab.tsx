@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, X, Camera, Images } from "lucide-react";
+import { Loader2, Upload, X, Camera, Images, ImagePlus } from "lucide-react";
 import SocialAccountsSection from "./SocialAccountsSection";
 import PortfolioUploadSection from "./PortfolioUploadSection";
 
@@ -22,6 +22,7 @@ const ProfileTab = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [profile, setProfile] = useState({
     id: "",
     display_name: "",
@@ -31,6 +32,7 @@ const ProfileTab = () => {
     location_country: "",
     categories: [] as string[],
     profile_image_url: "",
+    cover_image_url: "",
   });
 
   useEffect(() => {
@@ -60,6 +62,7 @@ const ProfileTab = () => {
           location_country: data.location_country || "",
           categories: data.categories || [],
           profile_image_url: data.profile_image_url || "",
+          cover_image_url: data.cover_image_url || "",
         });
       }
     } catch (error) {
@@ -147,6 +150,76 @@ const ProfileTab = () => {
     }
   };
 
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Image must be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingCover(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      // Delete old cover image if exists
+      if (profile.cover_image_url) {
+        const oldPath = profile.cover_image_url.split("/").pop();
+        if (oldPath) {
+          await supabase.storage
+            .from("profile-images")
+            .remove([`${user.id}/cover-${oldPath}`]);
+        }
+      }
+
+      // Upload new cover image
+      const fileExt = file.name.split(".").pop();
+      const fileName = `cover-${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("profile-images")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("profile-images")
+        .getPublicUrl(filePath);
+
+      setProfile({ ...profile, cover_image_url: publicUrl });
+
+      toast({
+        title: "Success",
+        description: "Cover image uploaded successfully",
+      });
+    } catch (error) {
+      console.error("Error uploading cover image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload cover image",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
   const toggleCategory = (category: string) => {
     setProfile({
       ...profile,
@@ -178,6 +251,7 @@ const ProfileTab = () => {
           location_country: profile.location_country,
           categories: profile.categories,
           profile_image_url: profile.profile_image_url,
+          cover_image_url: profile.cover_image_url,
         })
         .eq("id", profile.id);
 
@@ -264,6 +338,64 @@ const ProfileTab = () => {
                   JPG, PNG or WEBP. Max 5MB. Recommended: 400×500px
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Cover Image Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b">
+              <ImagePlus className="h-4 w-4 text-primary" />
+              <h3 className="font-medium">Cover Image</h3>
+              <span className="text-xs text-muted-foreground ml-auto">Main hero image on mobile</span>
+            </div>
+            <div className="space-y-3">
+              {profile.cover_image_url ? (
+                <div className="relative aspect-[4/5] max-w-xs rounded-xl overflow-hidden border">
+                  <img 
+                    src={profile.cover_image_url} 
+                    alt="Cover" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Label 
+                      htmlFor="cover-image-upload" 
+                      className="px-4 py-2 bg-white text-foreground rounded-lg cursor-pointer hover:bg-white/90 font-medium"
+                    >
+                      {uploadingCover ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Change Cover"
+                      )}
+                    </Label>
+                  </div>
+                </div>
+              ) : (
+                <Label 
+                  htmlFor="cover-image-upload" 
+                  className="flex flex-col items-center justify-center aspect-[4/5] max-w-xs rounded-xl border-2 border-dashed border-muted-foreground/30 cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
+                >
+                  {uploadingCover ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  ) : (
+                    <>
+                      <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
+                      <span className="text-sm text-muted-foreground font-medium">Add Cover Image</span>
+                      <span className="text-xs text-muted-foreground mt-1">This is the first image brands see on mobile</span>
+                    </>
+                  )}
+                </Label>
+              )}
+              <Input
+                id="cover-image-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleCoverImageUpload}
+                disabled={uploadingCover}
+              />
+              <p className="text-xs text-muted-foreground">
+                Recommended: Portrait orientation (4:5 ratio). Max 5MB.
+              </p>
             </div>
           </div>
 
