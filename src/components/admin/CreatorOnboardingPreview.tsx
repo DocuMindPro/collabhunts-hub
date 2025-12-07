@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, User, Camera } from "lucide-react";
+import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, User, Camera, Image as ImageIcon } from "lucide-react";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -29,9 +29,9 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
   const [locationCountry, setLocationCountry] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  // Step 3: Photos (preview only)
+  // Step 3: Photos (preview only - 3 cover images)
   const [hasProfileImage, setHasProfileImage] = useState(false);
-  const [hasCoverImage, setHasCoverImage] = useState(false);
+  const [hasCoverImages, setHasCoverImages] = useState<boolean[]>([false, false, false]);
 
   // Step 4: Social accounts
   const [socialAccounts, setSocialAccounts] = useState<Array<{ platform: string; username: string }>>([]);
@@ -53,6 +53,12 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
   ];
 
   const progress = (step / 7) * 100;
+
+  const toggleCoverImage = (index: number) => {
+    const newState = [...hasCoverImages];
+    newState[index] = !newState[index];
+    setHasCoverImages(newState);
+  };
 
   return (
     <div className="space-y-4">
@@ -178,6 +184,7 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
                 <CardDescription>Make a great first impression</CardDescription>
               </CardHeader>
 
+              {/* Profile Photo */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <User className="h-5 w-5 text-primary" />
@@ -196,26 +203,59 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
                 </div>
               </div>
 
+              {/* Cover Photos - 3 uniformly sized slots */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Camera className="h-5 w-5 text-primary" />
-                  <Label className="font-semibold">Cover Image</Label>
+                  <Label className="font-semibold">Cover Photos (First Required)</Label>
                 </div>
-                <div 
-                  className={`h-32 rounded-lg border-2 ${hasCoverImage ? 'border-primary bg-primary/10' : 'border-dashed border-muted-foreground/30 bg-muted'} flex items-center justify-center cursor-pointer`}
-                  onClick={() => setHasCoverImage(!hasCoverImage)}
-                >
-                  {hasCoverImage ? (
-                    <CheckCircle className="h-10 w-10 text-primary" />
-                  ) : (
-                    <span className="text-muted-foreground">Click to simulate upload</span>
-                  )}
+                <p className="text-sm text-muted-foreground">
+                  Use portrait photos (4:5 ratio) for best display
+                </p>
+                
+                <div className="grid grid-cols-3 gap-3">
+                  {[0, 1, 2].map((index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => toggleCoverImage(index)}
+                      className={`aspect-[4/5] rounded-lg border-2 flex flex-col items-center justify-center gap-1 transition-colors ${
+                        hasCoverImages[index] 
+                          ? 'border-primary bg-primary/10' 
+                          : index === 0 
+                            ? 'border-dashed border-primary/50 bg-primary/5 hover:bg-primary/10'
+                            : 'border-dashed border-muted-foreground/30 bg-muted hover:bg-muted/80'
+                      }`}
+                    >
+                      {hasCoverImages[index] ? (
+                        <>
+                          <CheckCircle className="h-8 w-8 text-primary" />
+                          <span className="text-xs text-primary font-medium">
+                            {index === 0 ? "Main" : `Photo ${index + 1}`}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">
+                            {index === 0 ? "Required" : "Optional"}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep(2)} className="flex-1">Back</Button>
-                <Button onClick={() => setStep(4)} className="flex-1">Continue</Button>
+                <Button 
+                  onClick={() => setStep(4)} 
+                  className="flex-1"
+                  disabled={!hasProfileImage || !hasCoverImages[0]}
+                >
+                  Continue
+                </Button>
               </div>
             </div>
           )}
@@ -355,6 +395,10 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {selectedCategories.map(c => <Badge key={c} variant="secondary">{c}</Badge>)}
                   </div>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm font-medium">Cover Photos</p>
+                  <p className="text-muted-foreground">{hasCoverImages.filter(Boolean).length} of 3 uploaded</p>
                 </div>
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm font-medium">Social Accounts</p>

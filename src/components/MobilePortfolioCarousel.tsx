@@ -13,6 +13,8 @@ interface PortfolioMedia {
 interface MobilePortfolioCarouselProps {
   media: PortfolioMedia[];
   coverImageUrl?: string | null;
+  coverImageUrl2?: string | null;
+  coverImageUrl3?: string | null;
   profileImageUrl?: string | null;
   displayName: string;
   onSlideClick: (index: number) => void;
@@ -22,6 +24,8 @@ interface MobilePortfolioCarouselProps {
 const MobilePortfolioCarousel = ({
   media,
   coverImageUrl,
+  coverImageUrl2,
+  coverImageUrl3,
   profileImageUrl,
   displayName,
   onSlideClick,
@@ -31,10 +35,16 @@ const MobilePortfolioCarousel = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
 
-  // Build slides array: cover image first (if exists), then portfolio media
-  const slides = coverImageUrl
-    ? [{ id: "cover", media_type: "image" as const, url: coverImageUrl, thumbnail_url: null }, ...media]
-    : media;
+  // Build slides array: cover images first (up to 3), then portfolio media
+  const coverImages = [coverImageUrl, coverImageUrl2, coverImageUrl3].filter(Boolean) as string[];
+  const coverSlides = coverImages.map((url, i) => ({
+    id: `cover-${i}`,
+    media_type: "image" as const,
+    url,
+    thumbnail_url: null,
+  }));
+  
+  const slides = [...coverSlides, ...media];
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -91,7 +101,7 @@ const MobilePortfolioCarousel = ({
             <button
               key={slide.id}
               className="relative flex-[0_0_100%] min-w-0 aspect-[4/5]"
-              onClick={() => onSlideClick(coverImageUrl ? index - 1 : index)}
+              onClick={() => onSlideClick(index >= coverSlides.length ? index - coverSlides.length : -1)}
             >
               {slide.media_type === "image" ? (
                 failedImages.has(index) ? (
@@ -126,7 +136,7 @@ const MobilePortfolioCarousel = ({
         </div>
       </div>
 
-      {/* Slide Counter Badge - Bottom Right */}
+      {/* Slide Counter Badge - Bottom Left */}
       {slides.length > 1 && (
         <div className="absolute bottom-4 left-4 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm text-white text-sm font-medium">
           {selectedIndex + 1}/{slides.length}

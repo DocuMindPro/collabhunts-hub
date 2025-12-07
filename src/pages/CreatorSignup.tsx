@@ -65,8 +65,8 @@ const CreatorSignup = () => {
   // Step 3: Profile Photos
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string>("");
-  const [coverImage, setCoverImage] = useState<File | null>(null);
-  const [coverImagePreview, setCoverImagePreview] = useState<string>("");
+  const [coverImages, setCoverImages] = useState<(File | null)[]>([null, null, null]);
+  const [coverImagePreviews, setCoverImagePreviews] = useState<string[]>(["", "", ""]);
 
   // Step 4: Social accounts
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
@@ -174,10 +174,10 @@ const CreatorSignup = () => {
       return;
     }
 
-    if (!coverImage) {
+    if (!coverImages[0]) {
       toast({
         title: "Validation Error",
-        description: "Please upload a cover image",
+        description: "Please upload at least one cover image",
         variant: "destructive"
       });
       return;
@@ -252,7 +252,7 @@ const CreatorSignup = () => {
     e.target.value = "";
   };
 
-  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverImageUpload = (index: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -274,13 +274,31 @@ const CreatorSignup = () => {
       return;
     }
 
-    if (coverImagePreview) {
-      URL.revokeObjectURL(coverImagePreview);
+    if (coverImagePreviews[index]) {
+      URL.revokeObjectURL(coverImagePreviews[index]);
     }
 
-    setCoverImage(file);
-    setCoverImagePreview(URL.createObjectURL(file));
+    const newCoverImages = [...coverImages];
+    newCoverImages[index] = file;
+    setCoverImages(newCoverImages);
+
+    const newPreviews = [...coverImagePreviews];
+    newPreviews[index] = URL.createObjectURL(file);
+    setCoverImagePreviews(newPreviews);
     e.target.value = "";
+  };
+
+  const removeCoverImage = (index: number) => {
+    if (coverImagePreviews[index]) {
+      URL.revokeObjectURL(coverImagePreviews[index]);
+    }
+    const newCoverImages = [...coverImages];
+    newCoverImages[index] = null;
+    setCoverImages(newCoverImages);
+
+    const newPreviews = [...coverImagePreviews];
+    newPreviews[index] = "";
+    setCoverImagePreviews(newPreviews);
   };
 
   const handlePortfolioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -375,23 +393,26 @@ const CreatorSignup = () => {
         }
       }
 
-      // Upload cover image
-      let coverImageUrl: string | null = null;
-      if (coverImage) {
-        const fileExt = coverImage.name.split(".").pop();
-        const filePath = `${authData.user.id}/cover.${fileExt}`;
-        
-        const { error: coverUploadError } = await supabase.storage
-          .from("profile-images")
-          .upload(filePath, coverImage);
-
-        if (coverUploadError) {
-          console.error("Cover image upload error:", coverUploadError);
-        } else {
-          const { data: { publicUrl } } = supabase.storage
+      // Upload cover images (up to 3)
+      const coverImageUrls: (string | null)[] = [null, null, null];
+      for (let i = 0; i < 3; i++) {
+        const coverImg = coverImages[i];
+        if (coverImg) {
+          const fileExt = coverImg.name.split(".").pop();
+          const filePath = `${authData.user.id}/cover-${i + 1}.${fileExt}`;
+          
+          const { error: coverUploadError } = await supabase.storage
             .from("profile-images")
-            .getPublicUrl(filePath);
-          coverImageUrl = publicUrl;
+            .upload(filePath, coverImg);
+
+          if (coverUploadError) {
+            console.error(`Cover image ${i + 1} upload error:`, coverUploadError);
+          } else {
+            const { data: { publicUrl } } = supabase.storage
+              .from("profile-images")
+              .getPublicUrl(filePath);
+            coverImageUrls[i] = publicUrl;
+          }
         }
       }
 
@@ -408,7 +429,9 @@ const CreatorSignup = () => {
           categories: selectedCategories,
           status: "pending",
           profile_image_url: profileImageUrl,
-          cover_image_url: coverImageUrl
+          cover_image_url: coverImageUrls[0],
+          cover_image_url_2: coverImageUrls[1],
+          cover_image_url_3: coverImageUrls[2]
         })
         .select()
         .single();
@@ -785,51 +808,61 @@ const CreatorSignup = () => {
                     </div>
                   </div>
 
-                  {/* Cover Image */}
+                  {/* Cover Images - 3 uniformly sized slots */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <Camera className="h-5 w-5 text-primary" />
-                      <Label className="text-base font-semibold">Cover Image (Required)</Label>
+                      <Label className="text-base font-semibold">Cover Photos (First Required)</Label>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      The main hero image brands see first when visiting your profile
+                      These are the main images brands see on your profile. Use portrait photos (4:5 ratio) for best display.
                     </p>
                     
-                    {coverImagePreview ? (
-                      <div className="relative">
-                        <img 
-                          src={coverImagePreview} 
-                          alt="Cover preview" 
-                          className="w-full h-48 object-cover rounded-lg border-2 border-primary"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            URL.revokeObjectURL(coverImagePreview);
-                            setCoverImage(null);
-                            setCoverImagePreview("");
-                          }}
-                          className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <label htmlFor="cover-image-upload" className="cursor-pointer block">
-                        <div className="w-full h-48 rounded-lg bg-muted border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-2 hover:bg-muted/80 transition-colors">
-                          <ImageIcon className="h-12 w-12 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">Click to upload cover image</span>
-                          <span className="text-xs text-muted-foreground">Recommended: 1920x1080 or larger</span>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[0, 1, 2].map((index) => (
+                        <div key={index} className="relative">
+                          {coverImagePreviews[index] ? (
+                            <div className="relative aspect-[4/5] rounded-lg overflow-hidden border-2 border-primary">
+                              <img 
+                                src={coverImagePreviews[index]} 
+                                alt={`Cover ${index + 1}`} 
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeCoverImage(index)}
+                                className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full shadow-lg"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                              <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 rounded text-white text-xs">
+                                {index === 0 ? "Main" : `Photo ${index + 1}`}
+                              </div>
+                            </div>
+                          ) : (
+                            <label htmlFor={`cover-image-upload-${index}`} className="cursor-pointer block">
+                              <div className={`aspect-[4/5] rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-colors ${
+                                index === 0 
+                                  ? 'border-primary/50 bg-primary/5 hover:bg-primary/10' 
+                                  : 'border-muted-foreground/30 bg-muted hover:bg-muted/80'
+                              }`}>
+                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground text-center px-2">
+                                  {index === 0 ? "Required" : "Optional"}
+                                </span>
+                              </div>
+                              <input
+                                id={`cover-image-upload-${index}`}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleCoverImageUpload(index)}
+                              />
+                            </label>
+                          )}
                         </div>
-                        <input
-                          id="cover-image-upload"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleCoverImageUpload}
-                        />
-                      </label>
-                    )}
+                      ))}
+                    </div>
                   </div>
 
                   <p className="text-xs text-muted-foreground">
@@ -1064,14 +1097,19 @@ const CreatorSignup = () => {
                             <p className="text-xs text-muted-foreground mt-1">Profile</p>
                           </div>
                         )}
-                        {coverImagePreview && (
+                        {coverImagePreviews.some(p => p) && (
                           <div className="flex-1">
-                            <img 
-                              src={coverImagePreview} 
-                              alt="Cover" 
-                              className="w-full h-20 object-cover rounded-lg border"
-                            />
-                            <p className="text-xs text-muted-foreground mt-1">Cover Image</p>
+                            <div className="grid grid-cols-3 gap-1">
+                              {coverImagePreviews.map((preview, idx) => preview && (
+                                <img 
+                                  key={idx}
+                                  src={preview} 
+                                  alt={`Cover ${idx + 1}`} 
+                                  className="aspect-[4/5] object-cover rounded border"
+                                />
+                              ))}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">Cover Images</p>
                           </div>
                         )}
                       </div>
