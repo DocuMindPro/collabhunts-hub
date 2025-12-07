@@ -18,6 +18,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CreatorData {
   id: string;
+  user_id: string;
   display_name: string;
   profile_image_url: string | null;
   cover_image_url: string | null;
@@ -75,6 +76,7 @@ const CreatorProfile = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [avatarFailed, setAvatarFailed] = useState(false);
   const [failedPortfolioImages, setFailedPortfolioImages] = useState<Set<number>>(new Set());
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
 
   const handleBookService = (service: any) => {
     setSelectedService(service);
@@ -242,6 +244,14 @@ const CreatorProfile = () => {
 
       if (profileError) throw profileError;
 
+      // Check if this is the creator's own profile
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && profileData.user_id === user.id) {
+        setIsOwnProfile(true);
+      } else {
+        setIsOwnProfile(false);
+      }
+
       const { data: socialData } = await supabase
         .from("creator_social_accounts")
         .select("*")
@@ -278,6 +288,7 @@ const CreatorProfile = () => {
 
       setCreator({
         id: profileData.id,
+        user_id: profileData.user_id,
         display_name: profileData.display_name,
         profile_image_url: profileData.profile_image_url,
         cover_image_url: profileData.cover_image_url,
@@ -456,6 +467,18 @@ const CreatorProfile = () => {
                 {creator.bio && (
                   <p className="text-muted-foreground text-sm px-4">{creator.bio}</p>
                 )}
+
+                {/* Mobile Edit Profile button for own profile */}
+                {isOwnProfile && (
+                  <div className="mt-2">
+                    <Button 
+                      variant="outline"
+                      onClick={() => navigate('/creator-dashboard?tab=profile')}
+                    >
+                      Edit Profile
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               /* Desktop: Original layout with avatar */
@@ -506,16 +529,26 @@ const CreatorProfile = () => {
                     <p className="text-muted-foreground max-w-2xl">{creator.bio}</p>
                   )}
 
-                  {/* Contact Creator Button - Under bio, above Social Media */}
+                  {/* Contact Creator Button - Under bio, above Social Media (hide on own profile) */}
                   <div className="mt-4">
-                    <Button 
-                      size="lg"
-                      className="gradient-hero hover:opacity-90"
-                      onClick={handleContactCreator}
-                    >
-                      <MessageCircle className="h-5 w-5 mr-2" />
-                      Contact Creator
-                    </Button>
+                    {isOwnProfile ? (
+                      <Button 
+                        size="lg"
+                        variant="outline"
+                        onClick={() => navigate('/creator-dashboard?tab=profile')}
+                      >
+                        Edit Profile
+                      </Button>
+                    ) : (
+                      <Button 
+                        size="lg"
+                        className="gradient-hero hover:opacity-90"
+                        onClick={handleContactCreator}
+                      >
+                        <MessageCircle className="h-5 w-5 mr-2" />
+                        Contact Creator
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -640,12 +673,14 @@ const CreatorProfile = () => {
                             </div>
                           </div>
                         </div>
-                        <Button 
-                          className="w-full gradient-hero hover:opacity-90"
-                          onClick={() => handleBookService(service)}
-                        >
-                          Book Now
-                        </Button>
+                        {!isOwnProfile && (
+                          <Button 
+                            className="w-full gradient-hero hover:opacity-90"
+                            onClick={() => handleBookService(service)}
+                          >
+                            Book Now
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -688,17 +723,19 @@ const CreatorProfile = () => {
         </div>
       </main>
 
-      {/* Mobile Floating Contact Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent md:hidden z-50">
-        <Button 
-          size="lg"
-          className="w-full gradient-hero hover:opacity-90 shadow-lg"
-          onClick={handleContactCreator}
-        >
-          <MessageCircle className="h-5 w-5 mr-2" />
-          Contact Creator
-        </Button>
-      </div>
+      {/* Mobile Floating Contact Button (hide on own profile) */}
+      {!isOwnProfile && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent md:hidden z-50">
+          <Button 
+            size="lg"
+            className="w-full gradient-hero hover:opacity-90 shadow-lg"
+            onClick={handleContactCreator}
+          >
+            <MessageCircle className="h-5 w-5 mr-2" />
+            Contact Creator
+          </Button>
+        </div>
+      )}
 
       <Footer />
 
