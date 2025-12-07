@@ -240,139 +240,140 @@ const BrandCampaignsTab = () => {
                 Create Campaign
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Campaign</DialogTitle>
-              <DialogDescription>Post a campaign for multiple creators to apply</DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleCreateCampaign} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Campaign Title * <span className="text-xs text-muted-foreground">({formData.title.length}/10 min)</span></Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g., Summer Fashion Campaign"
-                  required
-                  minLength={10}
-                />
-                {formData.title.length < 10 && formData.title.length > 0 && (
-                  <p className="text-xs text-destructive">Title must be at least 10 characters</p>
-                )}
-                <AiBioSuggestions
-                  text={formData.title}
-                  onSelect={(text) => setFormData({ ...formData, title: text })}
-                  minLength={10}
-                  type="campaign_title"
-                  label="title"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description * <span className="text-xs text-muted-foreground">({formData.description.length}/50 min)</span></Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe your campaign goals and expectations..."
-                  rows={4}
-                  required
-                  minLength={50}
-                />
-                {formData.description.length < 50 && formData.description.length > 0 && (
-                  <p className="text-xs text-destructive">Description must be at least 50 characters</p>
-                )}
-                <AiBioSuggestions
-                  text={formData.description}
-                  onSelect={(text) => setFormData({ ...formData, description: text })}
-                  minLength={50}
-                  type="campaign_description"
-                  label="description"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Campaign</DialogTitle>
+                <DialogDescription>Post a campaign for multiple creators to apply</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleCreateCampaign} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="campaign_type">Campaign Type *</Label>
-                  <Select value={formData.campaign_type} onValueChange={(value) => setFormData({ ...formData, campaign_type: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="instagram_post">Instagram Post</SelectItem>
-                      <SelectItem value="instagram_story">Instagram Story</SelectItem>
-                      <SelectItem value="instagram_reel">Instagram Reel</SelectItem>
-                      <SelectItem value="tiktok_video">TikTok Video</SelectItem>
-                      <SelectItem value="youtube_video">YouTube Video</SelectItem>
-                      <SelectItem value="ugc_content">UGC Content</SelectItem>
-                      <SelectItem value="multi_platform">Multi-Platform</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="budget_cents">Budget per Creator ($) *</Label>
+                  <Label htmlFor="title">Campaign Title * <span className="text-xs text-muted-foreground">({formData.title.length}/10 min)</span></Label>
                   <Input
-                    id="budget_cents"
-                    type="number"
-                    value={formData.budget_cents}
-                    onChange={(e) => setFormData({ ...formData, budget_cents: e.target.value })}
-                    placeholder="500"
-                    min="1"
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="e.g., Summer Fashion Campaign"
                     required
+                    minLength={10}
                   />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="spots_available">Number of Creators *</Label>
-                  <Input
-                    id="spots_available"
-                    type="number"
-                    value={formData.spots_available}
-                    onChange={(e) => setFormData({ ...formData, spots_available: e.target.value })}
-                    placeholder="3"
-                    min="1"
-                    required
+                  {formData.title.length < 10 && formData.title.length > 0 && (
+                    <p className="text-xs text-destructive">Title must be at least 10 characters</p>
+                  )}
+                  <AiBioSuggestions
+                    text={formData.title}
+                    onSelect={(text) => setFormData({ ...formData, title: text })}
+                    minLength={10}
+                    type="campaign_title"
+                    label="title"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="deadline">Application Deadline *</Label>
-                  <Input
-                    id="deadline"
-                    type="date"
-                    value={formData.deadline}
-                    onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                    min={new Date().toISOString().split('T')[0]}
+                  <Label htmlFor="description">Description * <span className="text-xs text-muted-foreground">({formData.description.length}/50 min)</span></Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Describe your campaign goals and expectations..."
+                    rows={4}
                     required
+                    minLength={50}
+                  />
+                  {formData.description.length < 50 && formData.description.length > 0 && (
+                    <p className="text-xs text-destructive">Description must be at least 50 characters</p>
+                  )}
+                  <AiBioSuggestions
+                    text={formData.description}
+                    onSelect={(text) => setFormData({ ...formData, description: text })}
+                    minLength={50}
+                    type="campaign_description"
+                    label="description"
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="requirements">Additional Requirements</Label>
-                <Textarea
-                  id="requirements"
-                  value={formData.requirements}
-                  onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
-                  placeholder="Special requirements, deliverables, timelines..."
-                  rows={3}
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="campaign_type">Campaign Type *</Label>
+                    <Select value={formData.campaign_type} onValueChange={(value) => setFormData({ ...formData, campaign_type: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="instagram_post">Instagram Post</SelectItem>
+                        <SelectItem value="instagram_story">Instagram Story</SelectItem>
+                        <SelectItem value="instagram_reel">Instagram Reel</SelectItem>
+                        <SelectItem value="tiktok_video">TikTok Video</SelectItem>
+                        <SelectItem value="youtube_video">YouTube Video</SelectItem>
+                        <SelectItem value="ugc_content">UGC Content</SelectItem>
+                        <SelectItem value="multi_platform">Multi-Platform</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={formData.title.length < 10 || formData.description.length < 50}
-              >
-                Create Campaign
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+                  <div className="space-y-2">
+                    <Label htmlFor="budget_cents">Budget per Creator ($) *</Label>
+                    <Input
+                      id="budget_cents"
+                      type="number"
+                      value={formData.budget_cents}
+                      onChange={(e) => setFormData({ ...formData, budget_cents: e.target.value })}
+                      placeholder="500"
+                      min="1"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="spots_available">Number of Creators *</Label>
+                    <Input
+                      id="spots_available"
+                      type="number"
+                      value={formData.spots_available}
+                      onChange={(e) => setFormData({ ...formData, spots_available: e.target.value })}
+                      placeholder="3"
+                      min="1"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="deadline">Application Deadline *</Label>
+                    <Input
+                      id="deadline"
+                      type="date"
+                      value={formData.deadline}
+                      onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                      min={new Date().toISOString().split('T')[0]}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="requirements">Additional Requirements</Label>
+                  <Textarea
+                    id="requirements"
+                    value={formData.requirements}
+                    onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
+                    placeholder="Special requirements, deliverables, timelines..."
+                    rows={3}
+                  />
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={formData.title.length < 10 || formData.description.length < 50}
+                >
+                  Create Campaign
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
         )}
+      </div>
 
       {campaigns.length === 0 ? (
         <Card>
