@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import Brand from "./pages/Brand";
 import Creator from "./pages/Creator";
 import BrandSignup from "./pages/BrandSignup";
+import BrandOnboarding from "./pages/BrandOnboarding";
+import BrandWelcome from "./pages/BrandWelcome";
 import CreatorSignup from "./pages/CreatorSignup";
 import CreatorProfile from "./pages/CreatorProfile";
 import CreatorDashboard from "./pages/CreatorDashboard";
@@ -39,6 +41,8 @@ const App = () => (
           <Route path="/brand" element={<Brand />} />
           <Route path="/creator" element={<Creator />} />
           <Route path="/brand-signup" element={<BrandSignup />} />
+          <Route path="/brand-onboarding" element={<BrandOnboarding />} />
+          <Route path="/brand-welcome" element={<BrandWelcome />} />
           <Route path="/creator-signup" element={<CreatorSignup />} />
           <Route path="/creator/:id" element={<CreatorProfile />} />
           <Route 
