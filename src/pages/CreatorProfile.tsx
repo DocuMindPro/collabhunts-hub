@@ -305,7 +305,7 @@ const CreatorProfile = () => {
           {/* Large Portfolio Gallery at Top - Collabstr Style */}
           {creator.portfolio_media.length > 0 && (
             <div className="mb-8">
-              <div className="grid grid-cols-4 gap-2 md:gap-3 rounded-2xl overflow-hidden" style={{ height: "clamp(300px, 50vh, 500px)" }}>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 rounded-2xl overflow-hidden" style={{ height: "clamp(250px, 40vh, 500px)" }}>
                 {/* Main Large Image - Takes 2 columns and full height */}
                 <button
                   onClick={() => openGallery(0)}
@@ -404,10 +404,10 @@ const CreatorProfile = () => {
           )}
 
           {/* Creator Info Section - Below Gallery */}
-          <div className="flex flex-col md:flex-row gap-6 items-start mb-8">
-            {/* Avatar and Basic Info */}
-            <div className="flex items-start gap-4 flex-1">
-              <Avatar className="h-20 w-20 md:h-24 md:w-24 border-4 border-background shadow-lg flex-shrink-0">
+          <div className="mb-8">
+            {/* Avatar and Basic Info - Stack on mobile */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+              <Avatar className="h-24 w-24 md:h-28 md:w-28 border-4 border-background shadow-lg flex-shrink-0">
                 <AvatarImage src={creator.profile_image_url || undefined} className="object-cover" />
                 <AvatarFallback className="text-2xl md:text-3xl bg-gradient-accent text-white">
                   {creator.display_name.charAt(0)}
@@ -415,7 +415,7 @@ const CreatorProfile = () => {
               </Avatar>
               
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 flex-wrap mb-2">
+                <div className="flex items-center justify-center sm:justify-start gap-3 flex-wrap mb-2">
                   <h1 className="text-2xl md:text-3xl font-heading font-bold">
                     {creator.display_name}
                   </h1>
@@ -426,7 +426,7 @@ const CreatorProfile = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-muted-foreground mb-3">
+                <div className="flex items-center justify-center sm:justify-start gap-2 text-muted-foreground mb-3">
                   <MapPin className="h-4 w-4 flex-shrink-0" />
                   <span className="text-sm">
                     {[creator.location_city, creator.location_state, creator.location_country]
@@ -435,7 +435,7 @@ const CreatorProfile = () => {
                   </span>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex flex-wrap justify-center sm:justify-start gap-2 mb-4">
                   {creator.categories.map((category) => (
                     <Badge key={category} variant="secondary">
                       {category}
@@ -446,9 +446,20 @@ const CreatorProfile = () => {
                 {creator.bio && (
                   <p className="text-muted-foreground max-w-2xl">{creator.bio}</p>
                 )}
+
+                {/* Contact Creator Button - Under bio, above Social Media */}
+                <div className="mt-4">
+                  <Button 
+                    size="lg"
+                    className="w-full sm:w-auto gradient-hero hover:opacity-90"
+                    onClick={handleContactCreator}
+                  >
+                    <MessageCircle className="h-5 w-5 mr-2" />
+                    Contact Creator
+                  </Button>
+                </div>
               </div>
             </div>
-
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -612,22 +623,6 @@ const CreatorProfile = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-accent text-white">
-                <CardHeader>
-                  <CardTitle className="text-white">Ready to Collaborate?</CardTitle>
-                  <CardDescription className="text-white/80">
-                    Get in touch to start your campaign
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    className="w-full bg-white text-primary hover:bg-white/90"
-                    onClick={handleContactCreator}
-                  >
-                    Contact Creator
-                  </Button>
-                </CardContent>
-              </Card>
             </div>
           </div>
         </div>
