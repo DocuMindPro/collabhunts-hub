@@ -16,6 +16,7 @@ import PortfolioGalleryModal from "@/components/PortfolioGalleryModal";
 interface CreatorData {
   id: string;
   display_name: string;
+  profile_image_url: string | null;
   bio: string | null;
   location_city: string | null;
   location_state: string | null;
@@ -219,6 +220,7 @@ const CreatorProfile = () => {
       setCreator({
         id: profileData.id,
         display_name: profileData.display_name,
+        profile_image_url: profileData.profile_image_url,
         bio: profileData.bio,
         location_city: profileData.location_city,
         location_state: profileData.location_state,
@@ -294,39 +296,57 @@ const CreatorProfile = () => {
         <div className="container mx-auto px-4 max-w-6xl">
           {/* Hero Section */}
           <div className="bg-gradient-accent rounded-2xl p-8 md:p-12 mb-8 relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h1 className="text-4xl md:text-5xl font-heading font-bold text-white mb-2">
-                    {creator.display_name}
-                  </h1>
-                  <div className="flex items-center gap-2 text-white/80">
-                    <MapPin className="h-4 w-4" />
-                    <span>
-                      {[creator.location_city, creator.location_state, creator.location_country]
-                        .filter(Boolean)
-                        .join(", ") || "Location not specified"}
-                    </span>
+            <div className="relative z-10 flex flex-col md:flex-row gap-6">
+              {/* Profile Image */}
+              {creator.profile_image_url ? (
+                <img 
+                  src={creator.profile_image_url} 
+                  alt={creator.display_name}
+                  className="w-32 h-32 md:w-40 md:h-40 rounded-xl object-cover border-4 border-white/20 flex-shrink-0"
+                />
+              ) : (
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-5xl font-bold text-white/40">
+                    {creator.display_name.charAt(0)}
+                  </span>
+                </div>
+              )}
+
+              {/* Creator Info */}
+              <div className="flex-1">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h1 className="text-4xl md:text-5xl font-heading font-bold text-white mb-2">
+                      {creator.display_name}
+                    </h1>
+                    <div className="flex items-center gap-2 text-white/80">
+                      <MapPin className="h-4 w-4" />
+                      <span>
+                        {[creator.location_city, creator.location_state, creator.location_country]
+                          .filter(Boolean)
+                          .join(", ") || "Location not specified"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/90 backdrop-blur px-4 py-2 rounded-full">
+                    <Star className="h-5 w-5 fill-primary text-primary" />
+                    <span className="font-semibold">{creator.avgRating.toFixed(1)}</span>
+                    <span className="text-sm text-muted-foreground">({creator.totalReviews})</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 bg-white/90 backdrop-blur px-4 py-2 rounded-full">
-                  <Star className="h-5 w-5 fill-primary text-primary" />
-                  <span className="font-semibold">{creator.avgRating.toFixed(1)}</span>
-                  <span className="text-sm text-muted-foreground">({creator.totalReviews})</span>
+
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {creator.categories.map((category) => (
+                    <Badge key={category} variant="secondary" className="bg-white/90 backdrop-blur">
+                      {category}
+                    </Badge>
+                  ))}
                 </div>
-              </div>
 
-              <div className="flex flex-wrap gap-2 mb-6">
-                {creator.categories.map((category) => (
-                  <Badge key={category} variant="secondary" className="bg-white/90 backdrop-blur">
-                    {category}
-                  </Badge>
-                ))}
+                {creator.bio && (
+                  <p className="text-white/90 text-lg max-w-3xl">{creator.bio}</p>
+                )}
               </div>
-
-              {creator.bio && (
-                <p className="text-white/90 text-lg max-w-3xl">{creator.bio}</p>
-              )}
             </div>
           </div>
 
