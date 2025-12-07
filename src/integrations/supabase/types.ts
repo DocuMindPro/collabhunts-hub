@@ -402,6 +402,44 @@ export type Database = {
           },
         ]
       }
+      creator_portfolio_media: {
+        Row: {
+          created_at: string | null
+          creator_profile_id: string
+          display_order: number | null
+          id: string
+          media_type: string
+          thumbnail_url: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          creator_profile_id: string
+          display_order?: number | null
+          id?: string
+          media_type: string
+          thumbnail_url?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          creator_profile_id?: string
+          display_order?: number | null
+          id?: string
+          media_type?: string
+          thumbnail_url?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_portfolio_media_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_profiles: {
         Row: {
           bio: string | null
