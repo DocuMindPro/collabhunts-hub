@@ -23,6 +23,7 @@ interface Campaign {
   deadline: string;
   requirements: string;
   created_at: string;
+  brand_profile_id: string;
   brand_profiles: {
     company_name: string;
     logo_url: string;
@@ -38,6 +39,8 @@ const Campaigns = () => {
   const [filterType, setFilterType] = useState("all");
   const [user, setUser] = useState<any>(null);
   const [isCreator, setIsCreator] = useState(false);
+  const [isBrand, setIsBrand] = useState(false);
+  const [brandProfileId, setBrandProfileId] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -53,6 +56,7 @@ const Campaigns = () => {
     setUser(user);
     
     if (user) {
+      // Check if user is a creator
       const { data: creatorProfile } = await supabase
         .from('creator_profiles')
         .select('id, status')
@@ -60,6 +64,18 @@ const Campaigns = () => {
         .single();
       
       setIsCreator(creatorProfile?.status === 'approved');
+
+      // Check if user is a brand
+      const { data: brandProfile } = await supabase
+        .from('brand_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (brandProfile) {
+        setIsBrand(true);
+        setBrandProfileId(brandProfile.id);
+      }
     }
   };
 
@@ -240,17 +256,29 @@ const Campaigns = () => {
                         <p className="text-sm text-muted-foreground">{campaign.requirements}</p>
                       </div>
                     )}
-                    <Button 
-                      onClick={() => handleApply(campaign.id)}
-                      disabled={campaign.spots_filled >= campaign.spots_available}
-                      className="w-full"
-                    >
-                      {campaign.spots_filled >= campaign.spots_available 
-                        ? 'No Spots Available' 
-                        : user && isCreator 
-                          ? 'Apply Now' 
-                          : 'Login to Apply'}
-                    </Button>
+                    {isBrand && campaign.brand_profile_id === brandProfileId ? (
+                      <Button 
+                        onClick={() => navigate('/brand-dashboard?tab=campaigns')}
+                        variant="secondary"
+                        className="w-full"
+                      >
+                        View Applications
+                      </Button>
+                    ) : isBrand ? (
+                      null
+                    ) : (
+                      <Button 
+                        onClick={() => handleApply(campaign.id)}
+                        disabled={campaign.spots_filled >= campaign.spots_available}
+                        className="w-full"
+                      >
+                        {campaign.spots_filled >= campaign.spots_available 
+                          ? 'No Spots Available' 
+                          : user && isCreator 
+                            ? 'Apply Now' 
+                            : 'Login to Apply'}
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ))}
