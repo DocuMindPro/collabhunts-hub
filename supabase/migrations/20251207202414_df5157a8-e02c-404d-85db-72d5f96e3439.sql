@@ -1,0 +1,3 @@
+-- Drop the existing status check constraint and add one that includes 'pending', 'draft', and 'rejected'
+ALTER TABLE public.campaigns DROP CONSTRAINT IF EXISTS campaigns_status_check;
+ALTER TABLE public.campaigns ADD CONSTRAINT campaigns_status_check CHECK (status = ANY (ARRAY['draft'::text, 'pending'::text, 'active'::text, 'paused'::text, 'completed'::text, 'cancelled'::text, 'rejected'::text]));
