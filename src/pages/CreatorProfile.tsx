@@ -449,15 +449,6 @@ const CreatorProfile = () => {
               </div>
             </div>
 
-            {/* Contact Button - Right Side */}
-            <Button 
-              size="lg"
-              className="gradient-hero hover:opacity-90 flex-shrink-0"
-              onClick={handleContactCreator}
-            >
-              <MessageCircle className="h-5 w-5 mr-2" />
-              Contact Creator
-            </Button>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
