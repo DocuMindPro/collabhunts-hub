@@ -41,14 +41,14 @@ export const SUBSCRIPTION_PLANS = {
     name: 'Premium',
     price: 29900, // $299 in cents
     priceId: 'price_premium_monthly',
-    marketplaceFee: 0.05, // 5%
+    marketplaceFee: 0.15, // 15%
     campaignLimit: Infinity,
     canContactCreators: true,
     hasAdvancedFilters: true,
     features: [
       'Everything in Pro',
       'Post unlimited campaigns',
-      '5% marketplace fee on bookings',
+      '15% marketplace fee on bookings',
       'Priority customer support (Coming Soon)',
       'Dedicated account manager (Coming Soon)',
     ],
