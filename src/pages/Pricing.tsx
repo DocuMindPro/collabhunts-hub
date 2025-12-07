@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
+import { Check, X, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Pricing = () => {
@@ -13,12 +13,10 @@ const Pricing = () => {
       description: "Perfect for getting started",
       features: [
         { text: "Search influencers on the marketplace", included: true },
-        { text: "Chat & negotiate with creators", included: true },
-        { text: "15% marketplace fee on bookings", included: true },
-        { text: "Post campaigns (Coming Soon)", included: false },
-        { text: "Track live analytics (Coming Soon)", included: false },
-        { text: "Advanced filters (Coming Soon)", included: false },
-        { text: "Influencer reports (Coming Soon)", included: false },
+        { text: "20% marketplace fee on bookings", included: true },
+        { text: "Chat & negotiate with creators", included: false, locked: true },
+        { text: "Post campaigns", included: false, locked: true },
+        { text: "Advanced filters", included: false, locked: true },
       ],
       cta: "Get Started",
       link: "/brand-signup",
@@ -26,38 +24,35 @@ const Pricing = () => {
     },
     {
       name: "Pro",
-      price: "$299",
+      price: "$99",
       period: "/mo",
       description: "For growing brands",
       features: [
         { text: "Everything in Basic", included: true },
-        { text: "10% marketplace fee on bookings", included: true },
-        { text: "Post 1 campaign per month (Coming Soon)", included: true },
-        { text: "Track live analytics for 5 posts (Coming Soon)", included: true },
-        { text: "Advanced filters (Coming Soon)", included: true },
-        { text: "20 Influencer engagement reports (Coming Soon)", included: true },
+        { text: "Chat & negotiate with creators before hiring", included: true },
+        { text: "Post 1 campaign per month", included: true },
+        { text: "Advanced filters for age, ethnicity, language and more", included: true },
+        { text: "15% marketplace fee on bookings", included: true },
         { text: "Priority support", included: false },
       ],
-      cta: "Coming Soon",
-      link: "#",
+      cta: "Upgrade to Pro",
+      link: "/brand-signup",
       popular: true,
     },
     {
       name: "Premium",
-      price: "$399",
+      price: "$299",
       period: "/mo",
       description: "For established businesses",
       features: [
         { text: "Everything in Pro", included: true },
+        { text: "Post unlimited campaigns", included: true },
         { text: "5% marketplace fee on bookings", included: true },
-        { text: "Post unlimited campaigns (Coming Soon)", included: true },
-        { text: "Track live analytics for 15 posts (Coming Soon)", included: true },
-        { text: "50 Influencer engagement reports (Coming Soon)", included: true },
         { text: "Priority customer support (Coming Soon)", included: true },
         { text: "Dedicated account manager (Coming Soon)", included: true },
       ],
-      cta: "Coming Soon",
-      link: "#",
+      cta: "Upgrade to Premium",
+      link: "/brand-signup",
       popular: false,
     },
   ];
@@ -125,6 +120,8 @@ const Pricing = () => {
                       <li key={featureIndex} className="flex items-start gap-3">
                         {feature.included ? (
                           <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                        ) : feature.locked ? (
+                          <Lock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                         ) : (
                           <X className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                         )}
@@ -132,7 +129,7 @@ const Pricing = () => {
                           className={
                             feature.included
                               ? "text-foreground"
-                              : "text-muted-foreground line-through"
+                              : "text-muted-foreground"
                           }
                         >
                           {feature.text}
@@ -141,7 +138,7 @@ const Pricing = () => {
                     ))}
                   </ul>
 
-                  {plan.link === "#" ? (
+                  <Link to={plan.link}>
                     <Button
                       className={`w-full ${
                         plan.popular
@@ -149,24 +146,10 @@ const Pricing = () => {
                           : "bg-secondary hover:bg-secondary/80 text-secondary-foreground"
                       }`}
                       size="lg"
-                      disabled
                     >
                       {plan.cta}
                     </Button>
-                  ) : (
-                    <Link to={plan.link}>
-                      <Button
-                        className={`w-full ${
-                          plan.popular
-                            ? "gradient-hero hover:opacity-90"
-                            : "bg-secondary hover:bg-secondary/80 text-secondary-foreground"
-                        }`}
-                        size="lg"
-                      >
-                        {plan.cta}
-                      </Button>
-                    </Link>
-                  )}
+                  </Link>
                 </div>
               ))}
             </div>

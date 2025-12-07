@@ -9,12 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Star, Instagram, Youtube, Twitter, Play, Image as ImageIcon, Images, MessageCircle } from "lucide-react";
+import { MapPin, Star, Instagram, Youtube, Twitter, Play, Image as ImageIcon, Images, MessageCircle, Lock } from "lucide-react";
 import BookingDialog from "@/components/BookingDialog";
 import MessageDialog from "@/components/MessageDialog";
 import PortfolioGalleryModal from "@/components/PortfolioGalleryModal";
 import MobilePortfolioCarousel from "@/components/MobilePortfolioCarousel";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SUBSCRIPTION_PLANS, type PlanType } from "@/lib/stripe-mock";
+import UpgradePrompt from "@/components/UpgradePrompt";
 
 interface CreatorData {
   id: string;
@@ -77,6 +79,9 @@ const CreatorProfile = () => {
   const [avatarFailed, setAvatarFailed] = useState(false);
   const [failedPortfolioImages, setFailedPortfolioImages] = useState<Set<number>>(new Set());
   const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [canContactCreators, setCanContactCreators] = useState(false);
+  const [checkingSubscription, setCheckingSubscription] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const handleBookService = (service: any) => {
     setSelectedService(service);
@@ -99,7 +104,7 @@ const CreatorProfile = () => {
       }
 
       // Check if user is admin
-      const { data: isAdmin } = await supabase.rpc('has_role', {
+      const { data: adminCheck } = await supabase.rpc('has_role', {
         _user_id: user.id,
         _role: 'admin'
       });
@@ -112,7 +117,7 @@ const CreatorProfile = () => {
         .maybeSingle();
 
       // If admin without brand profile, auto-create one
-      if (isAdmin && !brandProfile) {
+      if (adminCheck && !brandProfile) {
         const { data: newBrandProfile, error: createError } = await supabase
           .from("brand_profiles")
           .insert({
@@ -142,6 +147,27 @@ const CreatorProfile = () => {
         });
         navigate("/brand-signup");
         return;
+      }
+
+      // Check subscription allows contact (unless admin)
+      if (!adminCheck) {
+        const { data: subscription } = await supabase
+          .from("brand_subscriptions")
+          .select("plan_type")
+          .eq("brand_profile_id", brandProfile.id)
+          .eq("status", "active")
+          .maybeSingle();
+
+        const planType = (subscription?.plan_type || "basic") as PlanType;
+        if (!SUBSCRIPTION_PLANS[planType].canContactCreators) {
+          toast({
+            title: "Upgrade Required",
+            description: "Upgrade to Pro to contact creators",
+            variant: "destructive"
+          });
+          navigate("/brand-dashboard?tab=subscription");
+          return;
+        }
       }
 
       // Check if conversation already exists

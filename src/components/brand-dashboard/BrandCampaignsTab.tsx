@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Calendar, DollarSign, Users, Eye } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, Eye, Lock } from "lucide-react";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
-import { formatPrice } from "@/lib/stripe-mock";
+import { formatPrice, SUBSCRIPTION_PLANS, type PlanType } from "@/lib/stripe-mock";
+import UpgradePrompt from "@/components/UpgradePrompt";
 
 interface Campaign {
   id: string;
@@ -47,6 +48,9 @@ const BrandCampaignsTab = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [viewApplicationsOpen, setViewApplicationsOpen] = useState(false);
   const [brandProfileId, setBrandProfileId] = useState<string | null>(null);
+  const [campaignLimit, setCampaignLimit] = useState(0);
+  const [campaignsThisMonth, setCampaignsThisMonth] = useState(0);
+  const [canPostCampaigns, setCanPostCampaigns] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -75,6 +79,32 @@ const BrandCampaignsTab = () => {
 
       if (!brandProfile) return;
       setBrandProfileId(brandProfile.id);
+
+      // Get subscription to check campaign limit
+      const { data: subscription } = await supabase
+        .from('brand_subscriptions')
+        .select('plan_type')
+        .eq('brand_profile_id', brandProfile.id)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      const planType = (subscription?.plan_type || 'basic') as PlanType;
+      const limit = SUBSCRIPTION_PLANS[planType].campaignLimit;
+      setCampaignLimit(limit);
+      setCanPostCampaigns(limit > 0);
+
+      // Count campaigns this month
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { count } = await supabase
+        .from('campaigns')
+        .select('*', { count: 'exact', head: true })
+        .eq('brand_profile_id', brandProfile.id)
+        .gte('created_at', startOfMonth.toISOString());
+
+      setCampaignsThisMonth(count || 0);
 
       const { data, error } = await supabase
         .from('campaigns')
@@ -189,14 +219,27 @@ const BrandCampaignsTab = () => {
         <div>
           <h2 className="text-2xl font-heading font-bold">My Campaigns</h2>
           <p className="text-muted-foreground">Create and manage campaign collaborations</p>
+          {canPostCampaigns && campaignLimit !== Infinity && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {campaignsThisMonth}/{campaignLimit} campaigns used this month
+            </p>
+          )}
         </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Create Campaign
-            </Button>
-          </DialogTrigger>
+        {!canPostCampaigns ? (
+          <UpgradePrompt feature="campaigns" inline />
+        ) : campaignLimit !== Infinity && campaignsThisMonth >= campaignLimit ? (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Lock className="h-4 w-4" />
+            <span className="text-sm">Monthly limit reached</span>
+          </div>
+        ) : (
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Create Campaign
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Campaign</DialogTitle>
@@ -329,7 +372,7 @@ const BrandCampaignsTab = () => {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+        )}
 
       {campaigns.length === 0 ? (
         <Card>
