@@ -299,7 +299,7 @@ const CreatorProfile = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-1 py-8">
+      <main className="flex-1 py-8 pb-24 md:pb-8">
         <div className="container mx-auto px-4 max-w-6xl">
           
           {/* Large Portfolio Gallery at Top - Collabstr Style */}
