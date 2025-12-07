@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Calendar, DollarSign, Users, Eye } from "lucide-react";
+import AiBioSuggestions from "@/components/AiBioSuggestions";
 import { formatPrice } from "@/lib/stripe-mock";
 
 interface Campaign {
@@ -211,6 +212,13 @@ const BrandCampaignsTab = () => {
                   placeholder="e.g., Summer Fashion Campaign"
                   required
                 />
+                <AiBioSuggestions
+                  text={formData.title}
+                  onSelect={(text) => setFormData({ ...formData, title: text })}
+                  minLength={10}
+                  type="campaign_title"
+                  label="title"
+                />
               </div>
 
               <div className="space-y-2">
@@ -222,6 +230,13 @@ const BrandCampaignsTab = () => {
                   placeholder="Describe your campaign goals and expectations..."
                   rows={4}
                   required
+                />
+                <AiBioSuggestions
+                  text={formData.description}
+                  onSelect={(text) => setFormData({ ...formData, description: text })}
+                  minLength={50}
+                  type="campaign_description"
+                  label="description"
                 />
               </div>
 

@@ -17,7 +17,7 @@ import AiBioSuggestions from "@/components/AiBioSuggestions";
 // Validation schemas
 const emailSchema = z.string().email("Invalid email address").max(255);
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters").max(100);
-const displayNameSchema = z.string().trim().min(2, "Name must be at least 2 characters").max(100);
+const displayNameSchema = z.string().trim().min(5, "Name must be at least 5 characters").max(100);
 const bioSchema = z.string()
   .min(50, "Bio must be at least 50 characters - write a sentence about yourself!")
   .max(1000, "Bio must be less than 1000 characters");
@@ -660,6 +660,13 @@ const CreatorSignup = () => {
                       required
                       maxLength={100}
                     />
+                    <AiBioSuggestions
+                      text={displayName}
+                      onSelect={(text) => setDisplayName(text)}
+                      minLength={5}
+                      type="display_name"
+                      label="display name"
+                    />
                   </div>
 
                   <div>
@@ -739,7 +746,7 @@ const CreatorSignup = () => {
                     <Button 
                       type="submit" 
                       className="flex-1 gradient-hero hover:opacity-90"
-                      disabled={bio.length < 50 || displayName.length < 2 || selectedCategories.length === 0}
+                      disabled={bio.length < 50 || displayName.length < 5 || selectedCategories.length === 0}
                     >
                       Continue
                     </Button>

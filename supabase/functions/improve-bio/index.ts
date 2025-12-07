@@ -14,9 +14,21 @@ serve(async (req) => {
   try {
     const { text, type = 'bio' } = await req.json();
     
-    if (!text || text.length < 20) {
+    // Different minimum lengths based on content type
+    const minLengths: Record<string, number> = {
+      bio: 20,
+      description: 20,
+      campaign_title: 10,
+      campaign_description: 20,
+      display_name: 5,
+      title: 5
+    };
+    
+    const minLength = minLengths[type] || 10;
+    
+    if (!text || text.length < minLength) {
       return new Response(
-        JSON.stringify({ error: 'Text must be at least 20 characters' }),
+        JSON.stringify({ error: `Text must be at least ${minLength} characters` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -30,8 +42,62 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = type === 'bio' 
-      ? `You are a professional copywriter specializing in creator and influencer profiles. 
+    // Build system prompt based on content type
+    let systemPrompt: string;
+    
+    switch (type) {
+      case 'campaign_title':
+        systemPrompt = `You are a marketing expert specializing in influencer campaigns.
+Your task is to improve campaign titles to make them catchy, clear, and appealing to creators.
+
+Guidelines:
+- Keep each title concise (5-60 characters)
+- Make it attention-grabbing and clear
+- Highlight what makes this campaign exciting
+- Use action words when appropriate
+- Don't add emojis unless the original had them
+- Return EXACTLY 3 different improved versions
+
+Respond ONLY with a JSON object in this exact format:
+{"suggestions": ["improved title 1", "improved title 2", "improved title 3"]}`;
+        break;
+        
+      case 'campaign_description':
+        systemPrompt = `You are a marketing expert specializing in influencer campaigns.
+Your task is to improve campaign descriptions to be clear, professional, and attractive to creators.
+
+Guidelines:
+- Keep the same core information and requirements
+- Make it more compelling and easy to understand
+- Clearly communicate what creators will do
+- Highlight benefits for creators
+- Keep each suggestion between 100-500 characters
+- Don't add requirements that weren't mentioned
+- Return EXACTLY 3 different improved versions
+
+Respond ONLY with a JSON object in this exact format:
+{"suggestions": ["improved description 1", "improved description 2", "improved description 3"]}`;
+        break;
+        
+      case 'display_name':
+      case 'title':
+        systemPrompt = `You are a branding expert helping creators choose memorable display names.
+Your task is to improve the creator's display name to be more memorable and professional.
+
+Guidelines:
+- Keep it short and punchy (2-30 characters)
+- Make it memorable and unique
+- Keep the same general identity/style
+- Don't add special characters unless original had them
+- Return EXACTLY 3 different improved versions
+
+Respond ONLY with a JSON object in this exact format:
+{"suggestions": ["improved name 1", "improved name 2", "improved name 3"]}`;
+        break;
+        
+      case 'bio':
+      default:
+        systemPrompt = `You are a professional copywriter specializing in creator and influencer profiles. 
 Your task is to improve the user's bio/description to make it more professional, engaging, and attractive to brands.
 
 Guidelines:
@@ -44,12 +110,9 @@ Guidelines:
 - Return EXACTLY 3 different improved versions
 
 Respond ONLY with a JSON object in this exact format:
-{"suggestions": ["improved version 1", "improved version 2", "improved version 3"]}`
-      : `You are a professional copywriter. Improve the given text to be more professional and engaging.
-Return EXACTLY 3 different improved versions.
-
-Respond ONLY with a JSON object in this exact format:
 {"suggestions": ["improved version 1", "improved version 2", "improved version 3"]}`;
+        break;
+    }
 
     console.log('Calling Lovable AI with text:', text.substring(0, 50) + '...');
 
