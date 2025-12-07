@@ -18,6 +18,7 @@ import {
 interface CreatorWithDetails {
   id: string;
   display_name: string;
+  profile_image_url: string | null;
   categories: string[];
   location_city: string | null;
   location_state: string | null;
@@ -66,6 +67,7 @@ const Influencers = () => {
         .select(`
           id,
           display_name,
+          profile_image_url,
           categories,
           location_city,
           location_state,
@@ -80,6 +82,7 @@ const Influencers = () => {
       const formattedCreators: CreatorWithDetails[] = (data || []).map((creator) => ({
         id: creator.id,
         display_name: creator.display_name,
+        profile_image_url: creator.profile_image_url,
         categories: creator.categories,
         location_city: creator.location_city,
         location_state: creator.location_state,
@@ -209,11 +212,19 @@ const Influencers = () => {
                       className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-shadow group"
                     >
                       <div className="relative aspect-square overflow-hidden bg-gradient-accent">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-6xl font-heading font-bold text-white/20">
-                            {creator.display_name.charAt(0)}
-                          </span>
-                        </div>
+                        {creator.profile_image_url ? (
+                          <img 
+                            src={creator.profile_image_url} 
+                            alt={creator.display_name}
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-6xl font-heading font-bold text-white/20">
+                              {creator.display_name.charAt(0)}
+                            </span>
+                          </div>
+                        )}
                         <button className="absolute top-4 right-4 p-2 bg-background/80 backdrop-blur rounded-full hover:bg-background transition-colors">
                           <Heart className="h-5 w-5" />
                         </button>
