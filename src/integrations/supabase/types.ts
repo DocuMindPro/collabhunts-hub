@@ -143,6 +143,11 @@ export type Database = {
           id: string
           industry: string | null
           logo_url: string | null
+          marketing_intent: string | null
+          monthly_budget_range: string | null
+          onboarding_completed: boolean | null
+          preferred_categories: string[] | null
+          preferred_platforms: string[] | null
           updated_at: string | null
           user_id: string
           website_url: string | null
@@ -154,6 +159,11 @@ export type Database = {
           id?: string
           industry?: string | null
           logo_url?: string | null
+          marketing_intent?: string | null
+          monthly_budget_range?: string | null
+          onboarding_completed?: boolean | null
+          preferred_categories?: string[] | null
+          preferred_platforms?: string[] | null
           updated_at?: string | null
           user_id: string
           website_url?: string | null
@@ -165,6 +175,11 @@ export type Database = {
           id?: string
           industry?: string | null
           logo_url?: string | null
+          marketing_intent?: string | null
+          monthly_budget_range?: string | null
+          onboarding_completed?: boolean | null
+          preferred_categories?: string[] | null
+          preferred_platforms?: string[] | null
           updated_at?: string | null
           user_id?: string
           website_url?: string | null

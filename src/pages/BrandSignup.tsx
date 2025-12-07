@@ -115,13 +115,13 @@ const BrandSignup = () => {
 
       toast({
         title: "Welcome to CollabHunts!",
-        description: "Your brand account has been created successfully."
+        description: "Let's personalize your experience."
       });
 
-      // Navigate after a delay
+      // Navigate to onboarding after signup
       setTimeout(() => {
-        navigate("/influencers");
-      }, 1500);
+        navigate("/brand-onboarding");
+      }, 1000);
 
     } catch (error: any) {
       if (error instanceof z.ZodError) {
