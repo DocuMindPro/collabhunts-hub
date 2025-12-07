@@ -68,6 +68,7 @@ const CreatorProfile = () => {
   const [galleryStartIndex, setGalleryStartIndex] = useState(0);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [avatarFailed, setAvatarFailed] = useState(false);
+  const [failedPortfolioImages, setFailedPortfolioImages] = useState<Set<number>>(new Set());
 
   const handleBookService = (service: any) => {
     setSelectedService(service);
@@ -312,12 +313,20 @@ const CreatorProfile = () => {
                   onClick={() => openGallery(0)}
                   className="col-span-2 row-span-2 relative overflow-hidden group"
                 >
-                  {creator.portfolio_media[0]?.media_type === "image" ? (
-                    <img 
-                      src={creator.portfolio_media[0]?.url} 
-                      alt="Portfolio" 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                {creator.portfolio_media[0]?.media_type === "image" ? (
+                    failedPortfolioImages.has(0) ? (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
+                      </div>
+                    ) : (
+                      <img 
+                        src={creator.portfolio_media[0]?.url} 
+                        alt="Portfolio"
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={() => setFailedPortfolioImages(prev => new Set(prev).add(0))}
+                      />
+                    )
                   ) : (
                     <div className="relative w-full h-full">
                       <video src={creator.portfolio_media[0]?.url} className="w-full h-full object-cover" muted />
@@ -334,12 +343,20 @@ const CreatorProfile = () => {
                     onClick={() => openGallery(1)}
                     className="col-span-2 relative overflow-hidden group"
                   >
-                    {creator.portfolio_media[1].media_type === "image" ? (
-                      <img 
-                        src={creator.portfolio_media[1].url} 
-                        alt="Portfolio" 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                  {creator.portfolio_media[1].media_type === "image" ? (
+                      failedPortfolioImages.has(1) ? (
+                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                          <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+                        </div>
+                      ) : (
+                        <img 
+                          src={creator.portfolio_media[1].url} 
+                          alt="Portfolio"
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={() => setFailedPortfolioImages(prev => new Set(prev).add(1))}
+                        />
+                      )
                     ) : (
                       <div className="relative w-full h-full">
                         <video src={creator.portfolio_media[1].url} className="w-full h-full object-cover" muted />
@@ -357,12 +374,20 @@ const CreatorProfile = () => {
                     onClick={() => openGallery(2)}
                     className="col-span-2 relative overflow-hidden group"
                   >
-                    {creator.portfolio_media[2].media_type === "image" ? (
-                      <img 
-                        src={creator.portfolio_media[2].url} 
-                        alt="Portfolio" 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                  {creator.portfolio_media[2].media_type === "image" ? (
+                      failedPortfolioImages.has(2) ? (
+                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                          <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+                        </div>
+                      ) : (
+                        <img 
+                          src={creator.portfolio_media[2].url} 
+                          alt="Portfolio"
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={() => setFailedPortfolioImages(prev => new Set(prev).add(2))}
+                        />
+                      )
                     ) : (
                       <div className="relative w-full h-full">
                         <video src={creator.portfolio_media[2].url} className="w-full h-full object-cover" muted />
