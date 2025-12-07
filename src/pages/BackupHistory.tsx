@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   Database,
   CheckCircle,
@@ -24,6 +24,8 @@ import {
   Clock,
   HardDrive,
   ArrowLeft,
+  Calendar,
+  Timer,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -40,6 +42,26 @@ interface BackupRecord {
   error_message: string | null;
   backup_version: string;
   created_at: string;
+}
+
+interface CronStatus {
+  success: boolean;
+  cron: {
+    jobName: string;
+    schedule: string;
+    scheduleDescription: string;
+    isActive: boolean;
+    functionName: string;
+    nextRun: string;
+    lastExpectedRun: string;
+  };
+  recentScheduledBackups: Array<{
+    id: string;
+    status: string;
+    created_at: string;
+    execution_time_ms: number | null;
+    error_message: string | null;
+  }>;
 }
 
 const BackupHistory = () => {
@@ -60,6 +82,31 @@ const BackupHistory = () => {
       if (error) throw error;
       return data as BackupRecord[];
     },
+  });
+
+  // Fetch cron status
+  const { data: cronStatus, isLoading: cronLoading } = useQuery({
+    queryKey: ["cron-status"],
+    queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      
+      if (!session?.session?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await supabase.functions.invoke("get-cron-status", {
+        headers: {
+          Authorization: `Bearer ${session.session.access_token}`,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      return response.data as CronStatus;
+    },
+    retry: false,
   });
 
   // Trigger manual backup
@@ -185,6 +232,96 @@ const BackupHistory = () => {
             {isBackingUp ? "Backing up..." : "Trigger Backup"}
           </Button>
         </div>
+
+        {/* Scheduled Backup Status Card */}
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Timer className="h-5 w-5 text-primary" />
+              Scheduled Backup Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {cronLoading ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Loading cron status...
+              </div>
+            ) : cronStatus?.success ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      {cronStatus.cron.isActive ? (
+                        <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive">
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Inactive
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Schedule:</span>
+                    <span className="font-medium">{cronStatus.cron.scheduleDescription}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Next run:</span>
+                    <span className="font-medium">
+                      {format(new Date(cronStatus.cron.nextRun), "MMM d, yyyy HH:mm")} UTC
+                      <span className="text-muted-foreground ml-1">
+                        ({formatDistanceToNow(new Date(cronStatus.cron.nextRun), { addSuffix: true })})
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Recent Scheduled Backups */}
+                {cronStatus.recentScheduledBackups.length > 0 && (
+                  <div className="pt-3 border-t border-border/50">
+                    <p className="text-sm font-medium mb-2">Recent Scheduled Backups:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {cronStatus.recentScheduledBackups.map((backup) => (
+                        <Badge
+                          key={backup.id}
+                          variant={backup.status === "success" ? "outline" : "destructive"}
+                          className="gap-1"
+                        >
+                          {backup.status === "success" ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          {format(new Date(backup.created_at), "MMM d, HH:mm")}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {cronStatus.recentScheduledBackups.length === 0 && (
+                  <div className="pt-3 border-t border-border/50">
+                    <p className="text-sm text-muted-foreground">
+                      No scheduled backups yet. The cron job will run at the next scheduled time.
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                Unable to fetch cron status. Make sure the cron job is configured.
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
