@@ -43,11 +43,36 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId }: BookingDi
         return;
       }
 
-      const { data: brandProfile } = await supabase
+      // Check if user is admin
+      const { data: isAdmin } = await supabase.rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin'
+      });
+
+      let { data: brandProfile } = await supabase
         .from("brand_profiles")
         .select("id")
         .eq("user_id", user.id)
         .maybeSingle();
+
+      // If admin without brand profile, auto-create one
+      if (isAdmin && !brandProfile) {
+        const { data: newBrandProfile, error: createError } = await supabase
+          .from("brand_profiles")
+          .insert({
+            user_id: user.id,
+            company_name: "CollabHunts Admin"
+          })
+          .select("id")
+          .single();
+
+        if (createError) {
+          console.error("Error creating admin brand profile:", createError);
+          toast.error("Failed to create admin profile");
+          return;
+        }
+        brandProfile = newBrandProfile;
+      }
 
       if (!brandProfile) {
         toast.error("Please create a brand profile first");

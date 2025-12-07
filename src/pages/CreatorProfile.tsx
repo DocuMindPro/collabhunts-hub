@@ -98,14 +98,43 @@ const CreatorProfile = () => {
         return;
       }
 
+      // Check if user is admin
+      const { data: isAdmin } = await supabase.rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin'
+      });
+
       // Check if user has a brand profile
-      const { data: brandProfile, error: brandError } = await supabase
+      let { data: brandProfile } = await supabase
         .from("brand_profiles")
         .select("id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (brandError || !brandProfile) {
+      // If admin without brand profile, auto-create one
+      if (isAdmin && !brandProfile) {
+        const { data: newBrandProfile, error: createError } = await supabase
+          .from("brand_profiles")
+          .insert({
+            user_id: user.id,
+            company_name: "CollabHunts Admin"
+          })
+          .select("id")
+          .single();
+
+        if (createError) {
+          console.error("Error creating admin brand profile:", createError);
+          toast({
+            title: "Error",
+            description: "Failed to create admin profile",
+            variant: "destructive"
+          });
+          return;
+        }
+        brandProfile = newBrandProfile;
+      }
+
+      if (!brandProfile) {
         toast({
           title: "Brand Profile Required",
           description: "Please create a brand profile to contact creators",
