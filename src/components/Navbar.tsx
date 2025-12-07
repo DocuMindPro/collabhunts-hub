@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   Menu, Shield, LogOut, LayoutDashboard, ChevronDown, ChevronUp,
-  BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Megaphone, Wallet, Users, CreditCard
+  BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Megaphone, Wallet, Users, CreditCard, Crown
 } from "lucide-react";
 import Notifications from "@/components/Notifications";
 import { useState, useEffect } from "react";
@@ -178,6 +179,12 @@ const Navbar = () => {
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-sm">{user.email}</span>
+                      {isAdmin && (
+                        <Badge variant="default" className="ml-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs px-1.5 py-0">
+                          <Crown className="h-3 w-3 mr-0.5" />
+                          Super Admin
+                        </Badge>
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -303,7 +310,15 @@ const Navbar = () => {
                         </div>
                       )}
                       <div className="pt-4 border-t">
-                        <p className="text-sm text-muted-foreground mb-2">{user.email}</p>
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                          {isAdmin && (
+                            <Badge variant="default" className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs px-1.5 py-0">
+                              <Crown className="h-3 w-3 mr-0.5" />
+                              Super Admin
+                            </Badge>
+                          )}
+                        </div>
                         <Button 
                           variant="outline" 
                           className="w-full gap-2" 
