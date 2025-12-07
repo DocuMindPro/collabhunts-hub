@@ -8,6 +8,10 @@ import Influencers from "./pages/Influencers";
 import Campaigns from "./pages/Campaigns";
 import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
+import AboutUs from "./pages/AboutUs";
+import Contact from "./pages/Contact";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Brand from "./pages/Brand";
 import Creator from "./pages/Creator";
 import BrandSignup from "./pages/BrandSignup";
@@ -38,6 +42,10 @@ const App = () => (
           <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/brand" element={<Brand />} />
           <Route path="/creator" element={<Creator />} />
           <Route path="/brand-signup" element={<BrandSignup />} />
