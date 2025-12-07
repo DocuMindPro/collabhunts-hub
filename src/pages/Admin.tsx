@@ -18,7 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database } from "lucide-react";
+import { Link } from "react-router-dom";
 import AdminBrandSubscriptionsTab from "@/components/brand-dashboard/AdminBrandSubscriptionsTab";
 import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -533,9 +534,17 @@ const Admin = () => {
               <h1 className="text-4xl font-heading font-bold mb-2">Admin Dashboard</h1>
               <p className="text-muted-foreground">Manage users and platform settings</p>
             </div>
-            <Button onClick={handleLogout} variant="outline">
-              Logout
-            </Button>
+            <div className="flex gap-2">
+              <Button asChild variant="outline">
+                <Link to="/backup-history">
+                  <Database className="h-4 w-4 mr-2" />
+                  Backups
+                </Link>
+              </Button>
+              <Button onClick={handleLogout} variant="outline">
+                Logout
+              </Button>
+            </div>
           </div>
 
           {/* Stats Cards */}
