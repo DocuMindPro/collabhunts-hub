@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -353,6 +354,15 @@ Deno.serve(async (req) => {
     
     const executionTime = Date.now() - startTime;
     
+    // Determine backup type for error recording
+    let backupTypeForError = "scheduled";
+    try {
+      const body = await req.clone().json();
+      backupTypeForError = body.type || "scheduled";
+    } catch {
+      // Use default
+    }
+    
     // Try to record failure
     try {
       const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -361,7 +371,7 @@ Deno.serve(async (req) => {
       if (supabaseUrl && supabaseServiceKey) {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
         await supabase.from("backup_history").insert({
-          backup_type: "scheduled",
+          backup_type: backupTypeForError,
           status: "failed",
           error_message: error.message,
           execution_time_ms: executionTime,
@@ -370,6 +380,86 @@ Deno.serve(async (req) => {
       }
     } catch (historyError) {
       console.error("Failed to record backup failure:", historyError);
+    }
+    
+    // Send email notification for backup failure
+    try {
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      const adminEmail = Deno.env.get("ADMIN_EMAIL");
+      
+      if (resendApiKey && adminEmail) {
+        const resend = new Resend(resendApiKey);
+        
+        console.log(`Sending backup failure notification to ${adminEmail}`);
+        
+        const { error: emailError } = await resend.emails.send({
+          from: "CollabHunts Backup <onboarding@resend.dev>",
+          to: [adminEmail],
+          subject: "⚠️ CollabHunts Database Backup Failed",
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: #dc2626; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+                .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }
+                .footer { background: #f3f4f6; padding: 15px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #6b7280; }
+                .detail { margin: 10px 0; padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #dc2626; }
+                .label { font-weight: 600; color: #374151; }
+                .error-box { background: #fef2f2; border: 1px solid #fecaca; padding: 15px; border-radius: 4px; margin: 15px 0; }
+                .btn { display: inline-block; background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin-top: 15px; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1 style="margin: 0;">⚠️ Backup Failed</h1>
+                </div>
+                <div class="content">
+                  <p>A database backup has failed and requires your attention.</p>
+                  
+                  <div class="detail">
+                    <span class="label">Backup Type:</span> ${backupTypeForError}
+                  </div>
+                  
+                  <div class="detail">
+                    <span class="label">Timestamp:</span> ${new Date().toISOString()}
+                  </div>
+                  
+                  <div class="detail">
+                    <span class="label">Execution Time:</span> ${(executionTime / 1000).toFixed(2)} seconds
+                  </div>
+                  
+                  <div class="error-box">
+                    <span class="label">Error Message:</span><br/>
+                    <code>${error.message}</code>
+                  </div>
+                  
+                  <p>Please review the backup configuration and try again.</p>
+                  
+                  <a href="https://collabhunts.lovable.app/backup-history" class="btn">View Backup History</a>
+                </div>
+                <div class="footer">
+                  <p>This is an automated message from CollabHunts Backup System</p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `,
+        });
+        
+        if (emailError) {
+          console.error("Failed to send backup failure email:", emailError);
+        } else {
+          console.log("Backup failure notification sent successfully");
+        }
+      } else {
+        console.log("Email notification skipped: RESEND_API_KEY or ADMIN_EMAIL not configured");
+      }
+    } catch (emailErr) {
+      console.error("Error sending backup failure email:", emailErr);
     }
     
     return new Response(

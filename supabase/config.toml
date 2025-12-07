@@ -2,3 +2,12 @@ project_id = "olcygpkghmaqkezmunyu"
 
 [functions.database-backup]
 verify_jwt = false
+
+[functions.get-cron-status]
+verify_jwt = false
+
+[functions.verify-backup]
+verify_jwt = false
+
+[functions.admin-reset-password]
+verify_jwt = false
