@@ -1,7 +1,39 @@
 import { Link } from "react-router-dom";
 import { Instagram, Twitter, Youtube, Linkedin } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Footer = () => {
+  const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
+
+  useEffect(() => {
+    const checkUserProfiles = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        setHasBrandProfile(false);
+        setHasCreatorProfile(false);
+        return;
+      }
+
+      const [brandResult, creatorResult] = await Promise.all([
+        supabase.from("brand_profiles").select("id").eq("user_id", session.user.id).maybeSingle(),
+        supabase.from("creator_profiles").select("id").eq("user_id", session.user.id).maybeSingle()
+      ]);
+
+      setHasBrandProfile(!!brandResult.data);
+      setHasCreatorProfile(!!creatorResult.data);
+    };
+
+    checkUserProfiles();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      checkUserProfiles();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <footer className="border-t border-border bg-muted/30">
       <div className="container mx-auto px-4 py-12">
@@ -47,9 +79,15 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/brand" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Join as Brand
-                </Link>
+                {hasBrandProfile ? (
+                  <Link to="/brand-dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    Brand Dashboard
+                  </Link>
+                ) : (
+                  <Link to="/brand" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    Join as Brand
+                  </Link>
+                )}
               </li>
             </ul>
           </div>
@@ -59,9 +97,15 @@ const Footer = () => {
             <h3 className="font-heading font-semibold mb-4">For Creators</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/creator" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Join as Creator
-                </Link>
+                {hasCreatorProfile ? (
+                  <Link to="/creator-dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    Creator Dashboard
+                  </Link>
+                ) : (
+                  <Link to="/creator" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    Join as Creator
+                  </Link>
+                )}
               </li>
               <li>
                 <Link to="/#how-it-works" className="text-sm text-muted-foreground hover:text-primary transition-colors">
