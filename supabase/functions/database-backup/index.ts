@@ -203,14 +203,85 @@ Deno.serve(async (req) => {
     let backupType = "scheduled";
     let triggeredBy: string | null = null;
     let testFailure = false;
+    let requestBody: { type?: string; triggered_by?: string; test_failure?: boolean; scheduled_call?: boolean } = {};
     
     try {
-      const body = await req.json();
-      backupType = body.type || "scheduled";
-      triggeredBy = body.triggered_by || null;
-      testFailure = body.test_failure === true;
+      requestBody = await req.json();
+      backupType = requestBody.type || "scheduled";
+      triggeredBy = requestBody.triggered_by || null;
+      testFailure = requestBody.test_failure === true;
     } catch {
       // Use defaults if no body
+    }
+    
+    // Check if this is a scheduled cron job call (has scheduled_call flag and matches expected pattern)
+    const isScheduledCall = requestBody.scheduled_call === true && backupType === "scheduled";
+    
+    // For non-scheduled calls, require admin authentication
+    if (!isScheduledCall) {
+      // Extract and verify JWT token
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        console.error("No authorization header provided");
+        return new Response(
+          JSON.stringify({ success: false, error: "Unauthorized: No authorization header" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      const token = authHeader.replace("Bearer ", "");
+      
+      // Initialize Supabase client with the user's token to verify authentication
+      const supabaseClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || supabaseServiceKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } }
+      });
+      
+      // Get the authenticated user
+      const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+      
+      if (authError || !user) {
+        console.error("Authentication failed:", authError?.message);
+        return new Response(
+          JSON.stringify({ success: false, error: "Unauthorized: Invalid token" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      console.log(`User ${user.id} attempting to trigger backup`);
+      
+      // Initialize service role client to check admin role
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+      
+      // Verify admin role using has_role function
+      const { data: isAdmin, error: roleError } = await supabaseAdmin.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin"
+      });
+      
+      if (roleError) {
+        console.error("Role check error:", roleError.message);
+        return new Response(
+          JSON.stringify({ success: false, error: "Failed to verify admin role" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      if (!isAdmin) {
+        console.error(`User ${user.id} is not an admin`);
+        return new Response(
+          JSON.stringify({ success: false, error: "Forbidden: Admin access required" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      console.log(`Admin user ${user.id} authorized for backup operation`);
+      
+      // Set triggered_by to the admin user's ID if not already set
+      if (!triggeredBy) {
+        triggeredBy = user.id;
+      }
+    } else {
+      console.log("Scheduled cron job call - bypassing user authentication");
     }
     
     // Test mode: simulate a failure to test email notifications
