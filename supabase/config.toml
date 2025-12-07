@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.admin-reset-password]
 verify_jwt = false
+
+[functions.optimize-image]
+verify_jwt = false
+
+[functions.get-storage-stats]
+verify_jwt = false

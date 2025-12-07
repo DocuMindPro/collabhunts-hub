@@ -29,6 +29,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import StorageMonitorCard from "@/components/backup/StorageMonitorCard";
 
 interface BackupRecord {
   id: string;
@@ -382,7 +383,7 @@ const BackupHistory = () => {
         </Card>
 
         {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -428,7 +429,7 @@ const BackupHistory = () => {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Storage
+                Backup Storage (S3)
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -438,8 +439,13 @@ const BackupHistory = () => {
                   {formatBytes(stats.totalSize)}
                 </span>
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Database backups only
+              </p>
             </CardContent>
           </Card>
+
+          <StorageMonitorCard />
         </div>
 
         {/* Backup History Table */}
