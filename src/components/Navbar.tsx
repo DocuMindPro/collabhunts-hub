@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, Shield, LogOut, LayoutDashboard } from "lucide-react";
+import { 
+  Menu, Shield, LogOut, LayoutDashboard, ChevronDown, ChevronUp,
+  BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Megaphone, Wallet, Users, CreditCard
+} from "lucide-react";
 import Notifications from "@/components/Notifications";
 import { useState, useEffect } from "react";
 import {
@@ -25,6 +28,27 @@ const Navbar = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [creatorMenuOpen, setCreatorMenuOpen] = useState(false);
+  const [brandMenuOpen, setBrandMenuOpen] = useState(false);
+
+  const creatorTabs = [
+    { value: "overview", label: "Overview", icon: BarChart3 },
+    { value: "campaigns", label: "Campaigns", icon: Megaphone },
+    { value: "profile", label: "Profile", icon: UserIcon },
+    { value: "services", label: "Services", icon: Package },
+    { value: "bookings", label: "Bookings", icon: Calendar },
+    { value: "payouts", label: "Payouts", icon: Wallet },
+    { value: "messages", label: "Messages", icon: MessageSquare },
+  ];
+
+  const brandTabs = [
+    { value: "overview", label: "Overview", icon: BarChart3 },
+    { value: "campaigns", label: "Campaigns", icon: Megaphone },
+    { value: "bookings", label: "Bookings", icon: Calendar },
+    { value: "creators", label: "Creators", icon: Users },
+    { value: "subscription", label: "Subscription", icon: CreditCard },
+    { value: "messages", label: "Messages", icon: MessageSquare },
+  ];
 
   const navLinks = [
     { to: "/influencers", label: "Search" },
@@ -216,21 +240,67 @@ const Navbar = () => {
                           </Button>
                         </Link>
                       )}
+                      
                       {hasCreatorProfile && (
-                        <Link to="/creator-dashboard" onClick={() => setIsOpen(false)}>
-                          <Button variant="outline" className="w-full gap-2">
-                            <LayoutDashboard className="h-4 w-4" />
-                            Creator Dashboard
+                        <div className="space-y-1">
+                          <Button 
+                            variant="outline" 
+                            className="w-full gap-2 justify-between"
+                            onClick={() => setCreatorMenuOpen(!creatorMenuOpen)}
+                          >
+                            <span className="flex items-center gap-2">
+                              <LayoutDashboard className="h-4 w-4" />
+                              Creator Dashboard
+                            </span>
+                            {creatorMenuOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </Button>
-                        </Link>
+                          {creatorMenuOpen && (
+                            <div className="ml-4 space-y-1 border-l-2 border-border pl-3">
+                              {creatorTabs.map((tab) => (
+                                <Link 
+                                  key={tab.value}
+                                  to={`/creator-dashboard?tab=${tab.value}`}
+                                  onClick={() => setIsOpen(false)}
+                                  className="flex items-center gap-2 py-2 px-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+                                >
+                                  <tab.icon className="h-4 w-4" />
+                                  {tab.label}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       )}
+
                       {hasBrandProfile && (
-                        <Link to="/brand-dashboard" onClick={() => setIsOpen(false)}>
-                          <Button variant="outline" className="w-full gap-2">
-                            <LayoutDashboard className="h-4 w-4" />
-                            Brand Dashboard
+                        <div className="space-y-1">
+                          <Button 
+                            variant="outline" 
+                            className="w-full gap-2 justify-between"
+                            onClick={() => setBrandMenuOpen(!brandMenuOpen)}
+                          >
+                            <span className="flex items-center gap-2">
+                              <LayoutDashboard className="h-4 w-4" />
+                              Brand Dashboard
+                            </span>
+                            {brandMenuOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </Button>
-                        </Link>
+                          {brandMenuOpen && (
+                            <div className="ml-4 space-y-1 border-l-2 border-border pl-3">
+                              {brandTabs.map((tab) => (
+                                <Link 
+                                  key={tab.value}
+                                  to={`/brand-dashboard?tab=${tab.value}`}
+                                  onClick={() => setIsOpen(false)}
+                                  className="flex items-center gap-2 py-2 px-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+                                >
+                                  <tab.icon className="h-4 w-4" />
+                                  {tab.label}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       )}
                       <div className="pt-4 border-t">
                         <p className="text-sm text-muted-foreground mb-2">{user.email}</p>
