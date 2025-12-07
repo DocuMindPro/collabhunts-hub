@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, Play, Image as ImageIcon, User, Camera } from "lucide-react";
 import { z } from "zod";
+import AiBioSuggestions from "@/components/AiBioSuggestions";
 
 // Validation schemas
 const emailSchema = z.string().email("Invalid email address").max(255);
@@ -647,6 +648,12 @@ const CreatorSignup = () => {
                       maxLength={1000}
                     />
                     <p className="text-xs text-muted-foreground mt-1">{bio.length}/1000</p>
+                    <AiBioSuggestions
+                      text={bio}
+                      onSelect={(text) => setBio(text)}
+                      minLength={20}
+                      type="bio"
+                    />
                   </div>
 
                   <div className="grid grid-cols-3 gap-3">
