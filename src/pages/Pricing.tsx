@@ -47,7 +47,7 @@ const Pricing = () => {
       features: [
         { text: "Everything in Pro", included: true },
         { text: "Post unlimited campaigns", included: true },
-        { text: "5% marketplace fee on bookings", included: true },
+        { text: "15% marketplace fee on bookings", included: true },
         { text: "Priority customer support (Coming Soon)", included: true },
         { text: "Dedicated account manager (Coming Soon)", included: true },
       ],
