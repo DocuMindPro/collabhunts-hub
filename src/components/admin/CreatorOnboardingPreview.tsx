@@ -114,7 +114,9 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
                   placeholder="Tell brands what makes you unique..."
                   rows={4}
                 />
-                <p className="text-xs text-muted-foreground mt-1">{bio.length}/1000</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {bio.length}/1000 {bio.length < 50 && <span className="text-destructive">(minimum 50 characters - {50 - bio.length} more needed)</span>}
+                </p>
                 <AiBioSuggestions
                   text={bio}
                   onSelect={(text) => setBio(text)}
@@ -158,7 +160,13 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
 
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep(1)} className="flex-1">Back</Button>
-                <Button onClick={() => setStep(3)} className="flex-1">Continue</Button>
+                <Button 
+                  onClick={() => setStep(3)} 
+                  className="flex-1"
+                  disabled={bio.length < 50 || displayName.length < 2 || selectedCategories.length === 0}
+                >
+                  Continue
+                </Button>
               </div>
             </div>
           )}
