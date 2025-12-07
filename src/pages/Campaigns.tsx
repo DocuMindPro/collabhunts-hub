@@ -132,7 +132,7 @@ const Campaigns = () => {
       return;
     }
 
-    navigate('/creator-dashboard', { state: { openCampaign: campaignId } });
+    navigate(`/creator-dashboard?tab=campaigns&apply=${campaignId}`);
   };
 
   if (loading) {

@@ -75,7 +75,7 @@ const CreatorDashboard = () => {
             </TabsContent>
 
             <TabsContent value="campaigns" className="space-y-6">
-              <CampaignsTab />
+              <CampaignsTab openCampaignId={searchParams.get('apply')} />
             </TabsContent>
 
             <TabsContent value="profile" className="space-y-6">
