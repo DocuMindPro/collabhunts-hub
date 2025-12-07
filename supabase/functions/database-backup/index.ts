@@ -340,6 +340,105 @@ Deno.serve(async (req) => {
     
     console.log(`Backup completed successfully in ${executionTime}ms`);
     
+    // Send success email notification
+    try {
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      const adminEmail = Deno.env.get("ADMIN_EMAIL");
+      
+      if (resendApiKey && adminEmail) {
+        const resend = new Resend(resendApiKey);
+        
+        console.log(`Sending backup success notification to ${adminEmail}`);
+        
+        const { error: emailError } = await resend.emails.send({
+          from: "CollabHunts Backup <onboarding@resend.dev>",
+          to: [adminEmail],
+          subject: "✅ CollabHunts Database Backup Successful",
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: #16a34a; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+                .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }
+                .footer { background: #f3f4f6; padding: 15px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #6b7280; }
+                .detail { margin: 10px 0; padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #16a34a; }
+                .label { font-weight: 600; color: #374151; }
+                .success-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 4px; margin: 15px 0; }
+                .btn { display: inline-block; background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin-top: 15px; }
+                .stats { display: flex; gap: 15px; flex-wrap: wrap; margin: 15px 0; }
+                .stat { background: white; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb; flex: 1; min-width: 120px; text-align: center; }
+                .stat-value { font-size: 24px; font-weight: 700; color: #16a34a; }
+                .stat-label { font-size: 12px; color: #6b7280; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1 style="margin: 0;">✅ Backup Successful</h1>
+                </div>
+                <div class="content">
+                  <p>Your database backup has completed successfully.</p>
+                  
+                  <div class="stats">
+                    <div class="stat">
+                      <div class="stat-value">${tablesBackedUp.length}</div>
+                      <div class="stat-label">Tables</div>
+                    </div>
+                    <div class="stat">
+                      <div class="stat-value">${totalRows.toLocaleString()}</div>
+                      <div class="stat-label">Rows</div>
+                    </div>
+                    <div class="stat">
+                      <div class="stat-value">${(fileSize / 1024).toFixed(1)}KB</div>
+                      <div class="stat-label">Size</div>
+                    </div>
+                  </div>
+                  
+                  <div class="detail">
+                    <span class="label">Backup Type:</span> ${backupType}
+                  </div>
+                  
+                  <div class="detail">
+                    <span class="label">Timestamp:</span> ${new Date().toISOString()}
+                  </div>
+                  
+                  <div class="detail">
+                    <span class="label">Execution Time:</span> ${(executionTime / 1000).toFixed(2)} seconds
+                  </div>
+                  
+                  <div class="detail">
+                    <span class="label">File:</span> ${fileName}
+                  </div>
+                  
+                  <div class="success-box">
+                    <span class="label">S3 Location:</span><br/>
+                    <code style="word-break: break-all;">${uploadResult.url}</code>
+                  </div>
+                  
+                  <a href="https://collabhunts.lovable.app/backup-history" class="btn">View Backup History</a>
+                </div>
+                <div class="footer">
+                  <p>This is an automated message from CollabHunts Backup System</p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `,
+        });
+        
+        if (emailError) {
+          console.error("Failed to send backup success email:", emailError);
+        } else {
+          console.log("Backup success notification sent successfully");
+        }
+      }
+    } catch (emailErr) {
+      console.error("Error sending backup success email:", emailErr);
+    }
+    
     return new Response(
       JSON.stringify({
         success: true,
