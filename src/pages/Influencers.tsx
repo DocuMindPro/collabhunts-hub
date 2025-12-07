@@ -38,6 +38,7 @@ const Influencers = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [creators, setCreators] = useState<CreatorWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   const platforms = ["All", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch"];
   const categories = [
@@ -225,11 +226,14 @@ const Influencers = () => {
                       <div className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-all duration-300 hover:-translate-y-1">
                         {/* Taller Image Container - 4:5 aspect ratio like Collabstr */}
                         <div className="relative aspect-[4/5] overflow-hidden bg-muted">
-                          {creator.profile_image_url ? (
+                          {creator.profile_image_url && !failedImages.has(creator.id) ? (
                             <img 
                               src={creator.profile_image_url} 
                               alt={creator.display_name}
                               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              onError={() => {
+                                setFailedImages(prev => new Set(prev).add(creator.id));
+                              }}
                             />
                           ) : (
                             <div className="absolute inset-0 bg-gradient-accent flex items-center justify-center">

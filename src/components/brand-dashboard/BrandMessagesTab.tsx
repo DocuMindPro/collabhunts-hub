@@ -70,8 +70,8 @@ const BrandMessagesTab = () => {
     }
   }, [selectedConversation]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (instant = false) => {
+    messagesEndRef.current?.scrollIntoView({ behavior: instant ? "instant" : "smooth" });
   };
 
   useEffect(() => {
@@ -122,7 +122,10 @@ const BrandMessagesTab = () => {
       if (error) throw error;
       setMessages(data || []);
       
-      setTimeout(scrollToBottom, 100);
+      // Multiple scroll attempts for mobile compatibility
+      setTimeout(() => scrollToBottom(true), 50);
+      setTimeout(() => scrollToBottom(true), 150);
+      setTimeout(() => scrollToBottom(true), 300);
 
       await supabase
         .from("messages")
