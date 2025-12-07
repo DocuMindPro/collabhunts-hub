@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, MessageSquare } from "lucide-react";
+import { Send, MessageSquare, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Conversation {
   id: string;
@@ -32,6 +33,7 @@ const MessagesTab = () => {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchConversations();
@@ -47,7 +49,6 @@ const MessagesTab = () => {
         },
         (payload) => {
           if (payload.new.conversation_id === selectedConversation) {
-            // Only add if not already in messages (avoid duplicates from optimistic update)
             setMessages((prev) => {
               const exists = prev.some(m => m.id === payload.new.id);
               if (exists) return prev;
@@ -122,7 +123,6 @@ const MessagesTab = () => {
       if (error) throw error;
       setMessages(data || []);
       
-      // Multiple scroll attempts for mobile compatibility
       setTimeout(() => scrollToBottom(true), 50);
       setTimeout(() => scrollToBottom(true), 150);
       setTimeout(() => scrollToBottom(true), 300);
@@ -150,7 +150,6 @@ const MessagesTab = () => {
       is_read: false,
     };
 
-    // Optimistic update - show immediately
     setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
     scrollToBottom();
@@ -163,16 +162,20 @@ const MessagesTab = () => {
       });
 
       if (error) throw error;
-      
-      // Remove temp message after successful insert - real-time will add the actual message
       setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
     } catch (error) {
       console.error("Error sending message:", error);
-      // Rollback on error
       setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
       toast.error("Failed to send message");
     }
   };
+
+  const handleBackToList = () => {
+    setSelectedConversation(null);
+    setMessages([]);
+  };
+
+  const selectedConvoName = conversations.find(c => c.id === selectedConversation)?.brand_profiles?.company_name;
 
   if (loading) {
     return (
@@ -182,14 +185,111 @@ const MessagesTab = () => {
     );
   }
 
+  // Mobile: Show either conversation list OR messages (not both)
+  if (isMobile) {
+    if (selectedConversation) {
+      return (
+        <Card className="h-[calc(100vh-200px)] flex flex-col overflow-hidden">
+          <CardHeader className="py-3 px-4 border-b flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleBackToList}
+                className="h-8 w-8 shrink-0"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <CardTitle className="text-base truncate">{selectedConvoName || "Messages"}</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-y-auto p-3 space-y-3">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex ${msg.sender_id === userId ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
+                    msg.sender_id === userId
+                      ? "bg-primary text-primary-foreground rounded-br-md"
+                      : "bg-muted rounded-bl-md"
+                  }`}
+                >
+                  <p className="break-words">{msg.content}</p>
+                  <p className={`text-[10px] mt-1 ${
+                    msg.sender_id === userId ? "text-primary-foreground/70" : "text-muted-foreground"
+                  }`}>
+                    {format(new Date(msg.created_at), "HH:mm")}
+                  </p>
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </CardContent>
+          <div className="p-3 border-t flex-shrink-0">
+            <div className="flex gap-2">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+                className="flex-1"
+              />
+              <Button onClick={sendMessage} size="icon" className="shrink-0">
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+
+    // Show conversation list on mobile
+    return (
+      <Card className="h-[calc(100vh-200px)] flex flex-col overflow-hidden">
+        <CardHeader className="py-3 px-4 border-b flex-shrink-0">
+          <CardTitle className="text-base flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />
+            Messages
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 overflow-y-auto p-0">
+          {conversations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full py-12 px-4">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground text-center">No conversations yet</p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {conversations.map((conv) => (
+                <button
+                  key={conv.id}
+                  onClick={() => setSelectedConversation(conv.id)}
+                  className="w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors"
+                >
+                  <p className="font-semibold truncate">{conv.brand_profiles.company_name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {format(new Date(conv.last_message_at), "MMM dd, HH:mm")}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Desktop: Side-by-side layout
   return (
     <div className="grid md:grid-cols-3 gap-6 h-[600px]">
-      <Card className="md:col-span-1">
-        <CardHeader>
+      <Card className="md:col-span-1 flex flex-col overflow-hidden">
+        <CardHeader className="flex-shrink-0">
           <CardTitle>Conversations</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <ScrollArea className="h-[500px]">
+        <CardContent className="flex-1 overflow-hidden p-0">
+          <ScrollArea className="h-full">
             {conversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 px-4">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
@@ -219,16 +319,14 @@ const MessagesTab = () => {
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-2">
+      <Card className="md:col-span-2 flex flex-col overflow-hidden">
         {selectedConversation ? (
           <>
-            <CardHeader>
-              <CardTitle>
-                {conversations.find((c) => c.id === selectedConversation)?.brand_profiles.company_name}
-              </CardTitle>
+            <CardHeader className="flex-shrink-0">
+              <CardTitle>{selectedConvoName}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <ScrollArea className="h-[400px] pr-4">
+            <CardContent className="flex-1 flex flex-col overflow-hidden space-y-4">
+              <ScrollArea className="flex-1 pr-4">
                 <div className="space-y-4">
                   {messages.map((msg) => (
                     <div
@@ -253,7 +351,7 @@ const MessagesTab = () => {
                 </div>
               </ScrollArea>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-shrink-0">
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}

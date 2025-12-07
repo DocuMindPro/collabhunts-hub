@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BrandOverviewTab from "@/components/brand-dashboard/BrandOverviewTab";
 import BrandBookingsTab from "@/components/brand-dashboard/BrandBookingsTab";
@@ -17,36 +16,36 @@ const BrandDashboard = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="flex-1 py-8">
+      <main className="flex-1 py-4 md:py-8">
         <div className="container mx-auto px-4 max-w-7xl">
-          <div className="mb-8">
-            <h1 className="text-4xl font-heading font-bold mb-2">Brand Dashboard</h1>
-            <p className="text-muted-foreground">Manage your campaigns and collaborations</p>
+          <div className="mb-4 md:mb-8">
+            <h1 className="text-2xl md:text-4xl font-heading font-bold mb-1 md:mb-2">Brand Dashboard</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Manage your campaigns and collaborations</p>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-flex">
-              <TabsTrigger value="overview" className="gap-2">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+            <TabsList className="flex w-full overflow-x-auto gap-1 lg:w-auto lg:inline-flex">
+              <TabsTrigger value="overview" className="gap-2 shrink-0">
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
               </TabsTrigger>
-              <TabsTrigger value="campaigns" className="gap-2">
+              <TabsTrigger value="campaigns" className="gap-2 shrink-0">
                 <Megaphone className="h-4 w-4" />
                 <span className="hidden sm:inline">Campaigns</span>
               </TabsTrigger>
-              <TabsTrigger value="bookings" className="gap-2">
+              <TabsTrigger value="bookings" className="gap-2 shrink-0">
                 <Calendar className="h-4 w-4" />
                 <span className="hidden sm:inline">Bookings</span>
               </TabsTrigger>
-              <TabsTrigger value="creators" className="gap-2">
+              <TabsTrigger value="creators" className="gap-2 shrink-0">
                 <Users className="h-4 w-4" />
                 <span className="hidden sm:inline">Creators</span>
               </TabsTrigger>
-              <TabsTrigger value="subscription" className="gap-2">
+              <TabsTrigger value="subscription" className="gap-2 shrink-0">
                 <CreditCard className="h-4 w-4" />
                 <span className="hidden sm:inline">Subscription</span>
               </TabsTrigger>
-              <TabsTrigger value="messages" className="gap-2">
+              <TabsTrigger value="messages" className="gap-2 shrink-0">
                 <MessageSquare className="h-4 w-4" />
                 <span className="hidden sm:inline">Messages</span>
               </TabsTrigger>
@@ -78,8 +77,6 @@ const BrandDashboard = () => {
           </Tabs>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };
