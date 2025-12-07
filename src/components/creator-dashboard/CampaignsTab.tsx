@@ -38,7 +38,11 @@ interface MyApplication {
   campaigns: Campaign;
 }
 
-const CampaignsTab = () => {
+interface CampaignsTabProps {
+  openCampaignId?: string | null;
+}
+
+const CampaignsTab = ({ openCampaignId }: CampaignsTabProps) => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [myApplications, setMyApplications] = useState<MyApplication[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
@@ -54,6 +58,20 @@ const CampaignsTab = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Auto-open apply dialog when navigating from public campaigns page
+  useEffect(() => {
+    if (openCampaignId && !loading && campaigns.length > 0) {
+      const campaign = campaigns.find(c => c.id === openCampaignId);
+      if (campaign && !hasApplied(campaign.id)) {
+        openApplyDialog(campaign);
+        // Clear the URL parameter to prevent re-opening
+        const url = new URL(window.location.href);
+        url.searchParams.delete('apply');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+  }, [openCampaignId, loading, campaigns]);
 
   const fetchData = async () => {
     try {
