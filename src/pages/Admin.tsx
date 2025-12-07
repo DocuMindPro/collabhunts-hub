@@ -543,106 +543,113 @@ const Admin = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-1 py-12 px-4 gradient-subtle">
+      <main className="flex-1 py-4 md:py-12 px-4 gradient-subtle">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 md:mb-8">
             <div>
-              <h1 className="text-4xl font-heading font-bold mb-2">Admin Dashboard</h1>
-              <p className="text-muted-foreground">Manage users and platform settings</p>
+              <h1 className="text-2xl md:text-4xl font-heading font-bold mb-1 md:mb-2">Admin Dashboard</h1>
+              <p className="text-sm md:text-base text-muted-foreground">Manage users and platform settings</p>
             </div>
-            <div className="flex gap-2">
-              <Button asChild variant="outline">
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline" size="sm" className="md:size-default">
                 <Link to="/backup-history">
-                  <Database className="h-4 w-4 mr-2" />
-                  Backups
+                  <Database className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">Backups</span>
                 </Link>
               </Button>
-              <Button onClick={handleLogout} variant="outline">
+              <Button onClick={handleLogout} variant="outline" size="sm" className="md:size-default">
                 Logout
               </Button>
             </div>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-6 mb-4 md:mb-8">
             <Card>
-              <CardHeader className="pb-3">
-                <CardDescription className="flex items-center gap-2">
+              <CardHeader className="p-3 md:p-6 pb-3">
+                <CardDescription className="flex items-center gap-2 text-xs md:text-sm">
                   <Users className="h-4 w-4" />
                   Total Users
                 </CardDescription>
-                <CardTitle className="text-3xl">{stats.total}</CardTitle>
+                <CardTitle className="text-2xl md:text-3xl">{stats.total}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
-              <CardHeader className="pb-3">
-                <CardDescription className="flex items-center gap-2">
+              <CardHeader className="p-3 md:p-6 pb-3">
+                <CardDescription className="flex items-center gap-2 text-xs md:text-sm">
                   <Building2 className="h-4 w-4" />
                   Brands
                 </CardDescription>
-                <CardTitle className="text-3xl">{stats.brands}</CardTitle>
+                <CardTitle className="text-2xl md:text-3xl">{stats.brands}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
-              <CardHeader className="pb-3">
-                <CardDescription className="flex items-center gap-2">
+              <CardHeader className="p-3 md:p-6 pb-3">
+                <CardDescription className="flex items-center gap-2 text-xs md:text-sm">
                   <Palette className="h-4 w-4" />
                   Creators
                 </CardDescription>
-                <CardTitle className="text-3xl">{stats.creators}</CardTitle>
+                <CardTitle className="text-2xl md:text-3xl">{stats.creators}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
-              <CardHeader className="pb-3">
-                <CardDescription>Admins</CardDescription>
-                <CardTitle className="text-3xl">{stats.admins}</CardTitle>
+              <CardHeader className="p-3 md:p-6 pb-3">
+                <CardDescription className="text-xs md:text-sm">Admins</CardDescription>
+                <CardTitle className="text-2xl md:text-3xl">{stats.admins}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
-              <CardHeader className="pb-3">
-                <CardDescription>Pending Approvals</CardDescription>
-                <CardTitle className="text-3xl">{stats.pendingCreators}</CardTitle>
+              <CardHeader className="p-3 md:p-6 pb-3">
+                <CardDescription className="text-xs md:text-sm">Pending</CardDescription>
+                <CardTitle className="text-2xl md:text-3xl">{stats.pendingCreators}</CardTitle>
               </CardHeader>
             </Card>
           </div>
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="users">All Users</TabsTrigger>
-              <TabsTrigger value="approvals">
-                Creator Approvals
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 md:space-y-6">
+            <TabsList className="flex w-full overflow-x-auto gap-1 lg:w-auto lg:inline-flex h-auto p-1">
+              <TabsTrigger value="users" className="gap-2 shrink-0">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">All Users</span>
+              </TabsTrigger>
+              <TabsTrigger value="approvals" className="gap-2 shrink-0">
+                <CheckCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">Approvals</span>
                 {stats.pendingCreators > 0 && (
-                  <Badge variant="destructive" className="ml-2">
+                  <Badge variant="destructive" className="ml-1">
                     {stats.pendingCreators}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="campaigns">
-                <Megaphone className="h-4 w-4 mr-2" />
-                Campaigns
+              <TabsTrigger value="campaigns" className="gap-2 shrink-0">
+                <Megaphone className="h-4 w-4" />
+                <span className="hidden sm:inline">Campaigns</span>
               </TabsTrigger>
-              <TabsTrigger value="subscriptions">
-                <CreditCard className="h-4 w-4 mr-2" />
-                Subscriptions
+              <TabsTrigger value="subscriptions" className="gap-2 shrink-0">
+                <CreditCard className="h-4 w-4" />
+                <span className="hidden sm:inline">Subscriptions</span>
               </TabsTrigger>
-              <TabsTrigger value="revenue">Revenue & Analytics</TabsTrigger>
-              <TabsTrigger value="testing">
-                <FlaskConical className="h-4 w-4 mr-2" />
-                Testing
+              <TabsTrigger value="revenue" className="gap-2 shrink-0">
+                <TrendingUp className="h-4 w-4" />
+                <span className="hidden sm:inline">Revenue</span>
+              </TabsTrigger>
+              <TabsTrigger value="testing" className="gap-2 shrink-0">
+                <FlaskConical className="h-4 w-4" />
+                <span className="hidden sm:inline">Testing</span>
               </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
             <TabsContent value="users">
               <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
+                <CardHeader className="p-4 md:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <CardTitle>All Users</CardTitle>
-                      <CardDescription>View and manage platform users</CardDescription>
+                      <CardTitle className="text-lg md:text-xl">All Users</CardTitle>
+                      <CardDescription className="text-xs md:text-sm">View and manage platform users</CardDescription>
                     </div>
-                    <div className="w-72">
+                    <div className="w-full sm:w-72">
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -655,12 +662,13 @@ const Admin = () => {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
                   {loading ? (
                     <div className="flex justify-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
                   ) : (
+                    <div className="overflow-x-auto -mx-4 md:mx-0">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -758,6 +766,7 @@ const Admin = () => {
                         ))}
                       </TableBody>
                     </Table>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -914,45 +923,45 @@ const Admin = () => {
             <TabsContent value="revenue">
               <div className="space-y-6">
                 {/* Revenue Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-6">
                   <Card>
-                    <CardHeader className="pb-3">
-                      <CardDescription className="flex items-center gap-2">
+                    <CardHeader className="p-3 md:p-6 pb-3">
+                      <CardDescription className="flex items-center gap-2 text-xs md:text-sm">
                         <DollarSign className="h-4 w-4 text-green-600" />
-                        Platform Revenue (15%)
+                        <span className="hidden sm:inline">Platform</span> Revenue
                       </CardDescription>
-                      <CardTitle className="text-3xl text-green-600">
+                      <CardTitle className="text-xl md:text-3xl text-green-600">
                         ${(revenueStats.totalRevenue / 100).toFixed(2)}
                       </CardTitle>
                     </CardHeader>
                   </Card>
                   <Card>
-                    <CardHeader className="pb-3">
-                      <CardDescription className="flex items-center gap-2">
+                    <CardHeader className="p-3 md:p-6 pb-3">
+                      <CardDescription className="flex items-center gap-2 text-xs md:text-sm">
                         <TrendingUp className="h-4 w-4" />
                         Total Volume
                       </CardDescription>
-                      <CardTitle className="text-3xl">
+                      <CardTitle className="text-xl md:text-3xl">
                         ${(revenueStats.totalVolume / 100).toFixed(2)}
                       </CardTitle>
                     </CardHeader>
                   </Card>
                   <Card>
-                    <CardHeader className="pb-3">
-                      <CardDescription>Active Bookings</CardDescription>
-                      <CardTitle className="text-3xl">{revenueStats.activeBookings}</CardTitle>
+                    <CardHeader className="p-3 md:p-6 pb-3">
+                      <CardDescription className="text-xs md:text-sm">Active</CardDescription>
+                      <CardTitle className="text-xl md:text-3xl">{revenueStats.activeBookings}</CardTitle>
                     </CardHeader>
                   </Card>
                   <Card>
-                    <CardHeader className="pb-3">
-                      <CardDescription>Completed</CardDescription>
-                      <CardTitle className="text-3xl">{revenueStats.completedBookings}</CardTitle>
+                    <CardHeader className="p-3 md:p-6 pb-3">
+                      <CardDescription className="text-xs md:text-sm">Completed</CardDescription>
+                      <CardTitle className="text-xl md:text-3xl">{revenueStats.completedBookings}</CardTitle>
                     </CardHeader>
                   </Card>
                   <Card>
-                    <CardHeader className="pb-3">
-                      <CardDescription>Avg Booking Value</CardDescription>
-                      <CardTitle className="text-3xl">
+                    <CardHeader className="p-3 md:p-6 pb-3">
+                      <CardDescription className="text-xs md:text-sm">Avg Value</CardDescription>
+                      <CardTitle className="text-xl md:text-3xl">
                         ${(revenueStats.avgBookingValue / 100).toFixed(2)}
                       </CardTitle>
                     </CardHeader>
@@ -1002,17 +1011,17 @@ const Admin = () => {
 
                 {/* Transactions Table */}
                 <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
+                  <CardHeader className="p-4 md:p-6">
+                    <div className="flex flex-col gap-4">
                       <div>
-                        <CardTitle>All Transactions</CardTitle>
-                        <CardDescription>
-                          Complete transaction history with platform fees
+                        <CardTitle className="text-lg md:text-xl">All Transactions</CardTitle>
+                        <CardDescription className="text-xs md:text-sm">
+                          Transaction history with platform fees
                         </CardDescription>
                       </div>
-                      <div className="flex gap-3">
+                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
-                          <SelectTrigger className="w-36">
+                          <SelectTrigger className="w-full sm:w-36">
                             <SelectValue placeholder="Status" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1023,7 +1032,7 @@ const Admin = () => {
                             <SelectItem value="cancelled">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
-                        <div className="relative w-64">
+                        <div className="relative w-full sm:w-64">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
                             placeholder="Search transactions..."
