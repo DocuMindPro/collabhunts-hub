@@ -214,8 +214,12 @@ Deno.serve(async (req) => {
       // Use defaults if no body
     }
     
-    // Check if this is a scheduled cron job call (has scheduled_call flag and matches expected pattern)
-    const isScheduledCall = requestBody.scheduled_call === true && backupType === "scheduled";
+    // Check if this is a scheduled cron job call (must have scheduled_call flag AND valid cron_secret)
+    const BACKUP_CRON_SECRET = Deno.env.get("BACKUP_CRON_SECRET");
+    const isScheduledCall = requestBody.scheduled_call === true && 
+                           backupType === "scheduled" && 
+                           requestBody.cron_secret === BACKUP_CRON_SECRET &&
+                           BACKUP_CRON_SECRET !== undefined;
     
     // For non-scheduled calls, require admin authentication
     if (!isScheduledCall) {
