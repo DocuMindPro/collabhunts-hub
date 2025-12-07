@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, X, Camera, Images, ImagePlus } from "lucide-react";
 import SocialAccountsSection from "./SocialAccountsSection";
 import PortfolioUploadSection from "./PortfolioUploadSection";
+import AiBioSuggestions from "@/components/AiBioSuggestions";
 
 const AVAILABLE_CATEGORIES = [
   "Fashion", "Beauty", "Fitness", "Travel", "Food", "Tech",
@@ -435,6 +436,12 @@ const ProfileTab = () => {
               onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
               placeholder="Tell us about yourself..."
               rows={4}
+            />
+            <AiBioSuggestions
+              text={profile.bio}
+              onSelect={(text) => setProfile({ ...profile, bio: text })}
+              minLength={20}
+              type="bio"
             />
           </div>
         </CardContent>

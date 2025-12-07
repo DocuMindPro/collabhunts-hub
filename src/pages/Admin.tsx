@@ -18,10 +18,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical } from "lucide-react";
 import { Link } from "react-router-dom";
 import AdminBrandSubscriptionsTab from "@/components/brand-dashboard/AdminBrandSubscriptionsTab";
 import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
+import AdminTestingTab from "@/components/admin/AdminTestingTab";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface Profile {
@@ -611,6 +612,10 @@ const Admin = () => {
                 Subscriptions
               </TabsTrigger>
               <TabsTrigger value="revenue">Revenue & Analytics</TabsTrigger>
+              <TabsTrigger value="testing">
+                <FlaskConical className="h-4 w-4 mr-2" />
+                Testing
+              </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -1093,6 +1098,11 @@ const Admin = () => {
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            {/* Testing Tab */}
+            <TabsContent value="testing">
+              <AdminTestingTab />
             </TabsContent>
           </Tabs>
         </div>
