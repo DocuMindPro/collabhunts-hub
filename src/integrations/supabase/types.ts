@@ -460,6 +460,8 @@ export type Database = {
           bio: string | null
           categories: string[] | null
           cover_image_url: string | null
+          cover_image_url_2: string | null
+          cover_image_url_3: string | null
           created_at: string | null
           display_name: string
           id: string
@@ -476,6 +478,8 @@ export type Database = {
           bio?: string | null
           categories?: string[] | null
           cover_image_url?: string | null
+          cover_image_url_2?: string | null
+          cover_image_url_3?: string | null
           created_at?: string | null
           display_name: string
           id?: string
@@ -492,6 +496,8 @@ export type Database = {
           bio?: string | null
           categories?: string[] | null
           cover_image_url?: string | null
+          cover_image_url_2?: string | null
+          cover_image_url_3?: string | null
           created_at?: string | null
           display_name?: string
           id?: string

@@ -21,6 +21,8 @@ interface CreatorData {
   display_name: string;
   profile_image_url: string | null;
   cover_image_url: string | null;
+  cover_image_url_2: string | null;
+  cover_image_url_3: string | null;
   bio: string | null;
   location_city: string | null;
   location_state: string | null;
@@ -279,6 +281,8 @@ const CreatorProfile = () => {
         display_name: profileData.display_name,
         profile_image_url: profileData.profile_image_url,
         cover_image_url: profileData.cover_image_url,
+        cover_image_url_2: profileData.cover_image_url_2,
+        cover_image_url_3: profileData.cover_image_url_3,
         bio: profileData.bio,
         location_city: profileData.location_city,
         location_state: profileData.location_state,
@@ -356,6 +360,8 @@ const CreatorProfile = () => {
           <MobilePortfolioCarousel
             media={creator.portfolio_media}
             coverImageUrl={creator.cover_image_url}
+            coverImageUrl2={creator.cover_image_url_2}
+            coverImageUrl3={creator.cover_image_url_3}
             profileImageUrl={creator.profile_image_url}
             displayName={creator.display_name}
             onSlideClick={(index) => {
