@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      backup_history: {
+        Row: {
+          backup_type: string
+          backup_version: string | null
+          components_backed_up: Json | null
+          created_at: string | null
+          error_message: string | null
+          execution_time_ms: number | null
+          file_name: string | null
+          file_size: number | null
+          function_count: number | null
+          id: string
+          migration_count: number | null
+          s3_url: string | null
+          status: string
+          tables_backed_up: string[] | null
+          triggered_by: string | null
+        }
+        Insert: {
+          backup_type?: string
+          backup_version?: string | null
+          components_backed_up?: Json | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          file_name?: string | null
+          file_size?: number | null
+          function_count?: number | null
+          id?: string
+          migration_count?: number | null
+          s3_url?: string | null
+          status: string
+          tables_backed_up?: string[] | null
+          triggered_by?: string | null
+        }
+        Update: {
+          backup_type?: string
+          backup_version?: string | null
+          components_backed_up?: Json | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          file_name?: string | null
+          file_size?: number | null
+          function_count?: number | null
+          id?: string
+          migration_count?: number | null
+          s3_url?: string | null
+          status?: string
+          tables_backed_up?: string[] | null
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           booking_date: string | null
