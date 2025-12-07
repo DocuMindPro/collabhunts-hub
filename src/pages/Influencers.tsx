@@ -3,10 +3,9 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, SlidersHorizontal, Star, Heart } from "lucide-react";
+import { Search, Star, Instagram, Youtube, Play } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -113,7 +112,7 @@ const Influencers = () => {
   });
 
   const getMainPlatform = (socialAccounts: CreatorWithDetails['social_accounts']) => {
-    if (socialAccounts.length === 0) return { platform: "N/A", followers: 0 };
+    if (socialAccounts.length === 0) return { platform: "Creator", followers: 0 };
     const sorted = [...socialAccounts].sort((a, b) => b.follower_count - a.follower_count);
     return { platform: sorted[0].platform, followers: sorted[0].follower_count };
   };
@@ -127,6 +126,15 @@ const Influencers = () => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
     if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
     return count.toString();
+  };
+
+  const getPlatformIcon = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case "instagram": return Instagram;
+      case "youtube": return Youtube;
+      case "tiktok": return Play;
+      default: return Instagram;
+    }
   };
 
   return (
@@ -201,84 +209,84 @@ const Influencers = () => {
             </div>
           ) : (
             <>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Collabstr-style Grid - 4 columns, taller cards */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                 {filteredCreators.map((creator) => {
                   const mainPlatform = getMainPlatform(creator.social_accounts);
                   const lowestPrice = getLowestPrice(creator.services);
+                  const PlatformIcon = getPlatformIcon(mainPlatform.platform);
 
                   return (
-                    <div
+                    <Link
                       key={creator.id}
-                      className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-shadow group"
+                      to={`/creator/${creator.id}`}
+                      className="group block"
                     >
-                      <div className="relative aspect-square overflow-hidden bg-gradient-accent">
-                        {creator.profile_image_url ? (
-                          <img 
-                            src={creator.profile_image_url} 
-                            alt={creator.display_name}
-                            className="absolute inset-0 w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-6xl font-heading font-bold text-white/20">
-                              {creator.display_name.charAt(0)}
-                            </span>
+                      <div className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-all duration-300 hover:-translate-y-1">
+                        {/* Taller Image Container - 4:5 aspect ratio like Collabstr */}
+                        <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+                          {creator.profile_image_url ? (
+                            <img 
+                              src={creator.profile_image_url} 
+                              alt={creator.display_name}
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 bg-gradient-accent flex items-center justify-center">
+                              <span className="text-7xl font-heading font-bold text-white/30">
+                                {creator.display_name.charAt(0)}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* Overlay badges on image */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          
+                          {/* Platform & Followers Badge - Top Left */}
+                          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+                            <PlatformIcon className="h-3.5 w-3.5" />
+                            <span>{formatFollowers(mainPlatform.followers)}</span>
                           </div>
-                        )}
-                        <button className="absolute top-4 right-4 p-2 bg-background/80 backdrop-blur rounded-full hover:bg-background transition-colors">
-                          <Heart className="h-5 w-5" />
-                        </button>
-                        <Badge className="absolute bottom-4 left-4 bg-background/90 backdrop-blur capitalize">
-                          {mainPlatform.platform}
-                        </Badge>
-                      </div>
 
-                      <div className="p-6">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="font-heading font-semibold text-lg mb-1">
+                          {/* Rating Badge - Top Right */}
+                          <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium">
+                            <Star className="h-3 w-3 fill-primary text-primary" />
+                            <span>5.0</span>
+                          </div>
+
+                          {/* Creator Info - Bottom Overlay */}
+                          <div className="absolute bottom-0 left-0 right-0 p-4">
+                            <h3 className="font-heading font-semibold text-lg text-white mb-0.5 line-clamp-1">
                               {creator.display_name}
                             </h3>
-                            <p className="text-sm text-muted-foreground">
-                              {creator.categories[0] || "Creator"}
+                            <p className="text-sm text-white/80 line-clamp-1">
+                              {creator.categories[0] || "Content Creator"}
                             </p>
                           </div>
-                          <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded">
-                            <Star className="h-4 w-4 fill-primary text-primary" />
-                            <span className="text-sm font-medium">5.0</span>
-                          </div>
                         </div>
 
-                        <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                          <span>{formatFollowers(mainPlatform.followers)} followers</span>
-                          <span>
-                            {[creator.location_city, creator.location_state]
-                              .filter(Boolean)
-                              .join(", ") || "Location N/A"}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
+                        {/* Price & Location Bar */}
+                        <div className="p-4 flex items-center justify-between">
                           <div>
                             {lowestPrice > 0 ? (
-                              <>
-                                <span className="text-2xl font-heading font-bold">
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-xl font-heading font-bold">
                                   ${(lowestPrice / 100).toFixed(0)}
                                 </span>
-                                <span className="text-sm text-muted-foreground ml-1">starting at</span>
-                              </>
+                                <span className="text-xs text-muted-foreground">+</span>
+                              </div>
                             ) : (
-                              <span className="text-sm text-muted-foreground">Contact for pricing</span>
+                              <span className="text-sm text-muted-foreground">Contact</span>
                             )}
                           </div>
-                          <Link to={`/creator/${creator.id}`}>
-                            <Button size="sm" className="gradient-hero hover:opacity-90">
-                              View Profile
-                            </Button>
-                          </Link>
+                          <span className="text-xs text-muted-foreground truncate max-w-[100px]">
+                            {[creator.location_city, creator.location_state]
+                              .filter(Boolean)
+                              .join(", ") || "—"}
+                          </span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>

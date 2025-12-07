@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,13 @@ const PortfolioGalleryModal = ({
   creatorName,
 }: PortfolioGalleryModalProps) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  // Reset to initialIndex when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentIndex(initialIndex);
+    }
+  }, [isOpen, initialIndex]);
 
   const handlePrevious = () => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : media.length - 1));

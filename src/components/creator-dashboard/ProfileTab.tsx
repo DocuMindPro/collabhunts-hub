@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload, X, Camera, Images } from "lucide-react";
 import SocialAccountsSection from "./SocialAccountsSection";
 import PortfolioUploadSection from "./PortfolioUploadSection";
 
@@ -209,47 +209,72 @@ const ProfileTab = () => {
 
   return (
     <div className="space-y-6">
+      {/* Consolidated Media Management Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Profile Image</CardTitle>
-          <CardDescription>Update your profile picture</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Images className="h-5 w-5" />
+            Your Media
+          </CardTitle>
+          <CardDescription>
+            Manage your profile image and portfolio in one place
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-6">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={profile.profile_image_url} />
-              <AvatarFallback className="text-2xl">
-                {profile.display_name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="space-y-2">
-              <Label htmlFor="image-upload" className="cursor-pointer">
-                <div className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
-                  {uploading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4" />
-                      Upload Image
-                    </>
-                  )}
-                </div>
-              </Label>
-              <Input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageUpload}
-                disabled={uploading}
-              />
-              <p className="text-sm text-muted-foreground">
-                JPG, PNG or WEBP. Max 5MB.
-              </p>
+        <CardContent className="space-y-8">
+          {/* Profile Image Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b">
+              <Camera className="h-4 w-4 text-primary" />
+              <h3 className="font-medium">Profile Image</h3>
+              <span className="text-xs text-muted-foreground ml-auto">Appears in search results</span>
             </div>
+            <div className="flex items-center gap-6">
+              <div className="relative">
+                <Avatar className="h-28 w-28 border-4 border-border">
+                  <AvatarImage src={profile.profile_image_url} className="object-cover" />
+                  <AvatarFallback className="text-3xl bg-gradient-accent text-white">
+                    {profile.display_name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <Label 
+                  htmlFor="profile-image-upload" 
+                  className="absolute -bottom-2 -right-2 p-2 bg-primary text-primary-foreground rounded-full cursor-pointer hover:bg-primary/90 transition-colors shadow-lg"
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
+                </Label>
+                <Input
+                  id="profile-image-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                />
+              </div>
+              <div className="space-y-1">
+                <p className="font-medium">Main Profile Photo</p>
+                <p className="text-sm text-muted-foreground">
+                  This is the image brands see when browsing creators.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  JPG, PNG or WEBP. Max 5MB. Recommended: 400×500px
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Portfolio Gallery Section - Embedded */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b">
+              <Images className="h-4 w-4 text-primary" />
+              <h3 className="font-medium">Portfolio Gallery</h3>
+              <span className="text-xs text-muted-foreground ml-auto">Appears on your profile page</span>
+            </div>
+            <PortfolioUploadSection creatorProfileId={profile.id} compact />
           </div>
         </CardContent>
       </Card>
@@ -346,8 +371,6 @@ const ProfileTab = () => {
       </Card>
 
       <SocialAccountsSection creatorProfileId={profile.id} />
-
-      <PortfolioUploadSection creatorProfileId={profile.id} />
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving}>
