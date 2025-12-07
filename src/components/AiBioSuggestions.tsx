@@ -9,15 +9,26 @@ interface AiBioSuggestionsProps {
   text: string;
   onSelect: (text: string) => void;
   minLength?: number;
-  type?: 'bio' | 'description';
+  type?: 'bio' | 'description' | 'campaign_title' | 'campaign_description' | 'display_name' | 'title';
+  label?: string; // Custom label for the content type in messages
 }
 
 const AiBioSuggestions = ({ 
   text, 
   onSelect, 
   minLength = 20,
-  type = 'bio' 
+  type = 'bio',
+  label
 }: AiBioSuggestionsProps) => {
+  // Default labels based on type
+  const contentLabel = label || {
+    bio: 'bio',
+    description: 'description',
+    campaign_title: 'title',
+    campaign_description: 'description',
+    display_name: 'name',
+    title: 'title'
+  }[type] || 'content';
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -27,7 +38,7 @@ const AiBioSuggestions = ({
     if (text.length < minLength) {
       toast({
         title: "Need more text",
-        description: `Please write at least ${minLength} characters so AI can understand your ${type}`,
+        description: `Please write at least ${minLength} characters so AI can understand your ${contentLabel}`,
         variant: "destructive"
       });
       return;
@@ -83,7 +94,7 @@ const AiBioSuggestions = ({
     setSuggestions([]);
     toast({
       title: "Applied!",
-      description: "AI suggestion has been applied to your bio"
+      description: `AI suggestion has been applied to your ${contentLabel}`
     });
   };
 
