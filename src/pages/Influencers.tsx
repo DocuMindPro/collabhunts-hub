@@ -60,6 +60,40 @@ const Influencers = () => {
     fetchCreators();
   }, []);
 
+  // Pre-validate images when creators change
+  useEffect(() => {
+    creators.forEach((creator) => {
+      if (creator.profile_image_url && !loadedImages.has(creator.id) && !failedImages.has(creator.id)) {
+        const img = new Image();
+        img.onload = () => setLoadedImages(prev => new Set(prev).add(creator.id));
+        img.onerror = () => setFailedImages(prev => new Set(prev).add(creator.id));
+        img.src = creator.profile_image_url;
+        
+        // Timeout fallback - if nothing happens in 5 seconds, mark as failed
+        const timeoutId = setTimeout(() => {
+          setFailedImages(prev => {
+            if (!loadedImages.has(creator.id) && !prev.has(creator.id)) {
+              return new Set(prev).add(creator.id);
+            }
+            return prev;
+          });
+        }, 5000);
+        
+        img.onload = () => {
+          clearTimeout(timeoutId);
+          setLoadedImages(prev => new Set(prev).add(creator.id));
+        };
+        img.onerror = () => {
+          clearTimeout(timeoutId);
+          setFailedImages(prev => new Set(prev).add(creator.id));
+        };
+      } else if (!creator.profile_image_url) {
+        // No image URL, mark as failed immediately
+        setFailedImages(prev => new Set(prev).add(creator.id));
+      }
+    });
+  }, [creators]);
+
   const fetchCreators = async () => {
     try {
       setLoading(true);
@@ -229,28 +263,23 @@ const Influencers = () => {
                         {/* Taller Image Container - 4:5 aspect ratio like Collabstr */}
                         <div className="relative aspect-[4/5] overflow-hidden bg-muted">
                           {/* Skeleton shown while image is loading */}
-                          {creator.profile_image_url && !failedImages.has(creator.id) && !loadedImages.has(creator.id) && (
+                          {!failedImages.has(creator.id) && !loadedImages.has(creator.id) && (
                             <Skeleton className="absolute inset-0 w-full h-full" />
                           )}
                           
-                          {creator.profile_image_url && !failedImages.has(creator.id) ? (
+                          {!failedImages.has(creator.id) && loadedImages.has(creator.id) ? (
                             <img 
-                              src={creator.profile_image_url} 
+                              src={creator.profile_image_url!} 
                               alt={creator.display_name}
-                              loading="lazy"
-                              className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300 ${
-                                loadedImages.has(creator.id) ? 'opacity-100' : 'opacity-0'
-                              }`}
-                              onLoad={() => setLoadedImages(prev => new Set(prev).add(creator.id))}
-                              onError={() => setFailedImages(prev => new Set(prev).add(creator.id))}
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
                             />
-                          ) : (
+                          ) : failedImages.has(creator.id) ? (
                             <div className="absolute inset-0 bg-gradient-accent flex items-center justify-center">
                               <span className="text-7xl font-heading font-bold text-white/30">
                                 {creator.display_name.charAt(0)}
                               </span>
                             </div>
-                          )}
+                          ) : null}
                           
                           {/* Overlay badges on image */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />

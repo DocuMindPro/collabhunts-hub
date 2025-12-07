@@ -160,6 +160,50 @@ const CreatorProfile = () => {
     }
   }, [id]);
 
+  // Pre-validate avatar image
+  useEffect(() => {
+    if (creator?.profile_image_url && !avatarFailed) {
+      const img = new Image();
+      const timeoutId = setTimeout(() => {
+        setAvatarFailed(true);
+      }, 5000);
+      
+      img.onload = () => {
+        clearTimeout(timeoutId);
+      };
+      img.onerror = () => {
+        clearTimeout(timeoutId);
+        setAvatarFailed(true);
+      };
+      img.src = creator.profile_image_url;
+    } else if (creator && !creator.profile_image_url) {
+      setAvatarFailed(true);
+    }
+  }, [creator?.profile_image_url]);
+
+  // Pre-validate portfolio images
+  useEffect(() => {
+    if (creator?.portfolio_media) {
+      creator.portfolio_media.forEach((media, index) => {
+        if (media.media_type === "image" && !failedPortfolioImages.has(index)) {
+          const img = new Image();
+          const timeoutId = setTimeout(() => {
+            setFailedPortfolioImages(prev => new Set(prev).add(index));
+          }, 5000);
+          
+          img.onload = () => {
+            clearTimeout(timeoutId);
+          };
+          img.onerror = () => {
+            clearTimeout(timeoutId);
+            setFailedPortfolioImages(prev => new Set(prev).add(index));
+          };
+          img.src = media.url;
+        }
+      });
+    }
+  }, [creator?.portfolio_media]);
+
   const trackProfileView = async (creatorId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -322,9 +366,7 @@ const CreatorProfile = () => {
                       <img 
                         src={creator.portfolio_media[0]?.url} 
                         alt="Portfolio"
-                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={() => setFailedPortfolioImages(prev => new Set(prev).add(0))}
                       />
                     )
                   ) : (
@@ -352,9 +394,7 @@ const CreatorProfile = () => {
                         <img 
                           src={creator.portfolio_media[1].url} 
                           alt="Portfolio"
-                          loading="lazy"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={() => setFailedPortfolioImages(prev => new Set(prev).add(1))}
                         />
                       )
                     ) : (
@@ -383,9 +423,7 @@ const CreatorProfile = () => {
                         <img 
                           src={creator.portfolio_media[2].url} 
                           alt="Portfolio"
-                          loading="lazy"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={() => setFailedPortfolioImages(prev => new Set(prev).add(2))}
                         />
                       )
                     ) : (
