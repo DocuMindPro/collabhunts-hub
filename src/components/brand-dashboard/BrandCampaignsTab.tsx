@@ -204,14 +204,18 @@ const BrandCampaignsTab = () => {
             </DialogHeader>
             <form onSubmit={handleCreateCampaign} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Campaign Title *</Label>
+                <Label htmlFor="title">Campaign Title * <span className="text-xs text-muted-foreground">({formData.title.length}/10 min)</span></Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="e.g., Summer Fashion Campaign"
                   required
+                  minLength={10}
                 />
+                {formData.title.length < 10 && formData.title.length > 0 && (
+                  <p className="text-xs text-destructive">Title must be at least 10 characters</p>
+                )}
                 <AiBioSuggestions
                   text={formData.title}
                   onSelect={(text) => setFormData({ ...formData, title: text })}
@@ -222,7 +226,7 @@ const BrandCampaignsTab = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description *</Label>
+                <Label htmlFor="description">Description * <span className="text-xs text-muted-foreground">({formData.description.length}/50 min)</span></Label>
                 <Textarea
                   id="description"
                   value={formData.description}
@@ -230,7 +234,11 @@ const BrandCampaignsTab = () => {
                   placeholder="Describe your campaign goals and expectations..."
                   rows={4}
                   required
+                  minLength={50}
                 />
+                {formData.description.length < 50 && formData.description.length > 0 && (
+                  <p className="text-xs text-destructive">Description must be at least 50 characters</p>
+                )}
                 <AiBioSuggestions
                   text={formData.description}
                   onSelect={(text) => setFormData({ ...formData, description: text })}
@@ -311,7 +319,13 @@ const BrandCampaignsTab = () => {
                 />
               </div>
 
-              <Button type="submit" className="w-full">Create Campaign</Button>
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={formData.title.length < 10 || formData.description.length < 50}
+              >
+                Create Campaign
+              </Button>
             </form>
           </DialogContent>
         </Dialog>
