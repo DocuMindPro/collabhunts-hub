@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OverviewTab from "@/components/creator-dashboard/OverviewTab";
@@ -11,7 +12,20 @@ import PayoutsTab from "@/components/creator-dashboard/PayoutsTab";
 import { BarChart3, User, Package, Calendar, MessageSquare, Megaphone, Wallet } from "lucide-react";
 
 const CreatorDashboard = () => {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setSearchParams({ tab: value });
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -24,7 +38,7 @@ const CreatorDashboard = () => {
             <p className="text-sm md:text-base text-muted-foreground">Manage your profile, bookings, and collaborations</p>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 md:space-y-6">
             <TabsList className="flex w-full overflow-x-auto gap-1 lg:w-auto lg:inline-flex">
               <TabsTrigger value="overview" className="gap-2 shrink-0">
                 <BarChart3 className="h-4 w-4" />
