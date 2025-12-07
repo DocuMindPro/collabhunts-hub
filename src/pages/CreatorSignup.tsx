@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, Play, Image as ImageIcon } from "lucide-react";
+import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, Play, Image as ImageIcon, User, Camera } from "lucide-react";
 import { z } from "zod";
 
 // Validation schemas
@@ -20,7 +20,7 @@ const displayNameSchema = z.string().trim().min(2, "Name must be at least 2 char
 const bioSchema = z.string().max(1000, "Bio must be less than 1000 characters");
 const usernameSchema = z.string().trim().min(3, "Username must be at least 3 characters").max(50);
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6;
+type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 interface SocialAccount {
   platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'twitch';
@@ -59,13 +59,19 @@ const CreatorSignup = () => {
   const [locationCountry, setLocationCountry] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  // Step 3: Social accounts
+  // Step 3: Profile Photos
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string>("");
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverImagePreview, setCoverImagePreview] = useState<string>("");
+
+  // Step 4: Social accounts
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
 
-  // Step 4: Services
+  // Step 5: Services
   const [services, setServices] = useState<Service[]>([]);
 
-  // Step 5: Portfolio (optional)
+  // Step 6: Portfolio (optional)
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
 
   const categories = [
@@ -101,7 +107,7 @@ const CreatorSignup = () => {
     });
   }, [navigate]);
 
-  const progress = (step / 6) * 100;
+  const progress = (step / 7) * 100;
 
   const handleStep1 = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,10 +162,19 @@ const CreatorSignup = () => {
   const handleStep3 = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (socialAccounts.length === 0) {
+    if (!profileImage) {
       toast({
         title: "Validation Error",
-        description: "Please add at least one social media account",
+        description: "Please upload a profile photo",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!coverImage) {
+      toast({
+        title: "Validation Error",
+        description: "Please upload a cover image",
         variant: "destructive"
       });
       return;
@@ -171,10 +186,10 @@ const CreatorSignup = () => {
   const handleStep4 = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (services.length === 0) {
+    if (socialAccounts.length === 0) {
       toast({
         title: "Validation Error",
-        description: "Please add at least one service package",
+        description: "Please add at least one social media account",
         variant: "destructive"
       });
       return;
@@ -185,7 +200,84 @@ const CreatorSignup = () => {
 
   const handleStep5 = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (services.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please add at least one service package",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setStep(6);
+  };
+
+  const handleStep6 = (e: React.FormEvent) => {
+    e.preventDefault();
+    setStep(7);
+  };
+
+  const handleProfileImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload an image file",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Profile image must be less than 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (profileImagePreview) {
+      URL.revokeObjectURL(profileImagePreview);
+    }
+
+    setProfileImage(file);
+    setProfileImagePreview(URL.createObjectURL(file));
+    e.target.value = "";
+  };
+
+  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload an image file",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Cover image must be less than 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (coverImagePreview) {
+      URL.revokeObjectURL(coverImagePreview);
+    }
+
+    setCoverImage(file);
+    setCoverImagePreview(URL.createObjectURL(file));
+    e.target.value = "";
   };
 
   const handlePortfolioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -260,6 +352,46 @@ const CreatorSignup = () => {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error("Failed to create user");
 
+      // Upload profile image
+      let profileImageUrl: string | null = null;
+      if (profileImage) {
+        const fileExt = profileImage.name.split(".").pop();
+        const filePath = `${authData.user.id}/profile.${fileExt}`;
+        
+        const { error: profileUploadError } = await supabase.storage
+          .from("profile-images")
+          .upload(filePath, profileImage);
+
+        if (profileUploadError) {
+          console.error("Profile image upload error:", profileUploadError);
+        } else {
+          const { data: { publicUrl } } = supabase.storage
+            .from("profile-images")
+            .getPublicUrl(filePath);
+          profileImageUrl = publicUrl;
+        }
+      }
+
+      // Upload cover image
+      let coverImageUrl: string | null = null;
+      if (coverImage) {
+        const fileExt = coverImage.name.split(".").pop();
+        const filePath = `${authData.user.id}/cover.${fileExt}`;
+        
+        const { error: coverUploadError } = await supabase.storage
+          .from("profile-images")
+          .upload(filePath, coverImage);
+
+        if (coverUploadError) {
+          console.error("Cover image upload error:", coverUploadError);
+        } else {
+          const { data: { publicUrl } } = supabase.storage
+            .from("profile-images")
+            .getPublicUrl(filePath);
+          coverImageUrl = publicUrl;
+        }
+      }
+
       // Create creator profile
       const { data: profileData, error: profileError } = await supabase
         .from("creator_profiles")
@@ -271,7 +403,9 @@ const CreatorSignup = () => {
           location_state: locationState || null,
           location_country: locationCountry || null,
           categories: selectedCategories,
-          status: "pending"
+          status: "pending",
+          profile_image_url: profileImageUrl,
+          cover_image_url: coverImageUrl
         })
         .select()
         .single();
@@ -428,7 +562,7 @@ const CreatorSignup = () => {
             <h1 className="text-4xl font-heading font-bold mb-2">Join as a Creator</h1>
             <p className="text-muted-foreground">Complete your profile to start earning</p>
             <Progress value={progress} className="mt-4" />
-            <p className="text-sm text-muted-foreground mt-2">Step {step} of 5</p>
+            <p className="text-sm text-muted-foreground mt-2">Step {step} of 7</p>
           </div>
 
           <Card>
@@ -576,7 +710,130 @@ const CreatorSignup = () => {
               )}
 
               {step === 3 && (
-                <form onSubmit={handleStep3} className="space-y-4">
+                <form onSubmit={handleStep3} className="space-y-6">
+                  <CardHeader className="px-0">
+                    <CardTitle>Your Profile Photos</CardTitle>
+                    <CardDescription>Make a great first impression on brands</CardDescription>
+                  </CardHeader>
+
+                  {/* Profile Photo */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <User className="h-5 w-5 text-primary" />
+                      <Label className="text-base font-semibold">Profile Photo (Required)</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Your avatar shown in search results and next to your name
+                    </p>
+                    
+                    <div className="flex items-center gap-6">
+                      <div className="relative">
+                        {profileImagePreview ? (
+                          <div className="relative">
+                            <img 
+                              src={profileImagePreview} 
+                              alt="Profile preview" 
+                              className="w-24 h-24 rounded-full object-cover border-2 border-primary"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                URL.revokeObjectURL(profileImagePreview);
+                                setProfileImage(null);
+                                setProfileImagePreview("");
+                              }}
+                              className="absolute -top-1 -right-1 p-1 bg-destructive text-destructive-foreground rounded-full"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
+                            <User className="h-10 w-10 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      <label htmlFor="profile-image-upload" className="cursor-pointer">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors">
+                          <Upload className="h-4 w-4" />
+                          {profileImagePreview ? "Change Photo" : "Upload Photo"}
+                        </div>
+                        <input
+                          id="profile-image-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleProfileImageUpload}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Cover Image */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Camera className="h-5 w-5 text-primary" />
+                      <Label className="text-base font-semibold">Cover Image (Required)</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      The main hero image brands see first when visiting your profile
+                    </p>
+                    
+                    {coverImagePreview ? (
+                      <div className="relative">
+                        <img 
+                          src={coverImagePreview} 
+                          alt="Cover preview" 
+                          className="w-full h-48 object-cover rounded-lg border-2 border-primary"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            URL.revokeObjectURL(coverImagePreview);
+                            setCoverImage(null);
+                            setCoverImagePreview("");
+                          }}
+                          className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label htmlFor="cover-image-upload" className="cursor-pointer block">
+                        <div className="w-full h-48 rounded-lg bg-muted border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-2 hover:bg-muted/80 transition-colors">
+                          <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Click to upload cover image</span>
+                          <span className="text-xs text-muted-foreground">Recommended: 1920x1080 or larger</span>
+                        </div>
+                        <input
+                          id="cover-image-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleCoverImageUpload}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-muted-foreground">
+                    Supported formats: JPG, PNG, WEBP (max 5MB each)
+                  </p>
+
+                  <div className="flex gap-3">
+                    <Button type="button" variant="outline" onClick={() => setStep(2)} className="flex-1">
+                      Back
+                    </Button>
+                    <Button type="submit" className="flex-1 gradient-hero hover:opacity-90">
+                      Continue
+                    </Button>
+                  </div>
+                </form>
+              )}
+
+              {step === 4 && (
+                <form onSubmit={handleStep4} className="space-y-4">
                   <CardHeader className="px-0">
                     <CardTitle>Social Media Accounts</CardTitle>
                     <CardDescription>Connect your platforms</CardDescription>
@@ -622,7 +879,7 @@ const CreatorSignup = () => {
                   )}
 
                   <div className="flex gap-3">
-                    <Button type="button" variant="outline" onClick={() => setStep(2)} className="flex-1">
+                    <Button type="button" variant="outline" onClick={() => setStep(3)} className="flex-1">
                       Back
                     </Button>
                     <Button type="submit" className="flex-1 gradient-hero hover:opacity-90">
@@ -632,8 +889,8 @@ const CreatorSignup = () => {
                 </form>
               )}
 
-              {step === 4 && (
-                <form onSubmit={handleStep4} className="space-y-4">
+              {step === 5 && (
+                <form onSubmit={handleStep5} className="space-y-4">
                   <CardHeader className="px-0">
                     <CardTitle>Services & Pricing</CardTitle>
                     <CardDescription>What services do you offer?</CardDescription>
@@ -681,7 +938,7 @@ const CreatorSignup = () => {
                   )}
 
                   <div className="flex gap-3">
-                    <Button type="button" variant="outline" onClick={() => setStep(3)} className="flex-1">
+                    <Button type="button" variant="outline" onClick={() => setStep(4)} className="flex-1">
                       Back
                     </Button>
                     <Button type="submit" className="flex-1 gradient-hero hover:opacity-90">
@@ -691,8 +948,8 @@ const CreatorSignup = () => {
                 </form>
               )}
 
-              {step === 5 && (
-                <form onSubmit={handleStep5} className="space-y-4">
+              {step === 6 && (
+                <form onSubmit={handleStep6} className="space-y-4">
                   <CardHeader className="px-0">
                     <CardTitle>Upload Your Best Work</CardTitle>
                     <CardDescription>Showcase your content to brands (optional, max 3 videos)</CardDescription>
@@ -760,7 +1017,7 @@ const CreatorSignup = () => {
                   </div>
 
                   <div className="flex gap-3">
-                    <Button type="button" variant="outline" onClick={() => setStep(4)} className="flex-1">
+                    <Button type="button" variant="outline" onClick={() => setStep(5)} className="flex-1">
                       Back
                     </Button>
                     <Button type="submit" className="flex-1 gradient-hero hover:opacity-90">
@@ -770,7 +1027,7 @@ const CreatorSignup = () => {
                 </form>
               )}
 
-              {step === 6 && (
+              {step === 7 && (
                 <div className="space-y-6">
                   <CardHeader className="px-0">
                     <CardTitle>Review & Submit</CardTitle>
@@ -778,6 +1035,33 @@ const CreatorSignup = () => {
                   </CardHeader>
 
                   <div className="space-y-4">
+                    {/* Photos Preview */}
+                    <div>
+                      <h3 className="font-semibold mb-2">Your Photos</h3>
+                      <div className="flex items-center gap-4">
+                        {profileImagePreview && (
+                          <div className="text-center">
+                            <img 
+                              src={profileImagePreview} 
+                              alt="Profile" 
+                              className="w-16 h-16 rounded-full object-cover border"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">Profile</p>
+                          </div>
+                        )}
+                        {coverImagePreview && (
+                          <div className="flex-1">
+                            <img 
+                              src={coverImagePreview} 
+                              alt="Cover" 
+                              className="w-full h-20 object-cover rounded-lg border"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">Cover Image</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     <div>
                       <h3 className="font-semibold mb-2">Profile</h3>
                       <p className="text-sm text-muted-foreground">
@@ -833,7 +1117,7 @@ const CreatorSignup = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setStep(5)}
+                      onClick={() => setStep(6)}
                       disabled={isLoading}
                       className="flex-1"
                     >
