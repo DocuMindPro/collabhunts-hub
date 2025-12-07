@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Star, Instagram, Youtube, Play } from "lucide-react";
 import {
   Select,
@@ -39,6 +40,7 @@ const Influencers = () => {
   const [creators, setCreators] = useState<CreatorWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [loadingImages, setLoadingImages] = useState<Set<string>>(new Set());
 
   const platforms = ["All", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch"];
   const categories = [
@@ -226,13 +228,37 @@ const Influencers = () => {
                       <div className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-all duration-300 hover:-translate-y-1">
                         {/* Taller Image Container - 4:5 aspect ratio like Collabstr */}
                         <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+                          {/* Skeleton shown while image is loading */}
+                          {creator.profile_image_url && !failedImages.has(creator.id) && loadingImages.has(creator.id) && (
+                            <Skeleton className="absolute inset-0 w-full h-full" />
+                          )}
+                          
                           {creator.profile_image_url && !failedImages.has(creator.id) ? (
                             <img 
                               src={creator.profile_image_url} 
                               alt={creator.display_name}
-                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+                                loadingImages.has(creator.id) ? 'opacity-0' : 'opacity-100'
+                              }`}
+                              onLoad={() => {
+                                setLoadingImages(prev => {
+                                  const next = new Set(prev);
+                                  next.delete(creator.id);
+                                  return next;
+                                });
+                              }}
                               onError={() => {
                                 setFailedImages(prev => new Set(prev).add(creator.id));
+                                setLoadingImages(prev => {
+                                  const next = new Set(prev);
+                                  next.delete(creator.id);
+                                  return next;
+                                });
+                              }}
+                              ref={(el) => {
+                                if (el && !el.complete) {
+                                  setLoadingImages(prev => new Set(prev).add(creator.id));
+                                }
                               }}
                             />
                           ) : (
