@@ -628,6 +628,18 @@ const CreatorProfile = () => {
         </div>
       </main>
 
+      {/* Mobile Floating Contact Button */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent md:hidden z-50">
+        <Button 
+          size="lg"
+          className="w-full gradient-hero hover:opacity-90 shadow-lg"
+          onClick={handleContactCreator}
+        >
+          <MessageCircle className="h-5 w-5 mr-2" />
+          Contact Creator
+        </Button>
+      </div>
+
       <Footer />
 
       <BookingDialog
