@@ -20,8 +20,7 @@ interface CreatorWithDetails {
   display_name: string;
   profile_image_url: string | null;
   categories: string[];
-  location_city: string | null;
-  location_state: string | null;
+  location_country: string | null; // Only country for public view (privacy protection)
   social_accounts: Array<{
     platform: string;
     username: string;
@@ -98,6 +97,7 @@ const Influencers = () => {
     try {
       setLoading(true);
 
+      // Only fetch location_country for public view (privacy protection - no city/state)
       const { data, error } = await supabase
         .from("creator_profiles")
         .select(`
@@ -105,8 +105,7 @@ const Influencers = () => {
           display_name,
           profile_image_url,
           categories,
-          location_city,
-          location_state,
+          location_country,
           creator_social_accounts(platform, username, follower_count),
           creator_services(service_type, price_cents)
         `)
@@ -120,8 +119,7 @@ const Influencers = () => {
         display_name: creator.display_name,
         profile_image_url: creator.profile_image_url,
         categories: creator.categories,
-        location_city: creator.location_city,
-        location_state: creator.location_state,
+        location_country: creator.location_country,
         social_accounts: creator.creator_social_accounts || [],
         services: creator.creator_services || []
       }));
@@ -322,9 +320,7 @@ const Influencers = () => {
                             )}
                           </div>
                           <span className="text-xs text-muted-foreground truncate max-w-[100px]">
-                            {[creator.location_city, creator.location_state]
-                              .filter(Boolean)
-                              .join(", ") || "—"}
+                            {creator.location_country || "—"}
                           </span>
                         </div>
                       </div>
