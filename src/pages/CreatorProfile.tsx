@@ -373,124 +373,54 @@ const CreatorProfile = () => {
 
         <div className="container mx-auto px-4 max-w-6xl">
           
-          {/* Desktop: Large Portfolio Gallery at Top - Collabstr Style */}
-          {!isMobile && creator.portfolio_media.length > 0 && (
-            <div className="mb-8">
-              <div className="grid grid-cols-4 gap-3 rounded-2xl overflow-hidden" style={{ height: "clamp(250px, 40vh, 500px)" }}>
-                {/* Main Large Image - Takes 2 columns and full height */}
-                <button
-                  onClick={() => openGallery(0)}
-                  className="col-span-2 row-span-2 relative overflow-hidden group"
-                >
-                {creator.portfolio_media[0]?.media_type === "image" ? (
-                    failedPortfolioImages.has(0) ? (
-                      <div className="w-full h-full bg-muted flex items-center justify-center">
-                        <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
-                      </div>
-                    ) : (
+          {/* Desktop: Collabstr-style 3 equal cover photos */}
+          {!isMobile && (() => {
+            const coverImages = [
+              creator.cover_image_url,
+              creator.cover_image_url_2,
+              creator.cover_image_url_3
+            ].filter(Boolean) as string[];
+            
+            if (coverImages.length === 0) return null;
+            
+            return (
+              <div className="mb-8">
+                <div className="grid grid-cols-3 gap-2 rounded-2xl overflow-hidden">
+                  {coverImages.map((url, index) => (
+                    <button
+                      key={index}
+                      onClick={() => openGallery(index)}
+                      className="relative overflow-hidden group"
+                      style={{ aspectRatio: "4/5" }}
+                    >
                       <img 
-                        src={creator.portfolio_media[0]?.url} 
-                        alt="Portfolio"
+                        src={url}
+                        alt={`Cover ${index + 1}`}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                    )
-                  ) : (
-                    <div className="relative w-full h-full">
-                      <video src={creator.portfolio_media[0]?.url} className="w-full h-full object-cover" muted />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                        <Play className="h-12 w-12 text-white" />
-                      </div>
-                    </div>
-                  )}
-                </button>
-
-                {/* Second Image - Top Right */}
-                {creator.portfolio_media[1] && (
-                  <button
-                    onClick={() => openGallery(1)}
-                    className="col-span-2 relative overflow-hidden group"
-                  >
-                  {creator.portfolio_media[1].media_type === "image" ? (
-                      failedPortfolioImages.has(1) ? (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                          <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+                      {/* Show All Photos button on last image if more portfolio items exist */}
+                      {index === coverImages.length - 1 && creator.portfolio_media.length > 0 && (
+                        <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg flex items-center gap-2">
+                          <Images className="h-4 w-4" />
+                          <span className="text-sm font-medium">Show All Photos</span>
                         </div>
-                      ) : (
-                        <img 
-                          src={creator.portfolio_media[1].url} 
-                          alt="Portfolio"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      )
-                    ) : (
-                      <div className="relative w-full h-full">
-                        <video src={creator.portfolio_media[1].url} className="w-full h-full object-cover" muted />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                          <Play className="h-8 w-8 text-white" />
-                        </div>
-                      </div>
-                    )}
-                  </button>
-                )}
-
-                {/* Third Image - Bottom Right, with "Show All" overlay if more images */}
-                {creator.portfolio_media[2] && (
-                  <button
-                    onClick={() => openGallery(2)}
-                    className="col-span-2 relative overflow-hidden group"
-                  >
-                  {creator.portfolio_media[2].media_type === "image" ? (
-                      failedPortfolioImages.has(2) ? (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                          <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
-                        </div>
-                      ) : (
-                        <img 
-                          src={creator.portfolio_media[2].url} 
-                          alt="Portfolio"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      )
-                    ) : (
-                      <div className="relative w-full h-full">
-                        <video src={creator.portfolio_media[2].url} className="w-full h-full object-cover" muted />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                          <Play className="h-8 w-8 text-white" />
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Show All Photos Overlay */}
-                    {creator.portfolio_media.length > 3 && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center group-hover:bg-black/60 transition-colors">
-                        <div className="text-white text-center">
-                          <Images className="h-8 w-8 mx-auto mb-2" />
-                          <span className="font-medium">+{creator.portfolio_media.length - 3} more</span>
-                        </div>
-                      </div>
-                    )}
-                  </button>
-                )}
-
-                {/* Fill empty slots if less than 3 images */}
-                {creator.portfolio_media.length === 1 && (
-                  <>
-                    <div className="col-span-2 bg-muted flex items-center justify-center">
+                      )}
+                    </button>
+                  ))}
+                  {/* Fill empty slots with placeholders to maintain 3-column grid */}
+                  {coverImages.length < 3 && Array.from({ length: 3 - coverImages.length }).map((_, i) => (
+                    <div 
+                      key={`placeholder-${i}`}
+                      className="bg-muted flex items-center justify-center rounded-lg"
+                      style={{ aspectRatio: "4/5" }}
+                    >
                       <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
                     </div>
-                    <div className="col-span-2 bg-muted flex items-center justify-center">
-                      <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
-                    </div>
-                  </>
-                )}
-                {creator.portfolio_media.length === 2 && (
-                  <div className="col-span-2 bg-muted flex items-center justify-center">
-                    <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Creator Info Section - Below Gallery */}
           <div className="mb-8 mt-6 md:mt-0">
