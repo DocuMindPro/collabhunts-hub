@@ -18,7 +18,9 @@ import AiBioSuggestions from "@/components/AiBioSuggestions";
 const emailSchema = z.string().email("Invalid email address").max(255);
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters").max(100);
 const displayNameSchema = z.string().trim().min(2, "Name must be at least 2 characters").max(100);
-const bioSchema = z.string().max(1000, "Bio must be less than 1000 characters");
+const bioSchema = z.string()
+  .min(50, "Bio must be at least 50 characters - write a sentence about yourself!")
+  .max(1000, "Bio must be less than 1000 characters");
 const usernameSchema = z.string().trim().min(3, "Username must be at least 3 characters").max(50);
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -647,7 +649,9 @@ const CreatorSignup = () => {
                       rows={4}
                       maxLength={1000}
                     />
-                    <p className="text-xs text-muted-foreground mt-1">{bio.length}/1000</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {bio.length}/1000 {bio.length < 50 && <span className="text-destructive">(minimum 50 characters - {50 - bio.length} more needed)</span>}
+                    </p>
                     <AiBioSuggestions
                       text={bio}
                       onSelect={(text) => setBio(text)}
@@ -709,7 +713,11 @@ const CreatorSignup = () => {
                     <Button type="button" variant="outline" onClick={() => setStep(1)} className="flex-1">
                       Back
                     </Button>
-                    <Button type="submit" className="flex-1 gradient-hero hover:opacity-90">
+                    <Button 
+                      type="submit" 
+                      className="flex-1 gradient-hero hover:opacity-90"
+                      disabled={bio.length < 50 || displayName.length < 2 || selectedCategories.length === 0}
+                    >
                       Continue
                     </Button>
                   </div>
