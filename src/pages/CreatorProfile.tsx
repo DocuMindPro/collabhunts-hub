@@ -8,7 +8,8 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Star, Instagram, Youtube, Twitter, Play, Image as ImageIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MapPin, Star, Instagram, Youtube, Twitter, Play, Image as ImageIcon, Images, MessageCircle } from "lucide-react";
 import BookingDialog from "@/components/BookingDialog";
 import MessageDialog from "@/components/MessageDialog";
 import PortfolioGalleryModal from "@/components/PortfolioGalleryModal";
@@ -64,6 +65,7 @@ const CreatorProfile = () => {
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryStartIndex, setGalleryStartIndex] = useState(0);
   const [conversationId, setConversationId] = useState<string | null>(null);
 
   const handleBookService = (service: any) => {
@@ -142,6 +144,11 @@ const CreatorProfile = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const openGallery = (index: number) => {
+    setGalleryStartIndex(index);
+    setIsGalleryOpen(true);
   };
 
   useEffect(() => {
@@ -292,111 +299,170 @@ const CreatorProfile = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-1 py-12">
+      <main className="flex-1 py-8">
         <div className="container mx-auto px-4 max-w-6xl">
-          {/* Hero Section */}
-          <div className="bg-gradient-accent rounded-2xl p-8 md:p-12 mb-8 relative overflow-hidden">
-            <div className="relative z-10 flex flex-col md:flex-row gap-6">
-              {/* Profile Image */}
-              {creator.profile_image_url ? (
-                <img 
-                  src={creator.profile_image_url} 
-                  alt={creator.display_name}
-                  className="w-32 h-32 md:w-40 md:h-40 rounded-xl object-cover border-4 border-white/20 flex-shrink-0"
-                />
-              ) : (
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-5xl font-bold text-white/40">
-                    {creator.display_name.charAt(0)}
+          
+          {/* Large Portfolio Gallery at Top - Collabstr Style */}
+          {creator.portfolio_media.length > 0 && (
+            <div className="mb-8">
+              <div className="grid grid-cols-4 gap-2 md:gap-3 rounded-2xl overflow-hidden" style={{ height: "clamp(300px, 50vh, 500px)" }}>
+                {/* Main Large Image - Takes 2 columns and full height */}
+                <button
+                  onClick={() => openGallery(0)}
+                  className="col-span-2 row-span-2 relative overflow-hidden group"
+                >
+                  {creator.portfolio_media[0]?.media_type === "image" ? (
+                    <img 
+                      src={creator.portfolio_media[0]?.url} 
+                      alt="Portfolio" 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="relative w-full h-full">
+                      <video src={creator.portfolio_media[0]?.url} className="w-full h-full object-cover" muted />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                        <Play className="h-12 w-12 text-white" />
+                      </div>
+                    </div>
+                  )}
+                </button>
+
+                {/* Second Image - Top Right */}
+                {creator.portfolio_media[1] && (
+                  <button
+                    onClick={() => openGallery(1)}
+                    className="col-span-2 relative overflow-hidden group"
+                  >
+                    {creator.portfolio_media[1].media_type === "image" ? (
+                      <img 
+                        src={creator.portfolio_media[1].url} 
+                        alt="Portfolio" 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="relative w-full h-full">
+                        <video src={creator.portfolio_media[1].url} className="w-full h-full object-cover" muted />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                          <Play className="h-8 w-8 text-white" />
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                )}
+
+                {/* Third Image - Bottom Right, with "Show All" overlay if more images */}
+                {creator.portfolio_media[2] && (
+                  <button
+                    onClick={() => openGallery(2)}
+                    className="col-span-2 relative overflow-hidden group"
+                  >
+                    {creator.portfolio_media[2].media_type === "image" ? (
+                      <img 
+                        src={creator.portfolio_media[2].url} 
+                        alt="Portfolio" 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="relative w-full h-full">
+                        <video src={creator.portfolio_media[2].url} className="w-full h-full object-cover" muted />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                          <Play className="h-8 w-8 text-white" />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Show All Photos Overlay */}
+                    {creator.portfolio_media.length > 3 && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center group-hover:bg-black/60 transition-colors">
+                        <div className="text-white text-center">
+                          <Images className="h-8 w-8 mx-auto mb-2" />
+                          <span className="font-medium">+{creator.portfolio_media.length - 3} more</span>
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                )}
+
+                {/* Fill empty slots if less than 3 images */}
+                {creator.portfolio_media.length === 1 && (
+                  <>
+                    <div className="col-span-2 bg-muted flex items-center justify-center">
+                      <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
+                    </div>
+                    <div className="col-span-2 bg-muted flex items-center justify-center">
+                      <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
+                    </div>
+                  </>
+                )}
+                {creator.portfolio_media.length === 2 && (
+                  <div className="col-span-2 bg-muted flex items-center justify-center">
+                    <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Creator Info Section - Below Gallery */}
+          <div className="flex flex-col md:flex-row gap-6 items-start mb-8">
+            {/* Avatar and Basic Info */}
+            <div className="flex items-start gap-4 flex-1">
+              <Avatar className="h-20 w-20 md:h-24 md:w-24 border-4 border-background shadow-lg flex-shrink-0">
+                <AvatarImage src={creator.profile_image_url || undefined} className="object-cover" />
+                <AvatarFallback className="text-2xl md:text-3xl bg-gradient-accent text-white">
+                  {creator.display_name.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 flex-wrap mb-2">
+                  <h1 className="text-2xl md:text-3xl font-heading font-bold">
+                    {creator.display_name}
+                  </h1>
+                  <div className="flex items-center gap-1 bg-primary/10 px-2.5 py-1 rounded-full">
+                    <Star className="h-4 w-4 fill-primary text-primary" />
+                    <span className="font-semibold text-sm">{creator.avgRating.toFixed(1)}</span>
+                    <span className="text-xs text-muted-foreground">({creator.totalReviews})</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-muted-foreground mb-3">
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm">
+                    {[creator.location_city, creator.location_state, creator.location_country]
+                      .filter(Boolean)
+                      .join(", ") || "Location not specified"}
                   </span>
                 </div>
-              )}
 
-              {/* Creator Info */}
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h1 className="text-4xl md:text-5xl font-heading font-bold text-white mb-2">
-                      {creator.display_name}
-                    </h1>
-                    <div className="flex items-center gap-2 text-white/80">
-                      <MapPin className="h-4 w-4" />
-                      <span>
-                        {[creator.location_city, creator.location_state, creator.location_country]
-                          .filter(Boolean)
-                          .join(", ") || "Location not specified"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 bg-white/90 backdrop-blur px-4 py-2 rounded-full">
-                    <Star className="h-5 w-5 fill-primary text-primary" />
-                    <span className="font-semibold">{creator.avgRating.toFixed(1)}</span>
-                    <span className="text-sm text-muted-foreground">({creator.totalReviews})</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mb-6">
+                <div className="flex flex-wrap gap-2 mb-4">
                   {creator.categories.map((category) => (
-                    <Badge key={category} variant="secondary" className="bg-white/90 backdrop-blur">
+                    <Badge key={category} variant="secondary">
                       {category}
                     </Badge>
                   ))}
                 </div>
 
                 {creator.bio && (
-                  <p className="text-white/90 text-lg max-w-3xl">{creator.bio}</p>
+                  <p className="text-muted-foreground max-w-2xl">{creator.bio}</p>
                 )}
               </div>
             </div>
+
+            {/* Contact Button - Right Side */}
+            <Button 
+              size="lg"
+              className="gradient-hero hover:opacity-90 flex-shrink-0"
+              onClick={handleContactCreator}
+            >
+              <MessageCircle className="h-5 w-5 mr-2" />
+              Contact Creator
+            </Button>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="md:col-span-2 space-y-8">
-            {/* Portfolio Media */}
-              {creator.portfolio_media.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <ImageIcon className="h-5 w-5" />
-                      Portfolio
-                    </CardTitle>
-                    <CardDescription>Work samples from {creator.display_name}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-3 gap-2">
-                      {creator.portfolio_media.slice(0, 3).map((item, index) => (
-                        <button
-                          key={item.id}
-                          onClick={() => setIsGalleryOpen(true)}
-                          className="relative aspect-square rounded-lg overflow-hidden bg-muted hover:opacity-90 transition-opacity"
-                        >
-                          {item.media_type === "image" ? (
-                            <img src={item.url} alt="Portfolio" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="relative w-full h-full">
-                              <video src={item.url} className="w-full h-full object-cover" muted />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                <Play className="h-6 w-6 text-white" />
-                              </div>
-                            </div>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                    {creator.portfolio_media.length > 3 && (
-                      <Button
-                        variant="outline"
-                        className="w-full mt-4"
-                        onClick={() => setIsGalleryOpen(true)}
-                      >
-                        Show All ({creator.portfolio_media.length})
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
               {/* Social Accounts */}
               <Card>
                 <CardHeader>
@@ -600,6 +666,7 @@ const CreatorProfile = () => {
         onClose={() => setIsGalleryOpen(false)}
         media={creator.portfolio_media}
         creatorName={creator.display_name}
+        initialIndex={galleryStartIndex}
       />
     </div>
   );
