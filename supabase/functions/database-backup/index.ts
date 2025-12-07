@@ -203,7 +203,7 @@ Deno.serve(async (req) => {
     let backupType = "scheduled";
     let triggeredBy: string | null = null;
     let testFailure = false;
-    let requestBody: { type?: string; triggered_by?: string; test_failure?: boolean; scheduled_call?: boolean } = {};
+    let requestBody: { type?: string; triggered_by?: string; test_failure?: boolean; scheduled_call?: boolean; cron_secret?: string } = {};
     
     try {
       requestBody = await req.json();
