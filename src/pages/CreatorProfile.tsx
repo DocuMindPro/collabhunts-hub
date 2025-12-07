@@ -13,11 +13,14 @@ import { MapPin, Star, Instagram, Youtube, Twitter, Play, Image as ImageIcon, Im
 import BookingDialog from "@/components/BookingDialog";
 import MessageDialog from "@/components/MessageDialog";
 import PortfolioGalleryModal from "@/components/PortfolioGalleryModal";
+import MobilePortfolioCarousel from "@/components/MobilePortfolioCarousel";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CreatorData {
   id: string;
   display_name: string;
   profile_image_url: string | null;
+  cover_image_url: string | null;
   bio: string | null;
   location_city: string | null;
   location_state: string | null;
@@ -59,6 +62,7 @@ const CreatorProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [creator, setCreator] = useState<CreatorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<any>(null);
@@ -274,6 +278,7 @@ const CreatorProfile = () => {
         id: profileData.id,
         display_name: profileData.display_name,
         profile_image_url: profileData.profile_image_url,
+        cover_image_url: profileData.cover_image_url,
         bio: profileData.bio,
         location_city: profileData.location_city,
         location_state: profileData.location_state,
@@ -345,13 +350,27 @@ const CreatorProfile = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-1 py-8 pb-24 md:pb-8">
+      <main className="flex-1 py-0 md:py-8 pb-24 md:pb-8">
+        {/* Mobile: Collabstr-style swipeable hero carousel */}
+        {isMobile && (
+          <MobilePortfolioCarousel
+            media={creator.portfolio_media}
+            coverImageUrl={creator.cover_image_url}
+            profileImageUrl={creator.profile_image_url}
+            displayName={creator.display_name}
+            onSlideClick={(index) => {
+              if (index >= 0) openGallery(index);
+            }}
+            avatarFailed={avatarFailed}
+          />
+        )}
+
         <div className="container mx-auto px-4 max-w-6xl">
           
-          {/* Large Portfolio Gallery at Top - Collabstr Style */}
-          {creator.portfolio_media.length > 0 && (
+          {/* Desktop: Large Portfolio Gallery at Top - Collabstr Style */}
+          {!isMobile && creator.portfolio_media.length > 0 && (
             <div className="mb-8">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 rounded-2xl overflow-hidden" style={{ height: "clamp(250px, 40vh, 500px)" }}>
+              <div className="grid grid-cols-4 gap-3 rounded-2xl overflow-hidden" style={{ height: "clamp(250px, 40vh, 500px)" }}>
                 {/* Main Large Image - Takes 2 columns and full height */}
                 <button
                   onClick={() => openGallery(0)}
@@ -468,25 +487,12 @@ const CreatorProfile = () => {
           )}
 
           {/* Creator Info Section - Below Gallery */}
-          <div className="mb-8">
-            {/* Avatar and Basic Info - Stack on mobile */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
-              <Avatar className="h-24 w-24 md:h-28 md:w-28 border-4 border-background shadow-lg flex-shrink-0">
-                {creator.profile_image_url && !avatarFailed ? (
-                  <AvatarImage 
-                    src={creator.profile_image_url} 
-                    className="object-cover" 
-                    onError={() => setAvatarFailed(true)}
-                  />
-                ) : null}
-                <AvatarFallback className="text-2xl md:text-3xl bg-gradient-accent text-white">
-                  {creator.display_name.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-center sm:justify-start gap-3 flex-wrap mb-2">
-                  <h1 className="text-2xl md:text-3xl font-heading font-bold">
+          <div className="mb-8 mt-6 md:mt-0">
+            {/* Mobile: Simplified info (no duplicate avatar) */}
+            {isMobile ? (
+              <div className="text-center space-y-3">
+                <div className="flex items-center justify-center gap-3 flex-wrap">
+                  <h1 className="text-2xl font-heading font-bold">
                     {creator.display_name}
                   </h1>
                   <div className="flex items-center gap-1 bg-primary/10 px-2.5 py-1 rounded-full">
@@ -496,16 +502,14 @@ const CreatorProfile = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-center sm:justify-start gap-2 text-muted-foreground mb-3">
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
                   <MapPin className="h-4 w-4 flex-shrink-0" />
                   <span className="text-sm">
-                    {[creator.location_city, creator.location_state, creator.location_country]
-                      .filter(Boolean)
-                      .join(", ") || "Location not specified"}
+                    {creator.location_country || "Location not specified"}
                   </span>
                 </div>
 
-                <div className="flex flex-wrap justify-center sm:justify-start gap-2 mb-4">
+                <div className="flex flex-wrap justify-center gap-2">
                   {creator.categories.map((category) => (
                     <Badge key={category} variant="secondary">
                       {category}
@@ -514,22 +518,72 @@ const CreatorProfile = () => {
                 </div>
 
                 {creator.bio && (
-                  <p className="text-muted-foreground max-w-2xl">{creator.bio}</p>
+                  <p className="text-muted-foreground text-sm px-4">{creator.bio}</p>
                 )}
+              </div>
+            ) : (
+              /* Desktop: Original layout with avatar */
+              <div className="flex flex-row items-start gap-4 text-left">
+                <Avatar className="h-28 w-28 border-4 border-background shadow-lg flex-shrink-0">
+                  {creator.profile_image_url && !avatarFailed ? (
+                    <AvatarImage 
+                      src={creator.profile_image_url} 
+                      className="object-cover" 
+                      onError={() => setAvatarFailed(true)}
+                    />
+                  ) : null}
+                  <AvatarFallback className="text-3xl bg-gradient-accent text-white">
+                    {creator.display_name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-start gap-3 flex-wrap mb-2">
+                    <h1 className="text-3xl font-heading font-bold">
+                      {creator.display_name}
+                    </h1>
+                    <div className="flex items-center gap-1 bg-primary/10 px-2.5 py-1 rounded-full">
+                      <Star className="h-4 w-4 fill-primary text-primary" />
+                      <span className="font-semibold text-sm">{creator.avgRating.toFixed(1)}</span>
+                      <span className="text-xs text-muted-foreground">({creator.totalReviews})</span>
+                    </div>
+                  </div>
 
-                {/* Contact Creator Button - Under bio, above Social Media */}
-                <div className="mt-4">
-                  <Button 
-                    size="lg"
-                    className="w-full sm:w-auto gradient-hero hover:opacity-90"
-                    onClick={handleContactCreator}
-                  >
-                    <MessageCircle className="h-5 w-5 mr-2" />
-                    Contact Creator
-                  </Button>
+                  <div className="flex items-center justify-start gap-2 text-muted-foreground mb-3">
+                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-sm">
+                      {[creator.location_city, creator.location_state, creator.location_country]
+                        .filter(Boolean)
+                        .join(", ") || "Location not specified"}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap justify-start gap-2 mb-4">
+                    {creator.categories.map((category) => (
+                      <Badge key={category} variant="secondary">
+                        {category}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  {creator.bio && (
+                    <p className="text-muted-foreground max-w-2xl">{creator.bio}</p>
+                  )}
+
+                  {/* Contact Creator Button - Under bio, above Social Media */}
+                  <div className="mt-4">
+                    <Button 
+                      size="lg"
+                      className="gradient-hero hover:opacity-90"
+                      onClick={handleContactCreator}
+                    >
+                      <MessageCircle className="h-5 w-5 mr-2" />
+                      Contact Creator
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">

@@ -459,6 +459,7 @@ export type Database = {
         Row: {
           bio: string | null
           categories: string[] | null
+          cover_image_url: string | null
           created_at: string | null
           display_name: string
           id: string
@@ -474,6 +475,7 @@ export type Database = {
         Insert: {
           bio?: string | null
           categories?: string[] | null
+          cover_image_url?: string | null
           created_at?: string | null
           display_name: string
           id?: string
@@ -489,6 +491,7 @@ export type Database = {
         Update: {
           bio?: string | null
           categories?: string[] | null
+          cover_image_url?: string | null
           created_at?: string | null
           display_name?: string
           id?: string
