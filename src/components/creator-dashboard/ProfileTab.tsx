@@ -23,7 +23,7 @@ const ProfileTab = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingCoverIndex, setUploadingCoverIndex] = useState<number | null>(null);
   const [profile, setProfile] = useState({
     id: "",
     display_name: "",
@@ -34,6 +34,8 @@ const ProfileTab = () => {
     categories: [] as string[],
     profile_image_url: "",
     cover_image_url: "",
+    cover_image_url_2: "",
+    cover_image_url_3: "",
   });
 
   useEffect(() => {
@@ -64,6 +66,8 @@ const ProfileTab = () => {
           categories: data.categories || [],
           profile_image_url: data.profile_image_url || "",
           cover_image_url: data.cover_image_url || "",
+          cover_image_url_2: data.cover_image_url_2 || "",
+          cover_image_url_3: data.cover_image_url_3 || "",
         });
       }
     } catch (error) {
@@ -151,7 +155,7 @@ const ProfileTab = () => {
     }
   };
 
-  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -173,24 +177,28 @@ const ProfileTab = () => {
       return;
     }
 
-    setUploadingCover(true);
+    setUploadingCoverIndex(index);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      const coverKey = index === 0 ? 'cover_image_url' : 
+                       index === 1 ? 'cover_image_url_2' : 'cover_image_url_3';
+      const currentUrl = profile[coverKey];
+
       // Delete old cover image if exists
-      if (profile.cover_image_url) {
-        const oldPath = profile.cover_image_url.split("/").pop();
+      if (currentUrl) {
+        const oldPath = currentUrl.split("/").pop();
         if (oldPath) {
           await supabase.storage
             .from("profile-images")
-            .remove([`${user.id}/cover-${oldPath}`]);
+            .remove([`${user.id}/${oldPath}`]);
         }
       }
 
       // Upload new cover image
       const fileExt = file.name.split(".").pop();
-      const fileName = `cover-${Date.now()}.${fileExt}`;
+      const fileName = `cover-${index + 1}-${Date.now()}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -203,11 +211,11 @@ const ProfileTab = () => {
         .from("profile-images")
         .getPublicUrl(filePath);
 
-      setProfile({ ...profile, cover_image_url: publicUrl });
+      setProfile({ ...profile, [coverKey]: publicUrl });
 
       toast({
         title: "Success",
-        description: "Cover image uploaded successfully",
+        description: `Cover image ${index + 1} uploaded successfully`,
       });
     } catch (error) {
       console.error("Error uploading cover image:", error);
@@ -217,7 +225,49 @@ const ProfileTab = () => {
         variant: "destructive",
       });
     } finally {
-      setUploadingCover(false);
+      setUploadingCoverIndex(null);
+    }
+  };
+
+  const removeCoverImage = async (index: number) => {
+    if (index === 0) {
+      toast({
+        title: "Cannot remove",
+        description: "Cover image 1 is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const coverKey = index === 1 ? 'cover_image_url_2' : 'cover_image_url_3';
+    const currentUrl = profile[coverKey];
+
+    if (!currentUrl) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const oldPath = currentUrl.split("/").pop();
+      if (oldPath) {
+        await supabase.storage
+          .from("profile-images")
+          .remove([`${user.id}/${oldPath}`]);
+      }
+
+      setProfile({ ...profile, [coverKey]: "" });
+
+      toast({
+        title: "Removed",
+        description: `Cover image ${index + 1} removed`,
+      });
+    } catch (error) {
+      console.error("Error removing cover image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove cover image",
+        variant: "destructive",
+      });
     }
   };
 
@@ -253,6 +303,8 @@ const ProfileTab = () => {
           categories: profile.categories,
           profile_image_url: profile.profile_image_url,
           cover_image_url: profile.cover_image_url,
+          cover_image_url_2: profile.cover_image_url_2,
+          cover_image_url_3: profile.cover_image_url_3,
         })
         .eq("id", profile.id);
 
@@ -342,62 +394,91 @@ const ProfileTab = () => {
             </div>
           </div>
 
-          {/* Cover Image Section */}
+          {/* Cover Images Section - 3 Slots */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b">
               <ImagePlus className="h-4 w-4 text-primary" />
-              <h3 className="font-medium">Cover Image</h3>
-              <span className="text-xs text-muted-foreground ml-auto">Main hero image on mobile</span>
+              <h3 className="font-medium">Cover Images</h3>
+              <span className="text-xs text-muted-foreground ml-auto">Displayed on your profile page</span>
             </div>
-            <div className="space-y-3">
-              {profile.cover_image_url ? (
-                <div className="relative aspect-[4/5] max-w-xs rounded-xl overflow-hidden border">
-                  <img 
-                    src={profile.cover_image_url} 
-                    alt="Cover" 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Label 
-                      htmlFor="cover-image-upload" 
-                      className="px-4 py-2 bg-white text-foreground rounded-lg cursor-pointer hover:bg-white/90 font-medium"
-                    >
-                      {uploadingCover ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Change Cover"
-                      )}
-                    </Label>
+            <div className="grid grid-cols-3 gap-4">
+              {[0, 1, 2].map((index) => {
+                const coverUrl = index === 0 ? profile.cover_image_url :
+                                 index === 1 ? profile.cover_image_url_2 : 
+                                 profile.cover_image_url_3;
+                const isUploading = uploadingCoverIndex === index;
+                const inputId = `cover-image-upload-${index}`;
+                
+                return (
+                  <div key={index} className="relative">
+                    {coverUrl ? (
+                      <div className="relative aspect-[4/5] rounded-xl overflow-hidden border group">
+                        <img 
+                          src={coverUrl} 
+                          alt={`Cover ${index + 1}`} 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <Label 
+                            htmlFor={inputId} 
+                            className="px-3 py-1.5 bg-white text-foreground rounded-lg cursor-pointer hover:bg-white/90 text-sm font-medium"
+                          >
+                            {isUploading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Change"
+                            )}
+                          </Label>
+                          {index > 0 && (
+                            <button
+                              onClick={() => removeCoverImage(index)}
+                              className="px-3 py-1.5 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 text-sm font-medium"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                        <div className="absolute top-2 left-2">
+                          <Badge variant={index === 0 ? "default" : "secondary"} className="text-xs">
+                            {index === 0 ? "Required" : "Optional"}
+                          </Badge>
+                        </div>
+                      </div>
+                    ) : (
+                      <Label 
+                        htmlFor={inputId} 
+                        className="flex flex-col items-center justify-center aspect-[4/5] rounded-xl border-2 border-dashed border-muted-foreground/30 cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
+                      >
+                        {isUploading ? (
+                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        ) : (
+                          <>
+                            <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
+                            <span className="text-sm text-muted-foreground font-medium text-center px-2">
+                              {index === 0 ? "Add Cover Image" : `Add Photo ${index + 1}`}
+                            </span>
+                            <Badge variant={index === 0 ? "default" : "outline"} className="mt-2 text-xs">
+                              {index === 0 ? "Required" : "Optional"}
+                            </Badge>
+                          </>
+                        )}
+                      </Label>
+                    )}
+                    <Input
+                      id={inputId}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleCoverImageUpload(e, index)}
+                      disabled={isUploading}
+                    />
                   </div>
-                </div>
-              ) : (
-                <Label 
-                  htmlFor="cover-image-upload" 
-                  className="flex flex-col items-center justify-center aspect-[4/5] max-w-xs rounded-xl border-2 border-dashed border-muted-foreground/30 cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
-                >
-                  {uploadingCover ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  ) : (
-                    <>
-                      <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground font-medium">Add Cover Image</span>
-                      <span className="text-xs text-muted-foreground mt-1">This is the first image brands see on mobile</span>
-                    </>
-                  )}
-                </Label>
-              )}
-              <Input
-                id="cover-image-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleCoverImageUpload}
-                disabled={uploadingCover}
-              />
-              <p className="text-xs text-muted-foreground">
-                Recommended: Portrait orientation (4:5 ratio). Max 5MB.
-              </p>
+                );
+              })}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Recommended: Portrait orientation (4:5 ratio). Max 5MB per image.
+            </p>
           </div>
 
           {/* Portfolio Gallery Section - Embedded */}
