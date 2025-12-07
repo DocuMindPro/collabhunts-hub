@@ -26,6 +26,7 @@ import {
   ArrowLeft,
   Calendar,
   Timer,
+  AlertTriangle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -68,6 +69,7 @@ const BackupHistory = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isTestingFailure, setIsTestingFailure] = useState(false);
 
   // Fetch backup history
   const { data: backups, isLoading } = useQuery({
@@ -148,6 +150,47 @@ const BackupHistory = () => {
     },
   });
 
+  // Test backup failure (triggers email notification)
+  const testFailure = useMutation({
+    mutationFn: async () => {
+      setIsTestingFailure(true);
+      
+      const { data: session } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("database-backup", {
+        body: {
+          type: "test",
+          triggered_by: session?.session?.user?.id,
+          test_failure: true,
+        },
+      });
+
+      // This will always fail, which is expected
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      return response.data;
+    },
+    onSuccess: () => {
+      // This shouldn't happen in test mode
+      toast({
+        title: "Test completed",
+        description: "Check your email for the failure notification",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Test failure triggered",
+        description: "Check your email (care@collabhunts.com) for the failure notification",
+      });
+      queryClient.invalidateQueries({ queryKey: ["backup-history"] });
+    },
+    onSettled: () => {
+      setIsTestingFailure(false);
+    },
+  });
+
   // Verify backup
   const verifyBackup = useMutation({
     mutationFn: async (backupId: string) => {
@@ -219,18 +262,33 @@ const BackupHistory = () => {
               </p>
             </div>
           </div>
-          <Button
-            onClick={() => triggerBackup.mutate()}
-            disabled={isBackingUp}
-            className="gap-2"
-          >
-            {isBackingUp ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Database className="h-4 w-4" />
-            )}
-            {isBackingUp ? "Backing up..." : "Trigger Backup"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => testFailure.mutate()}
+              disabled={isTestingFailure || isBackingUp}
+              variant="outline"
+              className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10"
+            >
+              {isTestingFailure ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <AlertTriangle className="h-4 w-4" />
+              )}
+              {isTestingFailure ? "Testing..." : "Test Failure Email"}
+            </Button>
+            <Button
+              onClick={() => triggerBackup.mutate()}
+              disabled={isBackingUp || isTestingFailure}
+              className="gap-2"
+            >
+              {isBackingUp ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Database className="h-4 w-4" />
+              )}
+              {isBackingUp ? "Backing up..." : "Trigger Backup"}
+            </Button>
+          </div>
         </div>
 
         {/* Scheduled Backup Status Card */}

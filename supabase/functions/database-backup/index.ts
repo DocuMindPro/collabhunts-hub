@@ -202,13 +202,21 @@ Deno.serve(async (req) => {
     // Parse request body for backup type
     let backupType = "scheduled";
     let triggeredBy: string | null = null;
+    let testFailure = false;
     
     try {
       const body = await req.json();
       backupType = body.type || "scheduled";
       triggeredBy = body.triggered_by || null;
+      testFailure = body.test_failure === true;
     } catch {
       // Use defaults if no body
+    }
+    
+    // Test mode: simulate a failure to test email notifications
+    if (testFailure) {
+      console.log("Test failure mode activated - simulating backup failure");
+      throw new Error("TEST FAILURE: This is a simulated backup failure to test email notifications");
     }
     
     console.log(`Starting ${backupType} backup...`);
