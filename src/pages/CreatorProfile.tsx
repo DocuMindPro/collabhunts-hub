@@ -8,9 +8,10 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Star, Instagram, Youtube, Twitter } from "lucide-react";
+import { MapPin, Star, Instagram, Youtube, Twitter, Play, Image as ImageIcon } from "lucide-react";
 import BookingDialog from "@/components/BookingDialog";
 import MessageDialog from "@/components/MessageDialog";
+import PortfolioGalleryModal from "@/components/PortfolioGalleryModal";
 
 interface CreatorData {
   id: string;
@@ -44,6 +45,12 @@ interface CreatorData {
   }>;
   avgRating: number;
   totalReviews: number;
+  portfolio_media: Array<{
+    id: string;
+    media_type: "image" | "video";
+    url: string;
+    thumbnail_url: string | null;
+  }>;
 }
 
 const CreatorProfile = () => {
@@ -55,6 +62,7 @@ const CreatorProfile = () => {
   const [selectedService, setSelectedService] = useState<any>(null);
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
 
   const handleBookService = (service: any) => {
@@ -197,6 +205,12 @@ const CreatorProfile = () => {
         .eq("creator_profile_id", creatorId)
         .order("created_at", { ascending: false });
 
+      const { data: portfolioData } = await supabase
+        .from("creator_portfolio_media")
+        .select("id, media_type, url, thumbnail_url")
+        .eq("creator_profile_id", creatorId)
+        .order("display_order", { ascending: true });
+
       const reviews = reviewsData || [];
       const avgRating = reviews.length > 0 
         ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
@@ -214,7 +228,11 @@ const CreatorProfile = () => {
         services: servicesData || [],
         reviews,
         avgRating,
-        totalReviews: reviews.length
+        totalReviews: reviews.length,
+        portfolio_media: (portfolioData || []).map(p => ({
+          ...p,
+          media_type: p.media_type as "image" | "video"
+        }))
       });
     } catch (error: any) {
       console.error("Error fetching creator:", error.message);
@@ -315,6 +333,50 @@ const CreatorProfile = () => {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="md:col-span-2 space-y-8">
+            {/* Portfolio Media */}
+              {creator.portfolio_media.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ImageIcon className="h-5 w-5" />
+                      Portfolio
+                    </CardTitle>
+                    <CardDescription>Work samples from {creator.display_name}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-2">
+                      {creator.portfolio_media.slice(0, 3).map((item, index) => (
+                        <button
+                          key={item.id}
+                          onClick={() => setIsGalleryOpen(true)}
+                          className="relative aspect-square rounded-lg overflow-hidden bg-muted hover:opacity-90 transition-opacity"
+                        >
+                          {item.media_type === "image" ? (
+                            <img src={item.url} alt="Portfolio" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="relative w-full h-full">
+                              <video src={item.url} className="w-full h-full object-cover" muted />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <Play className="h-6 w-6 text-white" />
+                              </div>
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    {creator.portfolio_media.length > 3 && (
+                      <Button
+                        variant="outline"
+                        className="w-full mt-4"
+                        onClick={() => setIsGalleryOpen(true)}
+                      >
+                        Show All ({creator.portfolio_media.length})
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Social Accounts */}
               <Card>
                 <CardHeader>
@@ -511,6 +573,13 @@ const CreatorProfile = () => {
         onClose={() => setIsMessageDialogOpen(false)}
         conversationId={conversationId}
         recipientName={creator.display_name}
+      />
+
+      <PortfolioGalleryModal
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        media={creator.portfolio_media}
+        creatorName={creator.display_name}
       />
     </div>
   );

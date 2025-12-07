@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Instagram, Youtube, Twitter } from "lucide-react";
+import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, Play, Image as ImageIcon } from "lucide-react";
 import { z } from "zod";
 
 // Validation schemas
@@ -20,7 +20,7 @@ const displayNameSchema = z.string().trim().min(2, "Name must be at least 2 char
 const bioSchema = z.string().max(1000, "Bio must be less than 1000 characters");
 const usernameSchema = z.string().trim().min(3, "Username must be at least 3 characters").max(50);
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
 interface SocialAccount {
   platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'twitch';
@@ -33,6 +33,11 @@ interface Service {
   priceCents: number;
   description: string;
   deliveryDays: number;
+}
+interface PortfolioItem {
+  file: File;
+  type: "image" | "video";
+  previewUrl: string;
 }
 
 const CreatorSignup = () => {
@@ -59,6 +64,9 @@ const CreatorSignup = () => {
 
   // Step 4: Services
   const [services, setServices] = useState<Service[]>([]);
+
+  // Step 5: Portfolio (optional)
+  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
 
   const categories = [
     "Lifestyle", "Fashion", "Beauty", "Travel", "Health & Fitness",
@@ -93,7 +101,7 @@ const CreatorSignup = () => {
     });
   }, [navigate]);
 
-  const progress = (step / 5) * 100;
+  const progress = (step / 6) * 100;
 
   const handleStep1 = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,6 +183,63 @@ const CreatorSignup = () => {
     setStep(5);
   };
 
+  const handleStep5 = (e: React.FormEvent) => {
+    e.preventDefault();
+    setStep(6);
+  };
+
+  const handlePortfolioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isVideo = file.type.startsWith("video/");
+    const isImage = file.type.startsWith("image/");
+
+    if (!isVideo && !isImage) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload an image or video file",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check video limit
+    const videoCount = portfolioItems.filter(p => p.type === "video").length;
+    if (isVideo && videoCount >= 3) {
+      toast({
+        title: "Video limit reached",
+        description: "You can upload a maximum of 3 videos",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check file size
+    const maxSize = isVideo ? 100 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: `${isVideo ? "Videos" : "Images"} must be less than ${isVideo ? "100MB" : "5MB"}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setPortfolioItems([...portfolioItems, {
+      file,
+      type: isVideo ? "video" : "image",
+      previewUrl
+    }]);
+    e.target.value = "";
+  };
+
+  const removePortfolioItem = (index: number) => {
+    URL.revokeObjectURL(portfolioItems[index].previewUrl);
+    setPortfolioItems(portfolioItems.filter((_, i) => i !== index));
+  };
+
   const handleFinalSubmit = async () => {
     setIsLoading(true);
 
@@ -243,6 +308,37 @@ const CreatorSignup = () => {
         .insert(servicesData);
 
       if (servicesError) throw servicesError;
+
+      // Upload portfolio items if any
+      if (portfolioItems.length > 0) {
+        for (let i = 0; i < portfolioItems.length; i++) {
+          const item = portfolioItems[i];
+          const fileExt = item.file.name.split(".").pop();
+          const fileName = `${Date.now()}-${i}.${fileExt}`;
+          const filePath = `${authData.user.id}/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("portfolio-media")
+            .upload(filePath, item.file);
+
+          if (uploadError) {
+            console.error("Portfolio upload error:", uploadError);
+            continue;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from("portfolio-media")
+            .getPublicUrl(filePath);
+
+          await supabase.from("creator_portfolio_media").insert({
+            creator_profile_id: profileData.id,
+            media_type: item.type,
+            url: publicUrl,
+            thumbnail_url: item.type === "image" ? publicUrl : null,
+            display_order: i
+          });
+        }
+      }
 
       toast({
         title: "Application Submitted!",
@@ -596,6 +692,85 @@ const CreatorSignup = () => {
               )}
 
               {step === 5 && (
+                <form onSubmit={handleStep5} className="space-y-4">
+                  <CardHeader className="px-0">
+                    <CardTitle>Upload Your Best Work</CardTitle>
+                    <CardDescription>Showcase your content to brands (optional, max 3 videos)</CardDescription>
+                  </CardHeader>
+
+                  <div className="space-y-4">
+                    <div className="flex gap-3">
+                      <label htmlFor="portfolio-upload" className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors">
+                        <Upload className="h-4 w-4" />
+                        Add Image/Video
+                      </label>
+                      <input
+                        id="portfolio-upload"
+                        type="file"
+                        accept="image/*,video/*"
+                        className="hidden"
+                        onChange={handlePortfolioUpload}
+                      />
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      Images: JPG, PNG, WEBP (max 5MB) • Videos: MP4, MOV, WEBM (max 100MB)
+                    </p>
+
+                    {portfolioItems.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {portfolioItems.map((item, index) => (
+                          <div key={index} className="relative group aspect-square rounded-lg overflow-hidden bg-muted">
+                            {item.type === "image" ? (
+                              <img src={item.previewUrl} alt="Portfolio preview" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="relative w-full h-full">
+                                <video src={item.previewUrl} className="w-full h-full object-cover" muted />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <Play className="h-8 w-8 text-white" />
+                                </div>
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => removePortfolioItem(index)}
+                              className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                            <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 rounded text-xs text-white capitalize">
+                              {item.type}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {portfolioItems.length === 0 && (
+                      <div className="text-center py-8 bg-muted/50 rounded-lg border-2 border-dashed">
+                        <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground">No portfolio media yet</p>
+                        <p className="text-xs text-muted-foreground">Upload images and videos to showcase your work</p>
+                      </div>
+                    )}
+
+                    <p className="text-sm text-muted-foreground">
+                      Videos: {portfolioItems.filter(p => p.type === "video").length}/3 used
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button type="button" variant="outline" onClick={() => setStep(4)} className="flex-1">
+                      Back
+                    </Button>
+                    <Button type="submit" className="flex-1 gradient-hero hover:opacity-90">
+                      {portfolioItems.length === 0 ? "Skip for Now" : "Continue"}
+                    </Button>
+                  </div>
+                </form>
+              )}
+
+              {step === 6 && (
                 <div className="space-y-6">
                   <CardHeader className="px-0">
                     <CardTitle>Review & Submit</CardTitle>
@@ -632,6 +807,15 @@ const CreatorSignup = () => {
                       </div>
                     </div>
 
+                    {portfolioItems.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-2">Portfolio</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {portfolioItems.length} item(s) - {portfolioItems.filter(p => p.type === "image").length} images, {portfolioItems.filter(p => p.type === "video").length} videos
+                        </p>
+                      </div>
+                    )}
+
                     <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
                       <div className="flex items-start gap-3">
                         <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
@@ -649,7 +833,7 @@ const CreatorSignup = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setStep(4)}
+                      onClick={() => setStep(5)}
                       disabled={isLoading}
                       className="flex-1"
                     >

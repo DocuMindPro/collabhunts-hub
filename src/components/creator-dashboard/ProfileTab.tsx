@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, X } from "lucide-react";
 import SocialAccountsSection from "./SocialAccountsSection";
+import PortfolioUploadSection from "./PortfolioUploadSection";
 
 const AVAILABLE_CATEGORIES = [
   "Fashion", "Beauty", "Fitness", "Travel", "Food", "Tech",
@@ -345,6 +346,8 @@ const ProfileTab = () => {
       </Card>
 
       <SocialAccountsSection creatorProfileId={profile.id} />
+
+      <PortfolioUploadSection creatorProfileId={profile.id} />
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving}>
