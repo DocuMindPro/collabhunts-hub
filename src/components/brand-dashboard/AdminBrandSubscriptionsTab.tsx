@@ -20,6 +20,7 @@ interface BrandSubscription {
   current_period_start: string;
   current_period_end: string;
   cancel_at_period_end: boolean;
+  created_at?: string;
   brand_profiles: {
     company_name: string;
     user_id: string;
@@ -35,34 +36,63 @@ const AdminBrandSubscriptionsTab = () => {
   const [periodEndDate, setPeriodEndDate] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [expiryFilter, setExpiryFilter] = useState<"all" | "active" | "expired">("all");
+  const [statusFilter, setStatusFilter] = useState<"current" | "active" | "expired" | "all">("current");
   const { toast } = useToast();
 
   const isExpired = (periodEnd: string) => isPast(new Date(periodEnd));
 
+  // Get only the latest subscription per brand (excludes canceled, groups by brand)
+  const latestSubscriptionsPerBrand = useMemo(() => {
+    // First, filter out canceled subscriptions for the "current" view
+    const nonCanceled = subscriptions.filter(s => s.status !== "canceled");
+    
+    // Group by brand_profile_id and get the most recent one
+    const brandMap = new Map<string, BrandSubscription>();
+    nonCanceled.forEach(sub => {
+      const existing = brandMap.get(sub.brand_profile_id);
+      if (!existing || new Date(sub.created_at || sub.current_period_start) > new Date(existing.created_at || existing.current_period_start)) {
+        brandMap.set(sub.brand_profile_id, sub);
+      }
+    });
+    
+    return Array.from(brandMap.values());
+  }, [subscriptions]);
+
   const filteredSubscriptions = useMemo(() => {
-    return subscriptions.filter((sub) => {
+    // Use latest per brand for "current" view, all for "all" view
+    const baseList = statusFilter === "all" ? subscriptions : latestSubscriptionsPerBrand;
+    
+    return baseList.filter((sub) => {
       // Search filter
       const matchesSearch =
         sub.brand_profiles.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (sub.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
 
-      // Expiry filter
+      // Status filter
       const expired = isExpired(sub.current_period_end);
-      const matchesExpiry =
-        expiryFilter === "all" ||
-        (expiryFilter === "active" && !expired) ||
-        (expiryFilter === "expired" && expired);
+      let matchesStatus = true;
+      
+      if (statusFilter === "active") {
+        matchesStatus = !expired && sub.status !== "canceled";
+      } else if (statusFilter === "expired") {
+        matchesStatus = expired && sub.status !== "canceled";
+      } else if (statusFilter === "current") {
+        // Already filtered to latest per brand, no additional filter needed
+        matchesStatus = true;
+      }
+      // "all" shows everything including canceled
 
-      return matchesSearch && matchesExpiry;
+      return matchesSearch && matchesStatus;
     });
-  }, [subscriptions, searchQuery, expiryFilter]);
+  }, [subscriptions, latestSubscriptionsPerBrand, searchQuery, statusFilter]);
 
+  // Count based on latest subscriptions per brand (not all historical records)
   const expiredCount = useMemo(
-    () => subscriptions.filter((s) => isExpired(s.current_period_end)).length,
-    [subscriptions]
+    () => latestSubscriptionsPerBrand.filter((s) => isExpired(s.current_period_end)).length,
+    [latestSubscriptionsPerBrand]
   );
-  const activeCount = subscriptions.length - expiredCount;
+  const activeCount = latestSubscriptionsPerBrand.length - expiredCount;
+  const totalBrands = latestSubscriptionsPerBrand.length;
 
   useEffect(() => {
     fetchSubscriptions();
@@ -187,11 +217,11 @@ const AdminBrandSubscriptionsTab = () => {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Subscriptions</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Brands</CardTitle>
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{subscriptions.length}</div>
+            <div className="text-2xl font-bold">{totalBrands}</div>
           </CardContent>
         </Card>
 
@@ -217,12 +247,12 @@ const AdminBrandSubscriptionsTab = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Premium Subscribers</CardTitle>
+            <CardTitle className="text-sm font-medium">Premium Brands</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {subscriptions.filter(s => s.plan_type === "premium").length}
+              {latestSubscriptionsPerBrand.filter(s => s.plan_type === "premium").length}
             </div>
           </CardContent>
         </Card>
@@ -245,14 +275,15 @@ const AdminBrandSubscriptionsTab = () => {
                 className="pl-9"
               />
             </div>
-            <Select value={expiryFilter} onValueChange={(v) => setExpiryFilter(v as any)}>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Subscriptions</SelectItem>
+                <SelectItem value="current">Current (Latest per Brand)</SelectItem>
                 <SelectItem value="active">Active Only</SelectItem>
                 <SelectItem value="expired">Expired Only</SelectItem>
+                <SelectItem value="all">All History</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -263,7 +294,6 @@ const AdminBrandSubscriptionsTab = () => {
                 <TableHead>Company</TableHead>
                 <TableHead>Plan</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Expiry</TableHead>
                 <TableHead>Marketplace Fee</TableHead>
                 <TableHead>Period End</TableHead>
                 <TableHead>Actions</TableHead>
@@ -272,6 +302,7 @@ const AdminBrandSubscriptionsTab = () => {
             <TableBody>
               {filteredSubscriptions.map((subscription) => {
                 const expired = isExpired(subscription.current_period_end);
+                const isCanceled = subscription.status === "canceled";
                 return (
                   <TableRow key={subscription.id}>
                     <TableCell className="font-medium">
@@ -284,17 +315,15 @@ const AdminBrandSubscriptionsTab = () => {
                     </TableCell>
                     <TableCell>{getPlanBadge(subscription.plan_type)}</TableCell>
                     <TableCell>
-                      <Badge variant={subscription.status === "active" ? "default" : "secondary"}>
-                        {subscription.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={expired ? "destructive" : "outline"}
-                        className={expired ? "" : "border-green-500 text-green-600"}
-                      >
-                        {expired ? "Expired" : "Active"}
-                      </Badge>
+                      {isCanceled ? (
+                        <Badge variant="secondary">Canceled</Badge>
+                      ) : expired ? (
+                        <Badge variant="destructive">Expired</Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-green-500 text-green-600">
+                          Active
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>{getMarketplaceFee(subscription.plan_type)}</TableCell>
                     <TableCell>
