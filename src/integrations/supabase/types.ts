@@ -384,6 +384,51 @@ export type Database = {
           },
         ]
       }
+      content_folders: {
+        Row: {
+          brand_profile_id: string
+          color: string | null
+          created_at: string | null
+          id: string
+          name: string
+          parent_folder_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand_profile_id: string
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          parent_folder_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand_profile_id?: string
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          parent_folder_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_folders_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_folders_parent_folder_id_fkey"
+            columns: ["parent_folder_id"]
+            isOneToOne: false
+            referencedRelation: "content_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_library: {
         Row: {
           booking_id: string | null
@@ -394,7 +439,9 @@ export type Database = {
           file_name: string
           file_size_bytes: number
           file_type: string
+          folder_id: string | null
           id: string
+          last_expiry_notification_sent: string | null
           mime_type: string
           r2_key: string
           rights_type: string | null
@@ -414,7 +461,9 @@ export type Database = {
           file_name: string
           file_size_bytes: number
           file_type: string
+          folder_id?: string | null
           id?: string
+          last_expiry_notification_sent?: string | null
           mime_type: string
           r2_key: string
           rights_type?: string | null
@@ -434,7 +483,9 @@ export type Database = {
           file_name?: string
           file_size_bytes?: number
           file_type?: string
+          folder_id?: string | null
           id?: string
+          last_expiry_notification_sent?: string | null
           mime_type?: string
           r2_key?: string
           rights_type?: string | null
@@ -465,6 +516,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_library_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "content_folders"
             referencedColumns: ["id"]
           },
         ]
