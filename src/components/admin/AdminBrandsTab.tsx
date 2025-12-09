@@ -16,7 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Eye, Phone, CheckCircle, XCircle, Globe, Building2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Search, Eye, Phone, CheckCircle, XCircle, Globe, Building2, Download, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface BrandData {
   id: string;
@@ -38,11 +39,15 @@ interface BrandData {
   campaigns_count?: number;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 const AdminBrandsTab = () => {
   const [brands, setBrands] = useState<BrandData[]>([]);
   const [filteredBrands, setFilteredBrands] = useState<BrandData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBrand, setSelectedBrand] = useState<BrandData | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Filters
   const [search, setSearch] = useState("");
@@ -58,6 +63,13 @@ const AdminBrandsTab = () => {
   const industries = [...new Set(brands.map(b => b.industry).filter(Boolean))];
   const companySizes = [...new Set(brands.map(b => b.company_size).filter(Boolean))];
 
+  // Pagination
+  const totalPages = Math.ceil(filteredBrands.length / ITEMS_PER_PAGE);
+  const paginatedBrands = filteredBrands.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   useEffect(() => {
     fetchBrands();
   }, []);
@@ -65,7 +77,6 @@ const AdminBrandsTab = () => {
   useEffect(() => {
     let filtered = brands;
 
-    // Search filter
     if (search) {
       filtered = filtered.filter(b =>
         b.company_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -74,29 +85,24 @@ const AdminBrandsTab = () => {
       );
     }
 
-    // Phone verification filter
     if (phoneFilter !== "all") {
       filtered = filtered.filter(b => 
         phoneFilter === "verified" ? b.phone_verified : !b.phone_verified
       );
     }
 
-    // Subscription tier filter
     if (tierFilter !== "all") {
       filtered = filtered.filter(b => b.subscription_tier === tierFilter);
     }
 
-    // Industry filter
     if (industryFilter !== "all") {
       filtered = filtered.filter(b => b.industry === industryFilter);
     }
 
-    // Company size filter
     if (sizeFilter !== "all") {
       filtered = filtered.filter(b => b.company_size === sizeFilter);
     }
 
-    // Onboarding filter
     if (onboardingFilter !== "all") {
       filtered = filtered.filter(b => 
         onboardingFilter === "completed" ? b.onboarding_completed : !b.onboarding_completed
@@ -104,13 +110,14 @@ const AdminBrandsTab = () => {
     }
 
     setFilteredBrands(filtered);
+    setCurrentPage(1);
+    setSelectedIds(new Set());
   }, [search, phoneFilter, tierFilter, industryFilter, sizeFilter, onboardingFilter, brands]);
 
   const fetchBrands = async () => {
     try {
       setLoading(true);
 
-      // Fetch all brand profiles
       const { data: brandsData, error: brandsError } = await supabase
         .from("brand_profiles")
         .select("*")
@@ -123,7 +130,6 @@ const AdminBrandsTab = () => {
         return;
       }
 
-      // Fetch related data
       const userIds = brandsData.map(b => b.user_id);
       const brandIds = brandsData.map(b => b.id);
 
@@ -165,6 +171,54 @@ const AdminBrandsTab = () => {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === paginatedBrands.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(paginatedBrands.map(b => b.id)));
+    }
+  };
+
+  const exportToCSV = () => {
+    const headers = ["Company Name", "Email", "Phone", "Phone Verified", "Industry", "Company Size", "Subscription Tier", "Monthly Budget", "Total Spent ($)", "Bookings", "Campaigns", "Onboarding", "Joined"];
+    const rows = filteredBrands.map(b => [
+      b.company_name,
+      b.email || "",
+      b.phone_number || "",
+      b.phone_verified ? "Yes" : "No",
+      b.industry || "",
+      b.company_size || "",
+      b.subscription_tier || "basic",
+      b.monthly_budget_range || "",
+      ((b.total_spent_cents || 0) / 100).toFixed(2),
+      b.bookings_count?.toString() || "0",
+      b.campaigns_count?.toString() || "0",
+      b.onboarding_completed ? "Completed" : "Incomplete",
+      new Date(b.created_at).toLocaleDateString()
+    ]);
+
+    const csvContent = [headers, ...rows].map(row => 
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+    ).join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `brands_export_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    toast({ title: "Export complete", description: `${filteredBrands.length} brands exported` });
+  };
+
   const PhoneDisplay = ({ phone, verified }: { phone?: string | null; verified?: boolean | null }) => {
     if (!phone) return <span className="text-muted-foreground">—</span>;
     return (
@@ -192,11 +246,17 @@ const AdminBrandsTab = () => {
     <Card>
       <CardHeader className="p-4 md:p-6">
         <div className="flex flex-col gap-4">
-          <div>
-            <CardTitle className="text-lg md:text-xl">All Brands</CardTitle>
-            <CardDescription className="text-xs md:text-sm">
-              Comprehensive brand management ({filteredBrands.length} of {brands.length})
-            </CardDescription>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div>
+              <CardTitle className="text-lg md:text-xl">All Brands</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
+                Comprehensive brand management ({filteredBrands.length} of {brands.length})
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={exportToCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
           </div>
           
           {/* Filters */}
@@ -257,6 +317,16 @@ const AdminBrandsTab = () => {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Selection info */}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+              <span className="text-sm font-medium">{selectedIds.size} selected</span>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+                Clear
+              </Button>
+            </div>
+          )}
         </div>
       </CardHeader>
       
@@ -270,77 +340,118 @@ const AdminBrandsTab = () => {
             No brands found
           </div>
         ) : (
-          <div className="overflow-x-auto -mx-4 md:mx-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Industry</TableHead>
-                  <TableHead>Tier</TableHead>
-                  <TableHead>Spent</TableHead>
-                  <TableHead>Campaigns</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredBrands.map((brand) => (
-                  <TableRow key={brand.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={brand.logo_url || undefined} />
-                          <AvatarFallback>
-                            <Building2 className="h-4 w-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{brand.company_name}</p>
-                          <p className="text-xs text-muted-foreground">{brand.email}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <PhoneDisplay phone={brand.phone_number} verified={brand.phone_verified} />
-                    </TableCell>
-                    <TableCell>
-                      {brand.industry || <span className="text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getTierBadgeVariant(brand.subscription_tier || "basic")} className="capitalize">
-                        {brand.subscription_tier || "basic"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {brand.total_spent_cents && brand.total_spent_cents > 0 ? (
-                        <span className="text-blue-600 font-medium">
-                          ${(brand.total_spent_cents / 100).toFixed(2)}
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {brand.campaigns_count || 0}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(brand.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedBrand(brand)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+          <>
+            <div className="overflow-x-auto -mx-4 md:mx-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={selectedIds.size === paginatedBrands.length && paginatedBrands.length > 0}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Industry</TableHead>
+                    <TableHead>Tier</TableHead>
+                    <TableHead>Spent</TableHead>
+                    <TableHead>Campaigns</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {paginatedBrands.map((brand) => (
+                    <TableRow key={brand.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(brand.id)}
+                          onCheckedChange={() => toggleSelect(brand.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={brand.logo_url || undefined} />
+                            <AvatarFallback>
+                              <Building2 className="h-4 w-4" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{brand.company_name}</p>
+                            <p className="text-xs text-muted-foreground">{brand.email}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <PhoneDisplay phone={brand.phone_number} verified={brand.phone_verified} />
+                      </TableCell>
+                      <TableCell>
+                        {brand.industry || <span className="text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getTierBadgeVariant(brand.subscription_tier || "basic")} className="capitalize">
+                          {brand.subscription_tier || "basic"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {brand.total_spent_cents && brand.total_spent_cents > 0 ? (
+                          <span className="text-blue-600 font-medium">
+                            ${(brand.total_spent_cents / 100).toFixed(2)}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {brand.campaigns_count || 0}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(brand.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedBrand(brand)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
 
