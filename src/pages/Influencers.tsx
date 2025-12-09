@@ -6,7 +6,13 @@ import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Star, Instagram, Youtube, Play } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import { Search, Star, Instagram, Youtube, Play, Filter, X, ChevronDown, ChevronUp } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -14,13 +20,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import UpgradePrompt from "@/components/UpgradePrompt";
+import { userHasAdvancedFilters } from "@/lib/subscription-utils";
 
 interface CreatorWithDetails {
   id: string;
   display_name: string;
   profile_image_url: string | null;
   categories: string[];
-  location_country: string | null; // Only country for public view (privacy protection)
+  location_country: string | null;
+  birth_date: string | null;
+  gender: string | null;
+  ethnicity: string | null;
+  primary_language: string | null;
+  secondary_languages: string[] | null;
   social_accounts: Array<{
     platform: string;
     username: string;
@@ -32,6 +45,10 @@ interface CreatorWithDetails {
   }>;
 }
 
+const GENDERS = ["Male", "Female", "Non-binary"];
+const ETHNICITIES = ["African American", "Asian", "Caucasian", "Hispanic/Latino", "Middle Eastern", "Mixed/Other"];
+const LANGUAGES = ["English", "Spanish", "French", "German", "Portuguese", "Arabic", "Hindi", "Chinese", "Japanese", "Korean"];
+
 const Influencers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState("all");
@@ -40,6 +57,15 @@ const Influencers = () => {
   const [loading, setLoading] = useState(true);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+  
+  // Advanced filters state
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [hasAdvancedFilters, setHasAdvancedFilters] = useState(false);
+  const [checkingSubscription, setCheckingSubscription] = useState(true);
+  const [ageRange, setAgeRange] = useState([18, 65]);
+  const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
+  const [selectedEthnicities, setSelectedEthnicities] = useState<string[]>([]);
+  const [selectedLanguage, setSelectedLanguage] = useState("all");
 
   const platforms = ["All", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch"];
   const categories = [
@@ -57,7 +83,26 @@ const Influencers = () => {
 
   useEffect(() => {
     fetchCreators();
+    checkSubscription();
   }, []);
+
+  const checkSubscription = async () => {
+    setCheckingSubscription(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const canUseFilters = await userHasAdvancedFilters(user.id);
+        setHasAdvancedFilters(canUseFilters);
+      } else {
+        setHasAdvancedFilters(false);
+      }
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+      setHasAdvancedFilters(false);
+    } finally {
+      setCheckingSubscription(false);
+    }
+  };
 
   // Pre-validate images when creators change
   useEffect(() => {
@@ -68,7 +113,6 @@ const Influencers = () => {
         img.onerror = () => setFailedImages(prev => new Set(prev).add(creator.id));
         img.src = creator.profile_image_url;
         
-        // Timeout fallback - if nothing happens in 5 seconds, mark as failed
         const timeoutId = setTimeout(() => {
           setFailedImages(prev => {
             if (!loadedImages.has(creator.id) && !prev.has(creator.id)) {
@@ -87,7 +131,6 @@ const Influencers = () => {
           setFailedImages(prev => new Set(prev).add(creator.id));
         };
       } else if (!creator.profile_image_url) {
-        // No image URL, mark as failed immediately
         setFailedImages(prev => new Set(prev).add(creator.id));
       }
     });
@@ -97,7 +140,6 @@ const Influencers = () => {
     try {
       setLoading(true);
 
-      // Only fetch location_country for public view (privacy protection - no city/state)
       const { data, error } = await supabase
         .from("creator_profiles")
         .select(`
@@ -106,6 +148,11 @@ const Influencers = () => {
           profile_image_url,
           categories,
           location_country,
+          birth_date,
+          gender,
+          ethnicity,
+          primary_language,
+          secondary_languages,
           creator_social_accounts(platform, username, follower_count),
           creator_services(service_type, price_cents)
         `)
@@ -120,6 +167,11 @@ const Influencers = () => {
         profile_image_url: creator.profile_image_url,
         categories: creator.categories,
         location_country: creator.location_country,
+        birth_date: creator.birth_date,
+        gender: creator.gender,
+        ethnicity: creator.ethnicity,
+        primary_language: creator.primary_language,
+        secondary_languages: creator.secondary_languages,
         social_accounts: creator.creator_social_accounts || [],
         services: creator.creator_services || []
       }));
@@ -130,6 +182,28 @@ const Influencers = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateAge = (birthDate: string | null): number | null => {
+    if (!birthDate) return null;
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const hasActiveAdvancedFilters = ageRange[0] > 18 || ageRange[1] < 65 || 
+    selectedGenders.length > 0 || selectedEthnicities.length > 0 || selectedLanguage !== "all";
+
+  const clearAdvancedFilters = () => {
+    setAgeRange([18, 65]);
+    setSelectedGenders([]);
+    setSelectedEthnicities([]);
+    setSelectedLanguage("all");
   };
 
   const filteredCreators = creators.filter((creator) => {
@@ -143,7 +217,36 @@ const Influencers = () => {
     const matchesCategory = selectedCategory === "all" ||
       creator.categories.some(cat => cat.toLowerCase() === selectedCategory.toLowerCase().replace(" categories", ""));
 
-    return matchesSearch && matchesPlatform && matchesCategory;
+    // Advanced filters (only apply if user has access)
+    let matchesAdvanced = true;
+    if (hasAdvancedFilters && hasActiveAdvancedFilters) {
+      // Age filter
+      if (ageRange[0] > 18 || ageRange[1] < 65) {
+        const age = calculateAge(creator.birth_date);
+        if (age !== null) {
+          matchesAdvanced = matchesAdvanced && age >= ageRange[0] && age <= ageRange[1];
+        }
+      }
+
+      // Gender filter
+      if (selectedGenders.length > 0) {
+        matchesAdvanced = matchesAdvanced && (creator.gender ? selectedGenders.includes(creator.gender) : false);
+      }
+
+      // Ethnicity filter
+      if (selectedEthnicities.length > 0) {
+        matchesAdvanced = matchesAdvanced && (creator.ethnicity ? selectedEthnicities.includes(creator.ethnicity) : false);
+      }
+
+      // Language filter
+      if (selectedLanguage !== "all") {
+        const matchesLanguage = creator.primary_language === selectedLanguage || 
+          (creator.secondary_languages && creator.secondary_languages.includes(selectedLanguage));
+        matchesAdvanced = matchesAdvanced && matchesLanguage;
+      }
+    }
+
+    return matchesSearch && matchesPlatform && matchesCategory && matchesAdvanced;
   });
 
   const getMainPlatform = (socialAccounts: CreatorWithDetails['social_accounts']) => {
@@ -189,7 +292,7 @@ const Influencers = () => {
           </div>
 
           {/* Filters */}
-          <div className="bg-card rounded-xl border border-border p-6 mb-8 shadow-card">
+          <div className="bg-card rounded-xl border border-border p-6 mb-4 shadow-card">
             <div className="grid md:grid-cols-4 gap-4">
               <div className="md:col-span-2">
                 <div className="relative">
@@ -230,7 +333,143 @@ const Influencers = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="mt-4">
+              <Button
+                variant={showAdvancedFilters ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className="gap-2"
+              >
+                <Filter className="h-4 w-4" />
+                Advanced Filters
+                {hasActiveAdvancedFilters && hasAdvancedFilters && (
+                  <Badge variant="secondary" className="ml-1 rounded-full h-5 w-5 p-0 flex items-center justify-center">
+                    !
+                  </Badge>
+                )}
+                {showAdvancedFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
+
+          {/* Advanced Filters Panel */}
+          {showAdvancedFilters && (
+            <Card className="mb-8">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Advanced Filters</CardTitle>
+                  {hasAdvancedFilters && hasActiveAdvancedFilters && (
+                    <Button variant="ghost" size="sm" onClick={clearAdvancedFilters} className="gap-2">
+                      <X className="h-4 w-4" />
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {!hasAdvancedFilters && !checkingSubscription ? (
+                  <UpgradePrompt feature="filters" inline />
+                ) : checkingSubscription ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Age Range */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-base font-semibold">Age Range</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {ageRange[0]} - {ageRange[1]}+ years
+                        </span>
+                      </div>
+                      <Slider
+                        min={18}
+                        max={65}
+                        step={1}
+                        value={ageRange}
+                        onValueChange={setAgeRange}
+                        className="w-full"
+                      />
+                    </div>
+
+                    <Separator />
+
+                    {/* Gender */}
+                    <div className="space-y-3">
+                      <Label className="text-base font-semibold">Gender</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {GENDERS.map((gender) => (
+                          <div key={gender} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`gender-${gender}`}
+                              checked={selectedGenders.includes(gender)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedGenders([...selectedGenders, gender]);
+                                } else {
+                                  setSelectedGenders(selectedGenders.filter(g => g !== gender));
+                                }
+                              }}
+                            />
+                            <label htmlFor={`gender-${gender}`} className="text-sm cursor-pointer">
+                              {gender}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Ethnicity */}
+                    <div className="space-y-3">
+                      <Label className="text-base font-semibold">Ethnicity</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {ETHNICITIES.map((ethnicity) => (
+                          <div key={ethnicity} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`ethnicity-${ethnicity}`}
+                              checked={selectedEthnicities.includes(ethnicity)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedEthnicities([...selectedEthnicities, ethnicity]);
+                                } else {
+                                  setSelectedEthnicities(selectedEthnicities.filter(e => e !== ethnicity));
+                                }
+                              }}
+                            />
+                            <label htmlFor={`ethnicity-${ethnicity}`} className="text-sm cursor-pointer">
+                              {ethnicity}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Language */}
+                    <div className="space-y-3">
+                      <Label className="text-base font-semibold">Language</Label>
+                      <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                        <SelectTrigger className="w-full md:w-[300px]">
+                          <SelectValue placeholder="Select language" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Languages</SelectItem>
+                          {LANGUAGES.map((lang) => (
+                            <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Results */}
           {loading ? (
