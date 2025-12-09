@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, HeartOff, Star, MapPin, Calendar, DollarSign, MessageSquare, Trash2, Edit2, Plus, FolderOpen, Users, Clock, StickyNote } from "lucide-react";
+import { Heart, HeartOff, Star, MapPin, Calendar, DollarSign, MessageSquare, Trash2, Edit2, Plus, FolderOpen, Users, Clock, StickyNote, Search, ExternalLink, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, formatDistanceToNow } from "date-fns";
 import { canUserUseCRM } from "@/lib/subscription-utils";
@@ -27,6 +28,7 @@ interface SavedCreator {
     location_country: string | null;
     categories: string[];
   };
+  content_count?: number;
 }
 
 interface WorkedWithCreator {
@@ -39,6 +41,7 @@ interface WorkedWithCreator {
   total_spent_cents: number;
   last_booking_date: string;
   avg_rating: number | null;
+  content_count?: number;
 }
 
 interface CreatorNote {
@@ -61,6 +64,8 @@ const BrandYourCreatorsTab = () => {
   const [notes, setNotes] = useState<CreatorNote[]>([]);
   const [selectedFolder, setSelectedFolder] = useState("all");
   const [folders, setFolders] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [contentCountMap, setContentCountMap] = useState<Record<string, number>>({});
   
   // Notes dialog state
   const [notesDialogOpen, setNotesDialogOpen] = useState(false);
@@ -227,6 +232,23 @@ const BrandYourCreatorsTab = () => {
         setNotes(notesData);
       }
 
+      // Fetch content count per creator
+      const { data: contentData } = await supabase
+        .from("content_library")
+        .select("creator_profile_id")
+        .eq("brand_profile_id", brandProfile.id)
+        .not("creator_profile_id", "is", null);
+
+      if (contentData) {
+        const countMap: Record<string, number> = {};
+        contentData.forEach((item: any) => {
+          if (item.creator_profile_id) {
+            countMap[item.creator_profile_id] = (countMap[item.creator_profile_id] || 0) + 1;
+          }
+        });
+        setContentCountMap(countMap);
+      }
+
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -348,18 +370,50 @@ const BrandYourCreatorsTab = () => {
     return notes.filter(n => n.creator_profile_id === creatorId);
   };
 
-  const filteredSavedCreators = selectedFolder === "all" 
-    ? savedCreators 
-    : savedCreators.filter(s => s.folder_name === selectedFolder);
+  // Filter saved creators by folder and search
+  const filteredSavedCreators = savedCreators.filter(s => {
+    const matchesFolder = selectedFolder === "all" || s.folder_name === selectedFolder;
+    const matchesSearch = !searchQuery || 
+      s.creator.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.creator.categories.some(cat => cat.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesFolder && matchesSearch;
+  });
+
+  // Filter worked with creators by search
+  const filteredWorkedWithCreators = workedWithCreators.filter(c => {
+    return !searchQuery || 
+      c.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.categories.some(cat => cat.toLowerCase().includes(searchQuery.toLowerCase()));
+  });
 
   // Show upgrade prompt for Basic tier users
   if (hasCRMAccess === false) {
-    return (
-      <div className="space-y-6">
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-heading font-bold mb-2">Your Creators</h2>
           <p className="text-muted-foreground">Manage your saved creators and past collaborations</p>
         </div>
+        <Button asChild variant="outline" className="gap-2 shrink-0">
+          <Link to="/influencers">
+            <Search className="h-4 w-4" />
+            Browse All Creators
+            <ExternalLink className="h-3 w-3" />
+          </Link>
+        </Button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name or category..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
         <UpgradePrompt feature="crm" />
       </div>
     );
@@ -465,16 +519,27 @@ const BrandYourCreatorsTab = () => {
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Heart className="h-12 w-12 text-muted-foreground/30 mb-4" />
                 <p className="text-muted-foreground text-center">
-                  {selectedFolder === "all" 
-                    ? "No saved creators yet. Save creators from their profile pages!"
-                    : `No creators in "${selectedFolder}" folder`}
+                  {searchQuery 
+                    ? "No creators match your search"
+                    : selectedFolder === "all" 
+                      ? "No saved creators yet. Save creators from their profile pages!"
+                      : `No creators in "${selectedFolder}" folder`}
                 </p>
+                {!searchQuery && (
+                  <Button asChild variant="outline" className="mt-4 gap-2">
+                    <Link to="/influencers">
+                      <Search className="h-4 w-4" />
+                      Browse Creators
+                    </Link>
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredSavedCreators.map((saved) => {
                 const creatorNotes = getCreatorNotes(saved.creator_profile_id);
+                const contentCount = contentCountMap[saved.creator_profile_id] || 0;
                 return (
                   <Card key={saved.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                     <CardHeader className="pb-3">
@@ -503,7 +568,7 @@ const BrandYourCreatorsTab = () => {
                         ))}
                       </div>
                       
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center flex-wrap gap-2 text-sm">
                         <Badge variant="outline" className="gap-1">
                           <FolderOpen className="h-3 w-3" />
                           {saved.folder_name}
@@ -511,7 +576,13 @@ const BrandYourCreatorsTab = () => {
                         {creatorNotes.length > 0 && (
                           <Badge variant="secondary" className="gap-1">
                             <StickyNote className="h-3 w-3" />
-                            {creatorNotes.length} note{creatorNotes.length > 1 ? 's' : ''}
+                            {creatorNotes.length}
+                          </Badge>
+                        )}
+                        {contentCount > 0 && (
+                          <Badge variant="secondary" className="gap-1">
+                            <Image className="h-3 w-3" />
+                            {contentCount}
                           </Badge>
                         )}
                       </div>
@@ -559,17 +630,20 @@ const BrandYourCreatorsTab = () => {
         </TabsContent>
 
         <TabsContent value="worked" className="space-y-4">
-          {workedWithCreators.length === 0 ? (
+          {filteredWorkedWithCreators.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                <p className="text-muted-foreground">No past collaborations yet</p>
+                <p className="text-muted-foreground">
+                  {searchQuery ? "No creators match your search" : "No past collaborations yet"}
+                </p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {workedWithCreators.map((creator) => {
+              {filteredWorkedWithCreators.map((creator) => {
                 const creatorNotes = getCreatorNotes(creator.creator_profile_id);
+                const contentCount = contentCountMap[creator.creator_profile_id] || 0;
                 return (
                   <Card key={creator.creator_profile_id} className="overflow-hidden hover:shadow-lg transition-shadow">
                     <CardHeader className="pb-3">
@@ -613,6 +687,12 @@ const BrandYourCreatorsTab = () => {
                           <DollarSign className="h-4 w-4 text-muted-foreground" />
                           <span>${(creator.total_spent_cents / 100).toLocaleString()}</span>
                         </div>
+                        {contentCount > 0 && (
+                          <div className="flex items-center gap-2 col-span-2">
+                            <Image className="h-4 w-4 text-muted-foreground" />
+                            <span>{contentCount} content item{contentCount > 1 ? 's' : ''}</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
