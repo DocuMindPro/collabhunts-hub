@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Phone, CheckCircle, XCircle, Globe, Building2, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Eye, Phone, CheckCircle, XCircle, Globe, Building2, Download, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 interface BrandData {
   id: string;
@@ -59,15 +59,77 @@ const AdminBrandsTab = () => {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   
+  // Sorting
+  const [sortField, setSortField] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  
   const { toast } = useToast();
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("desc");
+    }
+  };
+
+  const SortableHeader = ({ field, children }: { field: string; children: React.ReactNode }) => (
+    <TableHead 
+      className="cursor-pointer hover:bg-muted/50 select-none"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        {sortField === field ? (
+          sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-30" />
+        )}
+      </div>
+    </TableHead>
+  );
 
   // Get unique values for filter dropdowns
   const industries = [...new Set(brands.map(b => b.industry).filter(Boolean))];
   const companySizes = [...new Set(brands.map(b => b.company_size).filter(Boolean))];
 
-  // Pagination
-  const totalPages = Math.ceil(filteredBrands.length / ITEMS_PER_PAGE);
-  const paginatedBrands = filteredBrands.slice(
+  // Sorting and Pagination
+  const sortedBrands = [...filteredBrands].sort((a, b) => {
+    let aVal: any, bVal: any;
+    switch (sortField) {
+      case "company_name":
+        aVal = a.company_name.toLowerCase();
+        bVal = b.company_name.toLowerCase();
+        break;
+      case "total_spent_cents":
+        aVal = a.total_spent_cents || 0;
+        bVal = b.total_spent_cents || 0;
+        break;
+      case "campaigns_count":
+        aVal = a.campaigns_count || 0;
+        bVal = b.campaigns_count || 0;
+        break;
+      case "created_at":
+        aVal = new Date(a.created_at).getTime();
+        bVal = new Date(b.created_at).getTime();
+        break;
+      case "subscription_tier":
+        const tierOrder = { basic: 0, pro: 1, premium: 2 };
+        aVal = tierOrder[a.subscription_tier as keyof typeof tierOrder] ?? 0;
+        bVal = tierOrder[b.subscription_tier as keyof typeof tierOrder] ?? 0;
+        break;
+      default:
+        aVal = a.created_at;
+        bVal = b.created_at;
+    }
+    if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const totalPages = Math.ceil(sortedBrands.length / ITEMS_PER_PAGE);
+  const paginatedBrands = sortedBrands.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -415,13 +477,13 @@ const AdminBrandsTab = () => {
                         onCheckedChange={toggleSelectAll}
                       />
                     </TableHead>
-                    <TableHead>Company</TableHead>
+                    <SortableHeader field="company_name">Company</SortableHeader>
                     <TableHead>Phone</TableHead>
                     <TableHead>Industry</TableHead>
-                    <TableHead>Tier</TableHead>
-                    <TableHead>Spent</TableHead>
-                    <TableHead>Campaigns</TableHead>
-                    <TableHead>Joined</TableHead>
+                    <SortableHeader field="subscription_tier">Tier</SortableHeader>
+                    <SortableHeader field="total_spent_cents">Spent</SortableHeader>
+                    <SortableHeader field="campaigns_count">Campaigns</SortableHeader>
+                    <SortableHeader field="created_at">Joined</SortableHeader>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
