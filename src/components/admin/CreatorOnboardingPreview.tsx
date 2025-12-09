@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, User, Camera, Image as ImageIcon } from "lucide-react";
+import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, User, Camera, Image as ImageIcon, Phone } from "lucide-react";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -21,6 +21,8 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
   // Step 1: Basic info
   const [email, setEmail] = useState("preview@example.com");
   const [fullName, setFullName] = useState("Preview User");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
 
   // Step 2: Profile details
   const [displayName, setDisplayName] = useState("");
@@ -109,7 +111,74 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
                 <p className="text-xs text-muted-foreground mt-1">Password input disabled in preview</p>
               </div>
 
-              <Button onClick={() => setStep(2)} className="w-full">Continue</Button>
+              {/* Phone Verification Preview */}
+              <div className="border-t pt-4 mt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Phone className="h-4 w-4 text-primary" />
+                  <Label className="font-semibold">Phone Verification</Label>
+                  <span className="text-destructive text-xs">*Required</span>
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <Label>Phone Number</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="tel"
+                        value={phoneNumber}
+                        onChange={(e) => {
+                          setPhoneNumber(e.target.value);
+                          setPhoneVerified(false);
+                        }}
+                        placeholder="+1234567890"
+                        disabled={phoneVerified}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant={phoneVerified ? "default" : "outline"}
+                        onClick={() => {
+                          if (phoneNumber.length >= 10) {
+                            setPhoneVerified(true);
+                          }
+                        }}
+                        disabled={phoneVerified || phoneNumber.length < 10}
+                      >
+                        {phoneVerified ? <CheckCircle className="h-4 w-4" /> : "Simulate Verify"}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Include country code (e.g., +1 for US)
+                    </p>
+                  </div>
+
+                  {phoneVerified && (
+                    <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-md">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>Phone number verified (simulated)</span>
+                    </div>
+                  )}
+
+                  {!phoneVerified && phoneNumber.length >= 10 && (
+                    <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded-md">
+                      Click "Simulate Verify" to test the verification flow
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => setStep(2)} 
+                className="w-full"
+                disabled={!phoneVerified}
+              >
+                Continue
+              </Button>
+              {!phoneVerified && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Phone verification required to continue
+                </p>
+              )}
             </div>
           )}
 
@@ -481,6 +550,13 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm font-medium">Display Name</p>
                   <p className="text-muted-foreground">{displayName || "Not set"}</p>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm font-medium">Phone Number</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-muted-foreground">{phoneNumber || "Not set"}</p>
+                    {phoneVerified && <CheckCircle className="h-4 w-4 text-green-600" />}
+                  </div>
                 </div>
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm font-medium">Bio</p>
