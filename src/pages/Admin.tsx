@@ -18,11 +18,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AdminBrandSubscriptionsTab from "@/components/brand-dashboard/AdminBrandSubscriptionsTab";
 import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
 import AdminTestingTab from "@/components/admin/AdminTestingTab";
+import AdminCreatorsTab from "@/components/admin/AdminCreatorsTab";
+import AdminBrandsTab from "@/components/admin/AdminBrandsTab";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface Profile {
@@ -40,6 +42,10 @@ interface Profile {
   total_earned_cents?: number;
   total_spent_cents?: number;
   booking_count?: number;
+  creator_phone?: string | null;
+  creator_phone_verified?: boolean | null;
+  brand_phone?: string | null;
+  brand_phone_verified?: boolean | null;
 }
 
 interface CreatorProfile {
@@ -204,15 +210,15 @@ const Admin = () => {
 
       if (rolesError) throw rolesError;
 
-      // Fetch creator profiles
+      // Fetch creator profiles with phone
       const { data: creatorProfilesData } = await supabase
         .from("creator_profiles")
-        .select("id, user_id, display_name, status");
+        .select("id, user_id, display_name, status, phone_number, phone_verified");
 
-      // Fetch brand profiles
+      // Fetch brand profiles with phone
       const { data: brandProfilesData } = await supabase
         .from("brand_profiles")
-        .select("id, user_id, company_name");
+        .select("id, user_id, company_name, phone_number, phone_verified");
 
       // Fetch all bookings for stats calculations
       const { data: allBookingsData } = await supabase
@@ -260,6 +266,10 @@ const Admin = () => {
           total_earned_cents: totalEarned,
           total_spent_cents: totalSpent,
           booking_count: creatorProfile ? creatorBookingCount : brandBookingCount,
+          creator_phone: creatorProfile?.phone_number,
+          creator_phone_verified: creatorProfile?.phone_verified,
+          brand_phone: brandProfile?.phone_number,
+          brand_phone_verified: brandProfile?.phone_verified,
         };
       });
 
@@ -613,6 +623,14 @@ const Admin = () => {
                 <Users className="h-4 w-4" />
                 <span className="hidden sm:inline">All Users</span>
               </TabsTrigger>
+              <TabsTrigger value="creators" className="gap-2 shrink-0">
+                <Palette className="h-4 w-4" />
+                <span className="hidden sm:inline">Creators</span>
+              </TabsTrigger>
+              <TabsTrigger value="brands" className="gap-2 shrink-0">
+                <Building2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Brands</span>
+              </TabsTrigger>
               <TabsTrigger value="approvals" className="gap-2 shrink-0">
                 <CheckCircle className="h-4 w-4" />
                 <span className="hidden sm:inline">Approvals</span>
@@ -674,6 +692,7 @@ const Admin = () => {
                         <TableRow>
                           <TableHead>Email</TableHead>
                           <TableHead>Full Name</TableHead>
+                          <TableHead>Phone</TableHead>
                           <TableHead>Account Type</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Total Activity</TableHead>
@@ -686,6 +705,24 @@ const Admin = () => {
                           <TableRow key={profile.id}>
                             <TableCell className="font-medium">{profile.email}</TableCell>
                             <TableCell>{profile.full_name || "—"}</TableCell>
+                            <TableCell>
+                              {(() => {
+                                const phone = profile.creator_phone || profile.brand_phone;
+                                const verified = profile.creator_phone ? profile.creator_phone_verified : profile.brand_phone_verified;
+                                if (!phone) return <span className="text-muted-foreground">—</span>;
+                                return (
+                                  <div className="flex items-center gap-1">
+                                    <Phone className="h-3 w-3 text-muted-foreground" />
+                                    <span className="text-sm">{phone}</span>
+                                    {verified ? (
+                                      <CheckCircle className="h-3 w-3 text-green-500" />
+                                    ) : (
+                                      <XCircle className="h-3 w-3 text-red-500" />
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                            </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-1">
                                 {profile.is_creator && (
@@ -770,6 +807,16 @@ const Admin = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Creators Tab */}
+            <TabsContent value="creators">
+              <AdminCreatorsTab />
+            </TabsContent>
+
+            {/* Brands Tab */}
+            <TabsContent value="brands">
+              <AdminBrandsTab />
             </TabsContent>
 
             {/* Creator Approvals Tab */}
