@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Building2, CreditCard } from "lucide-react";
 import { format } from "date-fns";
-
+import { SUBSCRIPTION_PLANS, PlanType } from "@/lib/stripe-mock";
 interface BrandSubscription {
   id: string;
   brand_profile_id: string;
@@ -122,12 +122,11 @@ const AdminBrandSubscriptionsTab = () => {
   };
 
   const getMarketplaceFee = (planType: string) => {
-    const fees: Record<string, string> = {
-      basic: "15%",
-      pro: "10%",
-      premium: "5%"
-    };
-    return fees[planType] || "15%";
+    const plan = SUBSCRIPTION_PLANS[planType as PlanType];
+    if (plan) {
+      return `${(plan.marketplaceFee * 100).toFixed(0)}%`;
+    }
+    return "20%"; // Default to Basic fee
   };
 
   if (loading) {
@@ -242,9 +241,11 @@ const AdminBrandSubscriptionsTab = () => {
                   <SelectValue placeholder="Select plan" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="basic">Basic (15% fee)</SelectItem>
-                  <SelectItem value="pro">Pro (10% fee)</SelectItem>
-                  <SelectItem value="premium">Premium (5% fee)</SelectItem>
+                  {(Object.keys(SUBSCRIPTION_PLANS) as PlanType[]).map((key) => (
+                    <SelectItem key={key} value={key}>
+                      {SUBSCRIPTION_PLANS[key].name} ({(SUBSCRIPTION_PLANS[key].marketplaceFee * 100).toFixed(0)}% fee)
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
