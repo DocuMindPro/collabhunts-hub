@@ -2,13 +2,70 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Users, Shield, TrendingUp, Instagram, Youtube, Video } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import heroImage from "@/assets/hero-creators.jpg";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState<any>(null);
+  const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
+
+  useEffect(() => {
+    const checkUserProfiles = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+        
+        const { data: brandProfile } = await supabase
+          .from('brand_profiles')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        const { data: creatorProfile } = await supabase
+          .from('creator_profiles')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        setHasBrandProfile(!!brandProfile);
+        setHasCreatorProfile(!!creatorProfile);
+      }
+    };
+
+    checkUserProfiles();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        
+        const { data: brandProfile } = await supabase
+          .from('brand_profiles')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        const { data: creatorProfile } = await supabase
+          .from('creator_profiles')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        setHasBrandProfile(!!brandProfile);
+        setHasCreatorProfile(!!creatorProfile);
+      } else {
+        setUser(null);
+        setHasBrandProfile(false);
+        setHasCreatorProfile(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const platforms = [
     { name: "Instagram", icon: Instagram, color: "text-pink-500" },
@@ -167,11 +224,30 @@ const Index = () => {
               <p className="text-muted-foreground mb-6">
                 Search influencers, post campaigns, track analytics, and get unique content for your brand
               </p>
-              <Link to="/brand">
-                <Button size="lg" variant="default">
-                  Join as Brand
-                </Button>
-              </Link>
+              {hasBrandProfile ? (
+                <Link to="/brand-dashboard">
+                  <Button size="lg" variant="default">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              ) : user && hasCreatorProfile ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Want to join as a brand? Create a new account with a different email.
+                  </p>
+                  <Link to="/brand">
+                    <Button size="lg" variant="outline">
+                      Learn More
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <Link to="/brand">
+                  <Button size="lg" variant="default">
+                    Join as Brand
+                  </Button>
+                </Link>
+              )}
             </div>
 
             <div className="bg-card/95 backdrop-blur p-8 rounded-2xl shadow-card">
@@ -179,11 +255,30 @@ const Index = () => {
               <p className="text-muted-foreground mb-6">
                 Get paid to work with brands you love and showcase your talent to thousands of companies
               </p>
-              <Link to="/creator">
-                <Button size="lg" className="bg-accent hover:bg-accent-hover">
-                  Join as Creator
-                </Button>
-              </Link>
+              {hasCreatorProfile ? (
+                <Link to="/creator-dashboard">
+                  <Button size="lg" className="bg-accent hover:bg-accent-hover">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              ) : user && hasBrandProfile ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Want to become a creator? Create a new account with a different email.
+                  </p>
+                  <Link to="/creator">
+                    <Button size="lg" variant="outline">
+                      Learn More
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <Link to="/creator">
+                  <Button size="lg" className="bg-accent hover:bg-accent-hover">
+                    Join as Creator
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

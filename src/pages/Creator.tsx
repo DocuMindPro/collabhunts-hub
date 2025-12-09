@@ -1,13 +1,71 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DollarSign, Users, Shield, TrendingUp, Calendar, Award } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
 
 const Creator = () => {
   const [username, setUsername] = useState("");
+  const [user, setUser] = useState<any>(null);
+  const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
+
+  useEffect(() => {
+    const checkUserProfiles = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+        
+        const { data: brandProfile } = await supabase
+          .from('brand_profiles')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        const { data: creatorProfile } = await supabase
+          .from('creator_profiles')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        setHasBrandProfile(!!brandProfile);
+        setHasCreatorProfile(!!creatorProfile);
+      }
+    };
+
+    checkUserProfiles();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        setTimeout(async () => {
+          const { data: brandProfile } = await supabase
+            .from('brand_profiles')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          const { data: creatorProfile } = await supabase
+            .from('creator_profiles')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          setHasBrandProfile(!!brandProfile);
+          setHasCreatorProfile(!!creatorProfile);
+        }, 0);
+      } else {
+        setUser(null);
+        setHasBrandProfile(false);
+        setHasCreatorProfile(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const benefits = [
     {
@@ -55,28 +113,47 @@ const Creator = () => {
               The simple way to sell, manage, and get paid for your Instagram, TikTok, YouTube, and UGC brand deals
             </p>
 
-            {/* Username Claim */}
-            <div className="max-w-2xl mx-auto mb-8">
-              <div className="flex gap-2">
-                <div className="flex-1 flex items-center bg-background border border-input rounded-lg px-4">
-                  <span className="text-muted-foreground mr-2">collabhunts.com/</span>
-                  <Input
-                    type="text"
-                    placeholder="yourname"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="border-0 focus-visible:ring-0 px-0"
-                  />
-                </div>
-                <Button 
-                  size="lg" 
-                  className="gradient-hero hover:opacity-90"
-                  onClick={() => window.location.href = '/creator-signup'}
-                >
-                  Claim
+            {/* Username Claim or Dashboard Link */}
+            {hasCreatorProfile ? (
+              <div className="max-w-2xl mx-auto mb-8">
+                <Link to="/creator-dashboard">
+                  <Button size="lg" className="gradient-hero hover:opacity-90 text-lg px-8 py-6">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              </div>
+            ) : user && hasBrandProfile ? (
+              <div className="max-w-2xl mx-auto mb-8 space-y-3">
+                <p className="text-muted-foreground">
+                  You're logged in as a brand. To join as a creator, please create a new account with a different email.
+                </p>
+                <Button size="lg" variant="outline" onClick={() => supabase.auth.signOut()}>
+                  Sign Out to Create Creator Account
                 </Button>
               </div>
-            </div>
+            ) : (
+              <div className="max-w-2xl mx-auto mb-8">
+                <div className="flex gap-2">
+                  <div className="flex-1 flex items-center bg-background border border-input rounded-lg px-4">
+                    <span className="text-muted-foreground mr-2">collabhunts.com/</span>
+                    <Input
+                      type="text"
+                      placeholder="yourname"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="border-0 focus-visible:ring-0 px-0"
+                    />
+                  </div>
+                  <Button 
+                    size="lg" 
+                    className="gradient-hero hover:opacity-90"
+                    onClick={() => window.location.href = '/creator-signup'}
+                  >
+                    Claim
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <p className="text-sm text-muted-foreground">
               Join 350,000+ creators already earning on CollabHunts
@@ -191,11 +268,23 @@ const Creator = () => {
               Create your profile in minutes and start getting paid
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/creator-signup">
-                <Button size="lg" className="gradient-hero hover:opacity-90">
-                  Create Your Profile
+              {hasCreatorProfile ? (
+                <Link to="/creator-dashboard">
+                  <Button size="lg" className="gradient-hero hover:opacity-90">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              ) : user && hasBrandProfile ? (
+                <Button size="lg" variant="outline" onClick={() => supabase.auth.signOut()}>
+                  Sign Out to Create Creator Account
                 </Button>
-              </Link>
+              ) : (
+                <Link to="/creator-signup">
+                  <Button size="lg" className="gradient-hero hover:opacity-90">
+                    Create Your Profile
+                  </Button>
+                </Link>
+              )}
               <Link to="/#how-it-works">
                 <Button size="lg" variant="outline">
                   Learn How It Works

@@ -1,10 +1,69 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Search, Shield, TrendingUp, Users, DollarSign, CheckCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
 
 const Brand = () => {
+  const [user, setUser] = useState<any>(null);
+  const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
+
+  useEffect(() => {
+    const checkUserProfiles = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+        
+        const { data: brandProfile } = await supabase
+          .from('brand_profiles')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        const { data: creatorProfile } = await supabase
+          .from('creator_profiles')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        setHasBrandProfile(!!brandProfile);
+        setHasCreatorProfile(!!creatorProfile);
+      }
+    };
+
+    checkUserProfiles();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        setTimeout(async () => {
+          const { data: brandProfile } = await supabase
+            .from('brand_profiles')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          const { data: creatorProfile } = await supabase
+            .from('creator_profiles')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          setHasBrandProfile(!!brandProfile);
+          setHasCreatorProfile(!!creatorProfile);
+        }, 0);
+      } else {
+        setUser(null);
+        setHasBrandProfile(false);
+        setHasCreatorProfile(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   const benefits = [
     {
       icon: DollarSign,
@@ -63,11 +122,28 @@ const Brand = () => {
             <p className="text-xl text-muted-foreground mb-8">
               Search influencers, post campaigns, track analytics, and get unique content for your brand in seconds
             </p>
-            <Link to="/brand-signup">
-              <Button size="lg" className="gradient-hero hover:opacity-90 text-lg px-8 py-6">
-                Join for Free
-              </Button>
-            </Link>
+            {hasBrandProfile ? (
+              <Link to="/brand-dashboard">
+                <Button size="lg" className="gradient-hero hover:opacity-90 text-lg px-8 py-6">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            ) : user && hasCreatorProfile ? (
+              <div className="space-y-3">
+                <p className="text-muted-foreground">
+                  You're logged in as a creator. To join as a brand, please create a new account with a different email.
+                </p>
+                <Button size="lg" variant="outline" onClick={() => supabase.auth.signOut()}>
+                  Sign Out to Create Brand Account
+                </Button>
+              </div>
+            ) : (
+              <Link to="/brand-signup">
+                <Button size="lg" className="gradient-hero hover:opacity-90 text-lg px-8 py-6">
+                  Join for Free
+                </Button>
+              </Link>
+            )}
             <p className="text-sm text-muted-foreground mt-6">
               Trusted by 250,000+ teams
             </p>
@@ -148,11 +224,23 @@ const Brand = () => {
               Join thousands of brands already using CollabHunts
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/brand-signup">
-                <Button size="lg" className="gradient-hero hover:opacity-90">
-                  Get Started
+              {hasBrandProfile ? (
+                <Link to="/brand-dashboard">
+                  <Button size="lg" className="gradient-hero hover:opacity-90">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              ) : user && hasCreatorProfile ? (
+                <Button size="lg" variant="outline" onClick={() => supabase.auth.signOut()}>
+                  Sign Out to Create Brand Account
                 </Button>
-              </Link>
+              ) : (
+                <Link to="/brand-signup">
+                  <Button size="lg" className="gradient-hero hover:opacity-90">
+                    Get Started
+                  </Button>
+                </Link>
+              )}
               <Link to="/pricing">
                 <Button size="lg" variant="outline">
                   View Pricing
