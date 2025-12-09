@@ -20,3 +20,9 @@ verify_jwt = false
 
 [functions.improve-bio]
 verify_jwt = false
+
+[functions.upload-content]
+verify_jwt = false
+
+[functions.delete-content]
+verify_jwt = false
