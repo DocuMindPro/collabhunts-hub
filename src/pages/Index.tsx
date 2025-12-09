@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import RotatingText from "@/components/RotatingText";
 import FloatingCard from "@/components/FloatingCard";
 import AnimatedSection from "@/components/AnimatedSection";
+import BrandMarquee from "@/components/BrandMarquee";
+import FloatingShapes from "@/components/FloatingShapes";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -107,6 +109,9 @@ const Index = () => {
       
       {/* Hero Section */}
       <section className="relative overflow-hidden gradient-subtle animated-gradient-bg">
+        {/* Floating background shapes */}
+        <FloatingShapes />
+        
         <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
@@ -203,6 +208,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Brand Marquee Section */}
+      <BrandMarquee />
 
       {/* How It Works Section */}
       <section id="how-it-works" className="py-20 md:py-32 bg-background">

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Instagram, Twitter, Youtube, Linkedin } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import Logo from "@/components/Logo";
 
 const Footer = () => {
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
@@ -40,10 +41,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center space-x-2">
-              <span className="text-xl font-heading font-bold bg-gradient-accent bg-clip-text text-transparent">
-                CollabHunts
-              </span>
+            <Link to="/" className="flex items-center">
+              <Logo size="md" />
             </Link>
             <p className="text-sm text-muted-foreground">
               Connecting brands with creators to create amazing content.
