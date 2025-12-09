@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Clock, Star } from "lucide-react";
+import { Clock, Star, Upload } from "lucide-react";
 import { ReviewDialog } from "@/components/ReviewDialog";
 
 interface Booking {
@@ -31,12 +33,15 @@ interface Booking {
 }
 
 const BrandBookingsTab = () => {
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [brandProfileId, setBrandProfileId] = useState<string>("");
+  const [uploadPromptOpen, setUploadPromptOpen] = useState(false);
+  const [completedBooking, setCompletedBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     fetchBookings();
@@ -210,17 +215,30 @@ const BrandBookingsTab = () => {
                     </Button>
                   )}
                   {booking.status === "completed" && booking.payment_status === "paid" && (
-                    <Button
-                      variant={booking.reviews && booking.reviews.length > 0 ? "outline" : "default"}
-                      onClick={() => {
-                        setSelectedBooking(booking);
-                        setReviewDialogOpen(true);
-                      }}
-                      className="flex-1 gap-2"
-                    >
-                      <Star className="h-4 w-4" />
-                      {booking.reviews && booking.reviews.length > 0 ? "Edit Review" : "Leave Review"}
-                    </Button>
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setCompletedBooking(booking);
+                          setUploadPromptOpen(true);
+                        }}
+                        className="flex-1 gap-2"
+                      >
+                        <Upload className="h-4 w-4" />
+                        Upload Content
+                      </Button>
+                      <Button
+                        variant={booking.reviews && booking.reviews.length > 0 ? "outline" : "default"}
+                        onClick={() => {
+                          setSelectedBooking(booking);
+                          setReviewDialogOpen(true);
+                        }}
+                        className="flex-1 gap-2"
+                      >
+                        <Star className="h-4 w-4" />
+                        {booking.reviews && booking.reviews.length > 0 ? "Edit Review" : "Leave Review"}
+                      </Button>
+                    </>
                   )}
                 </div>
               </CardContent>
@@ -246,6 +264,38 @@ const BrandBookingsTab = () => {
           existingReview={selectedBooking.reviews?.[0]}
         />
       )}
+
+      {/* Upload Deliverables Prompt Dialog */}
+      <Dialog open={uploadPromptOpen} onOpenChange={setUploadPromptOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload Deliverables</DialogTitle>
+            <DialogDescription>
+              Would you like to upload the content from {completedBooking?.creator_profiles.display_name} to your Content Library?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              Content will be automatically organized in a folder named after the creator for easy access.
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setUploadPromptOpen(false)}>
+              Maybe Later
+            </Button>
+            <Button 
+              onClick={() => {
+                setUploadPromptOpen(false);
+                navigate(`/brand-dashboard?tab=content-library&creatorId=${completedBooking?.creator_profiles.id}`);
+              }}
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Upload Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
