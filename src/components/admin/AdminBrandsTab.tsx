@@ -56,6 +56,8 @@ const AdminBrandsTab = () => {
   const [industryFilter, setIndustryFilter] = useState<string>("all");
   const [sizeFilter, setSizeFilter] = useState<string>("all");
   const [onboardingFilter, setOnboardingFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   
   const { toast } = useToast();
 
@@ -109,10 +111,18 @@ const AdminBrandsTab = () => {
       );
     }
 
+    // Date range filter
+    if (dateFrom) {
+      filtered = filtered.filter(b => new Date(b.created_at) >= new Date(dateFrom));
+    }
+    if (dateTo) {
+      filtered = filtered.filter(b => new Date(b.created_at) <= new Date(dateTo + 'T23:59:59'));
+    }
+
     setFilteredBrands(filtered);
     setCurrentPage(1);
     setSelectedIds(new Set());
-  }, [search, phoneFilter, tierFilter, industryFilter, sizeFilter, onboardingFilter, brands]);
+  }, [search, phoneFilter, tierFilter, industryFilter, sizeFilter, onboardingFilter, dateFrom, dateTo, brands]);
 
   const fetchBrands = async () => {
     try {
@@ -259,7 +269,7 @@ const AdminBrandsTab = () => {
             </Button>
           </div>
           
-          {/* Filters */}
+          {/* Filters Row 1 */}
           <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
             <div className="col-span-2 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -316,6 +326,60 @@ const AdminBrandsTab = () => {
                 <SelectItem value="incomplete">Incomplete</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Filters Row 2 */}
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+            <div>
+              <Input
+                type="date"
+                placeholder="From date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Input
+                type="date"
+                placeholder="To date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            <Select value={sizeFilter} onValueChange={setSizeFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Company Size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sizes</SelectItem>
+                {companySizes.map(size => (
+                  <SelectItem key={size} value={size!}>{size}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="col-span-2"></div>
+
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                setSearch("");
+                setPhoneFilter("all");
+                setTierFilter("all");
+                setIndustryFilter("all");
+                setSizeFilter("all");
+                setOnboardingFilter("all");
+                setDateFrom("");
+                setDateTo("");
+              }}
+              className="w-full"
+            >
+              Clear Filters
+            </Button>
           </div>
 
           {/* Selection info */}
