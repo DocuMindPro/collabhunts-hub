@@ -9,86 +9,87 @@ All colors MUST be HSL.
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 210 20% 15%;
+    --foreground: 0 0% 18%;
 
     --card: 0 0% 100%;
-    --card-foreground: 210 20% 15%;
+    --card-foreground: 0 0% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 20% 15%;
+    --popover-foreground: 0 0% 18%;
 
-    /* Teal/Cyan primary brand color */
-    --primary: 180 85% 45%;
+    /* Warm Orange primary brand color #FF7A00 */
+    --primary: 29 100% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 180 85% 40%;
+    --primary-hover: 29 100% 45%;
 
-    /* Coral accent color */
-    --accent: 14 90% 65%;
+    /* Deep Blue accent color #0077B6 */
+    --accent: 200 100% 36%;
     --accent-foreground: 0 0% 100%;
-    --accent-hover: 14 90% 60%;
+    --accent-hover: 200 100% 31%;
 
-    --secondary: 180 25% 95%;
-    --secondary-foreground: 180 85% 25%;
+    /* Golden Yellow secondary #FFC300 */
+    --secondary: 46 100% 50%;
+    --secondary-foreground: 0 0% 18%;
 
-    --muted: 210 15% 96%;
-    --muted-foreground: 210 10% 50%;
+    --muted: 45 20% 96%;
+    --muted-foreground: 0 0% 40%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 15% 90%;
-    --input: 210 15% 90%;
-    --ring: 180 85% 45%;
+    --border: 45 15% 88%;
+    --input: 45 15% 88%;
+    --ring: 29 100% 50%;
 
     --radius: 0.75rem;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(180 85% 45%) 0%, hsl(180 85% 35%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(180 85% 45%) 0%, hsl(14 90% 65%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(180 25% 98%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(29 100% 50%) 0%, hsl(29 100% 40%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(29 100% 50%) 0%, hsl(46 100% 50%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(45 30% 98%) 100%);
 
     /* Shadows */
-    --shadow-card: 0 4px 20px -4px hsla(180 85% 45% / 0.1);
-    --shadow-hover: 0 8px 30px -6px hsla(180 85% 45% / 0.2);
+    --shadow-card: 0 4px 20px -4px hsla(29 100% 50% / 0.1);
+    --shadow-hover: 0 8px 30px -6px hsla(29 100% 50% / 0.2);
   }
 
   .dark {
-    --background: 210 25% 8%;
+    --background: 0 0% 10%;
     --foreground: 0 0% 98%;
 
-    --card: 210 20% 12%;
+    --card: 0 0% 14%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 210 20% 12%;
+    --popover: 0 0% 14%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 180 85% 50%;
-    --primary-foreground: 210 25% 8%;
-    --primary-hover: 180 85% 45%;
+    --primary: 29 100% 55%;
+    --primary-foreground: 0 0% 10%;
+    --primary-hover: 29 100% 50%;
 
-    --accent: 14 90% 65%;
-    --accent-foreground: 210 25% 8%;
-    --accent-hover: 14 90% 60%;
+    --accent: 200 100% 45%;
+    --accent-foreground: 0 0% 10%;
+    --accent-hover: 200 100% 40%;
 
-    --secondary: 210 20% 18%;
-    --secondary-foreground: 180 85% 70%;
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 46 100% 70%;
 
-    --muted: 210 20% 18%;
-    --muted-foreground: 210 10% 65%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 65%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 210 20% 20%;
-    --input: 210 20% 20%;
-    --ring: 180 85% 50%;
+    --border: 0 0% 22%;
+    --input: 0 0% 22%;
+    --ring: 29 100% 55%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(180 85% 50%) 0%, hsl(180 85% 40%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(180 85% 50%) 0%, hsl(14 90% 65%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(210 25% 8%) 0%, hsl(210 25% 12%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(29 100% 55%) 0%, hsl(29 100% 45%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(29 100% 55%) 0%, hsl(46 100% 55%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 10%) 0%, hsl(0 0% 14%) 100%);
 
-    --shadow-card: 0 4px 20px -4px hsla(180 85% 50% / 0.2);
-    --shadow-hover: 0 8px 30px -6px hsla(180 85% 50% / 0.3);
+    --shadow-card: 0 4px 20px -4px hsla(29 100% 55% / 0.2);
+    --shadow-hover: 0 8px 30px -6px hsla(29 100% 55% / 0.3);
   }
 }
 
