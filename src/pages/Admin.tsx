@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AdminBrandSubscriptionsTab from "@/components/brand-dashboard/AdminBrandSubscriptionsTab";
 import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
@@ -141,7 +141,95 @@ const Admin = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [transactionSearch, setTransactionSearch] = useState("");
   
+  // Unified search
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  
   const { toast } = useToast();
+
+  // Unified search results
+  interface SearchResult {
+    type: "user" | "creator" | "brand" | "booking";
+    id: string;
+    title: string;
+    subtitle: string;
+    tab: string;
+  }
+
+  const getSearchResults = (): SearchResult[] => {
+    if (!globalSearch.trim() || globalSearch.length < 2) return [];
+    
+    const query = globalSearch.toLowerCase();
+    const results: SearchResult[] = [];
+    
+    // Search users
+    profiles.forEach(p => {
+      if (
+        p.email.toLowerCase().includes(query) ||
+        p.full_name?.toLowerCase().includes(query) ||
+        p.brand_name?.toLowerCase().includes(query) ||
+        p.creator_display_name?.toLowerCase().includes(query)
+      ) {
+        results.push({
+          type: "user",
+          id: p.id,
+          title: p.email,
+          subtitle: p.is_creator ? `Creator: ${p.creator_display_name}` : p.is_brand ? `Brand: ${p.brand_name}` : "User",
+          tab: "users"
+        });
+      }
+    });
+
+    // Search pending creators
+    pendingCreators.forEach(c => {
+      if (
+        c.display_name.toLowerCase().includes(query) ||
+        c.profiles?.email?.toLowerCase().includes(query)
+      ) {
+        results.push({
+          type: "creator",
+          id: c.id,
+          title: c.display_name,
+          subtitle: `Pending Creator • ${c.profiles?.email}`,
+          tab: "approvals"
+        });
+      }
+    });
+
+    // Search bookings
+    bookings.forEach(b => {
+      if (
+        b.creator_profiles?.display_name?.toLowerCase().includes(query) ||
+        b.brand_profiles?.company_name?.toLowerCase().includes(query) ||
+        b.creator_services?.service_type?.toLowerCase().includes(query)
+      ) {
+        results.push({
+          type: "booking",
+          id: b.id,
+          title: `${b.brand_profiles?.company_name} → ${b.creator_profiles?.display_name}`,
+          subtitle: `$${(b.total_price_cents / 100).toFixed(2)} • ${b.status}`,
+          tab: "revenue"
+        });
+      }
+    });
+
+    return results.slice(0, 10); // Limit to 10 results
+  };
+
+  const searchResults = getSearchResults();
+
+  const handleSearchResultClick = (result: SearchResult) => {
+    setGlobalSearch("");
+    setShowSearchResults(false);
+    handleTabChange(result.tab);
+    
+    // Set the local search filter for that tab
+    if (result.tab === "users") {
+      setUserSearch(result.title);
+    } else if (result.tab === "revenue") {
+      setTransactionSearch(result.title.split(" → ")[0]);
+    }
+  };
 
   // Sync active tab with URL params
   useEffect(() => {
@@ -571,6 +659,74 @@ const Admin = () => {
                 Logout
               </Button>
             </div>
+          </div>
+
+          {/* Unified Global Search */}
+          <div className="relative mb-4 md:mb-6">
+            <div className="relative max-w-xl">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                placeholder="Search across users, creators, brands, bookings..."
+                value={globalSearch}
+                onChange={(e) => {
+                  setGlobalSearch(e.target.value);
+                  setShowSearchResults(true);
+                }}
+                onFocus={() => setShowSearchResults(true)}
+                className="pl-10 pr-10 h-12 text-base"
+              />
+              {globalSearch && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                  onClick={() => {
+                    setGlobalSearch("");
+                    setShowSearchResults(false);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            
+            {/* Search Results Dropdown */}
+            {showSearchResults && globalSearch.length >= 2 && (
+              <div className="absolute top-full left-0 right-0 max-w-xl mt-1 bg-background border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+                {searchResults.length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    No results found for "{globalSearch}"
+                  </div>
+                ) : (
+                  <>
+                    <div className="p-2 border-b text-xs text-muted-foreground font-medium">
+                      {searchResults.length} results found
+                    </div>
+                    {searchResults.map((result) => (
+                      <button
+                        key={`${result.type}-${result.id}`}
+                        className="w-full text-left px-4 py-3 hover:bg-muted/50 flex items-center gap-3 border-b last:border-b-0"
+                        onClick={() => handleSearchResultClick(result)}
+                      >
+                        <div className="shrink-0">
+                          {result.type === "user" && <Users className="h-4 w-4 text-muted-foreground" />}
+                          {result.type === "creator" && <Palette className="h-4 w-4 text-muted-foreground" />}
+                          {result.type === "brand" && <Building2 className="h-4 w-4 text-muted-foreground" />}
+                          {result.type === "booking" && <DollarSign className="h-4 w-4 text-muted-foreground" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{result.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
+                        </div>
+                        <Badge variant="outline" className="shrink-0 capitalize text-xs">
+                          {result.tab}
+                        </Badge>
+                      </button>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Stats Cards */}
