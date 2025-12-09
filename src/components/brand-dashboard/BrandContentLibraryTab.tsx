@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,10 +13,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Image, Video, Trash2, Calendar as CalendarIcon, AlertTriangle, User, FileText, Loader2, FolderOpen, Search, X } from "lucide-react";
+import { Upload, Image, Video, Trash2, Calendar as CalendarIcon, AlertTriangle, User, Loader2, FolderOpen, Search, X, Plus, HardDrive } from "lucide-react";
 import { format, differenceInDays, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
-import { formatStorageSize, getStoragePercentage, canUseContentLibrary, getCurrentStorageUsage, getEffectiveStorageLimit } from "@/lib/storage-utils";
+import { formatStorageSize, getStoragePercentage, canUseContentLibrary, getCurrentStorageUsage, getEffectiveStorageLimit, calculateStorageAddonCost } from "@/lib/storage-utils";
+import { STORAGE_ADDON, formatPrice } from "@/lib/stripe-mock";
 import UpgradePrompt from "@/components/UpgradePrompt";
 
 interface ContentItem {
@@ -78,6 +79,15 @@ const BrandContentLibraryTab = () => {
   
   // Preview dialog state
   const [previewContent, setPreviewContent] = useState<ContentItem | null>(null);
+
+  // Drag and drop state
+  const [isDragging, setIsDragging] = useState(false);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
+
+  // Storage purchase dialog state
+  const [showStoragePurchaseDialog, setShowStoragePurchaseDialog] = useState(false);
+  const [storageToPurchase, setStorageToPurchase] = useState(1);
+  const [purchasingStorage, setPurchasingStorage] = useState(false);
 
   const r2PublicUrl = import.meta.env.VITE_R2_PUBLIC_URL || "";
 
@@ -164,43 +174,127 @@ const BrandContentLibraryTab = () => {
     loadData();
   }, [loadData]);
 
+  const validateAndSelectFile = (file: File) => {
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime', 'video/webm'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload JPG, PNG, GIF, WEBP, MP4, MOV, or WEBM files",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (100MB)
+    if (file.size > 100 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Maximum file size is 100MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check storage limit
+    if (storageUsed + file.size > storageLimit) {
+      toast({
+        title: "Storage limit exceeded",
+        description: "You don't have enough storage space. Consider purchasing additional storage.",
+        variant: "destructive",
+      });
+      setShowStoragePurchaseDialog(true);
+      return;
+    }
+
+    setSelectedFile(file);
+    setUploadTitle(file.name.replace(/\.[^/.]+$/, ""));
+    setShowUploadDialog(true);
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime', 'video/webm'];
-      if (!allowedTypes.includes(file.type)) {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload JPG, PNG, GIF, WEBP, MP4, MOV, or WEBM files",
-          variant: "destructive",
-        });
-        return;
-      }
+      validateAndSelectFile(file);
+    }
+  };
 
-      // Validate file size (100MB)
-      if (file.size > 100 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Maximum file size is 100MB",
-          variant: "destructive",
-        });
-        return;
-      }
+  // Drag and drop handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
 
-      // Check storage limit
-      if (storageUsed + file.size > storageLimit) {
-        toast({
-          title: "Storage limit exceeded",
-          description: "You don't have enough storage space. Consider upgrading or purchasing additional storage.",
-          variant: "destructive",
-        });
-        return;
-      }
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set to false if leaving the drop zone entirely
+    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
+      setIsDragging(false);
+    }
+  };
 
-      setSelectedFile(file);
-      setUploadTitle(file.name.replace(/\.[^/.]+$/, ""));
-      setShowUploadDialog(true);
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      validateAndSelectFile(file);
+    }
+  };
+
+  // Mock storage purchase handler
+  const handlePurchaseStorage = async () => {
+    if (!brandProfileId) return;
+
+    setPurchasingStorage(true);
+
+    try {
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Insert mock storage purchase record
+      const purchaseAmount = storageToPurchase * STORAGE_ADDON.amountBytes;
+      const purchasePrice = storageToPurchase * STORAGE_ADDON.priceCents;
+
+      const { error } = await supabase
+        .from('storage_purchases')
+        .insert({
+          brand_profile_id: brandProfileId,
+          storage_amount_bytes: purchaseAmount,
+          price_cents: purchasePrice,
+          status: 'active',
+          stripe_payment_id: `mock_pi_${Date.now()}`,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Storage purchased!",
+        description: `${formatStorageSize(purchaseAmount)} has been added to your account.`,
+      });
+
+      setShowStoragePurchaseDialog(false);
+      setStorageToPurchase(1);
+      await loadData();
+
+    } catch (error: any) {
+      console.error('Storage purchase error:', error);
+      toast({
+        title: "Purchase failed",
+        description: error.message || "Failed to purchase storage",
+        variant: "destructive",
+      });
+    } finally {
+      setPurchasingStorage(false);
     }
   };
 
@@ -385,58 +479,91 @@ const BrandContentLibraryTab = () => {
         </CardHeader>
         <CardContent>
           <Progress value={storagePercentage} className="h-2" />
-          {storagePercentage > 80 && (
-            <p className="text-sm text-muted-foreground mt-2">
-              {storagePercentage > 90 ? "Storage almost full! " : "Running low on storage. "}
-              <Button variant="link" className="p-0 h-auto text-primary">
-                Purchase more storage
-              </Button>
+          <div className="flex items-center justify-between mt-3">
+            <p className="text-sm text-muted-foreground">
+              {storagePercentage > 90 ? "Storage almost full!" : storagePercentage > 70 ? "Running low on storage." : `${formatStorageSize(storageLimit - storageUsed)} available`}
             </p>
-          )}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowStoragePurchaseDialog(true)}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Buy More Storage
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Upload and Filter Section */}
+      {/* Drag and Drop Upload Zone */}
+      <Card
+        ref={dropZoneRef}
+        className={cn(
+          "border-2 border-dashed transition-colors",
+          isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"
+        )}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className={cn(
+              "p-4 rounded-full mb-4 transition-colors",
+              isDragging ? "bg-primary/10" : "bg-muted"
+            )}>
+              <Upload className={cn(
+                "h-8 w-8 transition-colors",
+                isDragging ? "text-primary" : "text-muted-foreground"
+              )} />
+            </div>
+            <h3 className="text-lg font-medium mb-1">
+              {isDragging ? "Drop your file here" : "Drag and drop your files here"}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              or click to browse • JPG, PNG, GIF, WEBP, MP4, MOV, WEBM up to 100MB
+            </p>
+            <Label htmlFor="file-upload" className="cursor-pointer">
+              <div className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
+                <Upload className="h-4 w-4" />
+                Browse Files
+              </div>
+            </Label>
+            <Input
+              id="file-upload"
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/webm"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Filter Section */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-3 flex-1 w-full">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search content..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Filter type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="image">Images</SelectItem>
-                  <SelectItem value="video">Videos</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="file-upload" className="cursor-pointer">
-                <div className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
-                  <Upload className="h-4 w-4" />
-                  Upload Content
-                </div>
-              </Label>
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="file-upload"
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/webm"
-                onChange={handleFileSelect}
-                className="hidden"
+                placeholder="Search content..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
               />
             </div>
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Filter type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="image">Images</SelectItem>
+                <SelectItem value="video">Videos</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -878,6 +1005,88 @@ const BrandContentLibraryTab = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Storage Purchase Dialog */}
+      <Dialog open={showStoragePurchaseDialog} onOpenChange={setShowStoragePurchaseDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HardDrive className="h-5 w-5" />
+              Purchase Additional Storage
+            </DialogTitle>
+            <DialogDescription>
+              Add more storage space to your Content Library
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Current Storage Info */}
+            <div className="p-4 bg-muted rounded-lg">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-muted-foreground">Current Usage</span>
+                <span className="font-medium">{formatStorageSize(storageUsed)} / {formatStorageSize(storageLimit)}</span>
+              </div>
+              <Progress value={storagePercentage} className="h-2" />
+            </div>
+
+            {/* Storage Amount Selector */}
+            <div className="space-y-3">
+              <Label>Storage Amount</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 5].map((amount) => (
+                  <Button
+                    key={amount}
+                    variant={storageToPurchase === amount ? "default" : "outline"}
+                    onClick={() => setStorageToPurchase(amount)}
+                    className="flex flex-col h-auto py-3"
+                  >
+                    <span className="font-bold">{amount * 100} GB</span>
+                    <span className="text-xs opacity-75">{formatPrice(amount * STORAGE_ADDON.priceCents)}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Purchase Summary */}
+            <div className="p-4 border rounded-lg space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Storage to add</span>
+                <span>{formatStorageSize(storageToPurchase * STORAGE_ADDON.amountBytes)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">New total limit</span>
+                <span>{formatStorageSize(storageLimit + storageToPurchase * STORAGE_ADDON.amountBytes)}</span>
+              </div>
+              <div className="border-t pt-2 mt-2 flex justify-between font-medium">
+                <span>Total</span>
+                <span className="text-primary">{formatPrice(storageToPurchase * STORAGE_ADDON.priceCents)}</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground text-center">
+              Storage add-ons are one-time purchases and do not expire
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowStoragePurchaseDialog(false)} disabled={purchasingStorage}>
+              Cancel
+            </Button>
+            <Button onClick={handlePurchaseStorage} disabled={purchasingStorage}>
+              {purchasingStorage ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Purchase {formatPrice(storageToPurchase * STORAGE_ADDON.priceCents)}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
