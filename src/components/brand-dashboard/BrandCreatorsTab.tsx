@@ -56,7 +56,7 @@ const CreatorCardWithSave = ({ creator, totalReach, minPrice, formatFollowers }:
   minPrice: number | null;
   formatFollowers: (count: number) => string;
 }) => {
-  const { isSaved, toggleSave, hasBrandProfile } = useSaveCreator(creator.id);
+  const { isSaved, toggleSave, hasBrandProfile, canUseCRM } = useSaveCreator(creator.id);
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -81,6 +81,7 @@ const CreatorCardWithSave = ({ creator, totalReach, minPrice, formatFollowers }:
                   toggleSave();
                 }}
                 className="p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors"
+                title={canUseCRM ? (isSaved ? "Remove from saved" : "Save creator") : "Upgrade to Pro to save creators"}
               >
                 <Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
               </button>

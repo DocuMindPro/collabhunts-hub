@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Heart, HeartOff, Star, MapPin, Calendar, DollarSign, MessageSquare, Trash2, Edit2, Plus, FolderOpen, Users, Clock, StickyNote } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, formatDistanceToNow } from "date-fns";
+import { canUserUseCRM } from "@/lib/subscription-utils";
+import UpgradePrompt from "@/components/UpgradePrompt";
 
 interface SavedCreator {
   id: string;
@@ -52,6 +54,7 @@ const FOLDER_OPTIONS = ["Favorites", "To Contact", "Fashion", "Tech", "Food", "T
 const BrandYourCreatorsTab = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [hasCRMAccess, setHasCRMAccess] = useState<boolean | null>(null);
   const [brandProfileId, setBrandProfileId] = useState<string | null>(null);
   const [savedCreators, setSavedCreators] = useState<SavedCreator[]>([]);
   const [workedWithCreators, setWorkedWithCreators] = useState<WorkedWithCreator[]>([]);
@@ -80,6 +83,16 @@ const BrandYourCreatorsTab = () => {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Check CRM access first
+      const crmAccess = await canUserUseCRM(user.id);
+      setHasCRMAccess(crmAccess);
+
+      // If no CRM access, stop fetching data
+      if (!crmAccess) {
+        setLoading(false);
+        return;
+      }
 
       // Get brand profile
       const { data: brandProfile } = await supabase
@@ -338,6 +351,19 @@ const BrandYourCreatorsTab = () => {
   const filteredSavedCreators = selectedFolder === "all" 
     ? savedCreators 
     : savedCreators.filter(s => s.folder_name === selectedFolder);
+
+  // Show upgrade prompt for Basic tier users
+  if (hasCRMAccess === false) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-heading font-bold mb-2">Your Creators</h2>
+          <p className="text-muted-foreground">Manage your saved creators and past collaborations</p>
+        </div>
+        <UpgradePrompt feature="crm" />
+      </div>
+    );
+  }
 
   if (loading) {
     return (

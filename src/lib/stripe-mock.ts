@@ -10,6 +10,7 @@ export const SUBSCRIPTION_PLANS = {
     campaignLimit: 0,
     canContactCreators: false,
     hasAdvancedFilters: false,
+    hasCRM: false,
     features: [
       'Search influencers on the marketplace',
       '20% marketplace fee on bookings',
@@ -18,6 +19,7 @@ export const SUBSCRIPTION_PLANS = {
       'Chat & negotiate with creators',
       'Post campaigns',
       'Advanced filters for age, language, and more',
+      'Save creators & add notes (CRM)',
     ]
   },
   pro: {
@@ -28,11 +30,13 @@ export const SUBSCRIPTION_PLANS = {
     campaignLimit: 1,
     canContactCreators: true,
     hasAdvancedFilters: true,
+    hasCRM: true,
     features: [
       'Everything in Basic',
       'Chat & negotiate with creators before hiring',
       'Post 1 campaign per month',
       'Advanced filters for age, ethnicity, language and more',
+      'Save creators & add private notes (CRM)',
       '15% marketplace fee on bookings',
     ],
     lockedFeatures: []
@@ -45,6 +49,7 @@ export const SUBSCRIPTION_PLANS = {
     campaignLimit: Infinity,
     canContactCreators: true,
     hasAdvancedFilters: true,
+    hasCRM: true,
     features: [
       'Everything in Pro',
       'Post unlimited campaigns',
@@ -72,6 +77,10 @@ export const getCampaignLimit = (planType: PlanType): number => {
 
 export const hasAdvancedFilters = (planType: PlanType): boolean => {
   return SUBSCRIPTION_PLANS[planType].hasAdvancedFilters;
+};
+
+export const hasCRM = (planType: PlanType): boolean => {
+  return SUBSCRIPTION_PLANS[planType].hasCRM;
 };
 
 export const calculatePlatformFee = (totalPriceCents: number, planType: PlanType): number => {
