@@ -61,6 +61,13 @@ const CreatorSignup = () => {
   const [locationState, setLocationState] = useState("");
   const [locationCountry, setLocationCountry] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
+  // Demographics (optional)
+  const [birthDate, setBirthDate] = useState("");
+  const [gender, setGender] = useState("");
+  const [ethnicity, setEthnicity] = useState("");
+  const [primaryLanguage, setPrimaryLanguage] = useState("English");
+  const [secondaryLanguages, setSecondaryLanguages] = useState<string[]>([]);
 
   // Step 3: Profile Photos
   const [profileImage, setProfileImage] = useState<File | null>(null);
@@ -92,6 +99,10 @@ const CreatorSignup = () => {
     { value: "youtube_short", label: "YouTube Short" },
     { value: "ugc_content", label: "UGC Content" }
   ];
+
+  const GENDERS = ["Male", "Female", "Non-binary", "Prefer not to say"];
+  const ETHNICITIES = ["African American", "Asian", "Caucasian", "Hispanic/Latino", "Middle Eastern", "Mixed/Other", "Prefer not to say"];
+  const LANGUAGES = ["English", "Spanish", "French", "German", "Portuguese", "Arabic", "Hindi", "Chinese", "Japanese", "Korean", "Other"];
 
   const platforms: Array<{ value: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'twitch'; label: string; icon: any }> = [
     { value: "instagram", label: "Instagram", icon: Instagram },
@@ -431,7 +442,12 @@ const CreatorSignup = () => {
           profile_image_url: profileImageUrl,
           cover_image_url: coverImageUrls[0],
           cover_image_url_2: coverImageUrls[1],
-          cover_image_url_3: coverImageUrls[2]
+          cover_image_url_3: coverImageUrls[2],
+          birth_date: birthDate || null,
+          gender: gender || null,
+          ethnicity: ethnicity || null,
+          primary_language: primaryLanguage || "English",
+          secondary_languages: secondaryLanguages.length > 0 ? secondaryLanguages : null
         })
         .select()
         .single();
@@ -736,6 +752,93 @@ const CreatorSignup = () => {
                           {category}
                         </Badge>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Demographics Section */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-base font-semibold">Demographics (Optional)</Label>
+                      <span className="text-xs text-muted-foreground">Helps brands find creators</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="birthDate">Date of Birth</Label>
+                        <Input
+                          id="birthDate"
+                          type="date"
+                          value={birthDate}
+                          onChange={(e) => setBirthDate(e.target.value)}
+                          max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="gender">Gender</Label>
+                        <select
+                          id="gender"
+                          value={gender}
+                          onChange={(e) => setGender(e.target.value)}
+                          className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        >
+                          <option value="">Select gender</option>
+                          {GENDERS.map((g) => (
+                            <option key={g} value={g}>{g}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="ethnicity">Ethnicity</Label>
+                        <select
+                          id="ethnicity"
+                          value={ethnicity}
+                          onChange={(e) => setEthnicity(e.target.value)}
+                          className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        >
+                          <option value="">Select ethnicity</option>
+                          {ETHNICITIES.map((e) => (
+                            <option key={e} value={e}>{e}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <Label htmlFor="primaryLanguage">Primary Language</Label>
+                        <select
+                          id="primaryLanguage"
+                          value={primaryLanguage}
+                          onChange={(e) => setPrimaryLanguage(e.target.value)}
+                          className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        >
+                          {LANGUAGES.map((lang) => (
+                            <option key={lang} value={lang}>{lang}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Secondary Languages</Label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {LANGUAGES.filter(l => l !== primaryLanguage).map((lang) => (
+                          <Badge
+                            key={lang}
+                            variant={secondaryLanguages.includes(lang) ? "default" : "outline"}
+                            className="cursor-pointer"
+                            onClick={() => {
+                              if (secondaryLanguages.includes(lang)) {
+                                setSecondaryLanguages(secondaryLanguages.filter(l => l !== lang));
+                              } else {
+                                setSecondaryLanguages([...secondaryLanguages, lang]);
+                              }
+                            }}
+                          >
+                            {lang}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   </div>
 

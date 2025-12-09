@@ -18,6 +18,10 @@ const AVAILABLE_CATEGORIES = [
   "Gaming", "Lifestyle", "Photography", "Art", "Music", "Sports"
 ];
 
+const GENDERS = ["Male", "Female", "Non-binary", "Prefer not to say"];
+const ETHNICITIES = ["African American", "Asian", "Caucasian", "Hispanic/Latino", "Middle Eastern", "Mixed/Other", "Prefer not to say"];
+const LANGUAGES = ["English", "Spanish", "French", "German", "Portuguese", "Arabic", "Hindi", "Chinese", "Japanese", "Korean", "Other"];
+
 const ProfileTab = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -36,6 +40,11 @@ const ProfileTab = () => {
     cover_image_url: "",
     cover_image_url_2: "",
     cover_image_url_3: "",
+    birth_date: "",
+    gender: "",
+    ethnicity: "",
+    primary_language: "English",
+    secondary_languages: [] as string[],
   });
 
   useEffect(() => {
@@ -68,6 +77,11 @@ const ProfileTab = () => {
           cover_image_url: data.cover_image_url || "",
           cover_image_url_2: data.cover_image_url_2 || "",
           cover_image_url_3: data.cover_image_url_3 || "",
+          birth_date: data.birth_date || "",
+          gender: data.gender || "",
+          ethnicity: data.ethnicity || "",
+          primary_language: data.primary_language || "English",
+          secondary_languages: data.secondary_languages || [],
         });
       }
     } catch (error) {
@@ -305,6 +319,11 @@ const ProfileTab = () => {
           cover_image_url: profile.cover_image_url,
           cover_image_url_2: profile.cover_image_url_2,
           cover_image_url_3: profile.cover_image_url_3,
+          birth_date: profile.birth_date || null,
+          gender: profile.gender || null,
+          ethnicity: profile.ethnicity || null,
+          primary_language: profile.primary_language || "English",
+          secondary_languages: profile.secondary_languages.length > 0 ? profile.secondary_languages : null,
         })
         .eq("id", profile.id);
 
@@ -586,6 +605,103 @@ const ProfileTab = () => {
                 {category}
               </Badge>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Demographics Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Demographics</CardTitle>
+          <CardDescription>Optional info that helps brands find you</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="birth_date">Date of Birth</Label>
+              <Input
+                id="birth_date"
+                type="date"
+                value={profile.birth_date}
+                onChange={(e) => setProfile({ ...profile, birth_date: e.target.value })}
+                max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gender">Gender</Label>
+              <select
+                id="gender"
+                value={profile.gender}
+                onChange={(e) => setProfile({ ...profile, gender: e.target.value })}
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              >
+                <option value="">Select gender</option>
+                {GENDERS.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="ethnicity">Ethnicity</Label>
+              <select
+                id="ethnicity"
+                value={profile.ethnicity}
+                onChange={(e) => setProfile({ ...profile, ethnicity: e.target.value })}
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              >
+                <option value="">Select ethnicity</option>
+                {ETHNICITIES.map((e) => (
+                  <option key={e} value={e}>{e}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="primary_language">Primary Language</Label>
+              <select
+                id="primary_language"
+                value={profile.primary_language}
+                onChange={(e) => setProfile({ ...profile, primary_language: e.target.value })}
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              >
+                {LANGUAGES.map((lang) => (
+                  <option key={lang} value={lang}>{lang}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Secondary Languages</Label>
+            <div className="flex flex-wrap gap-2">
+              {LANGUAGES.filter(l => l !== profile.primary_language).map((lang) => (
+                <Badge
+                  key={lang}
+                  variant={profile.secondary_languages.includes(lang) ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => {
+                    if (profile.secondary_languages.includes(lang)) {
+                      setProfile({ 
+                        ...profile, 
+                        secondary_languages: profile.secondary_languages.filter(l => l !== lang) 
+                      });
+                    } else {
+                      setProfile({ 
+                        ...profile, 
+                        secondary_languages: [...profile.secondary_languages, lang] 
+                      });
+                    }
+                  }}
+                >
+                  {profile.secondary_languages.includes(lang) && (
+                    <X className="h-3 w-3 mr-1" />
+                  )}
+                  {lang}
+                </Badge>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
