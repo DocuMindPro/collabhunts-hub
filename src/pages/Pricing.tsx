@@ -18,6 +18,7 @@ const Pricing = () => {
         { text: "Post campaigns", included: false, locked: true },
         { text: "Advanced filters", included: false, locked: true },
         { text: "Save creators & add notes (CRM)", included: false, locked: true },
+        { text: "Content Library", included: false, locked: true },
       ],
       cta: "Get Started",
       link: "/brand-signup",
@@ -34,6 +35,7 @@ const Pricing = () => {
         { text: "Post 1 campaign per month", included: true },
         { text: "Advanced filters for age, ethnicity, language and more", included: true },
         { text: "Save creators & add private notes (CRM)", included: true },
+        { text: "Content Library with 10 GB storage", included: true },
         { text: "15% marketplace fee on bookings", included: true },
         { text: "Priority support", included: false },
       ],
@@ -49,6 +51,7 @@ const Pricing = () => {
       features: [
         { text: "Everything in Pro", included: true },
         { text: "Post unlimited campaigns", included: true },
+        { text: "Content Library with 50 GB storage", included: true },
         { text: "15% marketplace fee on bookings", included: true },
         { text: "Priority customer support (Coming Soon)", included: true },
         { text: "Dedicated account manager (Coming Soon)", included: true },

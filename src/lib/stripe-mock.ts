@@ -11,6 +11,8 @@ export const SUBSCRIPTION_PLANS = {
     canContactCreators: false,
     hasAdvancedFilters: false,
     hasCRM: false,
+    hasContentLibrary: false,
+    storageLimit: 0, // 0 bytes - no access
     features: [
       'Search influencers on the marketplace',
       '20% marketplace fee on bookings',
@@ -20,6 +22,7 @@ export const SUBSCRIPTION_PLANS = {
       'Post campaigns',
       'Advanced filters for age, language, and more',
       'Save creators & add notes (CRM)',
+      'Content Library',
     ]
   },
   pro: {
@@ -31,12 +34,15 @@ export const SUBSCRIPTION_PLANS = {
     canContactCreators: true,
     hasAdvancedFilters: true,
     hasCRM: true,
+    hasContentLibrary: true,
+    storageLimit: 10 * 1024 * 1024 * 1024, // 10 GB
     features: [
       'Everything in Basic',
       'Chat & negotiate with creators before hiring',
       'Post 1 campaign per month',
       'Advanced filters for age, ethnicity, language and more',
       'Save creators & add private notes (CRM)',
+      'Content Library with 10 GB storage',
       '15% marketplace fee on bookings',
     ],
     lockedFeatures: []
@@ -50,15 +56,25 @@ export const SUBSCRIPTION_PLANS = {
     canContactCreators: true,
     hasAdvancedFilters: true,
     hasCRM: true,
+    hasContentLibrary: true,
+    storageLimit: 50 * 1024 * 1024 * 1024, // 50 GB
     features: [
       'Everything in Pro',
       'Post unlimited campaigns',
+      'Content Library with 50 GB storage',
       '15% marketplace fee on bookings',
       'Priority customer support (Coming Soon)',
       'Dedicated account manager (Coming Soon)',
     ],
     lockedFeatures: []
   }
+} as const;
+
+// Storage add-on configuration
+export const STORAGE_ADDON = {
+  amountBytes: 100 * 1024 * 1024 * 1024, // 100 GB
+  priceCents: 1000, // $10
+  name: '100 GB Storage Add-on',
 } as const;
 
 export type PlanType = keyof typeof SUBSCRIPTION_PLANS;
@@ -81,6 +97,14 @@ export const hasAdvancedFilters = (planType: PlanType): boolean => {
 
 export const hasCRM = (planType: PlanType): boolean => {
   return SUBSCRIPTION_PLANS[planType].hasCRM;
+};
+
+export const hasContentLibrary = (planType: PlanType): boolean => {
+  return SUBSCRIPTION_PLANS[planType].hasContentLibrary;
+};
+
+export const getStorageLimit = (planType: PlanType): number => {
+  return SUBSCRIPTION_PLANS[planType].storageLimit;
 };
 
 export const calculatePlatformFee = (totalPriceCents: number, planType: PlanType): number => {

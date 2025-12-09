@@ -192,6 +192,44 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_storage_usage: {
+        Row: {
+          brand_profile_id: string
+          created_at: string
+          extra_storage_bytes: number
+          id: string
+          storage_limit_bytes: number
+          storage_used_bytes: number
+          updated_at: string
+        }
+        Insert: {
+          brand_profile_id: string
+          created_at?: string
+          extra_storage_bytes?: number
+          id?: string
+          storage_limit_bytes?: number
+          storage_used_bytes?: number
+          updated_at?: string
+        }
+        Update: {
+          brand_profile_id?: string
+          created_at?: string
+          extra_storage_bytes?: number
+          id?: string
+          storage_limit_bytes?: number
+          storage_used_bytes?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_storage_usage_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: true
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_subscriptions: {
         Row: {
           brand_profile_id: string
@@ -342,6 +380,91 @@ export type Database = {
             columns: ["brand_profile_id"]
             isOneToOne: false
             referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_library: {
+        Row: {
+          booking_id: string | null
+          brand_profile_id: string
+          created_at: string
+          creator_profile_id: string | null
+          description: string | null
+          file_name: string
+          file_size_bytes: number
+          file_type: string
+          id: string
+          mime_type: string
+          r2_key: string
+          rights_type: string | null
+          tags: string[] | null
+          thumbnail_r2_key: string | null
+          title: string | null
+          updated_at: string
+          usage_rights_end: string | null
+          usage_rights_start: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          brand_profile_id: string
+          created_at?: string
+          creator_profile_id?: string | null
+          description?: string | null
+          file_name: string
+          file_size_bytes: number
+          file_type: string
+          id?: string
+          mime_type: string
+          r2_key: string
+          rights_type?: string | null
+          tags?: string[] | null
+          thumbnail_r2_key?: string | null
+          title?: string | null
+          updated_at?: string
+          usage_rights_end?: string | null
+          usage_rights_start?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          brand_profile_id?: string
+          created_at?: string
+          creator_profile_id?: string | null
+          description?: string | null
+          file_name?: string
+          file_size_bytes?: number
+          file_type?: string
+          id?: string
+          mime_type?: string
+          r2_key?: string
+          rights_type?: string | null
+          tags?: string[] | null
+          thumbnail_r2_key?: string | null
+          title?: string | null
+          updated_at?: string
+          usage_rights_end?: string | null
+          usage_rights_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_library_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_library_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_library_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -921,6 +1044,53 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      storage_purchases: {
+        Row: {
+          brand_profile_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          price_cents: number
+          purchased_at: string
+          status: string
+          storage_amount_bytes: number
+          stripe_payment_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          brand_profile_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          price_cents: number
+          purchased_at?: string
+          status?: string
+          storage_amount_bytes: number
+          stripe_payment_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          brand_profile_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          price_cents?: number
+          purchased_at?: string
+          status?: string
+          storage_amount_bytes?: number
+          stripe_payment_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storage_purchases_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
             referencedColumns: ["id"]
           },
         ]
