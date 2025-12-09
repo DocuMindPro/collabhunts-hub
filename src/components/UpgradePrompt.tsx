@@ -4,7 +4,7 @@ import { Lock, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface UpgradePromptProps {
-  feature: "contact" | "campaigns" | "filters" | "crm";
+  feature: "contact" | "campaigns" | "filters" | "crm" | "content_library";
   className?: string;
   inline?: boolean;
 }
@@ -28,6 +28,11 @@ const featureMessages = {
   crm: {
     title: "Upgrade for Creator CRM",
     description: "Save your favorite creators, organize them in folders, and add private notes. Upgrade to Pro to unlock.",
+    cta: "Upgrade to Pro - $99/mo"
+  },
+  content_library: {
+    title: "Upgrade for Content Library",
+    description: "Store your UGC content, track usage rights, and re-download files anytime. Pro includes 10 GB, Premium includes 50 GB.",
     cta: "Upgrade to Pro - $99/mo"
   }
 };
