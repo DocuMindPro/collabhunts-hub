@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Phone, CheckCircle, XCircle, MapPin, ExternalLink, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Eye, Phone, CheckCircle, XCircle, MapPin, ExternalLink, Download, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface SocialAccount {
@@ -72,15 +72,76 @@ const AdminCreatorsTab = () => {
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [minFollowers, setMinFollowers] = useState<string>("");
   
+  // Sorting
+  const [sortField, setSortField] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  
   const { toast } = useToast();
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("desc");
+    }
+  };
+
+  const SortableHeader = ({ field, children }: { field: string; children: React.ReactNode }) => (
+    <TableHead 
+      className="cursor-pointer hover:bg-muted/50 select-none"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        {sortField === field ? (
+          sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-30" />
+        )}
+      </div>
+    </TableHead>
+  );
 
   // Get unique values for filter dropdowns
   const countries = [...new Set(creators.map(c => c.location_country).filter(Boolean))];
   const categories = [...new Set(creators.flatMap(c => c.categories || []))];
 
-  // Pagination
-  const totalPages = Math.ceil(filteredCreators.length / ITEMS_PER_PAGE);
-  const paginatedCreators = filteredCreators.slice(
+  // Sorting and Pagination
+  const sortedCreators = [...filteredCreators].sort((a, b) => {
+    let aVal: any, bVal: any;
+    switch (sortField) {
+      case "display_name":
+        aVal = a.display_name.toLowerCase();
+        bVal = b.display_name.toLowerCase();
+        break;
+      case "total_followers":
+        aVal = a.total_followers || 0;
+        bVal = b.total_followers || 0;
+        break;
+      case "total_earned_cents":
+        aVal = a.total_earned_cents || 0;
+        bVal = b.total_earned_cents || 0;
+        break;
+      case "created_at":
+        aVal = new Date(a.created_at).getTime();
+        bVal = new Date(b.created_at).getTime();
+        break;
+      case "status":
+        aVal = a.status;
+        bVal = b.status;
+        break;
+      default:
+        aVal = a.created_at;
+        bVal = b.created_at;
+    }
+    if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const totalPages = Math.ceil(sortedCreators.length / ITEMS_PER_PAGE);
+  const paginatedCreators = sortedCreators.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -541,13 +602,13 @@ const AdminCreatorsTab = () => {
                         onCheckedChange={toggleSelectAll}
                       />
                     </TableHead>
-                    <TableHead>Creator</TableHead>
+                    <SortableHeader field="display_name">Creator</SortableHeader>
                     <TableHead>Phone</TableHead>
                     <TableHead>Location</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Followers</TableHead>
-                    <TableHead>Earnings</TableHead>
-                    <TableHead>Joined</TableHead>
+                    <SortableHeader field="status">Status</SortableHeader>
+                    <SortableHeader field="total_followers">Followers</SortableHeader>
+                    <SortableHeader field="total_earned_cents">Earnings</SortableHeader>
+                    <SortableHeader field="created_at">Joined</SortableHeader>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
