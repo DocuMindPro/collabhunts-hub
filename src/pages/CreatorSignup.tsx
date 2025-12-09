@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, Play, Image as ImageIcon, User, Camera } from "lucide-react";
+import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, Play, Image as ImageIcon, User, Camera, Phone, Loader2 } from "lucide-react";
 import { z } from "zod";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
 
@@ -53,6 +53,11 @@ const CreatorSignup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
   // Step 2: Profile details
   const [displayName, setDisplayName] = useState("");
@@ -123,6 +128,89 @@ const CreatorSignup = () => {
 
   const progress = (step / 7) * 100;
 
+  const phoneSchema = z.string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number must be less than 15 digits")
+    .regex(/^\+?[1-9]\d{9,14}$/, "Please enter a valid phone number with country code (e.g., +1234567890)");
+
+  const handleSendOtp = async () => {
+    try {
+      phoneSchema.parse(phoneNumber);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Invalid Phone Number",
+          description: error.errors[0].message,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    setSendingOtp(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: phoneNumber,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Code Sent",
+        description: "A verification code has been sent to your phone",
+      });
+    } catch (error: any) {
+      console.error("OTP send error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send verification code",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (phoneOtp.length !== 6) {
+      toast({
+        title: "Invalid Code",
+        description: "Please enter the 6-digit verification code",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone: phoneNumber,
+        token: phoneOtp,
+        type: 'sms',
+      });
+
+      if (error) throw error;
+
+      // Sign out from the phone auth session (we'll create proper account in final submit)
+      await supabase.auth.signOut();
+      
+      setPhoneVerified(true);
+      toast({
+        title: "Phone Verified",
+        description: "Your phone number has been verified successfully",
+      });
+    } catch (error: any) {
+      console.error("OTP verify error:", error);
+      toast({
+        title: "Verification Failed",
+        description: error.message || "Invalid verification code",
+        variant: "destructive"
+      });
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
   const handleStep1 = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -130,6 +218,7 @@ const CreatorSignup = () => {
       emailSchema.parse(email);
       passwordSchema.parse(password);
       displayNameSchema.parse(fullName);
+      phoneSchema.parse(phoneNumber);
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
@@ -139,6 +228,15 @@ const CreatorSignup = () => {
         });
         return;
       }
+    }
+
+    if (!phoneVerified) {
+      toast({
+        title: "Phone Verification Required",
+        description: "Please verify your phone number before continuing",
+        variant: "destructive"
+      });
+      return;
     }
 
     setStep(2);
@@ -427,7 +525,7 @@ const CreatorSignup = () => {
         }
       }
 
-      // Create creator profile
+      // Create creator profile with phone number
       const { data: profileData, error: profileError } = await supabase
         .from("creator_profiles")
         .insert({
@@ -447,7 +545,9 @@ const CreatorSignup = () => {
           gender: gender || null,
           ethnicity: ethnicity || null,
           primary_language: primaryLanguage || "English",
-          secondary_languages: secondaryLanguages.length > 0 ? secondaryLanguages : null
+          secondary_languages: secondaryLanguages.length > 0 ? secondaryLanguages : null,
+          phone_number: phoneNumber,
+          phone_verified: phoneVerified
         })
         .select()
         .single();
@@ -653,7 +753,91 @@ const CreatorSignup = () => {
                     <p className="text-xs text-muted-foreground mt-1">Minimum 8 characters</p>
                   </div>
 
-                  <Button type="submit" className="w-full gradient-hero hover:opacity-90">
+                  {/* Phone Verification */}
+                  <div className="border-t pt-4 mt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Phone className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">Phone Verification</Label>
+                      <span className="text-destructive text-xs">*Required</span>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="phoneNumber">Phone Number</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="phoneNumber"
+                            type="tel"
+                            value={phoneNumber}
+                            onChange={(e) => {
+                              setPhoneNumber(e.target.value);
+                              setPhoneVerified(false);
+                            }}
+                            placeholder="+1234567890"
+                            disabled={phoneVerified}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant={phoneVerified ? "default" : "outline"}
+                            onClick={handleSendOtp}
+                            disabled={sendingOtp || phoneVerified || phoneNumber.length < 10}
+                          >
+                            {sendingOtp ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : phoneVerified ? (
+                              <CheckCircle className="h-4 w-4" />
+                            ) : (
+                              "Send Code"
+                            )}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Include country code (e.g., +1 for US)
+                        </p>
+                      </div>
+
+                      {!phoneVerified && phoneNumber.length >= 10 && (
+                        <div>
+                          <Label htmlFor="phoneOtp">Verification Code</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="phoneOtp"
+                              value={phoneOtp}
+                              onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                              placeholder="Enter 6-digit code"
+                              maxLength={6}
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              onClick={handleVerifyOtp}
+                              disabled={verifyingOtp || phoneOtp.length !== 6}
+                            >
+                              {verifyingOtp ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                "Verify"
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {phoneVerified && (
+                        <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-md">
+                          <CheckCircle className="h-4 w-4" />
+                          <span>Phone number verified successfully</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full gradient-hero hover:opacity-90"
+                    disabled={!phoneVerified}
+                  >
                     Continue
                   </Button>
                 </form>

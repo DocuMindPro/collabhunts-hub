@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, X, Camera, Images, ImagePlus } from "lucide-react";
+import { Loader2, Upload, X, Camera, Images, ImagePlus, Phone, CheckCircle } from "lucide-react";
 import SocialAccountsSection from "./SocialAccountsSection";
 import PortfolioUploadSection from "./PortfolioUploadSection";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
@@ -28,6 +28,11 @@ const ProfileTab = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadingCoverIndex, setUploadingCoverIndex] = useState<number | null>(null);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [newPhoneNumber, setNewPhoneNumber] = useState("");
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [profile, setProfile] = useState({
     id: "",
     display_name: "",
@@ -45,6 +50,8 @@ const ProfileTab = () => {
     ethnicity: "",
     primary_language: "English",
     secondary_languages: [] as string[],
+    phone_number: "",
+    phone_verified: false,
   });
 
   useEffect(() => {
@@ -82,6 +89,8 @@ const ProfileTab = () => {
           ethnicity: data.ethnicity || "",
           primary_language: data.primary_language || "English",
           secondary_languages: data.secondary_languages || [],
+          phone_number: data.phone_number || "",
+          phone_verified: data.phone_verified || false,
         });
       }
     } catch (error) {
@@ -292,6 +301,92 @@ const ProfileTab = () => {
         ? profile.categories.filter((c) => c !== category)
         : [...profile.categories, category],
     });
+  };
+
+  const handleSendPhoneOtp = async () => {
+    if (newPhoneNumber.length < 10) {
+      toast({
+        title: "Invalid Phone",
+        description: "Please enter a valid phone number with country code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSendingOtp(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: newPhoneNumber,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Code Sent",
+        description: "A verification code has been sent to your phone",
+      });
+    } catch (error: any) {
+      console.error("OTP send error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send verification code",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    if (phoneOtp.length !== 6) {
+      toast({
+        title: "Invalid Code",
+        description: "Please enter the 6-digit verification code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone: newPhoneNumber,
+        token: phoneOtp,
+        type: 'sms',
+      });
+
+      if (error) throw error;
+
+      // Update profile with new phone number
+      const { error: updateError } = await supabase
+        .from("creator_profiles")
+        .update({
+          phone_number: newPhoneNumber,
+          phone_verified: true,
+        })
+        .eq("id", profile.id);
+
+      if (updateError) throw updateError;
+
+      setProfile({ ...profile, phone_number: newPhoneNumber, phone_verified: true });
+      setIsEditingPhone(false);
+      setNewPhoneNumber("");
+      setPhoneOtp("");
+
+      toast({
+        title: "Phone Updated",
+        description: "Your phone number has been verified and updated",
+      });
+    } catch (error: any) {
+      console.error("OTP verify error:", error);
+      toast({
+        title: "Verification Failed",
+        description: error.message || "Invalid verification code",
+        variant: "destructive",
+      });
+    } finally {
+      setVerifyingOtp(false);
+    }
   };
 
   const handleSave = async () => {
@@ -544,6 +639,115 @@ const ProfileTab = () => {
               type="bio"
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Phone Number Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Phone className="h-5 w-5" />
+            Phone Number
+          </CardTitle>
+          <CardDescription>Your verified contact number</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {profile.phone_number && profile.phone_verified && !isEditingPhone ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span className="font-medium">{profile.phone_number}</span>
+                </div>
+                <Badge variant="secondary" className="bg-green-100 text-green-700">Verified</Badge>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditingPhone(true);
+                  setNewPhoneNumber("");
+                  setPhoneOtp("");
+                }}
+              >
+                Change Phone Number
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {!profile.phone_number && !isEditingPhone && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    No phone number on file. Please add and verify your phone number.
+                  </p>
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <Label htmlFor="new_phone">Phone Number</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="new_phone"
+                    type="tel"
+                    value={newPhoneNumber}
+                    onChange={(e) => setNewPhoneNumber(e.target.value)}
+                    placeholder="+1234567890"
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={handleSendPhoneOtp}
+                    disabled={sendingOtp || newPhoneNumber.length < 10}
+                  >
+                    {sendingOtp ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Send Code"
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Include country code (e.g., +1 for US)</p>
+              </div>
+
+              {newPhoneNumber.length >= 10 && (
+                <div className="space-y-2">
+                  <Label htmlFor="phone_otp">Verification Code</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="phone_otp"
+                      value={phoneOtp}
+                      onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="Enter 6-digit code"
+                      maxLength={6}
+                      className="flex-1"
+                    />
+                    <Button
+                      onClick={handleVerifyPhoneOtp}
+                      disabled={verifyingOtp || phoneOtp.length !== 6}
+                    >
+                      {verifyingOtp ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Verify"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {isEditingPhone && (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setIsEditingPhone(false);
+                    setNewPhoneNumber("");
+                    setPhoneOtp("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

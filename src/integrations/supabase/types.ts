@@ -471,6 +471,8 @@ export type Database = {
           location_city: string | null
           location_country: string | null
           location_state: string | null
+          phone_number: string | null
+          phone_verified: boolean | null
           primary_language: string | null
           profile_image_url: string | null
           rejection_reason: string | null
@@ -494,6 +496,8 @@ export type Database = {
           location_city?: string | null
           location_country?: string | null
           location_state?: string | null
+          phone_number?: string | null
+          phone_verified?: boolean | null
           primary_language?: string | null
           profile_image_url?: string | null
           rejection_reason?: string | null
@@ -517,6 +521,8 @@ export type Database = {
           location_city?: string | null
           location_country?: string | null
           location_state?: string | null
+          phone_number?: string | null
+          phone_verified?: boolean | null
           primary_language?: string | null
           profile_image_url?: string | null
           rejection_reason?: string | null
