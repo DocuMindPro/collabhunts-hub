@@ -15,12 +15,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { z } from "zod";
+import { Phone, CheckCircle, Loader2 } from "lucide-react";
+import PhoneInput from "@/components/PhoneInput";
 
 // Validation schemas
 const emailSchema = z.string().email("Invalid email address").max(255);
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters").max(100);
 const companyNameSchema = z.string().trim().min(2, "Company name must be at least 2 characters").max(200);
 const websiteSchema = z.string().url("Invalid URL").or(z.literal(""));
+const phoneSchema = z.string()
+  .min(10, "Phone number must be at least 10 digits")
+  .max(20, "Phone number must be less than 20 digits")
+  .regex(/^\+[1-9]\d{6,14}$/, "Please enter a valid phone number");
 
 const BrandSignup = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +41,13 @@ const BrandSignup = () => {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [industry, setIndustry] = useState("");
   const [companySize, setCompanySize] = useState("");
+
+  // Phone verification
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
   const industries = [
     "Fashion & Apparel",
@@ -70,8 +83,96 @@ const BrandSignup = () => {
     });
   }, [navigate]);
 
+  const handleSendOtp = async () => {
+    try {
+      phoneSchema.parse(phoneNumber);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Invalid Phone Number",
+          description: error.errors[0].message,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    setSendingOtp(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: phoneNumber,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Code Sent",
+        description: "A verification code has been sent to your phone",
+      });
+    } catch (error: any) {
+      console.error("OTP send error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send verification code",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (phoneOtp.length !== 6) {
+      toast({
+        title: "Invalid Code",
+        description: "Please enter the 6-digit verification code",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone: phoneNumber,
+        token: phoneOtp,
+        type: 'sms',
+      });
+
+      if (error) throw error;
+
+      // Sign out from the phone auth session (we'll create proper account in final submit)
+      await supabase.auth.signOut();
+      
+      setPhoneVerified(true);
+      toast({
+        title: "Phone Verified",
+        description: "Your phone number has been verified successfully",
+      });
+    } catch (error: any) {
+      console.error("OTP verify error:", error);
+      toast({
+        title: "Verification Failed",
+        description: error.message || "Invalid verification code",
+        variant: "destructive"
+      });
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!phoneVerified) {
+      toast({
+        title: "Phone Verification Required",
+        description: "Please verify your phone number before creating your account",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -100,7 +201,7 @@ const BrandSignup = () => {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error("Failed to create user");
 
-      // Create brand profile
+      // Create brand profile with phone info
       const { error: profileError } = await supabase
         .from("brand_profiles")
         .insert({
@@ -108,7 +209,9 @@ const BrandSignup = () => {
           company_name: companyName,
           website_url: websiteUrl || null,
           industry,
-          company_size: companySize
+          company_size: companySize,
+          phone_number: phoneNumber,
+          phone_verified: true
         });
 
       if (profileError) throw profileError;
@@ -206,6 +309,72 @@ const BrandSignup = () => {
                   <p className="text-xs text-muted-foreground mt-1">Minimum 8 characters</p>
                 </div>
 
+                {/* Phone Verification Section */}
+                <div className="border-t pt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Phone className="h-4 w-4 text-primary" />
+                    <Label className="font-semibold">Phone Verification</Label>
+                    <span className="text-destructive text-xs">*Required</span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <div className="flex gap-2">
+                        <PhoneInput
+                          value={phoneNumber}
+                          onChange={(num) => {
+                            setPhoneNumber(num);
+                            setPhoneVerified(false);
+                            setPhoneOtp("");
+                          }}
+                          disabled={isLoading || phoneVerified}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleSendOtp}
+                          disabled={isLoading || sendingOtp || phoneVerified || phoneNumber.length < 10}
+                        >
+                          {sendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Code"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {!phoneVerified && phoneNumber.length >= 10 && (
+                      <div>
+                        <Label htmlFor="otp">Verification Code</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="otp"
+                            type="text"
+                            value={phoneOtp}
+                            onChange={(e) => setPhoneOtp(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+                            placeholder="Enter 6-digit code"
+                            maxLength={6}
+                            disabled={isLoading || verifyingOtp}
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleVerifyOtp}
+                            disabled={isLoading || verifyingOtp || phoneOtp.length !== 6}
+                          >
+                            {verifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {phoneVerified && (
+                      <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 p-2 rounded-md">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>Phone number verified</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="border-t pt-4">
                   <h3 className="font-semibold mb-3">Company Information</h3>
                   
@@ -272,10 +441,16 @@ const BrandSignup = () => {
                   type="submit" 
                   className="w-full gradient-hero hover:opacity-90" 
                   size="lg"
-                  disabled={isLoading}
+                  disabled={isLoading || !phoneVerified}
                 >
                   {isLoading ? "Creating Account..." : "Create Brand Account"}
                 </Button>
+
+                {!phoneVerified && (
+                  <p className="text-xs text-center text-muted-foreground">
+                    Phone verification required to create account
+                  </p>
+                )}
 
                 <p className="text-sm text-center text-muted-foreground">
                   Already have an account?{" "}
