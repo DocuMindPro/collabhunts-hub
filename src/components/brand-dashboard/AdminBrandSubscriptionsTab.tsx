@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Building2, CreditCard } from "lucide-react";
-import { format } from "date-fns";
+import { Building2, CreditCard, Search, AlertCircle, CheckCircle } from "lucide-react";
+import { format, isPast } from "date-fns";
 import { SUBSCRIPTION_PLANS, PlanType } from "@/lib/stripe-mock";
 interface BrandSubscription {
   id: string;
@@ -34,7 +34,35 @@ const AdminBrandSubscriptionsTab = () => {
   const [newPlanType, setNewPlanType] = useState("");
   const [periodEndDate, setPeriodEndDate] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expiryFilter, setExpiryFilter] = useState<"all" | "active" | "expired">("all");
   const { toast } = useToast();
+
+  const isExpired = (periodEnd: string) => isPast(new Date(periodEnd));
+
+  const filteredSubscriptions = useMemo(() => {
+    return subscriptions.filter((sub) => {
+      // Search filter
+      const matchesSearch =
+        sub.brand_profiles.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (sub.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+
+      // Expiry filter
+      const expired = isExpired(sub.current_period_end);
+      const matchesExpiry =
+        expiryFilter === "all" ||
+        (expiryFilter === "active" && !expired) ||
+        (expiryFilter === "expired" && expired);
+
+      return matchesSearch && matchesExpiry;
+    });
+  }, [subscriptions, searchQuery, expiryFilter]);
+
+  const expiredCount = useMemo(
+    () => subscriptions.filter((s) => isExpired(s.current_period_end)).length,
+    [subscriptions]
+  );
+  const activeCount = subscriptions.length - expiredCount;
 
   useEffect(() => {
     fetchSubscriptions();
@@ -156,7 +184,7 @@ const AdminBrandSubscriptionsTab = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Subscriptions</CardTitle>
@@ -169,13 +197,21 @@ const AdminBrandSubscriptionsTab = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pro Subscribers</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {subscriptions.filter(s => s.plan_type === "pro").length}
-            </div>
+            <div className="text-2xl font-bold text-green-600">{activeCount}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Expired</CardTitle>
+            <AlertCircle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">{expiredCount}</div>
           </CardContent>
         </Card>
 
@@ -197,50 +233,85 @@ const AdminBrandSubscriptionsTab = () => {
           <CardTitle>Brand Subscriptions</CardTitle>
           <CardDescription>Manage all brand subscription plans</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Search and Filter Row */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by company name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={expiryFilter} onValueChange={(v) => setExpiryFilter(v as any)}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subscriptions</SelectItem>
+                <SelectItem value="active">Active Only</SelectItem>
+                <SelectItem value="expired">Expired Only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Company</TableHead>
                 <TableHead>Plan</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Expiry</TableHead>
                 <TableHead>Marketplace Fee</TableHead>
                 <TableHead>Period End</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {subscriptions.map((subscription) => (
-                <TableRow key={subscription.id}>
-                  <TableCell className="font-medium">
-                    <div>
-                      <div>{subscription.brand_profiles.company_name}</div>
-                      <div className="text-sm text-muted-foreground font-normal">
-                        {subscription.email}
+              {filteredSubscriptions.map((subscription) => {
+                const expired = isExpired(subscription.current_period_end);
+                return (
+                  <TableRow key={subscription.id}>
+                    <TableCell className="font-medium">
+                      <div>
+                        <div>{subscription.brand_profiles.company_name}</div>
+                        <div className="text-sm text-muted-foreground font-normal">
+                          {subscription.email}
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{getPlanBadge(subscription.plan_type)}</TableCell>
-                  <TableCell>
-                    <Badge variant={subscription.status === "active" ? "default" : "secondary"}>
-                      {subscription.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{getMarketplaceFee(subscription.plan_type)}</TableCell>
-                  <TableCell>
-                    {format(new Date(subscription.current_period_end), "MMM dd, yyyy")}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditDialog(subscription)}
-                    >
-                      Edit
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell>{getPlanBadge(subscription.plan_type)}</TableCell>
+                    <TableCell>
+                      <Badge variant={subscription.status === "active" ? "default" : "secondary"}>
+                        {subscription.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={expired ? "destructive" : "outline"}
+                        className={expired ? "" : "border-green-500 text-green-600"}
+                      >
+                        {expired ? "Expired" : "Active"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{getMarketplaceFee(subscription.plan_type)}</TableCell>
+                    <TableCell>
+                      {format(new Date(subscription.current_period_end), "MMM dd, yyyy")}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditDialog(subscription)}
+                      >
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
