@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Star, Instagram, Youtube, Twitter, Play, Image as ImageIcon, Images, MessageCircle, Lock } from "lucide-react";
+import { MapPin, Star, Instagram, Youtube, Twitter, Play, Image as ImageIcon, Images, MessageCircle, Lock, Heart } from "lucide-react";
+import { useSaveCreator } from "@/hooks/useSaveCreator";
 import BookingDialog from "@/components/BookingDialog";
 import MessageDialog from "@/components/MessageDialog";
 import PortfolioGalleryModal from "@/components/PortfolioGalleryModal";
@@ -82,6 +83,8 @@ const CreatorProfile = () => {
   const [canContactCreators, setCanContactCreators] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  
+  const { isSaved, loading: saveLoading, toggleSave, hasBrandProfile } = useSaveCreator(id);
 
   const handleBookService = (service: any) => {
     setSelectedService(service);
@@ -595,14 +598,27 @@ const CreatorProfile = () => {
                         Edit Profile
                       </Button>
                     ) : (
-                      <Button 
-                        size="lg"
-                        className="gradient-hero hover:opacity-90"
-                        onClick={handleContactCreator}
-                      >
-                        <MessageCircle className="h-5 w-5 mr-2" />
-                        Contact Creator
-                      </Button>
+                      <div className="flex items-center gap-3">
+                        <Button 
+                          size="lg"
+                          className="gradient-hero hover:opacity-90"
+                          onClick={handleContactCreator}
+                        >
+                          <MessageCircle className="h-5 w-5 mr-2" />
+                          Contact Creator
+                        </Button>
+                        <Button
+                          size="lg"
+                          variant="outline"
+                          onClick={toggleSave}
+                          disabled={saveLoading}
+                          className="px-4"
+                        >
+                          <Heart 
+                            className={`h-5 w-5 ${isSaved ? 'fill-primary text-primary' : ''}`} 
+                          />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -781,14 +797,27 @@ const CreatorProfile = () => {
       {/* Mobile Floating Contact Button (hide on own profile) */}
       {!isOwnProfile && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent md:hidden z-50">
-          <Button 
-            size="lg"
-            className="w-full gradient-hero hover:opacity-90 shadow-lg"
-            onClick={handleContactCreator}
-          >
-            <MessageCircle className="h-5 w-5 mr-2" />
-            Contact Creator
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              size="lg"
+              className="flex-1 gradient-hero hover:opacity-90 shadow-lg"
+              onClick={handleContactCreator}
+            >
+              <MessageCircle className="h-5 w-5 mr-2" />
+              Contact Creator
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={toggleSave}
+              disabled={saveLoading}
+              className="px-4 bg-background shadow-lg"
+            >
+              <Heart 
+                className={`h-5 w-5 ${isSaved ? 'fill-primary text-primary' : ''}`} 
+              />
+            </Button>
+          </div>
         </div>
       )}
 
