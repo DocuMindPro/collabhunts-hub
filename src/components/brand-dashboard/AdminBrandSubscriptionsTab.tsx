@@ -24,6 +24,7 @@ interface BrandSubscription {
     company_name: string;
     user_id: string;
   };
+  email?: string;
 }
 
 const AdminBrandSubscriptionsTab = () => {
@@ -53,7 +54,23 @@ const AdminBrandSubscriptionsTab = () => {
 
       if (error) throw error;
 
-      setSubscriptions(data || []);
+      // Fetch emails for each brand profile
+      const subscriptionsWithEmails = await Promise.all(
+        (data || []).map(async (sub) => {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("email")
+            .eq("id", sub.brand_profiles.user_id)
+            .single();
+          
+          return {
+            ...sub,
+            email: profileData?.email || ""
+          };
+        })
+      );
+
+      setSubscriptions(subscriptionsWithEmails);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -196,7 +213,12 @@ const AdminBrandSubscriptionsTab = () => {
               {subscriptions.map((subscription) => (
                 <TableRow key={subscription.id}>
                   <TableCell className="font-medium">
-                    {subscription.brand_profiles.company_name}
+                    <div>
+                      <div>{subscription.brand_profiles.company_name}</div>
+                      <div className="text-sm text-muted-foreground font-normal">
+                        {subscription.email}
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell>{getPlanBadge(subscription.plan_type)}</TableCell>
                   <TableCell>
