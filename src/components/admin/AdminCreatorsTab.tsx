@@ -16,7 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Eye, Phone, CheckCircle, XCircle, MapPin, ExternalLink } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Search, Eye, Phone, CheckCircle, XCircle, MapPin, ExternalLink, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface CreatorData {
@@ -43,11 +44,15 @@ interface CreatorData {
   total_earned_cents?: number;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 const AdminCreatorsTab = () => {
   const [creators, setCreators] = useState<CreatorData[]>([]);
   const [filteredCreators, setFilteredCreators] = useState<CreatorData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCreator, setSelectedCreator] = useState<CreatorData | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Filters
   const [search, setSearch] = useState("");
@@ -63,6 +68,13 @@ const AdminCreatorsTab = () => {
   const countries = [...new Set(creators.map(c => c.location_country).filter(Boolean))];
   const categories = [...new Set(creators.flatMap(c => c.categories || []))];
 
+  // Pagination
+  const totalPages = Math.ceil(filteredCreators.length / ITEMS_PER_PAGE);
+  const paginatedCreators = filteredCreators.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   useEffect(() => {
     fetchCreators();
   }, []);
@@ -70,7 +82,6 @@ const AdminCreatorsTab = () => {
   useEffect(() => {
     let filtered = creators;
 
-    // Search filter
     if (search) {
       filtered = filtered.filter(c =>
         c.display_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -79,41 +90,37 @@ const AdminCreatorsTab = () => {
       );
     }
 
-    // Status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter(c => c.status === statusFilter);
     }
 
-    // Phone verification filter
     if (phoneFilter !== "all") {
       filtered = filtered.filter(c => 
         phoneFilter === "verified" ? c.phone_verified : !c.phone_verified
       );
     }
 
-    // Country filter
     if (countryFilter !== "all") {
       filtered = filtered.filter(c => c.location_country === countryFilter);
     }
 
-    // Category filter
     if (categoryFilter !== "all") {
       filtered = filtered.filter(c => c.categories?.includes(categoryFilter));
     }
 
-    // Gender filter
     if (genderFilter !== "all") {
       filtered = filtered.filter(c => c.gender === genderFilter);
     }
 
     setFilteredCreators(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
+    setSelectedIds(new Set()); // Clear selection when filters change
   }, [search, statusFilter, phoneFilter, countryFilter, categoryFilter, genderFilter, creators]);
 
   const fetchCreators = async () => {
     try {
       setLoading(true);
 
-      // Fetch all creator profiles
       const { data: creatorsData, error: creatorsError } = await supabase
         .from("creator_profiles")
         .select("*")
@@ -126,7 +133,6 @@ const AdminCreatorsTab = () => {
         return;
       }
 
-      // Fetch related data
       const userIds = creatorsData.map(c => c.user_id);
       const creatorIds = creatorsData.map(c => c.id);
 
@@ -201,6 +207,88 @@ const AdminCreatorsTab = () => {
     }
   };
 
+  const handleBulkApprove = async () => {
+    if (selectedIds.size === 0) return;
+    try {
+      const { error } = await supabase
+        .from("creator_profiles")
+        .update({ status: "approved" })
+        .in("id", Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast({ title: `${selectedIds.size} creators approved` });
+      setSelectedIds(new Set());
+      fetchCreators();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleBulkReject = async () => {
+    if (selectedIds.size === 0) return;
+    try {
+      const { error } = await supabase
+        .from("creator_profiles")
+        .update({ status: "rejected" })
+        .in("id", Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast({ title: `${selectedIds.size} creators rejected` });
+      setSelectedIds(new Set());
+      fetchCreators();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === paginatedCreators.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(paginatedCreators.map(c => c.id)));
+    }
+  };
+
+  const exportToCSV = () => {
+    const headers = ["Display Name", "Email", "Phone", "Phone Verified", "Status", "Location", "Gender", "Categories", "Followers", "Earnings ($)", "Joined"];
+    const rows = filteredCreators.map(c => [
+      c.display_name,
+      c.email || "",
+      c.phone_number || "",
+      c.phone_verified ? "Yes" : "No",
+      c.status,
+      [c.location_city, c.location_state, c.location_country].filter(Boolean).join(", "),
+      c.gender || "",
+      (c.categories || []).join("; "),
+      c.total_followers?.toString() || "0",
+      ((c.total_earned_cents || 0) / 100).toFixed(2),
+      new Date(c.created_at).toLocaleDateString()
+    ]);
+
+    const csvContent = [headers, ...rows].map(row => 
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+    ).join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `creators_export_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    toast({ title: "Export complete", description: `${filteredCreators.length} creators exported` });
+  };
+
   const PhoneDisplay = ({ phone, verified }: { phone?: string | null; verified?: boolean | null }) => {
     if (!phone) return <span className="text-muted-foreground">—</span>;
     return (
@@ -220,11 +308,17 @@ const AdminCreatorsTab = () => {
     <Card>
       <CardHeader className="p-4 md:p-6">
         <div className="flex flex-col gap-4">
-          <div>
-            <CardTitle className="text-lg md:text-xl">All Creators</CardTitle>
-            <CardDescription className="text-xs md:text-sm">
-              Comprehensive creator management ({filteredCreators.length} of {creators.length})
-            </CardDescription>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div>
+              <CardTitle className="text-lg md:text-xl">All Creators</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
+                Comprehensive creator management ({filteredCreators.length} of {creators.length})
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={exportToCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
           </div>
           
           {/* Filters */}
@@ -287,6 +381,24 @@ const AdminCreatorsTab = () => {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Bulk Actions */}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+              <span className="text-sm font-medium">{selectedIds.size} selected</span>
+              <Button size="sm" onClick={handleBulkApprove}>
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Approve
+              </Button>
+              <Button size="sm" variant="destructive" onClick={handleBulkReject}>
+                <XCircle className="h-4 w-4 mr-1" />
+                Reject
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+                Clear
+              </Button>
+            </div>
+          )}
         </div>
       </CardHeader>
       
@@ -300,104 +412,145 @@ const AdminCreatorsTab = () => {
             No creators found
           </div>
         ) : (
-          <div className="overflow-x-auto -mx-4 md:mx-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Creator</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Followers</TableHead>
-                  <TableHead>Earnings</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCreators.map((creator) => (
-                  <TableRow key={creator.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={creator.profile_image_url || undefined} />
-                          <AvatarFallback>{creator.display_name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{creator.display_name}</p>
-                          <p className="text-xs text-muted-foreground">{creator.email}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <PhoneDisplay phone={creator.phone_number} verified={creator.phone_verified} />
-                    </TableCell>
-                    <TableCell>
-                      {creator.location_country ? (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-sm">
-                            {[creator.location_city, creator.location_country].filter(Boolean).join(", ")}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          creator.status === "approved"
-                            ? "default"
-                            : creator.status === "pending"
-                            ? "secondary"
-                            : "destructive"
-                        }
-                        className="capitalize"
-                      >
-                        {creator.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {creator.total_followers?.toLocaleString() || "0"}
-                    </TableCell>
-                    <TableCell>
-                      {creator.total_earned_cents && creator.total_earned_cents > 0 ? (
-                        <span className="text-green-600 font-medium">
-                          ${(creator.total_earned_cents / 100).toFixed(2)}
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(creator.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedCreator(creator)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          asChild
-                        >
-                          <Link to={`/creator/${creator.id}`} target="_blank">
-                            <ExternalLink className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </div>
-                    </TableCell>
+          <>
+            <div className="overflow-x-auto -mx-4 md:mx-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={selectedIds.size === paginatedCreators.length && paginatedCreators.length > 0}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
+                    <TableHead>Creator</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Followers</TableHead>
+                    <TableHead>Earnings</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {paginatedCreators.map((creator) => (
+                    <TableRow key={creator.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(creator.id)}
+                          onCheckedChange={() => toggleSelect(creator.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={creator.profile_image_url || undefined} />
+                            <AvatarFallback>{creator.display_name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{creator.display_name}</p>
+                            <p className="text-xs text-muted-foreground">{creator.email}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <PhoneDisplay phone={creator.phone_number} verified={creator.phone_verified} />
+                      </TableCell>
+                      <TableCell>
+                        {creator.location_country ? (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-sm">
+                              {[creator.location_city, creator.location_country].filter(Boolean).join(", ")}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            creator.status === "approved"
+                              ? "default"
+                              : creator.status === "pending"
+                              ? "secondary"
+                              : "destructive"
+                          }
+                          className="capitalize"
+                        >
+                          {creator.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {creator.total_followers?.toLocaleString() || "0"}
+                      </TableCell>
+                      <TableCell>
+                        {creator.total_earned_cents && creator.total_earned_cents > 0 ? (
+                          <span className="text-green-600 font-medium">
+                            ${(creator.total_earned_cents / 100).toFixed(2)}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(creator.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedCreator(creator)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                          >
+                            <Link to={`/creator/${creator.id}`} target="_blank">
+                              <ExternalLink className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
 
