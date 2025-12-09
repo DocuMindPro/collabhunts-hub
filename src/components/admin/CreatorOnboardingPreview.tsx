@@ -26,8 +26,16 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [locationCity, setLocationCity] = useState("");
+  const [locationState, setLocationState] = useState("");
   const [locationCountry, setLocationCountry] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  // Step 2: Demographics
+  const [birthDate, setBirthDate] = useState("");
+  const [gender, setGender] = useState("");
+  const [ethnicity, setEthnicity] = useState("");
+  const [primaryLanguage, setPrimaryLanguage] = useState("English");
+  const [secondaryLanguages, setSecondaryLanguages] = useState<string[]>([]);
 
   // Step 3: Photos (preview only - 3 cover images)
   const [hasProfileImage, setHasProfileImage] = useState(false);
@@ -43,6 +51,15 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
     "Lifestyle", "Fashion", "Beauty", "Travel", "Health & Fitness",
     "Food & Drink", "Tech & Gaming", "Music & Dance"
   ];
+
+  const GENDERS = ["Male", "Female", "Non-binary", "Prefer not to say"];
+  const ETHNICITIES = ["African American", "Asian", "Caucasian", "Hispanic/Latino", "Middle Eastern", "Mixed/Other", "Prefer not to say"];
+  const LANGUAGES = ["English", "Spanish", "French", "German", "Portuguese", "Arabic", "Hindi", "Chinese", "Japanese", "Korean", "Other"];
+
+  // Calculate max date for birth date (must be at least 13 years old)
+  const maxBirthDate = new Date();
+  maxBirthDate.setFullYear(maxBirthDate.getFullYear() - 13);
+  const maxBirthDateStr = maxBirthDate.toISOString().split('T')[0];
 
   const serviceTypes = [
     { value: "instagram_post", label: "Instagram Post" },
@@ -131,14 +148,18 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label>City</Label>
-                  <Input value={locationCity} onChange={(e) => setLocationCity(e.target.value)} />
+                  <Input value={locationCity} onChange={(e) => setLocationCity(e.target.value)} placeholder="New York" />
+                </div>
+                <div>
+                  <Label>State</Label>
+                  <Input value={locationState} onChange={(e) => setLocationState(e.target.value)} placeholder="NY" />
                 </div>
                 <div>
                   <Label>Country</Label>
-                  <Input value={locationCountry} onChange={(e) => setLocationCountry(e.target.value)} />
+                  <Input value={locationCountry} onChange={(e) => setLocationCountry(e.target.value)} placeholder="USA" />
                 </div>
               </div>
 
@@ -161,6 +182,81 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
                       {category}
                     </Badge>
                   ))}
+                </div>
+              </div>
+
+              {/* Demographics Section */}
+              <div className="border-t pt-4 mt-4">
+                <Label className="text-base font-semibold">Demographics <span className="text-muted-foreground font-normal">(Optional)</span></Label>
+                <p className="text-xs text-muted-foreground mb-3">This helps brands find creators that match their target audience</p>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Date of Birth</Label>
+                    <Input 
+                      type="date" 
+                      value={birthDate} 
+                      onChange={(e) => setBirthDate(e.target.value)}
+                      max={maxBirthDateStr}
+                    />
+                  </div>
+                  <div>
+                    <Label>Gender</Label>
+                    <select
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value)}
+                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                    >
+                      <option value="">Select gender</option>
+                      {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div>
+                    <Label>Ethnicity</Label>
+                    <select
+                      value={ethnicity}
+                      onChange={(e) => setEthnicity(e.target.value)}
+                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                    >
+                      <option value="">Select ethnicity</option>
+                      {ETHNICITIES.map(e => <option key={e} value={e}>{e}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <Label>Primary Language</Label>
+                    <select
+                      value={primaryLanguage}
+                      onChange={(e) => setPrimaryLanguage(e.target.value)}
+                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                    >
+                      {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <Label>Secondary Languages</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {LANGUAGES.filter(l => l !== primaryLanguage).map((lang) => (
+                      <Badge
+                        key={lang}
+                        variant={secondaryLanguages.includes(lang) ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => {
+                          if (secondaryLanguages.includes(lang)) {
+                            setSecondaryLanguages(secondaryLanguages.filter(l => l !== lang));
+                          } else {
+                            setSecondaryLanguages([...secondaryLanguages, lang]);
+                          }
+                        }}
+                      >
+                        {lang}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -388,12 +484,36 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
                 </div>
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm font-medium">Bio</p>
-                  <p className="text-muted-foreground">{bio || "Not set"}</p>
+                  <p className="text-muted-foreground line-clamp-2">{bio || "Not set"}</p>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm font-medium">Location</p>
+                  <p className="text-muted-foreground">
+                    {[locationCity, locationState, locationCountry].filter(Boolean).join(", ") || "Not set"}
+                  </p>
                 </div>
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm font-medium">Categories</p>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {selectedCategories.map(c => <Badge key={c} variant="secondary">{c}</Badge>)}
+                    {selectedCategories.length > 0 
+                      ? selectedCategories.map(c => <Badge key={c} variant="secondary">{c}</Badge>)
+                      : <span className="text-muted-foreground">None selected</span>
+                    }
+                  </div>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm font-medium">Demographics</p>
+                  <div className="text-muted-foreground text-sm space-y-1 mt-1">
+                    {birthDate && <p>Birth Date: {birthDate}</p>}
+                    {gender && <p>Gender: {gender}</p>}
+                    {ethnicity && <p>Ethnicity: {ethnicity}</p>}
+                    <p>Primary Language: {primaryLanguage}</p>
+                    {secondaryLanguages.length > 0 && (
+                      <p>Other Languages: {secondaryLanguages.join(", ")}</p>
+                    )}
+                    {!birthDate && !gender && !ethnicity && secondaryLanguages.length === 0 && (
+                      <p className="text-muted-foreground/60">Only primary language set</p>
+                    )}
                   </div>
                 </div>
                 <div className="p-3 bg-muted rounded-lg">
