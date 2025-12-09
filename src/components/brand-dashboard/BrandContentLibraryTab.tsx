@@ -7,16 +7,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Image, Video, Trash2, Calendar as CalendarIcon, AlertTriangle, User, Loader2, FolderOpen, Search, X, Plus, HardDrive } from "lucide-react";
+import { Upload, Image, Video, Trash2, Calendar as CalendarIcon, AlertTriangle, User, Loader2, FolderOpen, Search, X, Plus, HardDrive, Download, CheckSquare, Square } from "lucide-react";
 import { format, differenceInDays, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
-import { formatStorageSize, getStoragePercentage, canUseContentLibrary, getCurrentStorageUsage, getEffectiveStorageLimit, calculateStorageAddonCost } from "@/lib/storage-utils";
+import { formatStorageSize, getStoragePercentage, canUseContentLibrary, getCurrentStorageUsage, getEffectiveStorageLimit } from "@/lib/storage-utils";
 import { STORAGE_ADDON, formatPrice } from "@/lib/stripe-mock";
 import UpgradePrompt from "@/components/UpgradePrompt";
 
@@ -47,6 +48,14 @@ interface CreatorOption {
   display_name: string;
 }
 
+interface BulkUploadFile {
+  file: File;
+  id: string;
+  progress: number;
+  status: 'pending' | 'uploading' | 'success' | 'error';
+  error?: string;
+}
+
 const BrandContentLibraryTab = () => {
   const { toast } = useToast();
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
@@ -72,6 +81,13 @@ const BrandContentLibraryTab = () => {
   const [uploadRightsEnd, setUploadRightsEnd] = useState<Date | undefined>(undefined);
   const [uploadTags, setUploadTags] = useState("");
   
+  // Bulk upload state
+  const [showBulkUploadDialog, setShowBulkUploadDialog] = useState(false);
+  const [bulkUploadFiles, setBulkUploadFiles] = useState<BulkUploadFile[]>([]);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkRightsType, setBulkRightsType] = useState("perpetual");
+  const [bulkCreatorId, setBulkCreatorId] = useState<string>("");
+  
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contentToDelete, setContentToDelete] = useState<ContentItem | null>(null);
@@ -88,6 +104,11 @@ const BrandContentLibraryTab = () => {
   const [showStoragePurchaseDialog, setShowStoragePurchaseDialog] = useState(false);
   const [storageToPurchase, setStorageToPurchase] = useState(1);
   const [purchasingStorage, setPurchasingStorage] = useState(false);
+
+  // Selection mode state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [downloading, setDownloading] = useState(false);
 
   const r2PublicUrl = import.meta.env.VITE_R2_PUBLIC_URL || "";
 
@@ -174,23 +195,23 @@ const BrandContentLibraryTab = () => {
     loadData();
   }, [loadData]);
 
-  const validateAndSelectFile = (file: File) => {
-    // Validate file type
+  const validateFile = (file: File): string | null => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime', 'video/webm'];
     if (!allowedTypes.includes(file.type)) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload JPG, PNG, GIF, WEBP, MP4, MOV, or WEBM files",
-        variant: "destructive",
-      });
-      return;
+      return "Invalid file type";
     }
-
-    // Validate file size (100MB)
     if (file.size > 100 * 1024 * 1024) {
+      return "File too large (max 100MB)";
+    }
+    return null;
+  };
+
+  const validateAndSelectFile = (file: File) => {
+    const error = validateFile(file);
+    if (error) {
       toast({
-        title: "File too large",
-        description: "Maximum file size is 100MB",
+        title: "Invalid file",
+        description: error,
         variant: "destructive",
       });
       return;
@@ -213,10 +234,57 @@ const BrandContentLibraryTab = () => {
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      validateAndSelectFile(file);
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (files.length === 1) {
+      validateAndSelectFile(files[0]);
+    } else {
+      // Multiple files - open bulk upload dialog
+      handleBulkFileSelect(files);
     }
+    // Reset input
+    e.target.value = '';
+  };
+
+  const handleBulkFileSelect = (files: FileList) => {
+    const validFiles: BulkUploadFile[] = [];
+    let totalSize = 0;
+
+    Array.from(files).forEach((file) => {
+      const error = validateFile(file);
+      if (!error) {
+        validFiles.push({
+          file,
+          id: `${file.name}-${Date.now()}-${Math.random()}`,
+          progress: 0,
+          status: 'pending',
+        });
+        totalSize += file.size;
+      }
+    });
+
+    if (validFiles.length === 0) {
+      toast({
+        title: "No valid files",
+        description: "None of the selected files are valid",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (storageUsed + totalSize > storageLimit) {
+      toast({
+        title: "Storage limit exceeded",
+        description: "Total file size exceeds available storage",
+        variant: "destructive",
+      });
+      setShowStoragePurchaseDialog(true);
+      return;
+    }
+
+    setBulkUploadFiles(validFiles);
+    setShowBulkUploadDialog(true);
   };
 
   // Drag and drop handlers
@@ -229,7 +297,6 @@ const BrandContentLibraryTab = () => {
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only set to false if leaving the drop zone entirely
     if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
       setIsDragging(false);
     }
@@ -245,9 +312,11 @@ const BrandContentLibraryTab = () => {
     e.stopPropagation();
     setIsDragging(false);
 
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      validateAndSelectFile(file);
+    const files = e.dataTransfer.files;
+    if (files.length === 1) {
+      validateAndSelectFile(files[0]);
+    } else if (files.length > 1) {
+      handleBulkFileSelect(files);
     }
   };
 
@@ -258,10 +327,8 @@ const BrandContentLibraryTab = () => {
     setPurchasingStorage(true);
 
     try {
-      // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Insert mock storage purchase record
       const purchaseAmount = storageToPurchase * STORAGE_ADDON.amountBytes;
       const purchasePrice = storageToPurchase * STORAGE_ADDON.priceCents;
 
@@ -342,7 +409,6 @@ const BrandContentLibraryTab = () => {
         description: `${selectedFile.name} has been added to your content library`,
       });
 
-      // Refresh data
       await loadData();
       resetUploadForm();
 
@@ -359,6 +425,80 @@ const BrandContentLibraryTab = () => {
     }
   };
 
+  const handleBulkUpload = async () => {
+    if (bulkUploadFiles.length === 0 || !brandProfileId) return;
+
+    setBulkUploading(true);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({
+        title: "Not authenticated",
+        description: "Please log in to upload files",
+        variant: "destructive",
+      });
+      setBulkUploading(false);
+      return;
+    }
+
+    for (let i = 0; i < bulkUploadFiles.length; i++) {
+      const uploadFile = bulkUploadFiles[i];
+      
+      // Update status to uploading
+      setBulkUploadFiles(prev => 
+        prev.map(f => f.id === uploadFile.id ? { ...f, status: 'uploading' as const, progress: 10 } : f)
+      );
+
+      try {
+        const formData = new FormData();
+        formData.append('file', uploadFile.file);
+        formData.append('title', uploadFile.file.name.replace(/\.[^/.]+$/, ""));
+        formData.append('rights_type', bulkRightsType);
+        if (bulkCreatorId) formData.append('creator_profile_id', bulkCreatorId);
+
+        setBulkUploadFiles(prev => 
+          prev.map(f => f.id === uploadFile.id ? { ...f, progress: 50 } : f)
+        );
+
+        const response = await supabase.functions.invoke('upload-content', {
+          body: formData,
+        });
+
+        if (response.error || !response.data?.success) {
+          throw new Error(response.error?.message || response.data?.error || 'Upload failed');
+        }
+
+        setBulkUploadFiles(prev => 
+          prev.map(f => f.id === uploadFile.id ? { ...f, status: 'success' as const, progress: 100 } : f)
+        );
+
+      } catch (error: any) {
+        console.error('Bulk upload error:', error);
+        setBulkUploadFiles(prev => 
+          prev.map(f => f.id === uploadFile.id ? { 
+            ...f, 
+            status: 'error' as const, 
+            progress: 0,
+            error: error.message 
+          } : f)
+        );
+      }
+    }
+
+    setBulkUploading(false);
+    await loadData();
+
+    const successCount = bulkUploadFiles.filter(f => f.status === 'success').length;
+    const errorCount = bulkUploadFiles.filter(f => f.status === 'error').length;
+
+    if (successCount > 0) {
+      toast({
+        title: "Bulk upload complete",
+        description: `${successCount} file(s) uploaded successfully${errorCount > 0 ? `, ${errorCount} failed` : ''}`,
+      });
+    }
+  };
+
   const resetUploadForm = () => {
     setShowUploadDialog(false);
     setSelectedFile(null);
@@ -369,6 +509,17 @@ const BrandContentLibraryTab = () => {
     setUploadRightsStart(new Date());
     setUploadRightsEnd(undefined);
     setUploadTags("");
+  };
+
+  const resetBulkUploadForm = () => {
+    setShowBulkUploadDialog(false);
+    setBulkUploadFiles([]);
+    setBulkRightsType("perpetual");
+    setBulkCreatorId("");
+  };
+
+  const removeBulkFile = (id: string) => {
+    setBulkUploadFiles(prev => prev.filter(f => f.id !== id));
   };
 
   const handleDeleteClick = (item: ContentItem) => {
@@ -411,6 +562,84 @@ const BrandContentLibraryTab = () => {
     }
   };
 
+  // Download functionality
+  const downloadFile = async (item: ContentItem) => {
+    const url = getContentUrl(item);
+    if (!url) {
+      toast({
+        title: "Download failed",
+        description: "File URL not available",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = item.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download failed",
+        description: "Failed to download file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkDownload = async () => {
+    if (selectedItems.size === 0) return;
+
+    setDownloading(true);
+    
+    const itemsToDownload = content.filter(item => selectedItems.has(item.id));
+    
+    for (const item of itemsToDownload) {
+      await downloadFile(item);
+      // Small delay between downloads to prevent browser blocking
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+
+    setDownloading(false);
+    toast({
+      title: "Download complete",
+      description: `${itemsToDownload.length} file(s) downloaded`,
+    });
+  };
+
+  const toggleItemSelection = (id: string) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllItems = () => {
+    if (selectedItems.size === filteredContent.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(filteredContent.map(item => item.id)));
+    }
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedItems(new Set());
+  };
+
   const getExpirationStatus = (item: ContentItem) => {
     if (!item.usage_rights_end || item.rights_type === 'perpetual') return null;
     
@@ -428,7 +657,6 @@ const BrandContentLibraryTab = () => {
   };
 
   const getContentUrl = (item: ContentItem) => {
-    // Use the R2 public URL if configured, otherwise construct from key
     if (r2PublicUrl) {
       return `${r2PublicUrl}/${item.r2_key}`;
     }
@@ -519,10 +747,10 @@ const BrandContentLibraryTab = () => {
               )} />
             </div>
             <h3 className="text-lg font-medium mb-1">
-              {isDragging ? "Drop your file here" : "Drag and drop your files here"}
+              {isDragging ? "Drop your files here" : "Drag and drop your files here"}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              or click to browse • JPG, PNG, GIF, WEBP, MP4, MOV, WEBM up to 100MB
+              Drop multiple files for bulk upload • JPG, PNG, GIF, WEBP, MP4, MOV, WEBM up to 100MB each
             </p>
             <Label htmlFor="file-upload" className="cursor-pointer">
               <div className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
@@ -533,6 +761,7 @@ const BrandContentLibraryTab = () => {
             <Input
               id="file-upload"
               type="file"
+              multiple
               accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/webm"
               onChange={handleFileSelect}
               className="hidden"
@@ -541,29 +770,67 @@ const BrandContentLibraryTab = () => {
         </CardContent>
       </Card>
 
-      {/* Filter Section */}
+      {/* Filter and Actions Section */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search content..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-1">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search content..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Filter type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="image">Images</SelectItem>
+                  <SelectItem value="video">Videos</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Filter type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="image">Images</SelectItem>
-                <SelectItem value="video">Videos</SelectItem>
-              </SelectContent>
-            </Select>
+
+            {/* Selection Mode Actions */}
+            <div className="flex items-center gap-2">
+              {selectionMode ? (
+                <>
+                  <Button variant="outline" size="sm" onClick={selectAllItems}>
+                    {selectedItems.size === filteredContent.length ? (
+                      <><Square className="h-4 w-4 mr-1" /> Deselect All</>
+                    ) : (
+                      <><CheckSquare className="h-4 w-4 mr-1" /> Select All</>
+                    )}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleBulkDownload}
+                    disabled={selectedItems.size === 0 || downloading}
+                  >
+                    {downloading ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4 mr-1" />
+                    )}
+                    Download ({selectedItems.size})
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={exitSelectionMode}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setSelectionMode(true)} disabled={filteredContent.length === 0}>
+                  <CheckSquare className="h-4 w-4 mr-1" />
+                  Select
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -586,6 +853,7 @@ const BrandContentLibraryTab = () => {
             <Input
               id="file-upload-empty"
               type="file"
+              multiple
               accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/webm"
               onChange={handleFileSelect}
               className="hidden"
@@ -597,12 +865,16 @@ const BrandContentLibraryTab = () => {
           {filteredContent.map((item) => {
             const expirationStatus = getExpirationStatus(item);
             const contentUrl = getContentUrl(item);
+            const isSelected = selectedItems.has(item.id);
             
             return (
               <Card 
                 key={item.id} 
-                className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setPreviewContent(item)}
+                className={cn(
+                  "overflow-hidden group cursor-pointer hover:shadow-lg transition-all",
+                  isSelected && "ring-2 ring-primary"
+                )}
+                onClick={() => selectionMode ? toggleItemSelection(item.id) : setPreviewContent(item)}
               >
                 <div className="aspect-square relative bg-muted">
                   {item.file_type === 'video' ? (
@@ -619,9 +891,21 @@ const BrandContentLibraryTab = () => {
                       }}
                     />
                   )}
+
+                  {/* Selection checkbox */}
+                  {selectionMode && (
+                    <div className="absolute top-2 left-2 z-10">
+                      <Checkbox 
+                        checked={isSelected} 
+                        onClick={(e) => e.stopPropagation()}
+                        onCheckedChange={() => toggleItemSelection(item.id)}
+                        className="bg-background"
+                      />
+                    </div>
+                  )}
                   
                   {/* Overlay badges */}
-                  <div className="absolute top-2 left-2 flex flex-col gap-1">
+                  <div className={cn("absolute top-2 flex flex-col gap-1", selectionMode ? "left-8" : "left-2")}>
                     {expirationStatus && (
                       <Badge variant={expirationStatus.variant} className="text-xs">
                         <AlertTriangle className="h-3 w-3 mr-1" />
@@ -635,20 +919,32 @@ const BrandContentLibraryTab = () => {
                     {item.file_type === 'video' ? <Video className="h-3 w-3" /> : <Image className="h-3 w-3" />}
                   </Badge>
 
-                  {/* Delete button overlay */}
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteClick(item);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Delete
-                    </Button>
-                  </div>
+                  {/* Action buttons overlay */}
+                  {!selectionMode && (
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          downloadFile(item);
+                        }}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Download
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(item);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 
                 <CardContent className="p-3">
@@ -671,7 +967,7 @@ const BrandContentLibraryTab = () => {
         </div>
       )}
 
-      {/* Upload Dialog */}
+      {/* Single Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={(open) => !uploading && setShowUploadDialog(open)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -864,6 +1160,127 @@ const BrandContentLibraryTab = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Bulk Upload Dialog */}
+      <Dialog open={showBulkUploadDialog} onOpenChange={(open) => !bulkUploading && setShowBulkUploadDialog(open)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Bulk Upload ({bulkUploadFiles.length} files)</DialogTitle>
+            <DialogDescription>
+              Upload multiple files at once with shared settings
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* File list with progress */}
+            <div className="max-h-[200px] overflow-y-auto space-y-2">
+              {bulkUploadFiles.map((uploadFile) => (
+                <div key={uploadFile.id} className="flex items-center gap-3 p-2 bg-muted rounded-lg">
+                  {uploadFile.file.type.startsWith('video/') ? (
+                    <Video className="h-6 w-6 text-muted-foreground flex-shrink-0" />
+                  ) : (
+                    <Image className="h-6 w-6 text-muted-foreground flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate">{uploadFile.file.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-muted-foreground">{formatStorageSize(uploadFile.file.size)}</p>
+                      {uploadFile.status === 'success' && (
+                        <Badge variant="outline" className="text-xs text-green-600">Uploaded</Badge>
+                      )}
+                      {uploadFile.status === 'error' && (
+                        <Badge variant="destructive" className="text-xs">Failed</Badge>
+                      )}
+                      {uploadFile.status === 'uploading' && (
+                        <span className="text-xs text-primary">{uploadFile.progress}%</span>
+                      )}
+                    </div>
+                    {uploadFile.status === 'uploading' && (
+                      <Progress value={uploadFile.progress} className="h-1 mt-1" />
+                    )}
+                  </div>
+                  {!bulkUploading && uploadFile.status === 'pending' && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6"
+                      onClick={() => removeBulkFile(uploadFile.id)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Shared settings */}
+            <div className="space-y-4 pt-4 border-t">
+              <p className="text-sm font-medium">Shared Settings (applied to all files)</p>
+              
+              <div className="space-y-2">
+                <Label>Creator Attribution (optional)</Label>
+                <Select value={bulkCreatorId} onValueChange={setBulkCreatorId} disabled={bulkUploading}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select creator..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No creator</SelectItem>
+                    {creators.map((creator) => (
+                      <SelectItem key={creator.id} value={creator.id}>
+                        {creator.display_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Usage Rights</Label>
+                <Select value={bulkRightsType} onValueChange={setBulkRightsType} disabled={bulkUploading}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="perpetual">Perpetual (unlimited use)</SelectItem>
+                    <SelectItem value="limited">Limited Time Period</SelectItem>
+                    <SelectItem value="one-time">One-Time Use</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Total size */}
+            <div className="flex justify-between text-sm p-3 bg-muted rounded-lg">
+              <span className="text-muted-foreground">Total size</span>
+              <span className="font-medium">
+                {formatStorageSize(bulkUploadFiles.reduce((sum, f) => sum + f.file.size, 0))}
+              </span>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={resetBulkUploadForm} disabled={bulkUploading}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleBulkUpload} 
+              disabled={bulkUploadFiles.length === 0 || bulkUploading || bulkUploadFiles.every(f => f.status !== 'pending')}
+            >
+              {bulkUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload All
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Preview Dialog */}
       <Dialog open={!!previewContent} onOpenChange={() => setPreviewContent(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -959,7 +1376,14 @@ const BrandContentLibraryTab = () => {
                 )}
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => downloadFile(previewContent)}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
                 <Button
                   variant="destructive"
                   onClick={() => {
