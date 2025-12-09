@@ -172,6 +172,15 @@ const BrandCreatorsTab = () => {
     return age;
   };
 
+  const getTotalReach = (accounts: Array<{ follower_count: number }>) => {
+    return accounts.reduce((sum, acc) => sum + acc.follower_count, 0);
+  };
+
+  const getMinPrice = (services: Array<{ price_cents: number }>) => {
+    if (services.length === 0) return null;
+    return Math.min(...services.map(s => s.price_cents / 100));
+  };
+
   const hasActiveAdvancedFilters = ageRange[0] > 18 || ageRange[1] < 65 || 
     selectedGenders.length > 0 || selectedEthnicities.length > 0 || selectedLanguage !== "all";
 
@@ -277,15 +286,6 @@ const BrandCreatorsTab = () => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
     if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
     return count.toString();
-  };
-
-  const getTotalReach = (accounts: Array<{ follower_count: number }>) => {
-    return accounts.reduce((sum, acc) => sum + acc.follower_count, 0);
-  };
-
-  const getMinPrice = (services: Array<{ price_cents: number }>) => {
-    if (services.length === 0) return null;
-    return Math.min(...services.map(s => s.price_cents / 100));
   };
 
   if (loading) {
