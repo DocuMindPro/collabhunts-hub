@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Check, Crown, Zap, Shield, Lock, MessageCircle, Filter, Megaphone } from "lucide-react";
 import { SUBSCRIPTION_PLANS, PlanType, formatPrice, createCheckoutSession, cancelSubscription } from "@/lib/stripe-mock";
+import { checkAndHandleExpiredSubscriptions } from "@/lib/subscription-utils";
 
 interface Subscription {
   id: string;
@@ -40,14 +41,19 @@ const BrandSubscriptionTab = () => {
       if (!brandProfile) return;
       setBrandProfileId(brandProfile.id);
 
-      // Get subscription
-      const { data: sub } = await supabase
+      // Check for expired subscriptions and handle them
+      await checkAndHandleExpiredSubscriptions(brandProfile.id);
+
+      // Get active subscription (prefer non-basic if exists)
+      const { data: subs } = await supabase
         .from('brand_subscriptions')
         .select('*')
         .eq('brand_profile_id', brandProfile.id)
         .eq('status', 'active')
-        .maybeSingle();
+        .order('plan_type', { ascending: false }); // premium > pro > basic
 
+      // Return highest tier active subscription
+      const sub = subs && subs.length > 0 ? subs[0] : null;
       setSubscription(sub as Subscription);
     } catch (error) {
       console.error('Error fetching subscription:', error);
@@ -64,7 +70,18 @@ const BrandSubscriptionTab = () => {
       const result = await createCheckoutSession(planType, brandProfileId);
       
       if (result.success) {
-        // Mock: Create subscription in database
+        // First, cancel any existing active subscriptions
+        const { error: cancelError } = await supabase
+          .from('brand_subscriptions')
+          .update({ status: 'canceled' })
+          .eq('brand_profile_id', brandProfileId)
+          .eq('status', 'active');
+        
+        if (cancelError) {
+          console.error('Error canceling existing subscriptions:', cancelError);
+        }
+
+        // Create new subscription with 1 month period
         const periodEnd = new Date();
         periodEnd.setMonth(periodEnd.getMonth() + 1);
 
@@ -81,7 +98,7 @@ const BrandSubscriptionTab = () => {
 
         if (error) throw error;
 
-        toast.success(`Successfully subscribed to ${SUBSCRIPTION_PLANS[planType].name} plan!`);
+        toast.success(`Successfully subscribed to ${SUBSCRIPTION_PLANS[planType].name} plan! Valid for 1 month.`);
         fetchSubscription();
       }
     } catch (error) {
