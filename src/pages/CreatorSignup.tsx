@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, Play, Image as ImageIcon, User, Camera, Phone, Loader2 } from "lucide-react";
 import { z } from "zod";
+import PhoneInput from "@/components/PhoneInput";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
 
 // Validation schemas
@@ -130,8 +131,8 @@ const CreatorSignup = () => {
 
   const phoneSchema = z.string()
     .min(10, "Phone number must be at least 10 digits")
-    .max(15, "Phone number must be less than 15 digits")
-    .regex(/^\+?[1-9]\d{9,14}$/, "Please enter a valid phone number with country code (e.g., +1234567890)");
+    .max(20, "Phone number must be less than 20 digits")
+    .regex(/^\+[1-9]\d{6,14}$/, "Please enter a valid phone number");
 
   const handleSendOtp = async () => {
     try {
@@ -765,15 +766,12 @@ const CreatorSignup = () => {
                       <div>
                         <Label htmlFor="phoneNumber">Phone Number</Label>
                         <div className="flex gap-2">
-                          <Input
-                            id="phoneNumber"
-                            type="tel"
+                          <PhoneInput
                             value={phoneNumber}
-                            onChange={(e) => {
-                              setPhoneNumber(e.target.value);
+                            onChange={(num) => {
+                              setPhoneNumber(num);
                               setPhoneVerified(false);
                             }}
-                            placeholder="+1234567890"
                             disabled={phoneVerified}
                             className="flex-1"
                           />

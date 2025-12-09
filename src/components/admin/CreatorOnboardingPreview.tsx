@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, User, Camera, Image as ImageIcon, Phone } from "lucide-react";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
+import PhoneInput from "@/components/PhoneInput";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -123,14 +124,12 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
                   <div>
                     <Label>Phone Number</Label>
                     <div className="flex gap-2">
-                      <Input
-                        type="tel"
+                      <PhoneInput
                         value={phoneNumber}
-                        onChange={(e) => {
-                          setPhoneNumber(e.target.value);
+                        onChange={(num) => {
+                          setPhoneNumber(num);
                           setPhoneVerified(false);
                         }}
-                        placeholder="+1234567890"
                         disabled={phoneVerified}
                         className="flex-1"
                       />
@@ -147,20 +146,17 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
                         {phoneVerified ? <CheckCircle className="h-4 w-4" /> : "Simulate Verify"}
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Include country code (e.g., +1 for US)
-                    </p>
                   </div>
 
                   {phoneVerified && (
-                    <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-md">
+                    <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 p-2 rounded-md">
                       <CheckCircle className="h-4 w-4" />
                       <span>Phone number verified (simulated)</span>
                     </div>
                   )}
 
                   {!phoneVerified && phoneNumber.length >= 10 && (
-                    <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded-md">
+                    <p className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-md">
                       Click "Simulate Verify" to test the verification flow
                     </p>
                   )}

@@ -12,6 +12,7 @@ import { Loader2, Upload, X, Camera, Images, ImagePlus, Phone, CheckCircle } fro
 import SocialAccountsSection from "./SocialAccountsSection";
 import PortfolioUploadSection from "./PortfolioUploadSection";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
+import PhoneInput from "@/components/PhoneInput";
 
 const AVAILABLE_CATEGORIES = [
   "Fashion", "Beauty", "Fitness", "Travel", "Food", "Tech",
@@ -685,12 +686,9 @@ const ProfileTab = () => {
               <div className="space-y-2">
                 <Label htmlFor="new_phone">Phone Number</Label>
                 <div className="flex gap-2">
-                  <Input
-                    id="new_phone"
-                    type="tel"
+                  <PhoneInput
                     value={newPhoneNumber}
-                    onChange={(e) => setNewPhoneNumber(e.target.value)}
-                    placeholder="+1234567890"
+                    onChange={setNewPhoneNumber}
                     className="flex-1"
                   />
                   <Button
@@ -705,7 +703,6 @@ const ProfileTab = () => {
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">Include country code (e.g., +1 for US)</p>
               </div>
 
               {newPhoneNumber.length >= 10 && (

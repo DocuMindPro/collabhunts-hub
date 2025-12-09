@@ -146,6 +146,8 @@ export type Database = {
           marketing_intent: string | null
           monthly_budget_range: string | null
           onboarding_completed: boolean | null
+          phone_number: string | null
+          phone_verified: boolean | null
           preferred_categories: string[] | null
           preferred_platforms: string[] | null
           updated_at: string | null
@@ -162,6 +164,8 @@ export type Database = {
           marketing_intent?: string | null
           monthly_budget_range?: string | null
           onboarding_completed?: boolean | null
+          phone_number?: string | null
+          phone_verified?: boolean | null
           preferred_categories?: string[] | null
           preferred_platforms?: string[] | null
           updated_at?: string | null
@@ -178,6 +182,8 @@ export type Database = {
           marketing_intent?: string | null
           monthly_budget_range?: string | null
           onboarding_completed?: boolean | null
+          phone_number?: string | null
+          phone_verified?: boolean | null
           preferred_categories?: string[] | null
           preferred_platforms?: string[] | null
           updated_at?: string | null

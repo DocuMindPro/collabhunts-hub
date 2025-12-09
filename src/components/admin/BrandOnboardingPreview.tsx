@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Target, DollarSign, Tag, Share2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { CheckCircle, Target, DollarSign, Tag, Share2, Phone } from "lucide-react";
+import PhoneInput from "@/components/PhoneInput";
 
 interface BrandOnboardingPreviewProps {
   onClose: () => void;
@@ -10,12 +13,18 @@ interface BrandOnboardingPreviewProps {
 
 const BrandOnboardingPreview = ({ onClose }: BrandOnboardingPreviewProps) => {
   const [step, setStep] = useState(1);
+  
+  // Step 1: Phone verification (simulated)
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  
+  // Step 2-5: Preferences
   const [intent, setIntent] = useState("");
   const [budget, setBudget] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
 
-  const totalSteps = 4;
+  const totalSteps = 5;
   const progress = (step / totalSteps) * 100;
 
   const intents = [
@@ -50,6 +59,63 @@ const BrandOnboardingPreview = ({ onClose }: BrandOnboardingPreviewProps) => {
       {step === 1 && (
         <div className="space-y-4">
           <div className="text-center">
+            <Phone className="h-10 w-10 mx-auto text-primary mb-3" />
+            <h3 className="text-lg font-semibold">Phone Verification</h3>
+            <p className="text-sm text-muted-foreground">Verify your phone number to continue</p>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <Label>Phone Number</Label>
+              <PhoneInput
+                value={phoneNumber}
+                onChange={(num) => {
+                  setPhoneNumber(num);
+                  setPhoneVerified(false);
+                }}
+                disabled={phoneVerified}
+              />
+            </div>
+
+            {!phoneVerified && phoneNumber.length >= 10 && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setPhoneVerified(true)}
+              >
+                Simulate Verify
+              </Button>
+            )}
+
+            {phoneVerified && (
+              <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 p-2 rounded-md">
+                <CheckCircle className="h-4 w-4" />
+                <span>Phone verified (simulated)</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <Button variant="ghost" className="flex-1">Skip</Button>
+            <Button 
+              onClick={() => setStep(2)} 
+              className="flex-1"
+              disabled={!phoneVerified}
+            >
+              Continue
+            </Button>
+          </div>
+          {!phoneVerified && (
+            <p className="text-xs text-center text-muted-foreground">
+              Phone verification required to continue
+            </p>
+          )}
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="space-y-4">
+          <div className="text-center">
             <Target className="h-10 w-10 mx-auto text-primary mb-3" />
             <h3 className="text-lg font-semibold">What's your main goal?</h3>
             <p className="text-sm text-muted-foreground">We'll personalize your experience</p>
@@ -78,13 +144,13 @@ const BrandOnboardingPreview = ({ onClose }: BrandOnboardingPreviewProps) => {
           </div>
 
           <div className="flex gap-3">
-            <Button variant="ghost" className="flex-1">Skip</Button>
-            <Button onClick={() => setStep(2)} className="flex-1">Continue</Button>
+            <Button variant="outline" onClick={() => setStep(1)} className="flex-1">Back</Button>
+            <Button onClick={() => setStep(3)} className="flex-1">Continue</Button>
           </div>
         </div>
       )}
 
-      {step === 2 && (
+      {step === 3 && (
         <div className="space-y-4">
           <div className="text-center">
             <DollarSign className="h-10 w-10 mx-auto text-primary mb-3" />
@@ -112,13 +178,13 @@ const BrandOnboardingPreview = ({ onClose }: BrandOnboardingPreviewProps) => {
           </div>
 
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setStep(1)} className="flex-1">Back</Button>
-            <Button onClick={() => setStep(3)} className="flex-1">Continue</Button>
+            <Button variant="outline" onClick={() => setStep(2)} className="flex-1">Back</Button>
+            <Button onClick={() => setStep(4)} className="flex-1">Continue</Button>
           </div>
         </div>
       )}
 
-      {step === 3 && (
+      {step === 4 && (
         <div className="space-y-4">
           <div className="text-center">
             <Tag className="h-10 w-10 mx-auto text-primary mb-3" />
@@ -146,13 +212,13 @@ const BrandOnboardingPreview = ({ onClose }: BrandOnboardingPreviewProps) => {
           </div>
 
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setStep(2)} className="flex-1">Back</Button>
-            <Button onClick={() => setStep(4)} className="flex-1">Continue</Button>
+            <Button variant="outline" onClick={() => setStep(3)} className="flex-1">Back</Button>
+            <Button onClick={() => setStep(5)} className="flex-1">Continue</Button>
           </div>
         </div>
       )}
 
-      {step === 4 && (
+      {step === 5 && (
         <div className="space-y-4">
           <div className="text-center">
             <Share2 className="h-10 w-10 mx-auto text-primary mb-3" />
@@ -186,7 +252,7 @@ const BrandOnboardingPreview = ({ onClose }: BrandOnboardingPreviewProps) => {
           </div>
 
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setStep(3)} className="flex-1">Back</Button>
+            <Button variant="outline" onClick={() => setStep(4)} className="flex-1">Back</Button>
             <Button onClick={onClose} className="flex-1">
               <CheckCircle className="h-4 w-4 mr-2" />
               Close Preview
