@@ -157,4 +157,140 @@ All colors MUST be HSL.
       transform: translateY(0);
     }
   }
+
+  /* Floating animation for cards */
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+
+  /* Subtle pulse glow effect */
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px hsla(29, 100%, 50%, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 40px hsla(29, 100%, 50%, 0.4);
+    }
+  }
+
+  /* Gradient shift animation */
+  @keyframes gradient-shift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  .animate-gradient-shift {
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+
+  /* Enhanced button hover effects */
+  .btn-animated {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .btn-animated::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsla(0, 0%, 100%, 0.2),
+      transparent
+    );
+    transition: left 0.5s ease;
+  }
+
+  .btn-animated:hover::before {
+    left: 100%;
+  }
+
+  .btn-animated:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px -10px hsla(29, 100%, 50%, 0.5);
+  }
+
+  /* Platform icon hover effects */
+  .platform-icon {
+    transition: all 0.3s ease;
+  }
+
+  .platform-icon:hover {
+    transform: scale(1.2) translateY(-2px);
+  }
+
+  /* Category badge hover effects */
+  .category-badge {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .category-badge:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 12px hsla(0, 0%, 0%, 0.1);
+  }
+
+  /* Animated gradient background */
+  .animated-gradient-bg {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .animated-gradient-bg::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle,
+      hsla(29, 100%, 50%, 0.08) 0%,
+      transparent 50%
+    );
+    animation: gradient-shift 15s ease infinite;
+  }
+
+  /* Step card hover effect */
+  .step-card {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .step-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px -20px hsla(0, 0%, 0%, 0.15);
+  }
+
+  .step-card:hover .step-icon {
+    transform: scale(1.1);
+  }
+
+  .step-icon {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
