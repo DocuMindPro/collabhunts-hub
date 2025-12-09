@@ -5,7 +5,7 @@ import { Search, Users, Shield, TrendingUp, Instagram, Youtube, Video } from "lu
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import heroImage from "@/assets/hero-creators.jpg";
+import heroImage from "@/assets/hero-creators-brand.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import RotatingText from "@/components/RotatingText";
 import FloatingCard from "@/components/FloatingCard";
