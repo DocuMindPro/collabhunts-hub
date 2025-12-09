@@ -47,6 +47,8 @@ const SORT_OPTIONS = [
 ];
 const GENDERS = ["Male", "Female", "Non-binary"];
 const ETHNICITIES = ["African American", "Asian", "Caucasian", "Hispanic/Latino", "Middle Eastern", "Mixed/Other"];
+const LANGUAGES = ["English", "Spanish", "French", "German", "Portuguese", "Arabic", "Hindi", "Chinese", "Japanese", "Korean"];
+
 // Separate component for creator card with save functionality
 const CreatorCardWithSave = ({ creator, totalReach, minPrice, formatFollowers }: {
   creator: Creator;
