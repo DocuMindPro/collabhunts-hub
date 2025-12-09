@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,9 @@ interface BulkUploadFile {
 
 const BrandContentLibraryTab = () => {
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const creatorIdFromUrl = searchParams.get('creatorId');
+  
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -74,6 +78,7 @@ const BrandContentLibraryTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterTag, setFilterTag] = useState<string>("all");
+  const [filterCreatorId, setFilterCreatorId] = useState<string>(creatorIdFromUrl || "all");
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [creators, setCreators] = useState<CreatorOption[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
@@ -225,6 +230,20 @@ const BrandContentLibraryTab = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Handle creator ID from URL - pre-select creator and open upload dialog
+  useEffect(() => {
+    if (creatorIdFromUrl && creators.length > 0) {
+      // Pre-select the creator for filtering
+      setFilterCreatorId(creatorIdFromUrl);
+      // Pre-select for uploads
+      setUploadCreatorId(creatorIdFromUrl);
+      setBulkCreatorId(creatorIdFromUrl);
+      // Clear the URL param to prevent re-triggering
+      searchParams.delete('creatorId');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [creatorIdFromUrl, creators, searchParams, setSearchParams]);
 
   const validateFile = (file: File): string | null => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime', 'video/webm'];
@@ -821,11 +840,13 @@ const BrandContentLibraryTab = () => {
     
     const matchesTag = filterTag === 'all' || item.tags?.includes(filterTag);
     
+    const matchesCreator = filterCreatorId === 'all' || item.creator_profile_id === filterCreatorId;
+    
     const matchesFolder = currentFolderId === null 
       ? true 
       : item.folder_id === currentFolderId;
     
-    return matchesSearch && matchesType && matchesTag && matchesFolder;
+    return matchesSearch && matchesType && matchesTag && matchesCreator && matchesFolder;
   });
 
   const storagePercentage = getStoragePercentage(storageUsed, storageLimit);
@@ -996,6 +1017,20 @@ const BrandContentLibraryTab = () => {
                       <SelectItem value="all">All Tags</SelectItem>
                       {allTags.map((tag) => (
                         <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {creators.length > 0 && (
+                  <Select value={filterCreatorId} onValueChange={setFilterCreatorId}>
+                    <SelectTrigger className="w-[160px]">
+                      <User className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="All Creators" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Creators</SelectItem>
+                      {creators.map((creator) => (
+                        <SelectItem key={creator.id} value={creator.id}>{creator.display_name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

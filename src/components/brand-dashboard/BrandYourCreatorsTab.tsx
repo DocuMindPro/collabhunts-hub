@@ -587,7 +587,7 @@ const BrandYourCreatorsTab = () => {
                         )}
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <Button
                           size="sm"
                           className="flex-1"
@@ -595,6 +595,17 @@ const BrandYourCreatorsTab = () => {
                         >
                           View Profile
                         </Button>
+                        {contentCount > 0 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.location.href = `/brand-dashboard?tab=content-library&creatorId=${saved.creator_profile_id}`}
+                            className="gap-1"
+                          >
+                            <Image className="h-4 w-4" />
+                            Content
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="outline"
@@ -700,7 +711,7 @@ const BrandYourCreatorsTab = () => {
                         Last: {formatDistanceToNow(new Date(creator.last_booking_date), { addSuffix: true })}
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <Button
                           size="sm"
                           className="flex-1 gradient-hero hover:opacity-90"
@@ -708,6 +719,17 @@ const BrandYourCreatorsTab = () => {
                         >
                           Rebook
                         </Button>
+                        {contentCount > 0 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.location.href = `/brand-dashboard?tab=content-library&creatorId=${creator.creator_profile_id}`}
+                            className="gap-1"
+                          >
+                            <Image className="h-4 w-4" />
+                            Content
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="outline"
