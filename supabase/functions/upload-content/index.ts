@@ -247,6 +247,76 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Upload thumbnail to R2 if provided
+    let thumbnailR2Key: string | null = null;
+    if (thumbnailData && thumbnailData.startsWith('data:image/')) {
+      try {
+        thumbnailR2Key = `thumbnails/${brandProfile.id}/${timestamp}-thumb.jpg`;
+        
+        // Extract base64 data from data URL
+        const base64Data = thumbnailData.split(',')[1];
+        const thumbnailBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+        
+        // Calculate hash for thumbnail
+        const thumbPayloadHash = await crypto.subtle.digest('SHA-256', thumbnailBuffer)
+          .then(hash => Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join(''));
+        
+        // Create canonical request for thumbnail
+        const thumbCanonicalUri = `/${r2BucketName}/${thumbnailR2Key}`;
+        const thumbCanonicalHeaders = [
+          `content-type:image/jpeg`,
+          `host:${r2AccountId}.r2.cloudflarestorage.com`,
+          `x-amz-content-sha256:${thumbPayloadHash}`,
+          `x-amz-date:${amzDate}`,
+        ].join('\n') + '\n';
+
+        const thumbCanonicalRequest = [
+          method,
+          thumbCanonicalUri,
+          canonicalQueryString,
+          thumbCanonicalHeaders,
+          signedHeaders,
+          thumbPayloadHash,
+        ].join('\n');
+
+        const thumbCanonicalRequestHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(thumbCanonicalRequest))
+          .then(hash => Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join(''));
+
+        const thumbStringToSign = [
+          algorithm,
+          amzDate,
+          credentialScope,
+          thumbCanonicalRequestHash,
+        ].join('\n');
+
+        const thumbSignature = await hmacSha256(kSigning, thumbStringToSign)
+          .then(sig => Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join(''));
+
+        const thumbAuthHeader = `${algorithm} Credential=${r2AccessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${thumbSignature}`;
+
+        const thumbUploadResponse = await fetch(`${r2Endpoint}/${r2BucketName}/${thumbnailR2Key}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'image/jpeg',
+            'x-amz-content-sha256': thumbPayloadHash,
+            'x-amz-date': amzDate,
+            'Authorization': thumbAuthHeader,
+          },
+          body: thumbnailBuffer,
+        });
+
+        if (!thumbUploadResponse.ok) {
+          console.error('Thumbnail upload failed:', await thumbUploadResponse.text());
+          thumbnailR2Key = null; // Don't fail the whole upload, just skip thumbnail
+        } else {
+          console.log(`Thumbnail uploaded: ${thumbnailR2Key}`);
+        }
+      } catch (thumbError) {
+        console.error('Thumbnail processing error:', thumbError);
+        thumbnailR2Key = null;
+      }
+    }
+
     // Insert record into content_library
     const { data: contentRecord, error: insertError } = await supabase
       .from('content_library')
@@ -266,7 +336,7 @@ Deno.serve(async (req) => {
         usage_rights_end: usageRightsEnd,
         tags: tags ? tags.split(',').map(t => t.trim()) : null,
         folder_id: folderId || null,
-        thumbnail_r2_key: thumbnailData ? `thumbnails/${brandProfile.id}/${timestamp}-thumb.jpg` : null,
+        thumbnail_r2_key: thumbnailR2Key,
       })
       .select()
       .single();
