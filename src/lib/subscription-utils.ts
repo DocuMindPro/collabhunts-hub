@@ -151,3 +151,8 @@ export const userHasAdvancedFilters = async (userId: string): Promise<boolean> =
   const planType = await getCurrentPlanType(userId);
   return SUBSCRIPTION_PLANS[planType].hasAdvancedFilters;
 };
+
+export const canUserUseCRM = async (userId: string): Promise<boolean> => {
+  const planType = await getCurrentPlanType(userId);
+  return SUBSCRIPTION_PLANS[planType].hasCRM;
+};

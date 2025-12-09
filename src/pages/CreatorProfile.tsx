@@ -84,7 +84,7 @@ const CreatorProfile = () => {
   const [checkingSubscription, setCheckingSubscription] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   
-  const { isSaved, loading: saveLoading, toggleSave, hasBrandProfile } = useSaveCreator(id);
+  const { isSaved, loading: saveLoading, toggleSave, hasBrandProfile, canUseCRM } = useSaveCreator(id);
 
   const handleBookService = (service: any) => {
     setSelectedService(service);
@@ -607,17 +607,20 @@ const CreatorProfile = () => {
                           <MessageCircle className="h-5 w-5 mr-2" />
                           Contact Creator
                         </Button>
-                        <Button
-                          size="lg"
-                          variant="outline"
-                          onClick={toggleSave}
-                          disabled={saveLoading}
-                          className="px-4"
-                        >
-                          <Heart 
-                            className={`h-5 w-5 ${isSaved ? 'fill-primary text-primary' : ''}`} 
-                          />
-                        </Button>
+                        {hasBrandProfile && (
+                          <Button
+                            size="lg"
+                            variant="outline"
+                            onClick={toggleSave}
+                            disabled={saveLoading}
+                            className="px-4"
+                            title={canUseCRM ? (isSaved ? "Remove from saved" : "Save creator") : "Upgrade to Pro to save creators"}
+                          >
+                            <Heart 
+                              className={`h-5 w-5 ${isSaved ? 'fill-primary text-primary' : ''}`} 
+                            />
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -806,17 +809,20 @@ const CreatorProfile = () => {
               <MessageCircle className="h-5 w-5 mr-2" />
               Contact Creator
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={toggleSave}
-              disabled={saveLoading}
-              className="px-4 bg-background shadow-lg"
-            >
-              <Heart 
-                className={`h-5 w-5 ${isSaved ? 'fill-primary text-primary' : ''}`} 
-              />
-            </Button>
+            {hasBrandProfile && (
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={toggleSave}
+                disabled={saveLoading}
+                className="px-4 bg-background shadow-lg"
+                title={canUseCRM ? (isSaved ? "Remove from saved" : "Save creator") : "Upgrade to Pro to save creators"}
+              >
+                <Heart 
+                  className={`h-5 w-5 ${isSaved ? 'fill-primary text-primary' : ''}`} 
+                />
+              </Button>
+            )}
           </div>
         </div>
       )}
