@@ -385,6 +385,48 @@ export type Database = {
           },
         ]
       }
+      creator_notes: {
+        Row: {
+          brand_profile_id: string
+          created_at: string | null
+          creator_profile_id: string
+          id: string
+          note_content: string
+          updated_at: string | null
+        }
+        Insert: {
+          brand_profile_id: string
+          created_at?: string | null
+          creator_profile_id: string
+          id?: string
+          note_content: string
+          updated_at?: string | null
+        }
+        Update: {
+          brand_profile_id?: string
+          created_at?: string | null
+          creator_profile_id?: string
+          id?: string
+          note_content?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_notes_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_notes_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_payout_settings: {
         Row: {
           account_status: string
@@ -837,6 +879,45 @@ export type Database = {
           },
           {
             foreignKeyName: "reviews_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_creators: {
+        Row: {
+          brand_profile_id: string
+          created_at: string | null
+          creator_profile_id: string
+          folder_name: string | null
+          id: string
+        }
+        Insert: {
+          brand_profile_id: string
+          created_at?: string | null
+          creator_profile_id: string
+          folder_name?: string | null
+          id?: string
+        }
+        Update: {
+          brand_profile_id?: string
+          created_at?: string | null
+          creator_profile_id?: string
+          folder_name?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_creators_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_creators_creator_profile_id_fkey"
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
