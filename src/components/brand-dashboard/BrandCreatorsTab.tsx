@@ -9,9 +9,10 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { Search, MapPin, Star, Filter, X } from "lucide-react";
+import { Search, MapPin, Star, Filter, X, Heart } from "lucide-react";
 import UpgradePrompt from "@/components/UpgradePrompt";
 import { userHasAdvancedFilters } from "@/lib/subscription-utils";
+import { useSaveCreator } from "@/hooks/useSaveCreator";
 
 interface Creator {
   id: string;
@@ -46,7 +47,90 @@ const SORT_OPTIONS = [
 ];
 const GENDERS = ["Male", "Female", "Non-binary"];
 const ETHNICITIES = ["African American", "Asian", "Caucasian", "Hispanic/Latino", "Middle Eastern", "Mixed/Other"];
-const LANGUAGES = ["English", "Spanish", "French", "German", "Portuguese", "Arabic", "Hindi", "Chinese", "Japanese", "Korean"];
+// Separate component for creator card with save functionality
+const CreatorCardWithSave = ({ creator, totalReach, minPrice, formatFollowers }: {
+  creator: Creator;
+  totalReach: number;
+  minPrice: number | null;
+  formatFollowers: (count: number) => string;
+}) => {
+  const { isSaved, toggleSave, hasBrandProfile } = useSaveCreator(creator.id);
+
+  return (
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+      <CardHeader className="bg-gradient-accent text-white">
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-white">{creator.display_name}</CardTitle>
+            <div className="flex items-center gap-1 text-white/80 text-sm mt-1">
+              <MapPin className="h-3 w-3" />
+              <span>
+                {[creator.location_city, creator.location_state]
+                  .filter(Boolean)
+                  .join(", ") || "Location not set"}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {hasBrandProfile && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleSave();
+                }}
+                className="p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors"
+              >
+                <Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+              </button>
+            )}
+            <div className="flex items-center gap-1 bg-white/90 backdrop-blur px-2 py-1 rounded-full">
+              <Star className="h-3 w-3 fill-primary text-primary" />
+              <span className="text-xs font-semibold">{creator.avgRating.toFixed(1)}</span>
+              {creator.totalReviews > 0 && (
+                <span className="text-xs text-primary/70">({creator.totalReviews})</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-4 space-y-4">
+        <div className="flex flex-wrap gap-1">
+          {creator.categories.slice(0, 3).map((category) => (
+            <Badge key={category} variant="secondary" className="text-xs">
+              {category}
+            </Badge>
+          ))}
+        </div>
+
+        {creator.bio && (
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {creator.bio}
+          </p>
+        )}
+
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div>
+            <p className="text-muted-foreground">Total Reach</p>
+            <p className="font-semibold">{formatFollowers(totalReach)}</p>
+          </div>
+          {minPrice && (
+            <div>
+              <p className="text-muted-foreground">Starting at</p>
+              <p className="font-semibold">${minPrice.toFixed(0)}</p>
+            </div>
+          )}
+        </div>
+
+        <Button
+          className="w-full gradient-hero hover:opacity-90"
+          onClick={() => window.location.href = `/creator/${creator.id}`}
+        >
+          View Profile
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
 
 const BrandCreatorsTab = () => {
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -554,65 +638,13 @@ const BrandCreatorsTab = () => {
           const minPrice = getMinPrice(creator.services);
 
           return (
-            <Card key={creator.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <CardHeader className="bg-gradient-accent text-white">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-white">{creator.display_name}</CardTitle>
-                    <div className="flex items-center gap-1 text-white/80 text-sm mt-1">
-                      <MapPin className="h-3 w-3" />
-                      <span>
-                        {[creator.location_city, creator.location_state]
-                          .filter(Boolean)
-                          .join(", ") || "Location not set"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 bg-white/90 backdrop-blur px-2 py-1 rounded-full">
-                    <Star className="h-3 w-3 fill-primary text-primary" />
-                    <span className="text-xs font-semibold">{creator.avgRating.toFixed(1)}</span>
-                    {creator.totalReviews > 0 && (
-                      <span className="text-xs text-primary/70">({creator.totalReviews})</span>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-4 space-y-4">
-                <div className="flex flex-wrap gap-1">
-                  {creator.categories.slice(0, 3).map((category) => (
-                    <Badge key={category} variant="secondary" className="text-xs">
-                      {category}
-                    </Badge>
-                  ))}
-                </div>
-
-                {creator.bio && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {creator.bio}
-                  </p>
-                )}
-
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Total Reach</p>
-                    <p className="font-semibold">{formatFollowers(totalReach)}</p>
-                  </div>
-                  {minPrice && (
-                    <div>
-                      <p className="text-muted-foreground">Starting at</p>
-                      <p className="font-semibold">${minPrice.toFixed(0)}</p>
-                    </div>
-                  )}
-                </div>
-
-                <Button
-                  className="w-full gradient-hero hover:opacity-90"
-                  onClick={() => window.location.href = `/creator/${creator.id}`}
-                >
-                  View Profile
-                </Button>
-              </CardContent>
-            </Card>
+            <CreatorCardWithSave 
+              key={creator.id} 
+              creator={creator} 
+              totalReach={totalReach} 
+              minPrice={minPrice} 
+              formatFollowers={formatFollowers}
+            />
           );
         })}
       </div>
