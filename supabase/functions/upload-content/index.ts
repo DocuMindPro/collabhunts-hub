@@ -84,8 +84,9 @@ Deno.serve(async (req) => {
     const usageRightsStart = formData.get('usage_rights_start') as string || null;
     const usageRightsEnd = formData.get('usage_rights_end') as string || null;
     const tags = formData.get('tags') as string || null;
-    const folderId = formData.get('folder_id') as string || null;
+    let folderId = formData.get('folder_id') as string || null;
     const thumbnailData = formData.get('thumbnail_data') as string || null;
+    const autoCreateCreatorFolder = formData.get('auto_create_creator_folder') as string === 'true';
 
     if (!file) {
       return new Response(JSON.stringify({ error: 'No file provided' }), {
@@ -143,6 +144,49 @@ Deno.serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Auto-create creator folder if creator is selected and no folder specified
+    if (creatorProfileId && !folderId) {
+      // Get creator display name
+      const { data: creatorProfile } = await supabase
+        .from('creator_profiles')
+        .select('display_name')
+        .eq('id', creatorProfileId)
+        .single();
+
+      if (creatorProfile) {
+        const folderName = creatorProfile.display_name;
+        
+        // Check if folder already exists
+        const { data: existingFolder } = await supabase
+          .from('content_folders')
+          .select('id')
+          .eq('brand_profile_id', brandProfile.id)
+          .eq('name', folderName)
+          .maybeSingle();
+
+        if (existingFolder) {
+          folderId = existingFolder.id;
+          console.log(`Using existing folder: ${folderName} (${folderId})`);
+        } else {
+          // Create new folder for creator
+          const { data: newFolder, error: folderError } = await supabase
+            .from('content_folders')
+            .insert({
+              brand_profile_id: brandProfile.id,
+              name: folderName,
+              color: '#FF7A00', // Primary orange color
+            })
+            .select('id')
+            .single();
+
+          if (!folderError && newFolder) {
+            folderId = newFolder.id;
+            console.log(`Created folder for creator: ${folderName} (${folderId})`);
+          }
+        }
+      }
     }
 
     // Generate R2 key
