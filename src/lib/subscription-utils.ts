@@ -9,6 +9,63 @@ export interface BrandSubscription {
   cancel_at_period_end: boolean;
 }
 
+// Check and handle expired subscriptions for a brand
+export const checkAndHandleExpiredSubscriptions = async (brandProfileId: string): Promise<void> => {
+  const now = new Date().toISOString();
+  
+  // Find expired paid subscriptions (Pro/Premium that have passed their end date)
+  const { data: expiredSubs } = await supabase
+    .from('brand_subscriptions')
+    .select('*')
+    .eq('brand_profile_id', brandProfileId)
+    .eq('status', 'active')
+    .neq('plan_type', 'basic')
+    .lt('current_period_end', now);
+  
+  if (expiredSubs && expiredSubs.length > 0) {
+    console.log(`Found ${expiredSubs.length} expired subscription(s), downgrading to basic...`);
+    
+    // Mark expired subscriptions as expired
+    await supabase
+      .from('brand_subscriptions')
+      .update({ status: 'expired' })
+      .in('id', expiredSubs.map(s => s.id));
+    
+    // Check if there's already a basic subscription
+    const { data: existingBasic } = await supabase
+      .from('brand_subscriptions')
+      .select('id')
+      .eq('brand_profile_id', brandProfileId)
+      .eq('plan_type', 'basic')
+      .eq('status', 'active')
+      .maybeSingle();
+    
+    // Only create new basic subscription if none exists
+    if (!existingBasic) {
+      const basicPeriodEnd = new Date();
+      basicPeriodEnd.setFullYear(basicPeriodEnd.getFullYear() + 1);
+      
+      await supabase
+        .from('brand_subscriptions')
+        .insert({
+          brand_profile_id: brandProfileId,
+          plan_type: 'basic',
+          status: 'active',
+          current_period_end: basicPeriodEnd.toISOString()
+        });
+    }
+  }
+};
+
+// Cancel all active subscriptions for a brand before upgrade
+export const cancelExistingSubscriptions = async (brandProfileId: string): Promise<void> => {
+  await supabase
+    .from('brand_subscriptions')
+    .update({ status: 'canceled' })
+    .eq('brand_profile_id', brandProfileId)
+    .eq('status', 'active');
+};
+
 export const getBrandSubscription = async (userId: string): Promise<BrandSubscription | null> => {
   try {
     // Get brand profile
@@ -20,15 +77,21 @@ export const getBrandSubscription = async (userId: string): Promise<BrandSubscri
 
     if (!brandProfile) return null;
 
-    // Get subscription
-    const { data: sub } = await supabase
+    // Check for expired subscriptions first
+    await checkAndHandleExpiredSubscriptions(brandProfile.id);
+
+    // Get active subscription (prefer non-basic if multiple exist)
+    const { data: subs } = await supabase
       .from('brand_subscriptions')
       .select('*')
       .eq('brand_profile_id', brandProfile.id)
       .eq('status', 'active')
-      .maybeSingle();
+      .order('plan_type', { ascending: false }); // premium > pro > basic
 
-    return sub as BrandSubscription | null;
+    if (!subs || subs.length === 0) return null;
+    
+    // Return the highest tier active subscription
+    return subs[0] as BrandSubscription;
   } catch (error) {
     console.error('Error fetching subscription:', error);
     return null;
