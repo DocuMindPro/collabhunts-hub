@@ -20,6 +20,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Eye, Phone, CheckCircle, XCircle, MapPin, ExternalLink, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
+interface SocialAccount {
+  platform: string;
+  follower_count: number;
+}
+
 interface CreatorData {
   id: string;
   user_id: string;
@@ -42,6 +47,7 @@ interface CreatorData {
   total_followers?: number;
   services_count?: number;
   total_earned_cents?: number;
+  social_accounts?: SocialAccount[];
 }
 
 const ITEMS_PER_PAGE = 20;
@@ -61,6 +67,10 @@ const AdminCreatorsTab = () => {
   const [countryFilter, setCountryFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [genderFilter, setGenderFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [platformFilter, setPlatformFilter] = useState<string>("all");
+  const [minFollowers, setMinFollowers] = useState<string>("");
   
   const { toast } = useToast();
 
@@ -112,10 +122,29 @@ const AdminCreatorsTab = () => {
       filtered = filtered.filter(c => c.gender === genderFilter);
     }
 
+    // Date range filter
+    if (dateFrom) {
+      filtered = filtered.filter(c => new Date(c.created_at) >= new Date(dateFrom));
+    }
+    if (dateTo) {
+      filtered = filtered.filter(c => new Date(c.created_at) <= new Date(dateTo + 'T23:59:59'));
+    }
+
+    // Platform follower filter
+    if (platformFilter !== "all" && minFollowers) {
+      const minCount = parseInt(minFollowers);
+      if (!isNaN(minCount)) {
+        filtered = filtered.filter(c => {
+          const platformAccount = c.social_accounts?.find(s => s.platform.toLowerCase() === platformFilter.toLowerCase());
+          return platformAccount && platformAccount.follower_count >= minCount;
+        });
+      }
+    }
+
     setFilteredCreators(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
-    setSelectedIds(new Set()); // Clear selection when filters change
-  }, [search, statusFilter, phoneFilter, countryFilter, categoryFilter, genderFilter, creators]);
+    setCurrentPage(1);
+    setSelectedIds(new Set());
+  }, [search, statusFilter, phoneFilter, countryFilter, categoryFilter, genderFilter, dateFrom, dateTo, platformFilter, minFollowers, creators]);
 
   const fetchCreators = async () => {
     try {
@@ -138,7 +167,7 @@ const AdminCreatorsTab = () => {
 
       const [profilesRes, socialsRes, servicesRes, bookingsRes] = await Promise.all([
         supabase.from("profiles").select("id, email").in("id", userIds),
-        supabase.from("creator_social_accounts").select("creator_profile_id, follower_count").in("creator_profile_id", creatorIds),
+        supabase.from("creator_social_accounts").select("creator_profile_id, platform, follower_count").in("creator_profile_id", creatorIds),
         supabase.from("creator_services").select("creator_profile_id").in("creator_profile_id", creatorIds),
         supabase.from("bookings").select("creator_profile_id, total_price_cents, status").in("creator_profile_id", creatorIds)
       ]);
@@ -156,7 +185,8 @@ const AdminCreatorsTab = () => {
           email: profile?.email,
           total_followers: socials.reduce((sum, s) => sum + (s.follower_count || 0), 0),
           services_count: services.length,
-          total_earned_cents: completedBookings.reduce((sum, b) => sum + (b.total_price_cents * 0.85), 0)
+          total_earned_cents: completedBookings.reduce((sum, b) => sum + (b.total_price_cents * 0.85), 0),
+          social_accounts: socials.map(s => ({ platform: s.platform, follower_count: s.follower_count || 0 }))
         };
       });
 
@@ -262,20 +292,31 @@ const AdminCreatorsTab = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ["Display Name", "Email", "Phone", "Phone Verified", "Status", "Location", "Gender", "Categories", "Followers", "Earnings ($)", "Joined"];
-    const rows = filteredCreators.map(c => [
-      c.display_name,
-      c.email || "",
-      c.phone_number || "",
-      c.phone_verified ? "Yes" : "No",
-      c.status,
-      [c.location_city, c.location_state, c.location_country].filter(Boolean).join(", "),
-      c.gender || "",
-      (c.categories || []).join("; "),
-      c.total_followers?.toString() || "0",
-      ((c.total_earned_cents || 0) / 100).toFixed(2),
-      new Date(c.created_at).toLocaleDateString()
-    ]);
+    const headers = ["Display Name", "Email", "Phone", "Phone Verified", "Status", "Location", "Gender", "Categories", "Total Followers", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch", "Earnings ($)", "Joined"];
+    const rows = filteredCreators.map(c => {
+      const getFollowers = (platform: string) => {
+        const account = c.social_accounts?.find(s => s.platform.toLowerCase() === platform.toLowerCase());
+        return account?.follower_count?.toString() || "0";
+      };
+      return [
+        c.display_name,
+        c.email || "",
+        c.phone_number || "",
+        c.phone_verified ? "Yes" : "No",
+        c.status,
+        [c.location_city, c.location_state, c.location_country].filter(Boolean).join(", "),
+        c.gender || "",
+        (c.categories || []).join("; "),
+        c.total_followers?.toString() || "0",
+        getFollowers("Instagram"),
+        getFollowers("TikTok"),
+        getFollowers("YouTube"),
+        getFollowers("Twitter"),
+        getFollowers("Twitch"),
+        ((c.total_earned_cents || 0) / 100).toFixed(2),
+        new Date(c.created_at).toLocaleDateString()
+      ];
+    });
 
     const csvContent = [headers, ...rows].map(row => 
       row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")
@@ -321,7 +362,7 @@ const AdminCreatorsTab = () => {
             </Button>
           </div>
           
-          {/* Filters */}
+          {/* Filters Row 1 */}
           <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
             <div className="col-span-2 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -380,6 +421,83 @@ const AdminCreatorsTab = () => {
                 <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Filters Row 2 */}
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+            <div>
+              <Input
+                type="date"
+                placeholder="From date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Input
+                type="date"
+                placeholder="To date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            <Select value={platformFilter} onValueChange={(v) => { setPlatformFilter(v); if (v === "all") setMinFollowers(""); }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Platform" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Platforms</SelectItem>
+                <SelectItem value="instagram">Instagram</SelectItem>
+                <SelectItem value="tiktok">TikTok</SelectItem>
+                <SelectItem value="youtube">YouTube</SelectItem>
+                <SelectItem value="twitter">Twitter</SelectItem>
+                <SelectItem value="twitch">Twitch</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Input
+              type="number"
+              placeholder="Min followers"
+              value={minFollowers}
+              onChange={(e) => setMinFollowers(e.target.value)}
+              disabled={platformFilter === "all"}
+              className="w-full"
+            />
+
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map(category => (
+                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                setSearch("");
+                setStatusFilter("all");
+                setPhoneFilter("all");
+                setCountryFilter("all");
+                setCategoryFilter("all");
+                setGenderFilter("all");
+                setDateFrom("");
+                setDateTo("");
+                setPlatformFilter("all");
+                setMinFollowers("");
+              }}
+              className="w-full"
+            >
+              Clear Filters
+            </Button>
           </div>
 
           {/* Bulk Actions */}
