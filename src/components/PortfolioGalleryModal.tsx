@@ -58,7 +58,7 @@ const PortfolioGalleryModal = ({
           <DialogTitle>{creatorName}'s Portfolio</DialogTitle>
         </DialogHeader>
 
-        <div className="relative bg-black aspect-video flex items-center justify-center">
+        <div className="relative bg-black min-h-[300px] max-h-[70vh] flex items-center justify-center">
           {/* Navigation Buttons */}
           {media.length > 1 && (
             <>
