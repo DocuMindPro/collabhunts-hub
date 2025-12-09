@@ -84,6 +84,8 @@ Deno.serve(async (req) => {
     const usageRightsStart = formData.get('usage_rights_start') as string || null;
     const usageRightsEnd = formData.get('usage_rights_end') as string || null;
     const tags = formData.get('tags') as string || null;
+    const folderId = formData.get('folder_id') as string || null;
+    const thumbnailData = formData.get('thumbnail_data') as string || null;
 
     if (!file) {
       return new Response(JSON.stringify({ error: 'No file provided' }), {
@@ -263,6 +265,8 @@ Deno.serve(async (req) => {
         usage_rights_start: usageRightsStart,
         usage_rights_end: usageRightsEnd,
         tags: tags ? tags.split(',').map(t => t.trim()) : null,
+        folder_id: folderId || null,
+        thumbnail_r2_key: thumbnailData ? `thumbnails/${brandProfile.id}/${timestamp}-thumb.jpg` : null,
       })
       .select()
       .single();
