@@ -8,6 +8,7 @@ const Footer = () => {
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [recentUpdatesCount, setRecentUpdatesCount] = useState(0);
 
   useEffect(() => {
     const checkUserProfiles = async () => {
@@ -30,7 +31,21 @@ const Footer = () => {
       setHasCreatorProfile(!!creatorResult.data);
     };
 
+    const fetchRecentUpdatesCount = async () => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { count } = await supabase
+        .from("platform_changelog")
+        .select("id", { count: "exact", head: true })
+        .eq("is_published", true)
+        .gte("published_at", thirtyDaysAgo.toISOString());
+      
+      setRecentUpdatesCount(count || 0);
+    };
+
     checkUserProfiles();
+    fetchRecentUpdatesCount();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       checkUserProfiles();
@@ -144,6 +159,11 @@ const Footer = () => {
                 <Link to="/whats-new" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />
                   What's New
+                  {recentUpdatesCount > 0 && (
+                    <span className="ml-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full font-medium">
+                      {recentUpdatesCount}
+                    </span>
+                  )}
                 </Link>
               </li>
               <li>

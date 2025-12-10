@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Menu, Shield, LogOut, LayoutDashboard, ChevronDown, ChevronUp, BookOpen,
+  Menu, Shield, LogOut, LayoutDashboard, ChevronDown, ChevronUp, BookOpen, Sparkles,
   BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Megaphone, Wallet, Users, CreditCard, Crown
 } from "lucide-react";
 import Notifications from "@/components/Notifications";
@@ -57,6 +57,7 @@ const Navbar = () => {
     { to: "/campaigns", label: "Campaigns" },
     { to: "/#how-it-works", label: "How It Works" },
     { to: "/pricing", label: "Pricing" },
+    { to: "/whats-new", label: "What's New", icon: Sparkles },
   ];
 
   useEffect(() => {
@@ -134,8 +135,9 @@ const Navbar = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+                className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors flex items-center gap-1"
               >
+                {link.icon && <link.icon className="h-3.5 w-3.5" />}
                 {link.label}
               </Link>
             ))}
