@@ -128,6 +128,86 @@ export type Database = {
           },
         ]
       }
+      booking_disputes: {
+        Row: {
+          admin_decision_reason: string | null
+          admin_notes: string | null
+          booking_id: string
+          created_at: string
+          escalated_to_admin: boolean | null
+          evidence_description: string | null
+          id: string
+          opened_by_role: string
+          opened_by_user_id: string
+          reason: string
+          refund_percentage: number | null
+          reminder_sent_day2: boolean | null
+          reminder_sent_day3: boolean | null
+          resolution_deadline: string | null
+          resolved_at: string | null
+          resolved_by_user_id: string | null
+          response_deadline: string
+          response_submitted_at: string | null
+          response_text: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_decision_reason?: string | null
+          admin_notes?: string | null
+          booking_id: string
+          created_at?: string
+          escalated_to_admin?: boolean | null
+          evidence_description?: string | null
+          id?: string
+          opened_by_role: string
+          opened_by_user_id: string
+          reason: string
+          refund_percentage?: number | null
+          reminder_sent_day2?: boolean | null
+          reminder_sent_day3?: boolean | null
+          resolution_deadline?: string | null
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          response_deadline: string
+          response_submitted_at?: string | null
+          response_text?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_decision_reason?: string | null
+          admin_notes?: string | null
+          booking_id?: string
+          created_at?: string
+          escalated_to_admin?: boolean | null
+          evidence_description?: string | null
+          id?: string
+          opened_by_role?: string
+          opened_by_user_id?: string
+          reason?: string
+          refund_percentage?: number | null
+          reminder_sent_day2?: boolean | null
+          reminder_sent_day3?: boolean | null
+          resolution_deadline?: string | null
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          response_deadline?: string
+          response_submitted_at?: string | null
+          response_text?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_disputes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           booking_date: string | null

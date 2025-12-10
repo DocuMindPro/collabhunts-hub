@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -12,14 +12,93 @@ interface Notification {
   created_at: string;
 }
 
+// Notification sound - simple beep using Web Audio API
+const playNotificationSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+  } catch (error) {
+    console.log('Could not play notification sound:', error);
+  }
+};
+
+// Request browser notification permission
+const requestNotificationPermission = async () => {
+  if (!('Notification' in window)) {
+    return false;
+  }
+  
+  if (Notification.permission === 'granted') {
+    return true;
+  }
+  
+  if (Notification.permission !== 'denied') {
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  }
+  
+  return false;
+};
+
+// Show browser notification
+const showBrowserNotification = (title: string, message: string, link?: string | null) => {
+  if (!('Notification' in window) || Notification.permission !== 'granted') {
+    return;
+  }
+  
+  // Only show if tab is not focused
+  if (document.hasFocus()) {
+    return;
+  }
+  
+  const notification = new Notification(title, {
+    body: message,
+    icon: '/favicon.ico',
+    tag: 'collabhunts-notification',
+  });
+  
+  notification.onclick = () => {
+    window.focus();
+    if (link) {
+      window.location.href = link;
+    }
+    notification.close();
+  };
+  
+  // Auto close after 5 seconds
+  setTimeout(() => notification.close(), 5000);
+};
+
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const hasRequestedPermission = useRef(false);
 
   useEffect(() => {
     fetchNotifications();
-    subscribeToNotifications();
+    const cleanup = subscribeToNotifications();
+    
+    // Request notification permission on first load
+    if (!hasRequestedPermission.current) {
+      hasRequestedPermission.current = true;
+      requestNotificationPermission();
+    }
+    
+    return cleanup;
   }, []);
 
   const fetchNotifications = async () => {
@@ -55,10 +134,24 @@ export const useNotifications = () => {
           schema: 'public',
           table: 'notifications'
         },
-        (payload) => {
+        async (payload) => {
+          // Verify this notification is for the current user
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user || payload.new.user_id !== user.id) return;
+          
           const newNotification = payload.new as Notification;
           setNotifications(prev => [newNotification, ...prev]);
           setUnreadCount(prev => prev + 1);
+          
+          // Play notification sound
+          playNotificationSound();
+          
+          // Show browser notification
+          showBrowserNotification(
+            newNotification.title,
+            newNotification.message,
+            newNotification.link
+          );
           
           // Show toast notification
           toast(newNotification.title, {

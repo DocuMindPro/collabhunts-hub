@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format, formatDistanceToNow, isPast, addDays } from "date-fns";
-import { Check, X, Clock, MessageSquare, CheckCircle, AlertCircle, Upload, RotateCcw, DollarSign } from "lucide-react";
+import { Check, X, Clock, MessageSquare, CheckCircle, AlertCircle, Upload, RotateCcw, DollarSign, AlertTriangle } from "lucide-react";
 import DeliveryUploadDialog from "./DeliveryUploadDialog";
 import BookingTimeline from "@/components/BookingTimeline";
+import DisputeDialog from "@/components/DisputeDialog";
 
 interface Booking {
   id: string;
@@ -44,6 +45,8 @@ const BookingsTab = () => {
   const [creatorProfileId, setCreatorProfileId] = useState<string>("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedBookingForUpload, setSelectedBookingForUpload] = useState<Booking | null>(null);
+  const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
+  const [selectedDisputeBooking, setSelectedDisputeBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     fetchBookings();
