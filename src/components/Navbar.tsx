@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Menu, Shield, LogOut, LayoutDashboard, ChevronDown, ChevronUp,
+  Menu, Shield, LogOut, LayoutDashboard, ChevronDown, ChevronUp, BookOpen,
   BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Megaphone, Wallet, Users, CreditCard, Crown
 } from "lucide-react";
 import Notifications from "@/components/Notifications";
@@ -140,8 +140,15 @@ const Navbar = () => {
               </Link>
             ))}
             
-            {user ? (
+              {user ? (
               <>
+                <Link 
+                  to="/knowledge-base" 
+                  className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors flex items-center gap-1"
+                  title="Help & FAQs"
+                >
+                  <BookOpen className="h-4 w-4" />
+                </Link>
                 <Notifications />
                 {isAdmin && (
                   <Link to="/admin">
@@ -236,6 +243,12 @@ const Navbar = () => {
                   
                   {user ? (
                     <>
+                      <Link to="/knowledge-base" onClick={() => setIsOpen(false)}>
+                        <Button variant="ghost" className="w-full gap-2 justify-start">
+                          <BookOpen className="h-4 w-4" />
+                          Knowledge Base
+                        </Button>
+                      </Link>
                       {isAdmin && (
                         <Link to="/admin" onClick={() => setIsOpen(false)}>
                           <Button variant="outline" className="w-full gap-2">

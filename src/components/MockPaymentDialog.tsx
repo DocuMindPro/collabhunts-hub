@@ -9,8 +9,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CreditCard, Lock, CheckCircle, AlertCircle } from "lucide-react";
 import { confirmMockPayment, type MockCardDetails } from "@/lib/stripe-mock";
+import { Link } from "react-router-dom";
 
 interface MockPaymentDialogProps {
   isOpen: boolean;
@@ -32,6 +34,8 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [autoReleaseAccepted, setAutoReleaseAccepted] = useState(false);
 
   const formatCardNumber = (value: string) => {
     const numbers = value.replace(/\D/g, "");
@@ -64,6 +68,11 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
   const handlePayment = async () => {
     if (!cardNumber || !expiry || !cvv || !cardholderName) {
       setErrorMessage("Please fill in all card details");
+      return;
+    }
+
+    if (!termsAccepted || !autoReleaseAccepted) {
+      setErrorMessage("Please accept all terms and conditions");
       return;
     }
 
@@ -107,6 +116,8 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
     setPaymentStatus("idle");
     setErrorMessage("");
     setProcessing(false);
+    setTermsAccepted(false);
+    setAutoReleaseAccepted(false);
   };
 
   const handleClose = () => {
@@ -225,6 +236,39 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
                 {errorMessage}
               </div>
             )}
+
+            {/* Terms Acceptance */}
+            <div className="space-y-3 p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-start gap-3">
+                <Checkbox 
+                  id="payment-terms" 
+                  checked={termsAccepted} 
+                  onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                  disabled={processing}
+                />
+                <label htmlFor="payment-terms" className="text-xs leading-tight cursor-pointer">
+                  I agree to the{" "}
+                  <Link to="/terms" target="_blank" className="text-primary hover:underline">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link to="/privacy" target="_blank" className="text-primary hover:underline">
+                    Privacy Policy
+                  </Link>
+                </label>
+              </div>
+              <div className="flex items-start gap-3">
+                <Checkbox 
+                  id="auto-release" 
+                  checked={autoReleaseAccepted} 
+                  onCheckedChange={(checked) => setAutoReleaseAccepted(checked === true)}
+                  disabled={processing}
+                />
+                <label htmlFor="auto-release" className="text-xs leading-tight cursor-pointer">
+                  I understand payment will auto-release to the creator after 72 hours if I don't approve or dispute the deliverables
+                </label>
+              </div>
+            </div>
 
             {/* Test Card Info */}
             <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
