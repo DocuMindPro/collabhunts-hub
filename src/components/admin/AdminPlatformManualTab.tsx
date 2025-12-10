@@ -42,7 +42,7 @@ import {
 import { platformManual, searchManual, getAllTags, ManualSection, ManualArticle } from "@/data/platformManual";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import jsPDF from "jspdf";
+// jsPDF is dynamically imported to avoid React bundling conflicts
 
 const iconMap: Record<string, React.ReactNode> = {
   Server: <Server className="h-4 w-4" />,
@@ -272,6 +272,7 @@ const AdminPlatformManualTab = () => {
   const exportToPdf = async () => {
     setExportingPdf(true);
     try {
+      const jsPDF = (await import("jspdf")).default;
       const doc = new jsPDF();
       let yPos = 20;
       const pageHeight = 280;
