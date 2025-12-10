@@ -5,17 +5,44 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper to send notification emails
+async function sendNotificationEmail(type: string, toEmail: string, toName: string, data: Record<string, any>) {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+  
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ type, to_email: toEmail, to_name: toName, data }),
+    });
+    
+    if (!response.ok) {
+      console.error(`Failed to send ${type} email to ${toEmail}:`, await response.text());
+    } else {
+      console.log(`Sent ${type} email to ${toEmail}`);
+    }
+  } catch (error) {
+    console.error(`Error sending ${type} email:`, error);
+  }
+}
+
 interface Dispute {
   id: string;
   booking_id: string;
   opened_by_role: string;
   status: string;
+  reason: string;
   response_deadline: string;
   resolution_deadline: string | null;
   reminder_sent_day2: boolean;
   reminder_sent_day3: boolean;
   escalated_to_admin: boolean;
   bookings: {
+    total_price_cents: number;
     brand_profiles: {
       user_id: string;
       company_name: string;
@@ -43,6 +70,14 @@ interface Booking {
     user_id: string;
     display_name: string;
   };
+}
+
+interface NotificationData {
+  user_id: string;
+  title: string;
+  message: string;
+  type: string;
+  link: string;
 }
 
 Deno.serve(async (req) => {
@@ -112,7 +147,6 @@ Deno.serve(async (req) => {
 
         // 48-hour reminder (brand has 24 hours left)
         if (hoursSinceDelivery >= 48 && hoursSinceDelivery < 72) {
-          // Check if we already sent this reminder (we'll use a simple approach - send once in this window)
           const hoursLeft = Math.round(72 - hoursSinceDelivery);
           
           if (hoursSinceDelivery >= 48 && hoursSinceDelivery < 49) {
@@ -123,6 +157,15 @@ Deno.serve(async (req) => {
               type: 'delivery',
               link: '/brand-dashboard?tab=bookings'
             });
+            
+            // Send email
+            const { data: brandProfile } = await supabase.from('profiles').select('email').eq('id', booking.brand_profiles.user_id).single();
+            if (brandProfile?.email) {
+              await sendNotificationEmail('brand_review_reminder_48h', brandProfile.email, booking.brand_profiles.company_name, {
+                creator_name: booking.creator_profiles.display_name,
+                amount_cents: booking.total_price_cents
+              });
+            }
             console.log(`Sent 48h reminder for booking ${booking.id}`);
           }
         }
