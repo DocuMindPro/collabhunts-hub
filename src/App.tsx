@@ -24,6 +24,7 @@ import CreatorDashboard from "./pages/CreatorDashboard";
 import BrandDashboard from "./pages/BrandDashboard";
 import Admin from "./pages/Admin";
 import BackupHistory from "./pages/BackupHistory";
+import KnowledgeBase from "./pages/KnowledgeBase";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorProtectedRoute from "./components/CreatorProtectedRoute";
@@ -84,6 +85,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <BackupHistory />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/knowledge-base" 
+              element={
+                <ProtectedRoute>
+                  <KnowledgeBase />
                 </ProtectedRoute>
               } 
             />
