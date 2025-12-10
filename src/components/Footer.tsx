@@ -3,12 +3,14 @@ import { Instagram, Twitter, Youtube, Linkedin, BookOpen, Sparkles } from "lucid
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
+import { useToast } from "@/hooks/use-toast";
 
 const Footer = () => {
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [recentUpdatesCount, setRecentUpdatesCount] = useState(0);
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkUserProfiles = async () => {
@@ -54,6 +56,13 @@ const Footer = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const handleSocialClick = (platform: string) => {
+    toast({
+      title: "Coming Soon",
+      description: `Our ${platform} page is coming soon!`,
+    });
+  };
+
   return (
     <footer className="border-t border-border bg-muted/30">
       <div className="container mx-auto px-4 py-12">
@@ -67,18 +76,18 @@ const Footer = () => {
               Connecting brands with creators to create amazing content.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              <button onClick={() => handleSocialClick("Instagram")} className="text-muted-foreground hover:text-primary transition-colors">
                 <Instagram className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              </button>
+              <button onClick={() => handleSocialClick("Twitter")} className="text-muted-foreground hover:text-primary transition-colors">
                 <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              </button>
+              <button onClick={() => handleSocialClick("YouTube")} className="text-muted-foreground hover:text-primary transition-colors">
                 <Youtube className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              </button>
+              <button onClick={() => handleSocialClick("LinkedIn")} className="text-muted-foreground hover:text-primary transition-colors">
                 <Linkedin className="h-5 w-5" />
-              </a>
+              </button>
             </div>
           </div>
 
