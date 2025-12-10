@@ -1130,6 +1130,7 @@ export type Database = {
           created_by: string | null
           description: string
           id: string
+          is_public: boolean
           is_published: boolean
           notification_sent: boolean | null
           notification_sent_at: string | null
@@ -1143,6 +1144,7 @@ export type Database = {
           created_by?: string | null
           description: string
           id?: string
+          is_public?: boolean
           is_published?: boolean
           notification_sent?: boolean | null
           notification_sent_at?: string | null
@@ -1156,6 +1158,7 @@ export type Database = {
           created_by?: string | null
           description?: string
           id?: string
+          is_public?: boolean
           is_published?: boolean
           notification_sent?: boolean | null
           notification_sent_at?: string | null
