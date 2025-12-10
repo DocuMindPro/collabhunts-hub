@@ -1360,6 +1360,15 @@ export type Database = {
         Args: { p_creator_profile_id: string }
         Returns: boolean
       }
+      send_notification_email: {
+        Args: {
+          email_data?: Json
+          email_type: string
+          to_email: string
+          to_name?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "brand" | "creator"
