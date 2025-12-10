@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
@@ -51,6 +51,7 @@ const CreatorSignup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
 
   // Step 1: Basic info
   const [email, setEmail] = useState("");
@@ -132,7 +133,20 @@ const CreatorSignup = () => {
         navigate("/");
       }
     });
-  }, [navigate]);
+    
+    // Check for pre-verified phone from URL params (from phone login flow)
+    const preVerifiedPhone = searchParams.get('phone');
+    const isPhoneVerified = searchParams.get('phoneVerified') === 'true';
+    
+    if (preVerifiedPhone && isPhoneVerified) {
+      setPhoneNumber(preVerifiedPhone);
+      setPhoneVerified(true);
+      toast({
+        title: "Phone already verified",
+        description: "Your phone number has been pre-verified. Complete your profile to continue.",
+      });
+    }
+  }, [navigate, searchParams, toast]);
 
   const progress = (step / 7) * 100;
 
