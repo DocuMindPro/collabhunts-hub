@@ -13,6 +13,7 @@ import AboutUs from "./pages/AboutUs";
 import Contact from "./pages/Contact";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import RefundPolicy from "./pages/RefundPolicy";
 import Brand from "./pages/Brand";
 import Creator from "./pages/Creator";
 import BrandSignup from "./pages/BrandSignup";
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/refund" element={<RefundPolicy />} />
             <Route path="/brand" element={<Brand />} />
             <Route path="/creator" element={<Creator />} />
             <Route path="/brand-signup" element={<BrandSignup />} />
