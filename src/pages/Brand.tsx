@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
-import heroImage from "@/assets/hero-creators-brand.jpg";
+import heroImage from "@/assets/hero-brand-page.jpg";
 
 const Brand = () => {
   const [user, setUser] = useState<any>(null);
@@ -147,9 +147,6 @@ const Brand = () => {
                   </Button>
                 </Link>
               )}
-              <p className="text-sm text-muted-foreground mt-6">
-                Trusted by 250,000+ teams
-              </p>
             </div>
 
             {/* Right: Hero Image */}
