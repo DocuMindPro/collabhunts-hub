@@ -53,16 +53,32 @@ const Navbar = () => {
     { value: "messages", label: "Messages", icon: MessageSquare },
   ];
 
-  const publicNavLinks = [
+  type NavLink = { to: string; label: string; icon?: typeof Sparkles };
+  
+  const baseNavLinks: NavLink[] = [
     { to: "/influencers", label: "Search" },
-    { to: "/campaigns", label: "Campaigns" },
-    { to: "/#how-it-works", label: "How It Works" },
+    { to: "/brand", label: "How It Works" },
     { to: "/pricing", label: "Pricing" },
   ];
 
-  const navLinks = user 
-    ? [...publicNavLinks, { to: "/whats-new", label: "What's New", icon: Sparkles }]
-    : publicNavLinks;
+  // Campaigns link only visible to logged-in creators
+  const getNavLinks = (): NavLink[] => {
+    const links = [...baseNavLinks];
+    
+    // Add Campaigns link only for logged-in creators
+    if (user && hasCreatorProfile) {
+      links.splice(1, 0, { to: "/campaigns", label: "Campaigns" });
+    }
+    
+    // Add What's New for logged-in users
+    if (user) {
+      links.push({ to: "/whats-new", label: "What's New", icon: Sparkles });
+    }
+    
+    return links;
+  };
+
+  const navLinks = getNavLinks();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
