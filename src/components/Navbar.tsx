@@ -53,13 +53,16 @@ const Navbar = () => {
     { value: "messages", label: "Messages", icon: MessageSquare },
   ];
 
-  const navLinks = [
+  const publicNavLinks = [
     { to: "/influencers", label: "Search" },
     { to: "/campaigns", label: "Campaigns" },
     { to: "/#how-it-works", label: "How It Works" },
     { to: "/pricing", label: "Pricing" },
-    { to: "/whats-new", label: "What's New", icon: Sparkles },
   ];
+
+  const navLinks = user 
+    ? [...publicNavLinks, { to: "/whats-new", label: "What's New", icon: Sparkles }]
+    : publicNavLinks;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -169,7 +172,7 @@ const Navbar = () => {
                   }
                 }}
               >
-                {link.icon && <link.icon className="h-3.5 w-3.5" />}
+                {'icon' in link && link.icon && <link.icon className="h-3.5 w-3.5" />}
                 {link.label}
                 {link.to === "/whats-new" && hasNewUpdates && (
                   <span className="ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-primary text-primary-foreground rounded-full animate-pulse">
