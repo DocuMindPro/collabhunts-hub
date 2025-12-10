@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone, X, Gavel } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone, X, Gavel, BookOpen } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AdminBrandSubscriptionsTab from "@/components/brand-dashboard/AdminBrandSubscriptionsTab";
 import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
@@ -26,6 +26,7 @@ import AdminTestingTab from "@/components/admin/AdminTestingTab";
 import AdminCreatorsTab from "@/components/admin/AdminCreatorsTab";
 import AdminBrandsTab from "@/components/admin/AdminBrandsTab";
 import AdminDisputesTab from "@/components/admin/AdminDisputesTab";
+import AdminPlatformManualTab from "@/components/admin/AdminPlatformManualTab";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface Profile {
@@ -817,6 +818,10 @@ const Admin = () => {
                 <Gavel className="h-4 w-4" />
                 <span className="hidden sm:inline">Disputes</span>
               </TabsTrigger>
+              <TabsTrigger value="manual" className="gap-2 shrink-0">
+                <BookOpen className="h-4 w-4" />
+                <span className="hidden sm:inline">Manual</span>
+              </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -1340,6 +1345,11 @@ const Admin = () => {
             {/* Disputes Tab */}
             <TabsContent value="disputes">
               <AdminDisputesTab />
+            </TabsContent>
+
+            {/* Platform Manual Tab */}
+            <TabsContent value="manual">
+              <AdminPlatformManualTab />
             </TabsContent>
           </Tabs>
         </div>
