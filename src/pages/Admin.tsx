@@ -18,13 +18,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone, X } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone, X, Gavel } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AdminBrandSubscriptionsTab from "@/components/brand-dashboard/AdminBrandSubscriptionsTab";
 import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
 import AdminTestingTab from "@/components/admin/AdminTestingTab";
 import AdminCreatorsTab from "@/components/admin/AdminCreatorsTab";
 import AdminBrandsTab from "@/components/admin/AdminBrandsTab";
+import AdminDisputesTab from "@/components/admin/AdminDisputesTab";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface Profile {
@@ -812,6 +813,10 @@ const Admin = () => {
                 <FlaskConical className="h-4 w-4" />
                 <span className="hidden sm:inline">Testing</span>
               </TabsTrigger>
+              <TabsTrigger value="disputes" className="gap-2 shrink-0">
+                <Gavel className="h-4 w-4" />
+                <span className="hidden sm:inline">Disputes</span>
+              </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -1330,6 +1335,11 @@ const Admin = () => {
             {/* Testing Tab */}
             <TabsContent value="testing">
               <AdminTestingTab />
+            </TabsContent>
+
+            {/* Disputes Tab */}
+            <TabsContent value="disputes">
+              <AdminDisputesTab />
             </TabsContent>
           </Tabs>
         </div>

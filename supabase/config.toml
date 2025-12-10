@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.upload-deliverable]
 verify_jwt = false
+
+[functions.check-dispute-deadlines]
+verify_jwt = false
