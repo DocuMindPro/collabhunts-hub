@@ -65,12 +65,16 @@ type EmailType =
   | 'brand_dispute_resolved'
   | 'brand_campaign_approved'
   | 'brand_campaign_rejected'
+  | 'brand_verification_submitted'
+  | 'brand_verification_approved'
+  | 'brand_verification_rejected'
   // Admin emails
   | 'admin_new_creator_pending'
   | 'admin_new_campaign_pending'
   | 'admin_new_dispute'
   | 'admin_dispute_escalated'
   | 'admin_dispute_resolution_reminder'
+  | 'admin_verification_request'
   // Platform updates
   | 'platform_update'
   | 'test_email';
@@ -755,6 +759,88 @@ function getEmailContent(type: EmailType, data: Record<string, any>, toName?: st
           ${data.content ? `<div style="color: #666; line-height: 1.6;">${data.content}</div>` : ''}
           <div style="text-align: center; margin-top: 30px;">
             ${getCtaButton("See What's New", `${baseUrl}/knowledge-base/whats-new`)}
+          </div>
+        `)
+      };
+
+    // ============ VERIFICATION EMAILS ============
+    case 'brand_verification_submitted':
+      return {
+        subject: `📝 Verification Request Received`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">${greeting}</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            We've received your business verification request!
+          </p>
+          <div style="background: #FFF8F0; border-left: 4px solid #FF7A00; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0; color: #2F2F2F;"><strong>⏱️ Review Time:</strong> 1-2 business days</p>
+          </div>
+          <p style="color: #666; line-height: 1.6;">
+            Our team will review your information and verify your business. You'll receive a notification once the review is complete.
+          </p>
+          <div style="text-align: center;">
+            ${getCtaButton('View Status', `${baseUrl}/brand-dashboard?tab=subscription`)}
+          </div>
+        `)
+      };
+
+    case 'brand_verification_approved':
+      return {
+        subject: `✅ Your Business is Now Verified!`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">${greeting}</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            Congratulations! Your business has been verified.
+          </p>
+          <div style="background: #F0FFF4; border-left: 4px solid #22C55E; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0; color: #2F2F2F; font-size: 18px;"><strong>✅ Verified Business Badge Active</strong></p>
+            <p style="margin: 10px 0 0 0; color: #666;">Your verified badge is now displayed on your company name across the platform.</p>
+          </div>
+          <p style="color: #666; line-height: 1.6;">
+            Creators will now see your verified status, helping build trust and credibility for your brand.
+          </p>
+          <div style="text-align: center;">
+            ${getCtaButton('View Your Badge', `${baseUrl}/brand-dashboard?tab=subscription`)}
+          </div>
+        `)
+      };
+
+    case 'brand_verification_rejected':
+      return {
+        subject: `Verification Request Update`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">${greeting}</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            Unfortunately, your business verification request was not approved at this time.
+          </p>
+          ${data.rejection_reason ? `
+          <div style="background: #FEF2F2; border-left: 4px solid #EF4444; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0 0 5px 0; color: #2F2F2F;"><strong>Reason:</strong></p>
+            <p style="margin: 0; color: #666;">${data.rejection_reason}</p>
+          </div>
+          ` : ''}
+          <p style="color: #666; line-height: 1.6;">
+            You can address the issues and reapply for verification from your dashboard.
+          </p>
+          <div style="text-align: center;">
+            ${getCtaButton('Reapply for Verification', `${baseUrl}/brand-dashboard?tab=subscription`)}
+          </div>
+        `)
+      };
+
+    case 'admin_verification_request':
+      return {
+        subject: `🔍 New Business Verification Request`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">New Verification Request</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            A new business verification request has been submitted and needs review.
+          </p>
+          <div style="background: #FFF8F0; border-left: 4px solid #FF7A00; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0; color: #2F2F2F;"><strong>🏢 Company:</strong> ${data.brand_name}</p>
+          </div>
+          <div style="text-align: center;">
+            ${getCtaButton('Review Request', `${baseUrl}/admin?tab=verifications`)}
           </div>
         `)
       };
