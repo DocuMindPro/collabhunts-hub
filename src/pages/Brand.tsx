@@ -154,9 +154,9 @@ const Brand = () => {
       {/* How It Works */}
       <section className="py-20 md:py-32">
         <div className="container mx-auto px-4">
-          <div className="mb-16">
+          <div className="text-center mb-16">
             <Badge className="mb-4 bg-accent/10 text-accent-foreground border-accent/20">
-              Search
+              How It Works
             </Badge>
             <h2 className="text-4xl md:text-5xl font-heading font-bold mb-4">
               Find and Hire Influencers in Seconds
@@ -165,8 +165,8 @@ const Brand = () => {
 
           <div className="grid md:grid-cols-3 gap-8 mb-16">
             {steps.map((step, index) => (
-              <div key={index} className="space-y-4">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full gradient-hero">
+              <div key={index} className="text-center space-y-4">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full gradient-hero mx-auto">
                   <step.icon className="h-7 w-7 text-white" />
                 </div>
                 <h3 className="text-xl font-heading font-semibold">{step.title}</h3>
@@ -176,13 +176,13 @@ const Brand = () => {
           </div>
 
           <div className="bg-muted/50 rounded-2xl p-8 md:p-12">
-            <div className="max-w-3xl">
+            <div className="max-w-3xl mx-auto text-center">
               <p className="text-xl text-muted-foreground mb-6">
                 "CollabHunts made finding the perfect influencers incredibly easy. The platform saved us hours of research and negotiations. Highly recommended!"
               </p>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-gradient-accent" />
-                <div>
+                <div className="text-left">
                   <p className="font-semibold">Sarah Johnson</p>
                   <p className="text-sm text-muted-foreground">Marketing Director, TechCorp</p>
                 </div>
