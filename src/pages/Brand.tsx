@@ -83,8 +83,8 @@ const Brand = () => {
     },
     {
       icon: TrendingUp,
-      title: "Track Results",
-      description: "Monitor campaign performance with real-time analytics and reporting."
+      title: "Fast Delivery",
+      description: "Get high-quality UGC content delivered directly through the platform within days."
     }
   ];
 
@@ -116,7 +116,7 @@ const Brand = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left: Text Content */}
             <div className="text-center lg:text-left">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold mb-6 animate-fade-in">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold mb-6 animate-fade-in text-foreground">
                 The Easy Way to Generate{" "}
                 <span className="bg-gradient-accent bg-clip-text text-transparent">
                   Product Photos
