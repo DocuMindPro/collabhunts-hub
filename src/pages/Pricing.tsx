@@ -173,7 +173,11 @@ const Pricing = () => {
               <p className="text-xl text-muted-foreground mb-8">
                 Interested in our monthly plans? Speak to an expert.
               </p>
-              <Button size="lg" variant="default">
+              <Button 
+                size="lg" 
+                variant="default"
+                onClick={() => window.location.href = 'mailto:care@collabhunts.com?subject=Demo Request&body=Hi, I would like to schedule a demo of CollabHunts.'}
+              >
                 Book Demo
               </Button>
             </div>
