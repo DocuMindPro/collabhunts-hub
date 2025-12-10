@@ -10,10 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, Play, Image as ImageIcon, User, Camera, Phone, Loader2 } from "lucide-react";
 import { z } from "zod";
 import PhoneInput from "@/components/PhoneInput";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
+import { Link } from "react-router-dom";
 
 // Validation schemas
 const emailSchema = z.string().email("Invalid email address").max(255);
@@ -89,6 +91,11 @@ const CreatorSignup = () => {
 
   // Step 6: Portfolio (optional)
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
+
+  // Step 7: Terms acceptance
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [autoReleaseAccepted, setAutoReleaseAccepted] = useState(false);
+  const [metricsAccurate, setMetricsAccurate] = useState(false);
 
   const categories = [
     "Lifestyle", "Fashion", "Beauty", "Travel", "Health & Fitness",
@@ -464,6 +471,15 @@ const CreatorSignup = () => {
   };
 
   const handleFinalSubmit = async () => {
+    if (!termsAccepted || !autoReleaseAccepted || !metricsAccurate) {
+      toast({
+        title: "Agreement Required",
+        description: "Please accept all terms and conditions to continue",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -548,7 +564,9 @@ const CreatorSignup = () => {
           primary_language: primaryLanguage || "English",
           secondary_languages: secondaryLanguages.length > 0 ? secondaryLanguages : null,
           phone_number: phoneNumber,
-          phone_verified: phoneVerified
+          phone_verified: phoneVerified,
+          terms_accepted_at: new Date().toISOString(),
+          terms_version: "1.0"
         })
         .select()
         .single();
@@ -1456,6 +1474,48 @@ const CreatorSignup = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Terms Acceptance */}
+                    <div className="space-y-3 bg-muted/50 rounded-lg p-4">
+                      <h3 className="font-semibold text-sm">Terms & Conditions</h3>
+                      <div className="flex items-start gap-3">
+                        <Checkbox 
+                          id="terms-accepted" 
+                          checked={termsAccepted} 
+                          onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                        />
+                        <label htmlFor="terms-accepted" className="text-sm leading-tight cursor-pointer">
+                          I agree to the{" "}
+                          <Link to="/terms" target="_blank" className="text-primary hover:underline">
+                            Terms of Service
+                          </Link>{" "}
+                          and{" "}
+                          <Link to="/privacy" target="_blank" className="text-primary hover:underline">
+                            Privacy Policy
+                          </Link>
+                        </label>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Checkbox 
+                          id="auto-release-accepted" 
+                          checked={autoReleaseAccepted} 
+                          onCheckedChange={(checked) => setAutoReleaseAccepted(checked === true)}
+                        />
+                        <label htmlFor="auto-release-accepted" className="text-sm leading-tight cursor-pointer">
+                          I understand the 72-hour auto-release payment policy (payment releases to me 72 hours after delivery if the brand doesn't respond)
+                        </label>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Checkbox 
+                          id="metrics-accurate" 
+                          checked={metricsAccurate} 
+                          onCheckedChange={(checked) => setMetricsAccurate(checked === true)}
+                        />
+                        <label htmlFor="metrics-accurate" className="text-sm leading-tight cursor-pointer">
+                          I confirm my social media follower counts and metrics are accurate
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex gap-3">
@@ -1470,7 +1530,7 @@ const CreatorSignup = () => {
                     </Button>
                     <Button
                       onClick={handleFinalSubmit}
-                      disabled={isLoading}
+                      disabled={isLoading || !termsAccepted || !autoReleaseAccepted || !metricsAccurate}
                       className="flex-1 gradient-hero hover:opacity-90"
                     >
                       {isLoading ? "Submitting..." : "Submit Application"}

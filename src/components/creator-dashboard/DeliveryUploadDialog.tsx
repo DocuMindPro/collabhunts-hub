@@ -159,12 +159,13 @@ const DeliveryUploadDialog = ({
         }
       }
 
-      // Update booking status to delivered
+      // Update booking status to delivered and set delivered_at timestamp
       const { error: updateError } = await supabase
         .from("bookings")
         .update({ 
           delivery_status: "delivered",
-          status: "completed"
+          status: "completed",
+          delivered_at: new Date().toISOString()
         })
         .eq("id", bookingId);
 

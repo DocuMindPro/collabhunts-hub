@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Instagram, Twitter, Youtube, Linkedin } from "lucide-react";
+import { Instagram, Twitter, Youtube, Linkedin, BookOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
@@ -7,6 +7,7 @@ import Logo from "@/components/Logo";
 const Footer = () => {
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const checkUserProfiles = async () => {
@@ -14,8 +15,11 @@ const Footer = () => {
       if (!session?.user) {
         setHasBrandProfile(false);
         setHasCreatorProfile(false);
+        setIsLoggedIn(false);
         return;
       }
+
+      setIsLoggedIn(true);
 
       const [brandResult, creatorResult] = await Promise.all([
         supabase.from("brand_profiles").select("id").eq("user_id", session.user.id).maybeSingle(),
@@ -128,6 +132,14 @@ const Footer = () => {
                   Contact
                 </Link>
               </li>
+              {isLoggedIn && (
+                <li>
+                  <Link to="/knowledge-base" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                    <BookOpen className="h-3 w-3" />
+                    Knowledge Base
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link to="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Terms of Service
