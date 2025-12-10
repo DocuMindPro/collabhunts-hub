@@ -32,6 +32,7 @@ const Navbar = () => {
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [creatorMenuOpen, setCreatorMenuOpen] = useState(false);
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
+  const [hasNewUpdates, setHasNewUpdates] = useState(false);
 
   const creatorTabs = [
     { value: "overview", label: "Overview", icon: BarChart3 },
@@ -88,6 +89,32 @@ const Navbar = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Check for new changelog updates
+  useEffect(() => {
+    const checkNewUpdates = async () => {
+      try {
+        const { data } = await supabase
+          .from("platform_changelog")
+          .select("published_at")
+          .eq("is_published", true)
+          .order("published_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (data?.published_at) {
+          const lastVisited = localStorage.getItem("whats_new_last_visited");
+          if (!lastVisited || new Date(data.published_at) > new Date(lastVisited)) {
+            setHasNewUpdates(true);
+          }
+        }
+      } catch (error) {
+        // No published entries or error, don't show badge
+      }
+    };
+
+    checkNewUpdates();
+  }, []);
+
   const checkAdminRole = async (userId: string) => {
     const { data } = await supabase
       .from('user_roles')
@@ -136,9 +163,19 @@ const Navbar = () => {
                 key={link.to}
                 to={link.to}
                 className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors flex items-center gap-1"
+                onClick={() => {
+                  if (link.to === "/whats-new") {
+                    setHasNewUpdates(false);
+                  }
+                }}
               >
                 {link.icon && <link.icon className="h-3.5 w-3.5" />}
                 {link.label}
+                {link.to === "/whats-new" && hasNewUpdates && (
+                  <span className="ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-primary text-primary-foreground rounded-full animate-pulse">
+                    New
+                  </span>
+                )}
               </Link>
             ))}
             

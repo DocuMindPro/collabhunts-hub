@@ -41,6 +41,8 @@ const WhatsNew = () => {
 
   useEffect(() => {
     fetchEntries();
+    // Mark as visited to clear the "New" badge
+    localStorage.setItem("whats_new_last_visited", new Date().toISOString());
   }, []);
 
   const fetchEntries = async () => {
