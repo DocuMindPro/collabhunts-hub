@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Instagram, Twitter, Youtube, Linkedin, BookOpen } from "lucide-react";
+import { Instagram, Twitter, Youtube, Linkedin, BookOpen, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
@@ -140,6 +140,12 @@ const Footer = () => {
                   </Link>
                 </li>
               )}
+              <li>
+                <Link to="/whats-new" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  What's New
+                </Link>
+              </li>
               <li>
                 <Link to="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Terms of Service
