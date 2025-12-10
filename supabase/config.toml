@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.send-notification-email]
 verify_jwt = false
+
+[functions.send-platform-update]
+verify_jwt = false

@@ -70,7 +70,10 @@ type EmailType =
   | 'admin_new_campaign_pending'
   | 'admin_new_dispute'
   | 'admin_dispute_escalated'
-  | 'admin_dispute_resolution_reminder';
+  | 'admin_dispute_resolution_reminder'
+  // Platform updates
+  | 'platform_update'
+  | 'test_email';
 
 interface EmailRequest {
   type: EmailType;
@@ -729,6 +732,51 @@ function getEmailContent(type: EmailType, data: Record<string, any>, toName?: st
           </div>
           <div style="text-align: center;">
             ${getCtaButton('Resolve Dispute', `${baseUrl}/admin?tab=disputes`)}
+          </div>
+        `)
+      };
+
+    case 'platform_update':
+      const categoryBadge = data.category === 'feature' ? '🚀 New Feature' : 
+                           data.category === 'improvement' ? '⚡ Improvement' :
+                           data.category === 'fix' ? '🔧 Bug Fix' : '📢 Announcement';
+      return {
+        subject: `${categoryBadge}: ${data.title}`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">${greeting}</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            We've got exciting news to share with you!
+          </p>
+          <div style="background: linear-gradient(135deg, rgba(255,122,0,0.1) 0%, rgba(255,195,0,0.1) 100%); border-left: 4px solid #FF7A00; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0 0 5px 0; color: #FF7A00; font-weight: 600; font-size: 12px; text-transform: uppercase;">${categoryBadge}</p>
+            <h3 style="margin: 0 0 10px 0; color: #2F2F2F; font-size: 20px;">${data.title}</h3>
+            <p style="margin: 0; color: #666;">${data.description}</p>
+          </div>
+          ${data.content ? `<div style="color: #666; line-height: 1.6;">${data.content}</div>` : ''}
+          <div style="text-align: center; margin-top: 30px;">
+            ${getCtaButton("See What's New", `${baseUrl}/knowledge-base/whats-new`)}
+          </div>
+        `)
+      };
+
+    case 'test_email':
+      return {
+        subject: `✅ CollabHunts Email Test - ${new Date().toLocaleString()}`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">${greeting}</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            This is a test email to verify your email notifications are working correctly.
+          </p>
+          <div style="background: #F0FFF4; border-left: 4px solid #22C55E; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0 0 10px 0; color: #2F2F2F;"><strong>✅ Email Service:</strong> SendGrid</p>
+            <p style="margin: 0 0 10px 0; color: #2F2F2F;"><strong>📧 Recipient:</strong> ${data.recipient_email || 'You'}</p>
+            <p style="margin: 0; color: #2F2F2F;"><strong>⏰ Timestamp:</strong> ${new Date().toISOString()}</p>
+          </div>
+          <p style="color: #666; line-height: 1.6;">
+            If you received this email, your email notifications are configured correctly!
+          </p>
+          <div style="text-align: center;">
+            ${getCtaButton('Go to CollabHunts', baseUrl)}
           </div>
         `)
       };
