@@ -5,8 +5,9 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, ArrowRight } from "lucide-react";
-import { getCategoriesForRole, searchArticles, KBCategory, KBArticle } from "@/data/knowledgeBase";
+import { Badge } from "@/components/ui/badge";
+import { Search, ArrowRight, Sparkles } from "lucide-react";
+import { getCategoriesForRole, searchArticles, getRecentUpdates, KBCategory, KBArticle } from "@/data/knowledgeBase";
 
 const KnowledgeBase = () => {
   const navigate = useNavigate();
@@ -58,6 +59,7 @@ const KnowledgeBase = () => {
   }
 
   const categories = getCategoriesForRole(userRole);
+  const recentUpdates = getRecentUpdates(userRole);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -116,6 +118,37 @@ const KnowledgeBase = () => {
       {/* Categories Grid */}
       <main className="container mx-auto px-4 py-12 flex-1">
         <div className="max-w-5xl mx-auto">
+          {/* What's New Card */}
+          {recentUpdates.length > 0 && (
+            <div className="mb-10">
+              <Link to="/knowledge-base/whats-new">
+                <Card className="p-6 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20 hover:border-primary/40 hover:shadow-lg transition-all duration-200 group cursor-pointer">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Sparkles className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-heading font-semibold text-lg group-hover:text-primary transition-colors">
+                            What's New
+                          </h3>
+                          <Badge variant="default" className="bg-primary/90">
+                            {recentUpdates.length} update{recentUpdates.length !== 1 ? 's' : ''}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Latest platform updates and improvements
+                        </p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </Card>
+              </Link>
+            </div>
+          )}
+
           <h2 className="text-2xl font-heading font-semibold mb-8 text-center">
             Browse by Category
           </h2>

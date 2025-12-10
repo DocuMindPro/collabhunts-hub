@@ -13,7 +13,16 @@ import {
   Wallet,
   Camera,
   TrendingUp,
-  LucideIcon
+  LucideIcon,
+  Sparkles,
+  Zap,
+  Wrench,
+  Megaphone,
+  Rocket,
+  Target,
+  Award,
+  Clock,
+  Heart
 } from "lucide-react";
 
 export type UserRole = 'creator' | 'brand' | 'all';
@@ -35,6 +44,315 @@ export interface KBCategory {
   roles: UserRole[];
   order: number;
   articles: KBArticle[];
+}
+
+// Platform Updates System
+export interface PlatformUpdate {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  publishedAt: Date;
+  roles: UserRole[];
+  category: 'feature' | 'improvement' | 'fix' | 'announcement';
+  icon: LucideIcon;
+}
+
+export const platformUpdates: PlatformUpdate[] = [
+  // Recent updates (add new ones at the top)
+  {
+    id: "knowledge-base-redesign",
+    title: "Knowledge Base Redesign",
+    description: "Our help center has been completely redesigned for easier navigation",
+    content: `
+      <h2>New Knowledge Base Experience</h2>
+      <p>We've completely redesigned our Knowledge Base to help you find answers faster and easier than ever.</p>
+      
+      <h3>What's New</h3>
+      <ul>
+        <li><strong>Role-Based Content:</strong> Creators and brands now see articles relevant to their role only</li>
+        <li><strong>Improved Search:</strong> Find articles instantly with our new search functionality</li>
+        <li><strong>Better Organization:</strong> Articles are now organized into clear categories</li>
+        <li><strong>Modern Design:</strong> Clean, easy-to-read layout optimized for all devices</li>
+      </ul>
+    `,
+    publishedAt: new Date("2024-12-10"),
+    roles: ['all'],
+    category: 'feature',
+    icon: Sparkles
+  },
+  {
+    id: "content-library-folders",
+    title: "Content Library Folder Organization",
+    description: "Organize your UGC content with nested folders and color coding",
+    content: `
+      <h2>Better Content Organization</h2>
+      <p>Pro and Premium brands can now organize their Content Library with nested folders.</p>
+      
+      <h3>New Features</h3>
+      <ul>
+        <li>Create custom folders with color coding</li>
+        <li>Nest folders within folders for better hierarchy</li>
+        <li>Drag and drop files between folders</li>
+        <li>Quick search within folders</li>
+      </ul>
+    `,
+    publishedAt: new Date("2024-12-05"),
+    roles: ['brand'],
+    category: 'feature',
+    icon: FolderOpen
+  },
+  {
+    id: "creator-crm-launch",
+    title: "Creator CRM Now Available",
+    description: "Save favorite creators, add notes, and track collaboration history",
+    content: `
+      <h2>Introducing Creator CRM</h2>
+      <p>Pro and Premium brands can now save their favorite creators and track all collaboration history in one place.</p>
+      
+      <h3>CRM Features</h3>
+      <ul>
+        <li><strong>Save Creators:</strong> Bookmark creators you want to work with</li>
+        <li><strong>Private Notes:</strong> Add notes only you can see</li>
+        <li><strong>Folder Organization:</strong> Group creators into custom folders</li>
+        <li><strong>Collaboration History:</strong> See all past bookings with each creator</li>
+        <li><strong>Quick Re-booking:</strong> Book again with one click</li>
+      </ul>
+    `,
+    publishedAt: new Date("2024-12-01"),
+    roles: ['brand'],
+    category: 'feature',
+    icon: Heart
+  },
+  {
+    id: "phone-verification",
+    title: "Phone Verification for All Users",
+    description: "Enhanced security with SMS verification during signup",
+    content: `
+      <h2>Phone Verification Now Required</h2>
+      <p>To improve platform security and reduce fraud, all new users must now verify their phone number during signup.</p>
+      
+      <h3>How It Works</h3>
+      <ul>
+        <li>Enter your phone number during signup</li>
+        <li>Receive an SMS verification code</li>
+        <li>Enter the code to verify your account</li>
+      </ul>
+      
+      <p>This helps us ensure all users are real people and makes our marketplace safer for everyone.</p>
+    `,
+    publishedAt: new Date("2024-11-25"),
+    roles: ['all'],
+    category: 'improvement',
+    icon: Shield
+  },
+  {
+    id: "campaign-approval-system",
+    title: "Campaign Quality Review",
+    description: "All campaigns are now reviewed before going live",
+    content: `
+      <h2>Campaign Approval Process</h2>
+      <p>To maintain marketplace quality, all brand campaigns are now reviewed by our team before becoming visible to creators.</p>
+      
+      <h3>What This Means</h3>
+      <ul>
+        <li>Campaigns are reviewed within 1-2 business days</li>
+        <li>You'll be notified when your campaign is approved</li>
+        <li>Only approved campaigns appear to creators</li>
+        <li>Higher quality campaigns for creators to apply to</li>
+      </ul>
+    `,
+    publishedAt: new Date("2024-11-20"),
+    roles: ['brand'],
+    category: 'improvement',
+    icon: Award
+  },
+  {
+    id: "real-time-messaging",
+    title: "Real-Time Messaging",
+    description: "Instant messaging between brands and creators",
+    content: `
+      <h2>Chat in Real-Time</h2>
+      <p>Messages between brands and creators are now delivered instantly with our new real-time messaging system.</p>
+      
+      <h3>Features</h3>
+      <ul>
+        <li>Messages appear instantly without refreshing</li>
+        <li>Unread message indicators</li>
+        <li>Notification when new messages arrive</li>
+        <li>Conversation history preserved</li>
+      </ul>
+    `,
+    publishedAt: new Date("2024-11-15"),
+    roles: ['all'],
+    category: 'feature',
+    icon: MessageSquare
+  },
+  {
+    id: "advanced-creator-filters",
+    title: "Advanced Creator Filters",
+    description: "Filter creators by demographics for better targeting",
+    content: `
+      <h2>Find the Perfect Creator</h2>
+      <p>Pro and Premium brands can now use advanced demographic filters to find creators that match their target audience.</p>
+      
+      <h3>New Filters</h3>
+      <ul>
+        <li>Age range</li>
+        <li>Gender</li>
+        <li>Primary language</li>
+        <li>Location (country, state, city)</li>
+        <li>Platform-specific follower counts</li>
+      </ul>
+    `,
+    publishedAt: new Date("2024-11-10"),
+    roles: ['brand'],
+    category: 'feature',
+    icon: Target
+  },
+  {
+    id: "creator-profile-analytics",
+    title: "Profile View Analytics",
+    description: "Creators can now see who's viewing their profile",
+    content: `
+      <h2>Track Your Profile Performance</h2>
+      <p>Creators can now see detailed analytics about profile views in their dashboard.</p>
+      
+      <h3>Analytics Include</h3>
+      <ul>
+        <li>Daily profile view counts</li>
+        <li>View trends over time</li>
+        <li>Peak viewing days</li>
+      </ul>
+      
+      <p>Use this data to optimize your profile and understand when brands are most active.</p>
+    `,
+    publishedAt: new Date("2024-11-05"),
+    roles: ['creator'],
+    category: 'feature',
+    icon: TrendingUp
+  },
+  // Older updates (will appear in changelog)
+  {
+    id: "subscription-tiers-launch",
+    title: "Brand Subscription Tiers",
+    description: "New subscription plans with different features and fees",
+    content: `
+      <h2>Choose Your Plan</h2>
+      <p>We've launched three subscription tiers for brands with different features and marketplace fees.</p>
+      
+      <h3>Available Plans</h3>
+      <ul>
+        <li><strong>Basic (Free):</strong> Browse creators, 20% marketplace fee</li>
+        <li><strong>Pro ($99/mo):</strong> Contact & book creators, CRM, 15% fee</li>
+        <li><strong>Premium ($299/mo):</strong> Unlimited campaigns, 50GB storage, 15% fee</li>
+      </ul>
+    `,
+    publishedAt: new Date("2024-10-15"),
+    roles: ['brand'],
+    category: 'feature',
+    icon: Star
+  },
+  {
+    id: "dispute-system",
+    title: "Dispute Resolution System",
+    description: "Fair and transparent process for resolving issues",
+    content: `
+      <h2>Resolving Issues Fairly</h2>
+      <p>Our dispute resolution system helps brands and creators resolve issues fairly with admin oversight when needed.</p>
+      
+      <h3>How It Works</h3>
+      <ul>
+        <li>Either party can open a dispute</li>
+        <li>3-day response window</li>
+        <li>Negotiation period</li>
+        <li>Admin review if unresolved</li>
+      </ul>
+    `,
+    publishedAt: new Date("2024-10-01"),
+    roles: ['all'],
+    category: 'feature',
+    icon: AlertTriangle
+  },
+  {
+    id: "escrow-payments",
+    title: "Secure Escrow Payments",
+    description: "Payment protection for both brands and creators",
+    content: `
+      <h2>Payment Security</h2>
+      <p>All payments are held securely in escrow until work is delivered and approved, protecting both parties.</p>
+      
+      <h3>How Escrow Works</h3>
+      <ul>
+        <li>Brand pays when booking</li>
+        <li>Payment held securely</li>
+        <li>Creator delivers work</li>
+        <li>Brand approves or 72-hour auto-release</li>
+        <li>Creator receives payment</li>
+      </ul>
+    `,
+    publishedAt: new Date("2024-09-15"),
+    roles: ['all'],
+    category: 'feature',
+    icon: Wallet
+  }
+];
+
+// Helper functions for platform updates
+export function getRecentUpdates(role: 'creator' | 'brand' | null): PlatformUpdate[] {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  return platformUpdates
+    .filter(update => {
+      const isRecent = update.publishedAt >= thirtyDaysAgo;
+      const roleMatch = update.roles.includes('all') || (role && update.roles.includes(role));
+      return isRecent && roleMatch;
+    })
+    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+}
+
+export function getArchivedUpdates(role: 'creator' | 'brand' | null): PlatformUpdate[] {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  return platformUpdates
+    .filter(update => {
+      const isOld = update.publishedAt < thirtyDaysAgo;
+      const roleMatch = update.roles.includes('all') || (role && update.roles.includes(role));
+      return isOld && roleMatch;
+    })
+    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+}
+
+export function getUpdateById(id: string): PlatformUpdate | undefined {
+  return platformUpdates.find(u => u.id === id);
+}
+
+export function formatUpdateDate(date: Date): string {
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - date.getTime());
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
+  
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+export function getCategoryBadge(category: PlatformUpdate['category']): { label: string; color: string } {
+  switch (category) {
+    case 'feature':
+      return { label: 'New Feature', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' };
+    case 'improvement':
+      return { label: 'Improvement', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' };
+    case 'fix':
+      return { label: 'Bug Fix', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' };
+    case 'announcement':
+      return { label: 'Announcement', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' };
+  }
 }
 
 export const knowledgeBaseCategories: KBCategory[] = [
@@ -129,12 +447,237 @@ export const knowledgeBaseCategories: KBCategory[] = [
     ]
   },
   {
+    slug: "grow-your-business",
+    title: "Grow Your Business",
+    description: "Tips and strategies to increase bookings and maximize earnings",
+    icon: Rocket,
+    roles: ['creator'],
+    order: 2,
+    articles: [
+      {
+        slug: "increase-booking-rate",
+        title: "How to Increase Your Booking Rate",
+        content: `
+          <h2>Get More Bookings</h2>
+          <p>Your booking rate depends on multiple factors. Here's how to optimize each one to attract more brands.</p>
+          
+          <h3>1. Perfect Your Profile</h3>
+          <ul>
+            <li><strong>Professional Photos:</strong> Use high-quality cover images that showcase your best work</li>
+            <li><strong>Compelling Bio:</strong> Write a bio that highlights your unique value and personality</li>
+            <li><strong>Complete Information:</strong> Fill out every field - incomplete profiles get fewer views</li>
+            <li><strong>Accurate Metrics:</strong> Keep your follower counts and engagement rates up-to-date</li>
+          </ul>
+          
+          <h3>2. Optimize Your Pricing</h3>
+          <ul>
+            <li><strong>Research Competitors:</strong> See what creators with similar audiences charge</li>
+            <li><strong>Start Competitive:</strong> Lower prices initially can help build reviews</li>
+            <li><strong>Offer Bundles:</strong> Create package deals for multiple pieces of content</li>
+            <li><strong>Adjust Based on Demand:</strong> Raise prices as bookings increase</li>
+          </ul>
+          
+          <h3>3. Respond Quickly</h3>
+          <p>Brands often reach out to multiple creators. The first to respond often gets the booking.</p>
+          <ul>
+            <li>Enable notifications on your phone</li>
+            <li>Respond within 2-4 hours during business hours</li>
+            <li>Even if busy, acknowledge the message and give a timeline</li>
+          </ul>
+          
+          <h3>4. Build Your Reputation</h3>
+          <ul>
+            <li><strong>Deliver Quality:</strong> Exceed expectations on every booking</li>
+            <li><strong>Meet Deadlines:</strong> Late delivery kills repeat business</li>
+            <li><strong>Request Reviews:</strong> Politely ask satisfied brands to leave reviews</li>
+          </ul>
+          
+          <div class="alert alert-info">
+            <strong>Pro Tip:</strong> Creators with 5+ positive reviews get 3x more booking requests than those with no reviews.
+          </div>
+        `,
+        roles: ['creator'],
+        order: 1
+      },
+      {
+        slug: "best-campaign-applications",
+        title: "Best Practices for Campaign Applications",
+        content: `
+          <h2>Stand Out in Campaign Applications</h2>
+          <p>With many creators applying to campaigns, here's how to make your application stand out.</p>
+          
+          <h3>Before You Apply</h3>
+          <ul>
+            <li><strong>Read the Brief Carefully:</strong> Understand exactly what the brand wants</li>
+            <li><strong>Check Brand Fit:</strong> Only apply to campaigns that align with your content style</li>
+            <li><strong>Review Requirements:</strong> Make sure you can meet all requirements</li>
+          </ul>
+          
+          <h3>Writing Your Application</h3>
+          <ol>
+            <li><strong>Personalize It:</strong> Reference the specific campaign and brand by name</li>
+            <li><strong>Show Understanding:</strong> Demonstrate you understand their goals</li>
+            <li><strong>Highlight Relevance:</strong> Explain why YOU are perfect for this campaign</li>
+            <li><strong>Share Ideas:</strong> Briefly pitch 1-2 content concepts</li>
+            <li><strong>Include Metrics:</strong> Mention relevant engagement rates or past results</li>
+          </ol>
+          
+          <h3>Example Application</h3>
+          <div class="example-box">
+            <p>"Hi [Brand]! I'm excited about your [Campaign Name] campaign. As a [niche] creator with [X]k engaged followers, I've worked with similar brands like [examples] with great results.</p>
+            <p>For this campaign, I'm thinking a [specific content idea] would resonate with my audience because [reason]. My average engagement rate is [X]% and I typically see [results].</p>
+            <p>I'd love to bring [unique value] to this collaboration!"</p>
+          </div>
+          
+          <h3>Pricing Your Application</h3>
+          <ul>
+            <li>Stay within the campaign's stated budget range</li>
+            <li>Don't undervalue yourself just to win</li>
+            <li>Consider the work involved vs. your normal rates</li>
+            <li>Be prepared to negotiate slightly</li>
+          </ul>
+          
+          <div class="alert alert-warning">
+            <strong>Avoid:</strong> Generic copy-paste applications. Brands can tell immediately and will skip to the next applicant.
+          </div>
+        `,
+        roles: ['creator'],
+        order: 2
+      },
+      {
+        slug: "building-your-brand",
+        title: "Building Your Personal Brand",
+        content: `
+          <h2>Create a Memorable Personal Brand</h2>
+          <p>Your personal brand is what makes brands remember and choose you over others.</p>
+          
+          <h3>Define Your Niche</h3>
+          <ul>
+            <li><strong>Be Specific:</strong> "Travel creator" is generic. "Budget backpacking in Southeast Asia" is memorable</li>
+            <li><strong>Find Your Angle:</strong> What unique perspective do you bring?</li>
+            <li><strong>Stay Consistent:</strong> Your content should have a recognizable style</li>
+          </ul>
+          
+          <h3>Visual Consistency</h3>
+          <ul>
+            <li>Use consistent colors, fonts, and editing styles</li>
+            <li>Create a cohesive portfolio that tells a story</li>
+            <li>Your cover photos should immediately communicate your vibe</li>
+          </ul>
+          
+          <h3>Voice & Personality</h3>
+          <ul>
+            <li>Let your personality shine in your bio and messages</li>
+            <li>Be authentic - brands value genuine creators</li>
+            <li>Develop catchphrases or formats your audience recognizes</li>
+          </ul>
+          
+          <h3>Portfolio Curation</h3>
+          <ul>
+            <li>Only show your absolute best work</li>
+            <li>Include variety while maintaining your style</li>
+            <li>Update regularly with fresh content</li>
+            <li>Remove outdated or lower-quality pieces</li>
+          </ul>
+        `,
+        roles: ['creator'],
+        order: 3
+      },
+      {
+        slug: "maximizing-earnings",
+        title: "Maximizing Your Earnings",
+        content: `
+          <h2>Earn More From Your Content</h2>
+          <p>Strategic pricing and service structuring can significantly increase your income.</p>
+          
+          <h3>Tiered Service Pricing</h3>
+          <p>Offer multiple price points to capture different budgets:</p>
+          <ul>
+            <li><strong>Basic:</strong> Simple deliverable, fastest turnaround</li>
+            <li><strong>Standard:</strong> More polish, includes minor revisions</li>
+            <li><strong>Premium:</strong> Full production value, multiple revisions, exclusivity</li>
+          </ul>
+          
+          <h3>Upselling Strategies</h3>
+          <ul>
+            <li>Offer add-ons: extra revisions, faster delivery, raw footage</li>
+            <li>Suggest complementary services: "Would you also like Stories?"</li>
+            <li>Create bundles: "3 posts for the price of 2.5"</li>
+          </ul>
+          
+          <h3>Build Repeat Relationships</h3>
+          <ul>
+            <li>Over-deliver on first bookings to earn repeat business</li>
+            <li>Offer "returning client" discounts</li>
+            <li>Stay in touch with past brands</li>
+            <li>Suggest relevant opportunities when you see them</li>
+          </ul>
+          
+          <h3>Increase Your Value</h3>
+          <ul>
+            <li>Grow your audience = higher rates</li>
+            <li>Improve engagement = more valuable to brands</li>
+            <li>Build case studies from successful campaigns</li>
+            <li>Get testimonials and reviews</li>
+          </ul>
+          
+          <div class="alert alert-info">
+            <strong>Rule of Thumb:</strong> Aim to increase your rates by 10-20% every 6 months as you gain experience and reviews.
+          </div>
+        `,
+        roles: ['creator'],
+        order: 4
+      },
+      {
+        slug: "response-time-importance",
+        title: "Why Response Time Matters",
+        content: `
+          <h2>Speed Wins Bookings</h2>
+          <p>Response time is one of the biggest factors in converting inquiries to bookings.</p>
+          
+          <h3>The Numbers</h3>
+          <ul>
+            <li>Creators who respond within 1 hour are <strong>7x more likely</strong> to get booked</li>
+            <li>Response within 4 hours: <strong>4x more likely</strong></li>
+            <li>Response after 24 hours: Brand has likely moved on</li>
+          </ul>
+          
+          <h3>Why Speed Matters</h3>
+          <ul>
+            <li>Brands often contact multiple creators at once</li>
+            <li>First responders get priority consideration</li>
+            <li>Quick responses signal professionalism</li>
+            <li>Momentum matters - excited brands cool off quickly</li>
+          </ul>
+          
+          <h3>How to Respond Faster</h3>
+          <ul>
+            <li><strong>Enable Push Notifications:</strong> Know immediately when you get a message</li>
+            <li><strong>Set Response Windows:</strong> Check messages at set times throughout the day</li>
+            <li><strong>Use Quick Replies:</strong> Have templates ready for common questions</li>
+            <li><strong>Acknowledge First:</strong> Even if you can't fully respond, say "Thanks! I'll review this and get back to you within [time]"</li>
+          </ul>
+          
+          <h3>When You Can't Respond Immediately</h3>
+          <p>If you're unavailable for an extended period:</p>
+          <ul>
+            <li>Update your profile status</li>
+            <li>Extend delivery times temporarily</li>
+            <li>Mention availability in your bio</li>
+          </ul>
+        `,
+        roles: ['creator'],
+        order: 5
+      }
+    ]
+  },
+  {
     slug: "managing-bookings-creators",
     title: "Managing Bookings",
     description: "How to handle booking requests, deliveries, and revisions",
     icon: Briefcase,
     roles: ['creator'],
-    order: 2,
+    order: 3,
     articles: [
       {
         slug: "accepting-bookings",
@@ -207,7 +750,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
     description: "Everything about getting paid for your work",
     icon: Wallet,
     roles: ['creator'],
-    order: 3,
+    order: 4,
     articles: [
       {
         slug: "how-payments-work",
@@ -254,7 +797,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
     description: "How to handle disputes and get help when needed",
     icon: AlertTriangle,
     roles: ['creator'],
-    order: 4,
+    order: 5,
     articles: [
       {
         slug: "dispute-process-creators",
@@ -293,7 +836,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
     description: "What content is allowed and FTC disclosure requirements",
     icon: Camera,
     roles: ['creator'],
-    order: 5,
+    order: 6,
     articles: [
       {
         slug: "allowed-content",
@@ -386,6 +929,46 @@ export const knowledgeBaseCategories: KBCategory[] = [
         `,
         roles: ['brand'],
         order: 2
+      },
+      {
+        slug: "choosing-right-creator",
+        title: "How to Choose the Right Creator",
+        content: `
+          <h2>Beyond Follower Count</h2>
+          <p>The best creator for your campaign isn't always the one with the most followers. Here's what really matters.</p>
+          
+          <h3>Key Factors to Consider</h3>
+          <ul>
+            <li><strong>Engagement Rate:</strong> High engagement indicates an active, trusting audience</li>
+            <li><strong>Content Quality:</strong> Does their style match your brand aesthetic?</li>
+            <li><strong>Audience Demographics:</strong> Are their followers your target customers?</li>
+            <li><strong>Brand Alignment:</strong> Do they authentically use products like yours?</li>
+            <li><strong>Past Performance:</strong> Check reviews from other brands</li>
+          </ul>
+          
+          <h3>Red Flags to Watch</h3>
+          <ul>
+            <li>Unusually low engagement for their follower count (potential fake followers)</li>
+            <li>No portfolio or poor quality samples</li>
+            <li>Pricing that seems too good to be true</li>
+            <li>Slow response times during inquiry</li>
+          </ul>
+          
+          <h3>Micro vs. Macro Influencers</h3>
+          <table>
+            <tr><th>Micro (10k-100k)</th><th>Macro (100k+)</th></tr>
+            <tr><td>Higher engagement rates</td><td>Broader reach</td></tr>
+            <tr><td>More affordable</td><td>More brand awareness</td></tr>
+            <tr><td>Niche audiences</td><td>Diverse audiences</td></tr>
+            <tr><td>More authentic feel</td><td>More polished content</td></tr>
+          </table>
+          
+          <div class="alert alert-info">
+            <strong>Pro Tip:</strong> Consider booking multiple micro-influencers instead of one macro-influencer for better ROI on most campaigns.
+          </div>
+        `,
+        roles: ['brand'],
+        order: 3
       }
     ]
   },
@@ -437,6 +1020,49 @@ export const knowledgeBaseCategories: KBCategory[] = [
         `,
         roles: ['brand'],
         order: 2
+      },
+      {
+        slug: "writing-effective-briefs",
+        title: "Writing Effective Campaign Briefs",
+        content: `
+          <h2>Clear Briefs = Better Results</h2>
+          <p>The quality of content you receive directly depends on the clarity of your brief.</p>
+          
+          <h3>Essential Brief Elements</h3>
+          <ol>
+            <li><strong>Campaign Objective:</strong> What do you want to achieve? (awareness, sales, engagement)</li>
+            <li><strong>Target Audience:</strong> Who should the content appeal to?</li>
+            <li><strong>Key Messages:</strong> What must be communicated?</li>
+            <li><strong>Content Requirements:</strong> Format, length, style preferences</li>
+            <li><strong>Brand Guidelines:</strong> Colors, logos, dos and don'ts</li>
+            <li><strong>Timeline:</strong> Important dates and deadlines</li>
+            <li><strong>Examples:</strong> Links to content you like (and dislike)</li>
+          </ol>
+          
+          <h3>What to Avoid</h3>
+          <ul>
+            <li>Vague instructions like "make it cool"</li>
+            <li>Too many requirements that stifle creativity</li>
+            <li>Unrealistic expectations for the budget</li>
+            <li>Missing information that causes back-and-forth</li>
+          </ul>
+          
+          <h3>Template Brief</h3>
+          <div class="example-box">
+            <p><strong>Campaign:</strong> [Name]<br>
+            <strong>Product:</strong> [What you're promoting]<br>
+            <strong>Objective:</strong> [Awareness/Sales/Engagement]<br>
+            <strong>Target Audience:</strong> [Demographics]<br>
+            <strong>Key Message:</strong> [Main point to convey]<br>
+            <strong>Content Type:</strong> [Post/Story/Video etc.]<br>
+            <strong>Must Include:</strong> [Required elements]<br>
+            <strong>Avoid:</strong> [Things not to do]<br>
+            <strong>Examples:</strong> [Links to reference content]<br>
+            <strong>Deadline:</strong> [Date]</p>
+          </div>
+        `,
+        roles: ['brand'],
+        order: 3
       }
     ]
   },
@@ -612,6 +1238,83 @@ export const knowledgeBaseCategories: KBCategory[] = [
         `,
         roles: ['brand'],
         order: 1
+      },
+      {
+        slug: "maximizing-campaign-results",
+        title: "Maximizing Your Campaign Results",
+        content: `
+          <h2>Get Better ROI</h2>
+          <p>Follow these best practices to maximize the impact of your influencer campaigns.</p>
+          
+          <h3>Before the Campaign</h3>
+          <ul>
+            <li><strong>Set Clear Goals:</strong> Define measurable objectives (reach, engagement, sales)</li>
+            <li><strong>Choose Right Creators:</strong> Prioritize relevance over reach</li>
+            <li><strong>Provide Detailed Briefs:</strong> Clear expectations = better content</li>
+          </ul>
+          
+          <h3>During the Campaign</h3>
+          <ul>
+            <li><strong>Be Available:</strong> Respond quickly to creator questions</li>
+            <li><strong>Be Flexible:</strong> Trust creators to know their audience</li>
+            <li><strong>Track Performance:</strong> Monitor metrics in real-time</li>
+          </ul>
+          
+          <h3>After the Campaign</h3>
+          <ul>
+            <li><strong>Repurpose Content:</strong> Use UGC across your marketing channels</li>
+            <li><strong>Build Relationships:</strong> Re-book high-performers</li>
+            <li><strong>Leave Reviews:</strong> Help great creators get discovered</li>
+            <li><strong>Analyze Results:</strong> Document what worked for future campaigns</li>
+          </ul>
+          
+          <h3>Content Repurposing Ideas</h3>
+          <ul>
+            <li>Website hero images and testimonials</li>
+            <li>Paid ad creative (with proper rights)</li>
+            <li>Email marketing content</li>
+            <li>Social proof on product pages</li>
+            <li>Sales presentation materials</li>
+          </ul>
+        `,
+        roles: ['brand'],
+        order: 2
+      },
+      {
+        slug: "building-creator-relationships",
+        title: "Building Long-Term Creator Relationships",
+        content: `
+          <h2>The Power of Repeat Collaborations</h2>
+          <p>Long-term creator partnerships deliver better results than one-off campaigns.</p>
+          
+          <h3>Benefits of Repeat Collaborations</h3>
+          <ul>
+            <li>Creators understand your brand better over time</li>
+            <li>More authentic content as they genuinely use your product</li>
+            <li>Better rates for ongoing partnerships</li>
+            <li>Consistent brand presence in their content</li>
+          </ul>
+          
+          <h3>Using the Creator CRM</h3>
+          <p>Pro and Premium brands can use the Creator CRM to:</p>
+          <ul>
+            <li><strong>Save Favorites:</strong> Build a roster of go-to creators</li>
+            <li><strong>Add Notes:</strong> Track what worked well with each creator</li>
+            <li><strong>View History:</strong> See all past collaborations</li>
+            <li><strong>Organize:</strong> Create folders by campaign, category, or tier</li>
+          </ul>
+          
+          <h3>Nurturing Relationships</h3>
+          <ul>
+            <li>Pay promptly - approve deliverables quickly</li>
+            <li>Provide constructive feedback, not just criticism</li>
+            <li>Share campaign results with creators</li>
+            <li>Send products they'll genuinely enjoy</li>
+            <li>Consider exclusive partnerships for top performers</li>
+          </ul>
+        `,
+        roles: ['brand'],
+        order: 3
       }
     ]
   },
