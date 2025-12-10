@@ -1131,6 +1131,8 @@ export type Database = {
           description: string
           id: string
           is_published: boolean
+          notification_sent: boolean | null
+          notification_sent_at: string | null
           published_at: string | null
           title: string
           version: string
@@ -1142,6 +1144,8 @@ export type Database = {
           description: string
           id?: string
           is_published?: boolean
+          notification_sent?: boolean | null
+          notification_sent_at?: string | null
           published_at?: string | null
           title: string
           version: string
@@ -1153,6 +1157,8 @@ export type Database = {
           description?: string
           id?: string
           is_published?: boolean
+          notification_sent?: boolean | null
+          notification_sent_at?: string | null
           published_at?: string | null
           title?: string
           version?: string

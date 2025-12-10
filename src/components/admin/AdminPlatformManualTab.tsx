@@ -34,6 +34,7 @@ import {
   Sparkles,
   Plus,
   Calendar,
+  Send,
   Rocket,
   Bug,
   Wrench,
@@ -86,6 +87,8 @@ interface ChangelogEntry {
   is_published: boolean;
   published_at: string | null;
   created_at: string;
+  notification_sent: boolean;
+  notification_sent_at: string | null;
 }
 
 const AdminPlatformManualTab = () => {
@@ -118,6 +121,7 @@ const AdminPlatformManualTab = () => {
     is_published: false,
   });
   const [savingEntry, setSavingEntry] = useState(false);
+  const [sendingNotification, setSendingNotification] = useState<string | null>(null);
   
   const { toast } = useToast();
 
@@ -266,6 +270,49 @@ const AdminPlatformManualTab = () => {
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const notifyUsers = async (entry: ChangelogEntry) => {
+    setSendingNotification(entry.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-platform-update", {
+        body: {
+          title: `v${entry.version} - ${entry.title}`,
+          description: entry.description,
+          content: entry.description,
+          category: entry.category,
+          roles: ["all"],
+        },
+      });
+
+      if (error) throw error;
+
+      // Update the entry to mark notification as sent
+      const { error: updateError } = await supabase
+        .from("platform_changelog")
+        .update({
+          notification_sent: true,
+          notification_sent_at: new Date().toISOString(),
+        })
+        .eq("id", entry.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Notifications Sent",
+        description: `Update sent to ${data?.sentCount || 0} users`,
+      });
+
+      fetchChangelog();
+    } catch (error: any) {
+      toast({
+        title: "Error sending notifications",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSendingNotification(null);
     }
   };
 
@@ -658,6 +705,23 @@ const AdminPlatformManualTab = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
+                        {entry.is_published && !entry.notification_sent && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => notifyUsers(entry)}
+                            disabled={sendingNotification === entry.id}
+                          >
+                            <Send className="h-3 w-3 mr-1" />
+                            {sendingNotification === entry.id ? "Sending..." : "Notify Users"}
+                          </Button>
+                        )}
+                        {entry.notification_sent && (
+                          <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            Notified
+                          </Badge>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
