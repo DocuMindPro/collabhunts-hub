@@ -2,29 +2,42 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
+import { Eye, EyeOff } from "lucide-react";
+
+const GoogleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+    <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+  </svg>
+);
+
+const AppleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+    <path d="M14.94 9.88c-.02-2.04 1.67-3.03 1.74-3.07-.95-1.38-2.43-1.57-2.95-1.59-1.25-.13-2.46.74-3.1.74-.64 0-1.62-.72-2.67-.7-1.37.02-2.65.8-3.35 2.03-1.44 2.49-.37 6.17 1.02 8.19.69.99 1.5 2.1 2.57 2.06 1.03-.04 1.42-.66 2.67-.66 1.24 0 1.6.66 2.68.64 1.11-.02 1.81-.99 2.48-1.99.79-1.14 1.11-2.25 1.13-2.31-.03-.01-2.16-.83-2.18-3.28l-.04-.06zM12.87 3.53c.56-.69.94-1.63.84-2.58-.81.03-1.8.55-2.38 1.23-.52.6-.98 1.57-.86 2.49.91.07 1.84-.46 2.4-1.14z" fill="currentColor"/>
+  </svg>
+);
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/");
       }
     });
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         navigate("/");
@@ -108,126 +121,171 @@ const Login = () => {
     }
   };
 
+  const handleSocialLogin = (provider: string) => {
+    toast({
+      title: "Coming Soon",
+      description: `${provider} login will be available soon. Please use email login for now.`,
+    });
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
 
-      <main className="flex-1 flex items-center justify-center py-12 px-4 gradient-subtle">
+      <main className="flex-1 flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md">
-          <div className="bg-card rounded-2xl border border-border p-8 shadow-card">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-heading font-bold mb-2">
-                {isResetMode ? "Reset Password" : "Welcome Back"}
-              </h1>
-              <p className="text-muted-foreground">
-                {isResetMode
-                  ? "Enter your email to reset your password"
-                  : "Sign in to your CollabHunts account"}
-              </p>
-            </div>
+          {!isResetMode ? (
+            <>
+              <div className="text-center mb-10">
+                <h1 className="text-4xl md:text-5xl font-heading font-bold italic mb-2">
+                  Welcome Back
+                </h1>
+              </div>
 
-            {!isResetMode ? (
-              <>
-                {/* Email/Password Form */}
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
+              {/* Social Login Buttons */}
+              <div className="space-y-3 mb-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-12 text-base font-medium border-border hover:bg-muted/50"
+                  onClick={() => handleSocialLogin("Google")}
+                  disabled={isLoading}
+                >
+                  <GoogleIcon />
+                  <span className="ml-3">Sign in with Google</span>
+                </Button>
 
-                  <div>
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-12 text-base font-medium border-border hover:bg-muted/50"
+                  onClick={() => handleSocialLogin("Apple")}
+                  disabled={isLoading}
+                >
+                  <AppleIcon />
+                  <span className="ml-3">Sign in with Apple</span>
+                </Button>
+              </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full gradient-hero hover:opacity-90" 
-                    size="lg"
+              {/* Divider */}
+              <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 bg-background text-muted-foreground">or</span>
+                </div>
+              </div>
+
+              {/* Email/Password Form */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                     disabled={isLoading}
-                  >
-                    {isLoading ? "Logging in..." : "Login"}
-                  </Button>
-                </form>
+                    className="h-12 text-base border-border"
+                  />
+                </div>
 
-                <div className="text-center mt-4">
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className="h-12 text-base border-border pr-12"
+                  />
                   <button
-                    onClick={() => setIsResetMode(true)}
-                    className="text-sm text-primary hover:underline"
-                    disabled={isLoading}
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
                   >
-                    Forgot password?
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
-              </>
-            ) : (
-              <>
-                {/* Password Reset Form */}
-                <form onSubmit={handleReset} className="space-y-4">
-                  <div>
-                    <Label htmlFor="reset-email">Email</Label>
-                    <Input
-                      id="reset-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full gradient-hero hover:opacity-90" 
-                    size="lg"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Sending..." : "Send Reset Email"}
-                  </Button>
-                </form>
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 text-base font-medium bg-foreground text-background hover:bg-foreground/90" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Logging in..." : "Log in"}
+                </Button>
+              </form>
 
-                <div className="text-center mt-4">
-                  <button
-                    onClick={() => setIsResetMode(false)}
-                    className="text-sm text-primary hover:underline"
+              <div className="text-center mt-6">
+                <button
+                  onClick={() => setIsResetMode(true)}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  disabled={isLoading}
+                >
+                  Forgot password?
+                </button>
+              </div>
+
+              <div className="mt-8 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Don't have an account?{" "}
+                  <Link to="/brand-signup" className="text-foreground hover:underline font-medium">
+                    Sign up
+                  </Link>
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-center mb-10">
+                <h1 className="text-4xl md:text-5xl font-heading font-bold italic mb-2">
+                  Reset Password
+                </h1>
+                <p className="text-muted-foreground mt-4">
+                  Enter your email to receive a reset link
+                </p>
+              </div>
+
+              <form onSubmit={handleReset} className="space-y-4">
+                <div>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                     disabled={isLoading}
-                  >
-                    Want to try again? Login.
-                  </button>
+                    className="h-12 text-base border-border"
+                  />
                 </div>
-              </>
-            )}
 
-            <div className="mt-8 text-center">
-              <p className="text-sm text-muted-foreground">
-                Don't have an account?{" "}
-                <Link to="/brand-signup" className="text-primary hover:underline font-medium">
-                  Join as Brand
-                </Link>
-                {" or "}
-                <Link to="/creator-signup" className="text-primary hover:underline font-medium">
-                  Join as Creator
-                </Link>
-              </p>
-            </div>
-          </div>
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 text-base font-medium bg-foreground text-background hover:bg-foreground/90" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Sending..." : "Send Reset Link"}
+                </Button>
+              </form>
+
+              <div className="text-center mt-6">
+                <button
+                  onClick={() => setIsResetMode(false)}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  disabled={isLoading}
+                >
+                  Back to login
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </main>
     </div>
