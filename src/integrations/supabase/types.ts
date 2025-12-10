@@ -1123,6 +1123,42 @@ export type Database = {
           },
         ]
       }
+      platform_changelog: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          is_published: boolean
+          published_at: string | null
+          title: string
+          version: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          title: string
+          version: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          title?: string
+          version?: string
+        }
+        Relationships: []
+      }
       profile_views: {
         Row: {
           created_at: string | null
