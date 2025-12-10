@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Check, Crown, Zap, Shield, Lock, MessageCircle, Filter, Megaphone } from "lucide-react";
 import { SUBSCRIPTION_PLANS, PlanType, formatPrice, createCheckoutSession, cancelSubscription } from "@/lib/stripe-mock";
 import { checkAndHandleExpiredSubscriptions } from "@/lib/subscription-utils";
+import BrandVerificationSection from "./BrandVerificationSection";
 
 interface Subscription {
   id: string;
@@ -174,6 +175,9 @@ const BrandSubscriptionTab = () => {
 
   return (
     <div className="space-y-6">
+      {/* Verification Section */}
+      <BrandVerificationSection planType={currentPlan} />
+
       {subscription && (
         <Card>
           <CardHeader>

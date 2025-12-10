@@ -300,6 +300,7 @@ export type Database = {
           created_at: string | null
           id: string
           industry: string | null
+          is_verified: boolean | null
           logo_url: string | null
           marketing_intent: string | null
           monthly_budget_range: string | null
@@ -312,6 +313,12 @@ export type Database = {
           terms_version: string | null
           updated_at: string | null
           user_id: string
+          verification_completed_at: string | null
+          verification_notes: string | null
+          verification_rejection_reason: string | null
+          verification_status: string | null
+          verification_submitted_at: string | null
+          verified_by_user_id: string | null
           website_url: string | null
         }
         Insert: {
@@ -320,6 +327,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           industry?: string | null
+          is_verified?: boolean | null
           logo_url?: string | null
           marketing_intent?: string | null
           monthly_budget_range?: string | null
@@ -332,6 +340,12 @@ export type Database = {
           terms_version?: string | null
           updated_at?: string | null
           user_id: string
+          verification_completed_at?: string | null
+          verification_notes?: string | null
+          verification_rejection_reason?: string | null
+          verification_status?: string | null
+          verification_submitted_at?: string | null
+          verified_by_user_id?: string | null
           website_url?: string | null
         }
         Update: {
@@ -340,6 +354,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           industry?: string | null
+          is_verified?: boolean | null
           logo_url?: string | null
           marketing_intent?: string | null
           monthly_budget_range?: string | null
@@ -352,6 +367,12 @@ export type Database = {
           terms_version?: string | null
           updated_at?: string | null
           user_id?: string
+          verification_completed_at?: string | null
+          verification_notes?: string | null
+          verification_rejection_reason?: string | null
+          verification_status?: string | null
+          verification_submitted_at?: string | null
+          verified_by_user_id?: string | null
           website_url?: string | null
         }
         Relationships: []

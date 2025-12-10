@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone, X, Gavel, BookOpen } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone, X, Gavel, BookOpen, BadgeCheck } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AdminBrandSubscriptionsTab from "@/components/brand-dashboard/AdminBrandSubscriptionsTab";
 import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
@@ -27,6 +27,7 @@ import AdminCreatorsTab from "@/components/admin/AdminCreatorsTab";
 import AdminBrandsTab from "@/components/admin/AdminBrandsTab";
 import AdminDisputesTab from "@/components/admin/AdminDisputesTab";
 import AdminPlatformManualTab from "@/components/admin/AdminPlatformManualTab";
+import AdminVerificationsTab from "@/components/admin/AdminVerificationsTab";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface Profile {
@@ -822,6 +823,10 @@ const Admin = () => {
                 <BookOpen className="h-4 w-4" />
                 <span className="hidden sm:inline">Manual</span>
               </TabsTrigger>
+              <TabsTrigger value="verifications" className="gap-2 shrink-0">
+                <BadgeCheck className="h-4 w-4" />
+                <span className="hidden sm:inline">Verifications</span>
+              </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -1350,6 +1355,11 @@ const Admin = () => {
             {/* Platform Manual Tab */}
             <TabsContent value="manual">
               <AdminPlatformManualTab />
+            </TabsContent>
+
+            {/* Verifications Tab */}
+            <TabsContent value="verifications">
+              <AdminVerificationsTab />
             </TabsContent>
           </Tabs>
         </div>
