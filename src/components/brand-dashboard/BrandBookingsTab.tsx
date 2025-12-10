@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Clock, Star, Upload } from "lucide-react";
+import { Clock, Star, Upload, MessageSquare, CheckCircle, Loader2, PartyPopper } from "lucide-react";
 import { ReviewDialog } from "@/components/ReviewDialog";
 
 interface Booking {
@@ -18,6 +18,7 @@ interface Booking {
   booking_date: string | null;
   total_price_cents: number;
   created_at: string;
+  creator_profile_id: string;
   creator_profiles: {
     display_name: string;
     id: string;
@@ -107,6 +108,10 @@ const BrandBookingsTab = () => {
     }
   };
 
+  const handleMessageCreator = (creatorProfileId: string) => {
+    navigate(`/brand-dashboard?tab=messages`);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending": return "bg-yellow-500";
@@ -132,12 +137,12 @@ const BrandBookingsTab = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-heading font-bold">My Bookings</h2>
           <p className="text-muted-foreground">Track your collaboration requests</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {["all", "pending", "accepted", "completed"].map((status) => (
             <Button
               key={status}
@@ -177,10 +182,41 @@ const BrandBookingsTab = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Status guidance messages */}
+                {booking.status === "pending" && (
+                  <div className="flex items-start gap-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                    <Loader2 className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0 animate-spin" />
+                    <div>
+                      <p className="font-medium text-yellow-600 dark:text-yellow-400">Waiting for creator</p>
+                      <p className="text-sm text-muted-foreground">The creator will review your request and respond soon.</p>
+                    </div>
+                  </div>
+                )}
+
+                {booking.status === "accepted" && (
+                  <div className="flex items-start gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                    <CheckCircle className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-blue-600 dark:text-blue-400">Creator accepted!</p>
+                      <p className="text-sm text-muted-foreground">They're working on your deliverables. You can message them for updates.</p>
+                    </div>
+                  </div>
+                )}
+
+                {booking.status === "completed" && (
+                  <div className="flex items-start gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <PartyPopper className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-green-600 dark:text-green-400">Deliverables ready!</p>
+                      <p className="text-sm text-muted-foreground">The creator has completed your booking. Upload content to your library and leave a review!</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Amount</p>
-                    <p className="font-semibold">${(booking.total_price_cents / 100).toFixed(2)}</p>
+                    <p className="font-semibold text-lg">${(booking.total_price_cents / 100).toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Requested</p>
@@ -197,23 +233,36 @@ const BrandBookingsTab = () => {
                   </div>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
-                    className="flex-1 gap-2"
+                    className="flex-1 min-w-[120px] gap-2"
                     onClick={() => window.location.href = `/creator/${booking.creator_profiles.id}`}
                   >
                     View Profile
                   </Button>
+                  
+                  {(booking.status === "accepted" || booking.status === "completed") && (
+                    <Button
+                      variant="outline"
+                      onClick={() => handleMessageCreator(booking.creator_profile_id)}
+                      className="flex-1 min-w-[120px] gap-2"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      Message
+                    </Button>
+                  )}
+
                   {booking.status === "pending" && (
                     <Button
                       variant="outline"
                       onClick={() => cancelBooking(booking.id)}
-                      className="flex-1"
+                      className="flex-1 min-w-[120px]"
                     >
                       Cancel Request
                     </Button>
                   )}
+                  
                   {booking.status === "completed" && booking.payment_status === "paid" && (
                     <>
                       <Button
@@ -222,7 +271,7 @@ const BrandBookingsTab = () => {
                           setCompletedBooking(booking);
                           setUploadPromptOpen(true);
                         }}
-                        className="flex-1 gap-2"
+                        className="flex-1 min-w-[120px] gap-2"
                       >
                         <Upload className="h-4 w-4" />
                         Upload Content
@@ -233,7 +282,7 @@ const BrandBookingsTab = () => {
                           setSelectedBooking(booking);
                           setReviewDialogOpen(true);
                         }}
-                        className="flex-1 gap-2"
+                        className="flex-1 min-w-[120px] gap-2"
                       >
                         <Star className="h-4 w-4" />
                         {booking.reviews && booking.reviews.length > 0 ? "Edit Review" : "Leave Review"}
