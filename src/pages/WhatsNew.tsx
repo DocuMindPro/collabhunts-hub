@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -35,15 +35,26 @@ interface ChangelogEntry {
 
 const WhatsNew = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isKnowledgeBasePath = location.pathname.includes("/knowledge-base");
   const [entries, setEntries] = useState<ChangelogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    fetchEntries();
-    // Mark as visited to clear the "New" badge
-    localStorage.setItem("whats_new_last_visited", new Date().toISOString());
-  }, []);
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/login");
+        return;
+      }
+      setIsAuthenticated(true);
+      fetchEntries();
+      localStorage.setItem("whats_new_last_visited", new Date().toISOString());
+    };
+    
+    checkAuth();
+  }, [navigate]);
 
   const fetchEntries = async () => {
     try {
@@ -51,6 +62,7 @@ const WhatsNew = () => {
         .from("platform_changelog")
         .select("id, version, title, description, category, published_at")
         .eq("is_published", true)
+        .eq("is_public", true)
         .order("published_at", { ascending: false });
 
       if (error) throw error;
@@ -61,6 +73,14 @@ const WhatsNew = () => {
       setLoading(false);
     }
   };
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Skeleton className="h-12 w-48" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

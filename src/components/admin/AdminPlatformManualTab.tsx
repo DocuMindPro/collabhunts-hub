@@ -85,6 +85,7 @@ interface ChangelogEntry {
   description: string;
   category: string;
   is_published: boolean;
+  is_public: boolean;
   published_at: string | null;
   created_at: string;
   notification_sent: boolean;
@@ -119,6 +120,7 @@ const AdminPlatformManualTab = () => {
     description: "",
     category: "feature",
     is_published: false,
+    is_public: false,
   });
   const [savingEntry, setSavingEntry] = useState(false);
   const [sendingNotification, setSendingNotification] = useState<string | null>(null);
@@ -191,6 +193,7 @@ const AdminPlatformManualTab = () => {
         description: newEntry.description,
         category: newEntry.category,
         is_published: newEntry.is_published,
+        is_public: newEntry.is_public,
         published_at: newEntry.is_published ? new Date().toISOString() : null,
         created_by: userData.user?.id,
       });
@@ -208,6 +211,7 @@ const AdminPlatformManualTab = () => {
         description: "",
         category: "feature",
         is_published: false,
+        is_public: false,
       });
       setShowAddDialog(false);
       fetchChangelog();
@@ -645,17 +649,28 @@ const AdminPlatformManualTab = () => {
                       onChange={(e) => setNewEntry({ ...newEntry, description: e.target.value })}
                     />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={newEntry.is_published}
-                        onCheckedChange={(checked) => setNewEntry({ ...newEntry, is_published: checked })}
-                      />
-                      <label className="text-sm">Publish immediately</label>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={newEntry.is_published}
+                          onCheckedChange={(checked) => setNewEntry({ ...newEntry, is_published: checked })}
+                        />
+                        <label className="text-sm">Publish immediately</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={newEntry.is_public}
+                          onCheckedChange={(checked) => setNewEntry({ ...newEntry, is_public: checked })}
+                        />
+                        <label className="text-sm">Public (visible to users)</label>
+                      </div>
                     </div>
-                    <Button onClick={handleAddEntry} disabled={savingEntry}>
-                      {savingEntry ? "Saving..." : "Save Entry"}
-                    </Button>
+                    <div className="flex justify-end">
+                      <Button onClick={handleAddEntry} disabled={savingEntry}>
+                        {savingEntry ? "Saving..." : "Save Entry"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </DialogContent>
@@ -688,6 +703,11 @@ const AdminPlatformManualTab = () => {
                             v{entry.version} - {entry.title}
                             {!entry.is_published && (
                               <Badge variant="outline">Draft</Badge>
+                            )}
+                            {entry.is_public ? (
+                              <Badge variant="default" className="bg-green-500/20 text-green-600 border-green-500/30">Public</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-muted-foreground">Admin Only</Badge>
                             )}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-2 mt-1">
