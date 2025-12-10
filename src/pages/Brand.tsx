@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import heroImage from "@/assets/hero-creators-brand.jpg";
 
 const Brand = () => {
   const [user, setUser] = useState<any>(null);
@@ -110,43 +111,67 @@ const Brand = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative gradient-subtle py-20 md:py-32">
+      <section className="relative gradient-subtle py-16 md:py-24 lg:py-32">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold mb-6 animate-fade-in">
-              The Easy Way to Generate{" "}
-              <span className="bg-gradient-accent bg-clip-text text-transparent">
-                Product Photos
-              </span>
-            </h1>
-            <p className="text-xl text-muted-foreground mb-8">
-              Search influencers, post campaigns, track analytics, and get unique content for your brand in seconds
-            </p>
-            {hasBrandProfile ? (
-              <Link to="/brand-dashboard">
-                <Button size="lg" className="gradient-hero hover:opacity-90 text-lg px-8 py-6">
-                  Go to Dashboard
-                </Button>
-              </Link>
-            ) : user && hasCreatorProfile ? (
-              <div className="space-y-3">
-                <p className="text-muted-foreground">
-                  You're logged in as a creator. To join as a brand, please create a new account with a different email.
-                </p>
-                <Button size="lg" variant="outline" onClick={() => supabase.auth.signOut()}>
-                  Sign Out to Create Brand Account
-                </Button>
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left: Text Content */}
+            <div className="text-center lg:text-left">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold mb-6 animate-fade-in">
+                The Easy Way to Generate{" "}
+                <span className="bg-gradient-accent bg-clip-text text-transparent">
+                  Product Photos
+                </span>
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0">
+                Search influencers, post campaigns, track analytics, and get unique content for your brand in seconds
+              </p>
+              {hasBrandProfile ? (
+                <Link to="/brand-dashboard">
+                  <Button size="lg" className="gradient-hero hover:opacity-90 text-lg px-8 py-6">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              ) : user && hasCreatorProfile ? (
+                <div className="space-y-3">
+                  <p className="text-muted-foreground">
+                    You're logged in as a creator. To join as a brand, please create a new account with a different email.
+                  </p>
+                  <Button size="lg" variant="outline" onClick={() => supabase.auth.signOut()}>
+                    Sign Out to Create Brand Account
+                  </Button>
+                </div>
+              ) : (
+                <Link to="/brand-signup">
+                  <Button size="lg" className="gradient-hero hover:opacity-90 text-lg px-8 py-6">
+                    Join for Free
+                  </Button>
+                </Link>
+              )}
+              <p className="text-sm text-muted-foreground mt-6">
+                Trusted by 250,000+ teams
+              </p>
+            </div>
+
+            {/* Right: Hero Image */}
+            <div className="relative animate-fade-in hidden lg:block">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                <img 
+                  src={heroImage} 
+                  alt="Brands collaborating with influencers" 
+                  className="w-full h-auto object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent" />
               </div>
-            ) : (
-              <Link to="/brand-signup">
-                <Button size="lg" className="gradient-hero hover:opacity-90 text-lg px-8 py-6">
-                  Join for Free
-                </Button>
-              </Link>
-            )}
-            <p className="text-sm text-muted-foreground mt-6">
-              Trusted by 250,000+ teams
-            </p>
+              {/* Floating stats card */}
+              <div className="absolute -bottom-6 -left-6 bg-card rounded-xl p-4 shadow-lg border border-border">
+                <p className="text-2xl font-bold text-primary">10K+</p>
+                <p className="text-sm text-muted-foreground">Active Creators</p>
+              </div>
+              <div className="absolute -top-4 -right-4 bg-card rounded-xl p-4 shadow-lg border border-border">
+                <p className="text-2xl font-bold text-accent">98%</p>
+                <p className="text-sm text-muted-foreground">Satisfaction</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
