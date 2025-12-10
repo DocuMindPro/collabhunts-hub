@@ -1,34 +1,39 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Helper to send email via Resend API
+// Helper to send email via SendGrid API
 async function sendEmail(to: string, subject: string, html: string) {
-  const response = await fetch("https://api.resend.com/emails", {
+  console.log(`Sending email to ${to} with subject: ${subject}`);
+  
+  const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${RESEND_API_KEY}`,
+      "Authorization": `Bearer ${SENDGRID_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "CollabHunts <notifications@collabhunts.com>",
-      to: [to],
+      personalizations: [{ to: [{ email: to }] }],
+      from: { email: "notifications@collabhunts.com", name: "CollabHunts" },
       subject: subject,
-      html: html,
+      content: [{ type: "text/html", value: html }],
     }),
   });
 
   if (!response.ok) {
     const errorData = await response.text();
-    throw new Error(`Resend API error: ${errorData}`);
+    console.error(`SendGrid API error: ${errorData}`);
+    throw new Error(`SendGrid API error: ${errorData}`);
   }
 
-  return response.json();
+  // SendGrid returns 202 with empty body on success
+  console.log(`Email sent successfully to ${to}`);
+  return { success: true };
 }
 
 // Email types enum
@@ -762,7 +767,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Email sent successfully:`, emailResponse);
 
-    return new Response(JSON.stringify({ success: true, id: emailResponse.id }), {
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
