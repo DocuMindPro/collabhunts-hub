@@ -7,13 +7,20 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Clock, Star, Upload, MessageSquare, CheckCircle, Loader2, PartyPopper } from "lucide-react";
+import { Clock, Star, Upload, MessageSquare, CheckCircle, Loader2, PartyPopper, Package, DollarSign, Archive } from "lucide-react";
 import { ReviewDialog } from "@/components/ReviewDialog";
+import DeliveryReviewDialog from "./DeliveryReviewDialog";
+import BookingTimeline from "@/components/BookingTimeline";
 
 interface Booking {
   id: string;
   status: string;
   payment_status: string;
+  delivery_status: string | null;
+  delivery_deadline: string | null;
+  revision_count: number | null;
+  revision_notes: string | null;
+  confirmed_at: string | null;
   message: string | null;
   booking_date: string | null;
   total_price_cents: number;
@@ -43,6 +50,8 @@ const BrandBookingsTab = () => {
   const [brandProfileId, setBrandProfileId] = useState<string>("");
   const [uploadPromptOpen, setUploadPromptOpen] = useState(false);
   const [completedBooking, setCompletedBooking] = useState<Booking | null>(null);
+  const [reviewDeliveryDialogOpen, setReviewDeliveryDialogOpen] = useState(false);
+  const [selectedDeliveryBooking, setSelectedDeliveryBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     fetchBookings();
@@ -75,7 +84,6 @@ const BrandBookingsTab = () => {
 
       if (error) throw error;
       
-      // Transform the data to ensure reviews is always an array
       const bookingsWithReviews = (data || []).map(booking => ({
         ...booking,
         reviews: booking.reviews ? [booking.reviews].flat() : []
@@ -112,6 +120,11 @@ const BrandBookingsTab = () => {
     navigate(`/brand-dashboard?tab=messages`);
   };
 
+  const handleReviewDelivery = (booking: Booking) => {
+    setSelectedDeliveryBooking(booking);
+    setReviewDeliveryDialogOpen(true);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending": return "bg-yellow-500";
@@ -120,6 +133,28 @@ const BrandBookingsTab = () => {
       case "declined": return "bg-red-500";
       case "cancelled": return "bg-gray-500";
       default: return "bg-gray-500";
+    }
+  };
+
+  const getDeliveryStatusColor = (status: string | null) => {
+    switch (status) {
+      case "pending": return "bg-gray-500";
+      case "in_progress": return "bg-blue-500";
+      case "delivered": return "bg-yellow-500";
+      case "revision_requested": return "bg-orange-500";
+      case "confirmed": return "bg-green-500";
+      default: return "bg-gray-500";
+    }
+  };
+
+  const getDeliveryStatusLabel = (status: string | null) => {
+    switch (status) {
+      case "pending": return "Not Started";
+      case "in_progress": return "In Progress";
+      case "delivered": return "Ready for Review";
+      case "revision_requested": return "Revision Requested";
+      case "confirmed": return "Approved";
+      default: return status || "Pending";
     }
   };
 
@@ -176,9 +211,16 @@ const BrandBookingsTab = () => {
                       {booking.creator_services?.service_type.replace(/_/g, " ") || "Service removed"}
                     </CardDescription>
                   </div>
-                  <Badge className={`${getStatusColor(booking.status)} text-white capitalize`}>
-                    {booking.status}
-                  </Badge>
+                  <div className="flex flex-wrap gap-2 justify-end">
+                    <Badge className={`${getStatusColor(booking.status)} text-white capitalize`}>
+                      {booking.status}
+                    </Badge>
+                    {booking.status === "accepted" && booking.delivery_status && (
+                      <Badge className={`${getDeliveryStatusColor(booking.delivery_status)} text-white`}>
+                        {getDeliveryStatusLabel(booking.delivery_status)}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -193,22 +235,54 @@ const BrandBookingsTab = () => {
                   </div>
                 )}
 
-                {booking.status === "accepted" && (
+                {booking.status === "accepted" && booking.delivery_status === "in_progress" && (
                   <div className="flex items-start gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <Package className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-blue-600 dark:text-blue-400">Creator accepted!</p>
-                      <p className="text-sm text-muted-foreground">They're working on your deliverables. You can message them for updates.</p>
+                      <p className="font-medium text-blue-600 dark:text-blue-400">Creator is working on it!</p>
+                      <p className="text-sm text-muted-foreground">
+                        Your payment of ${(booking.total_price_cents / 100).toFixed(2)} is held securely. 
+                        It will be released when you approve the delivery.
+                      </p>
                     </div>
                   </div>
                 )}
 
-                {booking.status === "completed" && (
+                {booking.delivery_status === "delivered" && (
                   <div className="flex items-start gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                    <PartyPopper className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <Archive className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-green-600 dark:text-green-400">Deliverables ready!</p>
-                      <p className="text-sm text-muted-foreground">The creator has completed your booking. Upload content to your library and leave a review!</p>
+                      <p className="font-medium text-green-600 dark:text-green-400">Deliverables Ready!</p>
+                      <p className="text-sm text-muted-foreground">
+                        Review the work and approve to release payment, or request revisions (up to 2).
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {booking.delivery_status === "revision_requested" && (
+                  <div className="flex items-start gap-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                    <Clock className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-orange-600 dark:text-orange-400">
+                        Revision #{booking.revision_count || 1} in Progress
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        The creator is working on your requested changes.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {booking.delivery_status === "confirmed" && (
+                  <div className="flex items-start gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <DollarSign className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-green-600 dark:text-green-400">Completed & Paid!</p>
+                      <p className="text-sm text-muted-foreground">
+                        Payment of ${(booking.total_price_cents / 100).toFixed(2)} released to creator.
+                        {booking.reviews && booking.reviews.length === 0 && " Don't forget to leave a review!"}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -230,6 +304,21 @@ const BrandBookingsTab = () => {
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Your message:</p>
                     <p className="text-sm bg-muted p-3 rounded-lg">{booking.message}</p>
+                  </div>
+                )}
+
+                {/* Timeline for accepted bookings */}
+                {booking.status !== "pending" && booking.status !== "declined" && booking.status !== "cancelled" && (
+                  <div className="pt-2 border-t">
+                    <p className="text-sm font-medium mb-3">Progress</p>
+                    <BookingTimeline
+                      status={booking.status}
+                      deliveryStatus={booking.delivery_status || "pending"}
+                      paymentStatus={booking.payment_status}
+                      createdAt={booking.created_at}
+                      confirmedAt={booking.confirmed_at}
+                      deliveryDeadline={booking.delivery_deadline}
+                    />
                   </div>
                 )}
 
@@ -262,8 +351,19 @@ const BrandBookingsTab = () => {
                       Cancel Request
                     </Button>
                   )}
+
+                  {/* Review Deliverables button */}
+                  {booking.delivery_status === "delivered" && (
+                    <Button
+                      onClick={() => handleReviewDelivery(booking)}
+                      className="flex-1 min-w-[120px] gap-2"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      Review Deliverables
+                    </Button>
+                  )}
                   
-                  {booking.status === "completed" && booking.payment_status === "paid" && (
+                  {booking.delivery_status === "confirmed" && (
                     <>
                       <Button
                         variant="outline"
@@ -274,7 +374,7 @@ const BrandBookingsTab = () => {
                         className="flex-1 min-w-[120px] gap-2"
                       >
                         <Upload className="h-4 w-4" />
-                        Upload Content
+                        Save to Library
                       </Button>
                       <Button
                         variant={booking.reviews && booking.reviews.length > 0 ? "outline" : "default"}
@@ -314,13 +414,33 @@ const BrandBookingsTab = () => {
         />
       )}
 
-      {/* Upload Deliverables Prompt Dialog */}
+      {/* Delivery Review Dialog */}
+      {selectedDeliveryBooking && (
+        <DeliveryReviewDialog
+          open={reviewDeliveryDialogOpen}
+          onOpenChange={(open) => {
+            setReviewDeliveryDialogOpen(open);
+            if (!open) {
+              setSelectedDeliveryBooking(null);
+              fetchBookings();
+            }
+          }}
+          bookingId={selectedDeliveryBooking.id}
+          creatorName={selectedDeliveryBooking.creator_profiles.display_name}
+          creatorProfileId={selectedDeliveryBooking.creator_profiles.id}
+          revisionCount={selectedDeliveryBooking.revision_count || 0}
+          totalPrice={selectedDeliveryBooking.total_price_cents}
+          onReviewComplete={fetchBookings}
+        />
+      )}
+
+      {/* Upload to Content Library Prompt Dialog */}
       <Dialog open={uploadPromptOpen} onOpenChange={setUploadPromptOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Upload Deliverables</DialogTitle>
+            <DialogTitle>Save to Content Library</DialogTitle>
             <DialogDescription>
-              Would you like to upload the content from {completedBooking?.creator_profiles.display_name} to your Content Library?
+              Would you like to save the content from {completedBooking?.creator_profiles.display_name} to your Content Library?
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -340,7 +460,7 @@ const BrandBookingsTab = () => {
               className="gap-2"
             >
               <Upload className="h-4 w-4" />
-              Upload Now
+              Go to Content Library
             </Button>
           </DialogFooter>
         </DialogContent>
