@@ -5,7 +5,20 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Phone, ArrowLeft } from "lucide-react";
+import PhoneInput from "@/components/PhoneInput";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
@@ -28,6 +41,18 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Phone login states
+  const [isPhoneMode, setIsPhoneMode] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  
+  // Role selection dialog
+  const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const [pendingPhoneNumber, setPendingPhoneNumber] = useState("");
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -39,13 +64,13 @@ const Login = () => {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+      if (session && !isPhoneMode) {
         navigate("/");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, isPhoneMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,164 +153,426 @@ const Login = () => {
     });
   };
 
+  const handleSendOTP = async () => {
+    if (!phoneNumber || phoneNumber.length < 10) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter a valid phone number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPhoneLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: phoneNumber,
+      });
+
+      if (error) throw error;
+
+      setOtpSent(true);
+      toast({
+        title: "Verification code sent",
+        description: "Please enter the 6-digit code sent to your phone.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to send code",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    if (otpCode.length !== 6) {
+      toast({
+        title: "Invalid code",
+        description: "Please enter the 6-digit verification code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPhoneLoading(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: phoneNumber,
+        token: otpCode,
+        type: 'sms',
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        // Check if user has a profile (creator or brand) by phone number
+        const [creatorResult, brandResult] = await Promise.all([
+          supabase
+            .from('creator_profiles')
+            .select('id, user_id')
+            .eq('phone_number', phoneNumber)
+            .maybeSingle(),
+          supabase
+            .from('brand_profiles')
+            .select('id, user_id')
+            .eq('phone_number', phoneNumber)
+            .maybeSingle(),
+        ]);
+
+        const hasCreatorProfile = creatorResult.data !== null;
+        const hasBrandProfile = brandResult.data !== null;
+
+        if (hasCreatorProfile) {
+          toast({
+            title: "Welcome back!",
+            description: "You have successfully logged in.",
+          });
+          navigate("/creator-dashboard");
+        } else if (hasBrandProfile) {
+          toast({
+            title: "Welcome back!",
+            description: "You have successfully logged in.",
+          });
+          navigate("/brand-dashboard");
+        } else {
+          // New user - show role selection
+          setPendingPhoneNumber(phoneNumber);
+          setShowRoleDialog(true);
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Verification failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const handleRoleSelection = async (role: 'creator' | 'brand') => {
+    setShowRoleDialog(false);
+    
+    // Sign out from the phone session since signup pages will handle full account creation
+    await supabase.auth.signOut();
+    
+    // Navigate to signup with phone pre-verified
+    const params = new URLSearchParams({
+      phone: pendingPhoneNumber,
+      phoneVerified: 'true',
+    });
+    
+    if (role === 'creator') {
+      navigate(`/creator?${params.toString()}`);
+    } else {
+      navigate(`/brand-signup?${params.toString()}`);
+    }
+  };
+
+  const resetPhoneMode = () => {
+    setIsPhoneMode(false);
+    setOtpSent(false);
+    setOtpCode("");
+    setPhoneNumber("");
+  };
+
+  // Phone login mode
+  if (isPhoneMode) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+
+        <main className="flex-1 flex items-center justify-center py-12 px-4">
+          <div className="w-full max-w-md">
+            <button
+              onClick={resetPhoneMode}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to login
+            </button>
+
+            <div className="text-center mb-10">
+              <h1 className="text-4xl md:text-5xl font-heading font-bold italic mb-2">
+                Sign in with Phone
+              </h1>
+            </div>
+
+            <div className="space-y-6">
+              {!otpSent ? (
+                <>
+                  <div>
+                    <PhoneInput
+                      value={phoneNumber}
+                      onChange={setPhoneNumber}
+                      disabled={phoneLoading}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSendOTP}
+                    disabled={phoneLoading || !phoneNumber}
+                    className="w-full h-12 text-base font-medium bg-foreground text-background hover:bg-foreground/90"
+                  >
+                    {phoneLoading ? "Sending..." : "Send Verification Code"}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="text-center mb-4">
+                    <p className="text-muted-foreground">
+                      Enter the 6-digit code sent to
+                    </p>
+                    <p className="font-medium text-foreground">{phoneNumber}</p>
+                  </div>
+                  <div className="flex justify-center">
+                    <InputOTP
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={setOtpCode}
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={1} />
+                        <InputOTPSlot index={2} />
+                        <InputOTPSlot index={3} />
+                        <InputOTPSlot index={4} />
+                        <InputOTPSlot index={5} />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
+                  <Button
+                    onClick={handleVerifyOTP}
+                    disabled={phoneLoading || otpCode.length !== 6}
+                    className="w-full h-12 text-base font-medium bg-foreground text-background hover:bg-foreground/90"
+                  >
+                    {phoneLoading ? "Verifying..." : "Verify & Sign In"}
+                  </Button>
+                  <button
+                    onClick={() => {
+                      setOtpSent(false);
+                      setOtpCode("");
+                    }}
+                    className="w-full text-center text-muted-foreground hover:text-foreground text-sm transition-colors"
+                  >
+                    Didn't receive code? Try again
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </main>
+
+        {/* Role Selection Dialog */}
+        <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-heading">Welcome to CollabHunts!</DialogTitle>
+              <DialogDescription>
+                It looks like you're new here. How would you like to join?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-4 mt-4">
+              <Button
+                onClick={() => handleRoleSelection('creator')}
+                className="w-full h-12 bg-primary hover:bg-primary/90"
+              >
+                Join as a Creator
+              </Button>
+              <Button
+                onClick={() => handleRoleSelection('brand')}
+                variant="outline"
+                className="w-full h-12"
+              >
+                Join as a Brand
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // Reset password mode
+  if (isResetMode) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+
+        <main className="flex-1 flex items-center justify-center py-12 px-4">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-10">
+              <h1 className="text-4xl md:text-5xl font-heading font-bold italic mb-2">
+                Reset Password
+              </h1>
+              <p className="text-muted-foreground mt-4">
+                Enter your email to receive a reset link
+              </p>
+            </div>
+
+            <form onSubmit={handleReset} className="space-y-4">
+              <div>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="h-12 text-base border-border"
+                />
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full h-12 text-base font-medium bg-foreground text-background hover:bg-foreground/90" 
+                disabled={isLoading}
+              >
+                {isLoading ? "Sending..." : "Send Reset Link"}
+              </Button>
+            </form>
+
+            <div className="text-center mt-6">
+              <button
+                onClick={() => setIsResetMode(false)}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                disabled={isLoading}
+              >
+                Back to login
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Main login view
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
 
       <main className="flex-1 flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md">
-          {!isResetMode ? (
-            <>
-              <div className="text-center mb-10">
-                <h1 className="text-4xl md:text-5xl font-heading font-bold italic mb-2">
-                  Welcome Back
-                </h1>
-              </div>
+          <div className="text-center mb-10">
+            <h1 className="text-4xl md:text-5xl font-heading font-bold italic mb-2">
+              Welcome Back
+            </h1>
+          </div>
 
-              {/* Social Login Buttons */}
-              <div className="space-y-3 mb-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-12 text-base font-medium border-border hover:bg-muted/50"
-                  onClick={() => handleSocialLogin("Google")}
-                  disabled={isLoading}
-                >
-                  <GoogleIcon />
-                  <span className="ml-3">Sign in with Google</span>
-                </Button>
+          {/* Social Login Buttons */}
+          <div className="space-y-3 mb-6">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-12 text-base font-medium border-border hover:bg-muted/50"
+              onClick={() => handleSocialLogin("Google")}
+              disabled={isLoading}
+            >
+              <GoogleIcon />
+              <span className="ml-3">Sign in with Google</span>
+            </Button>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-12 text-base font-medium border-border hover:bg-muted/50"
-                  onClick={() => handleSocialLogin("Apple")}
-                  disabled={isLoading}
-                >
-                  <AppleIcon />
-                  <span className="ml-3">Sign in with Apple</span>
-                </Button>
-              </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-12 text-base font-medium border-border hover:bg-muted/50"
+              onClick={() => handleSocialLogin("Apple")}
+              disabled={isLoading}
+            >
+              <AppleIcon />
+              <span className="ml-3">Sign in with Apple</span>
+            </Button>
 
-              {/* Divider */}
-              <div className="relative mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-background text-muted-foreground">or</span>
-                </div>
-              </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-12 text-base font-medium border-border hover:bg-muted/50"
+              onClick={() => setIsPhoneMode(true)}
+              disabled={isLoading}
+            >
+              <Phone className="h-[18px] w-[18px]" />
+              <span className="ml-3">Sign in with Phone</span>
+            </Button>
+          </div>
 
-              {/* Email/Password Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="h-12 text-base border-border"
-                  />
-                </div>
+          {/* Divider */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-background text-muted-foreground">or</span>
+            </div>
+          </div>
 
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="h-12 text-base border-border pr-12"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
+          {/* Email/Password Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+                className="h-12 text-base border-border"
+              />
+            </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 text-base font-medium bg-foreground text-background hover:bg-foreground/90" 
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Logging in..." : "Log in"}
-                </Button>
-              </form>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isLoading}
+                className="h-12 text-base border-border pr-12"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
 
-              <div className="text-center mt-6">
-                <button
-                  onClick={() => setIsResetMode(true)}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  disabled={isLoading}
-                >
-                  Forgot password?
-                </button>
-              </div>
+            <Button 
+              type="submit" 
+              className="w-full h-12 text-base font-medium bg-foreground text-background hover:bg-foreground/90" 
+              disabled={isLoading}
+            >
+              {isLoading ? "Logging in..." : "Log in"}
+            </Button>
+          </form>
 
-              <div className="mt-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                  Don't have an account?{" "}
-                  <Link to="/brand-signup" className="text-foreground hover:underline font-medium">
-                    Sign up
-                  </Link>
-                </p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="text-center mb-10">
-                <h1 className="text-4xl md:text-5xl font-heading font-bold italic mb-2">
-                  Reset Password
-                </h1>
-                <p className="text-muted-foreground mt-4">
-                  Enter your email to receive a reset link
-                </p>
-              </div>
+          <div className="text-center mt-6">
+            <button
+              onClick={() => setIsResetMode(true)}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              disabled={isLoading}
+            >
+              Forgot password?
+            </button>
+          </div>
 
-              <form onSubmit={handleReset} className="space-y-4">
-                <div>
-                  <Input
-                    id="reset-email"
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="h-12 text-base border-border"
-                  />
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 text-base font-medium bg-foreground text-background hover:bg-foreground/90" 
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Sending..." : "Send Reset Link"}
-                </Button>
-              </form>
-
-              <div className="text-center mt-6">
-                <button
-                  onClick={() => setIsResetMode(false)}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  disabled={isLoading}
-                >
-                  Back to login
-                </button>
-              </div>
-            </>
-          )}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link to="/brand-signup" className="text-foreground hover:underline font-medium">
+                Sign up
+              </Link>
+            </p>
+          </div>
         </div>
       </main>
     </div>
