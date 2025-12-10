@@ -25,6 +25,8 @@ import BrandDashboard from "./pages/BrandDashboard";
 import Admin from "./pages/Admin";
 import BackupHistory from "./pages/BackupHistory";
 import KnowledgeBase from "./pages/KnowledgeBase";
+import KnowledgeBaseCategory from "./pages/KnowledgeBaseCategory";
+import KnowledgeBaseArticle from "./pages/KnowledgeBaseArticle";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorProtectedRoute from "./components/CreatorProtectedRoute";
@@ -93,6 +95,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <KnowledgeBase />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/knowledge-base/:categorySlug" 
+              element={
+                <ProtectedRoute>
+                  <KnowledgeBaseCategory />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/knowledge-base/:categorySlug/:articleSlug" 
+              element={
+                <ProtectedRoute>
+                  <KnowledgeBaseArticle />
                 </ProtectedRoute>
               } 
             />
