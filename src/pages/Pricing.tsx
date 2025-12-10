@@ -72,7 +72,7 @@ const Pricing = () => {
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold mb-4">
               Supercharge Your{" "}
-              <span className="bg-gradient-accent bg-clip-text text-transparent">
+              <span className="text-primary">
                 Influencer Marketing
               </span>
             </h1>
@@ -174,21 +174,6 @@ const Pricing = () => {
               <Button size="lg" variant="default">
                 Book Demo
               </Button>
-            </div>
-          </div>
-        </section>
-
-        {/* Trust Section */}
-        <section className="py-12 border-t border-border">
-          <div className="container mx-auto px-4">
-            <p className="text-center text-muted-foreground mb-8">
-              Trusted by 250,000+ teams
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-12 opacity-50">
-              <div className="text-2xl font-bold">Brand Logo</div>
-              <div className="text-2xl font-bold">Brand Logo</div>
-              <div className="text-2xl font-bold">Brand Logo</div>
-              <div className="text-2xl font-bold">Brand Logo</div>
             </div>
           </div>
         </section>
