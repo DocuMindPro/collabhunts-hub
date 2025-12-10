@@ -116,6 +116,7 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            <Route path="/whats-new" element={<WhatsNew />} />
             <Route 
               path="/knowledge-base/whats-new" 
               element={

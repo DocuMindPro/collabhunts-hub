@@ -1,58 +1,64 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
-import { 
-  getRecentUpdates, 
-  formatUpdateDate, 
-  getCategoryBadge,
-  PlatformUpdate 
-} from "@/data/knowledgeBase";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft, Sparkles, Rocket, Bug, Wrench, AlertCircle, Calendar } from "lucide-react";
+
+const categoryIcons: Record<string, React.ReactNode> = {
+  feature: <Rocket className="h-5 w-5 text-green-500" />,
+  improvement: <Sparkles className="h-5 w-5 text-blue-500" />,
+  bugfix: <Bug className="h-5 w-5 text-red-500" />,
+  maintenance: <Wrench className="h-5 w-5 text-orange-500" />,
+  security: <AlertCircle className="h-5 w-5 text-purple-500" />,
+};
+
+const categoryColors: Record<string, string> = {
+  feature: "bg-green-500/10 text-green-600 border-green-500/20",
+  improvement: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  bugfix: "bg-red-500/10 text-red-600 border-red-500/20",
+  maintenance: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+  security: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+};
+
+interface ChangelogEntry {
+  id: string;
+  version: string;
+  title: string;
+  description: string;
+  category: string;
+  published_at: string | null;
+}
 
 const WhatsNew = () => {
-  const navigate = useNavigate();
+  const location = useLocation();
+  const isKnowledgeBasePath = location.pathname.includes("/knowledge-base");
+  const [entries, setEntries] = useState<ChangelogEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<'creator' | 'brand' | null>(null);
-  const [selectedUpdate, setSelectedUpdate] = useState<PlatformUpdate | null>(null);
 
   useEffect(() => {
-    const checkAuthAndRole = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/login");
-        return;
-      }
+    fetchEntries();
+  }, []);
 
-      const [creatorResult, brandResult] = await Promise.all([
-        supabase.from("creator_profiles").select("id").eq("user_id", session.user.id).maybeSingle(),
-        supabase.from("brand_profiles").select("id").eq("user_id", session.user.id).maybeSingle()
-      ]);
+  const fetchEntries = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("platform_changelog")
+        .select("id, version, title, description, category, published_at")
+        .eq("is_published", true)
+        .order("published_at", { ascending: false });
 
-      if (creatorResult.data) {
-        setUserRole('creator');
-      } else if (brandResult.data) {
-        setUserRole('brand');
-      }
-
+      if (error) throw error;
+      setEntries(data || []);
+    } catch (error) {
+      console.error("Error fetching changelog:", error);
+    } finally {
       setLoading(false);
-    };
-    checkAuthAndRole();
-  }, [navigate]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  const recentUpdates = getRecentUpdates(userRole);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -62,13 +68,15 @@ const WhatsNew = () => {
       <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background py-12 md:py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
-            <Link 
-              to="/knowledge-base" 
-              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Knowledge Base
-            </Link>
+            {isKnowledgeBasePath && (
+              <Link 
+                to="/knowledge-base" 
+                className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Knowledge Base
+              </Link>
+            )}
             
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
@@ -79,7 +87,7 @@ const WhatsNew = () => {
                   What's New
                 </h1>
                 <p className="text-muted-foreground">
-                  Latest updates and improvements from the past 30 days
+                  Latest features, improvements, and updates to CollabHunts
                 </p>
               </div>
             </div>
@@ -90,81 +98,72 @@ const WhatsNew = () => {
       {/* Content */}
       <main className="container mx-auto px-4 py-8 flex-1">
         <div className="max-w-4xl mx-auto">
-          {recentUpdates.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No recent updates in the past 30 days.</p>
-              <Link to="/knowledge-base/changelog" className="text-primary hover:underline mt-2 inline-block">
-                View older updates in the changelog
-              </Link>
+          {loading ? (
+            <div className="space-y-6">
+              {[1, 2, 3].map((i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/4 mt-2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-20 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : entries.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <Sparkles className="h-16 w-16 text-muted-foreground mb-4" />
+                <h2 className="text-xl font-semibold mb-2">No updates yet</h2>
+                <p className="text-muted-foreground">Check back soon for platform updates!</p>
+              </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
-              {recentUpdates.map((update) => {
-                const Icon = update.icon;
-                const badge = getCategoryBadge(update.category);
-                const isExpanded = selectedUpdate?.id === update.id;
-                
-                return (
-                  <Card 
-                    key={update.id}
-                    className={`overflow-hidden transition-all duration-200 ${isExpanded ? 'ring-2 ring-primary/50' : 'hover:border-primary/30'}`}
-                  >
-                    <div 
-                      className="p-6 cursor-pointer"
-                      onClick={() => setSelectedUpdate(isExpanded ? null : update)}
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
-                          <Icon className="h-5 w-5 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 flex-wrap mb-2">
-                            <Badge className={badge.color}>{badge.label}</Badge>
-                            <span className="text-sm text-muted-foreground">
-                              {formatUpdateDate(update.publishedAt)}
+            <div className="space-y-6">
+              {entries.map((entry) => (
+                <Card key={entry.id} className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        {categoryIcons[entry.category] || <Sparkles className="h-5 w-5" />}
+                        <div>
+                          <CardTitle className="text-xl">
+                            v{entry.version} — {entry.title}
+                          </CardTitle>
+                          <CardDescription className="flex items-center gap-3 mt-2">
+                            <Badge 
+                              variant="outline" 
+                              className={`capitalize ${categoryColors[entry.category] || ""}`}
+                            >
+                              {entry.category}
+                            </Badge>
+                            <span className="flex items-center gap-1 text-sm">
+                              <Calendar className="h-3.5 w-3.5" />
+                              {entry.published_at 
+                                ? new Date(entry.published_at).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric"
+                                  })
+                                : "Recently"
+                              }
                             </span>
-                          </div>
-                          <h3 className="font-heading font-semibold text-lg mb-1">
-                            {update.title}
-                          </h3>
-                          <p className="text-muted-foreground text-sm">
-                            {update.description}
-                          </p>
+                          </CardDescription>
                         </div>
-                        <ArrowRight className={`h-5 w-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                       </div>
                     </div>
-                    
-                    {isExpanded && (
-                      <div className="px-6 pb-6 pt-0 border-t">
-                        <div 
-                          className="prose prose-sm max-w-none pt-4
-                            prose-headings:font-heading prose-headings:font-semibold
-                            prose-h2:text-xl prose-h2:mt-6 prose-h2:mb-3
-                            prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2
-                            prose-p:text-muted-foreground prose-p:leading-relaxed
-                            prose-ul:my-3 prose-li:text-muted-foreground
-                            prose-strong:text-foreground
-                          "
-                          dangerouslySetInnerHTML={{ __html: update.content }}
-                        />
-                      </div>
-                    )}
-                  </Card>
-                );
-              })}
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                      {entry.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
-
-          {/* Link to Changelog */}
-          <div className="mt-8 text-center">
-            <Link to="/knowledge-base/changelog">
-              <Button variant="outline" className="gap-2">
-                View older updates
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
         </div>
       </main>
 
