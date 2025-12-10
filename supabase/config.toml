@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.check-content-expiration]
 verify_jwt = false
+
+[functions.upload-deliverable]
+verify_jwt = false

@@ -68,16 +68,81 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_deliverables: {
+        Row: {
+          booking_id: string
+          created_at: string | null
+          creator_profile_id: string
+          description: string | null
+          file_name: string
+          file_size_bytes: number
+          file_type: string
+          id: string
+          mime_type: string
+          r2_key: string
+          thumbnail_r2_key: string | null
+          version: number | null
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string | null
+          creator_profile_id: string
+          description?: string | null
+          file_name: string
+          file_size_bytes: number
+          file_type: string
+          id?: string
+          mime_type: string
+          r2_key: string
+          thumbnail_r2_key?: string | null
+          version?: number | null
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string | null
+          creator_profile_id?: string
+          description?: string | null
+          file_name?: string
+          file_size_bytes?: number
+          file_type?: string
+          id?: string
+          mime_type?: string
+          r2_key?: string
+          thumbnail_r2_key?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_deliverables_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_deliverables_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           booking_date: string | null
           brand_profile_id: string
+          confirmed_at: string | null
           created_at: string | null
           creator_profile_id: string
+          delivery_deadline: string | null
+          delivery_status: string | null
           id: string
           message: string | null
           payment_status: string
           platform_fee_cents: number | null
+          revision_count: number | null
+          revision_notes: string | null
           service_id: string | null
           status: string | null
           total_price_cents: number
@@ -86,12 +151,17 @@ export type Database = {
         Insert: {
           booking_date?: string | null
           brand_profile_id: string
+          confirmed_at?: string | null
           created_at?: string | null
           creator_profile_id: string
+          delivery_deadline?: string | null
+          delivery_status?: string | null
           id?: string
           message?: string | null
           payment_status?: string
           platform_fee_cents?: number | null
+          revision_count?: number | null
+          revision_notes?: string | null
           service_id?: string | null
           status?: string | null
           total_price_cents: number
@@ -100,12 +170,17 @@ export type Database = {
         Update: {
           booking_date?: string | null
           brand_profile_id?: string
+          confirmed_at?: string | null
           created_at?: string | null
           creator_profile_id?: string
+          delivery_deadline?: string | null
+          delivery_status?: string | null
           id?: string
           message?: string | null
           payment_status?: string
           platform_fee_cents?: number | null
+          revision_count?: number | null
+          revision_notes?: string | null
           service_id?: string | null
           status?: string | null
           total_price_cents?: number

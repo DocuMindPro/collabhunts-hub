@@ -6,13 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { Check, X, Clock, MessageSquare, CheckCircle, AlertCircle } from "lucide-react";
+import { format, formatDistanceToNow, isPast, addDays } from "date-fns";
+import { Check, X, Clock, MessageSquare, CheckCircle, AlertCircle, Upload, RotateCcw, DollarSign } from "lucide-react";
+import DeliveryUploadDialog from "./DeliveryUploadDialog";
+import BookingTimeline from "@/components/BookingTimeline";
 
 interface Booking {
   id: string;
   status: string;
   payment_status: string;
+  delivery_status: string | null;
+  delivery_deadline: string | null;
+  revision_count: number | null;
+  revision_notes: string | null;
+  confirmed_at: string | null;
   message: string | null;
   booking_date: string | null;
   total_price_cents: number;
@@ -23,6 +30,7 @@ interface Booking {
   };
   creator_services: {
     service_type: string;
+    delivery_days: number;
   } | null;
 }
 
@@ -34,6 +42,8 @@ const BookingsTab = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [creatorProfileId, setCreatorProfileId] = useState<string>("");
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [selectedBookingForUpload, setSelectedBookingForUpload] = useState<Booking | null>(null);
 
   useEffect(() => {
     fetchBookings();
@@ -58,7 +68,7 @@ const BookingsTab = () => {
         .select(`
           *,
           brand_profiles!inner(company_name),
-          creator_services(service_type)
+          creator_services(service_type, delivery_days)
         `)
         .eq("creator_profile_id", profile.id)
         .order("created_at", { ascending: false });
@@ -73,17 +83,27 @@ const BookingsTab = () => {
     }
   };
 
-  const updateBookingStatus = async (bookingId: string, status: string) => {
+  const updateBookingStatus = async (bookingId: string, status: string, additionalUpdates = {}) => {
     try {
+      const updates: any = { status, ...additionalUpdates };
+      
+      // Calculate delivery deadline when accepting
+      if (status === "accepted") {
+        const booking = bookings.find(b => b.id === bookingId);
+        const deliveryDays = booking?.creator_services?.delivery_days || 7;
+        updates.delivery_deadline = addDays(new Date(), deliveryDays).toISOString();
+        updates.delivery_status = "in_progress";
+      }
+
       const { error } = await supabase
         .from("bookings")
-        .update({ status })
+        .update(updates)
         .eq("id", bookingId);
 
       if (error) throw error;
       
       if (status === "accepted") {
-        toast.success("Booking accepted! Start working on the deliverables.");
+        toast.success("Booking accepted! Upload your deliverables when ready.");
       } else if (status === "completed") {
         toast.success("Great work! The brand has been notified.");
       } else {
@@ -110,8 +130,12 @@ const BookingsTab = () => {
     }
   };
 
+  const handleUploadDeliverables = (booking: Booking) => {
+    setSelectedBookingForUpload(booking);
+    setUploadDialogOpen(true);
+  };
+
   const handleMessageBrand = async (brandProfileId: string) => {
-    // Check if conversation exists, if not create one
     try {
       const { data: existingConversation } = await supabase
         .from("conversations")
@@ -123,7 +147,6 @@ const BookingsTab = () => {
       if (existingConversation) {
         navigate("/creator-dashboard?tab=messages");
       } else {
-        // Just navigate to messages, brand should have initiated
         navigate("/creator-dashboard?tab=messages");
       }
     } catch {
@@ -142,13 +165,25 @@ const BookingsTab = () => {
     }
   };
 
-  const getPaymentStatusColor = (paymentStatus: string) => {
-    switch (paymentStatus) {
-      case "pending": return "bg-yellow-500";
-      case "paid": return "bg-green-500";
-      case "failed": return "bg-red-500";
-      case "refunded": return "bg-gray-500";
+  const getDeliveryStatusColor = (status: string | null) => {
+    switch (status) {
+      case "pending": return "bg-gray-500";
+      case "in_progress": return "bg-blue-500";
+      case "delivered": return "bg-yellow-500";
+      case "revision_requested": return "bg-orange-500";
+      case "confirmed": return "bg-green-500";
       default: return "bg-gray-500";
+    }
+  };
+
+  const getDeliveryStatusLabel = (status: string | null) => {
+    switch (status) {
+      case "pending": return "Not Started";
+      case "in_progress": return "In Progress";
+      case "delivered": return "Awaiting Review";
+      case "revision_requested": return "Revision Requested";
+      case "confirmed": return "Approved";
+      default: return status || "Pending";
     }
   };
 
@@ -205,38 +240,20 @@ const BookingsTab = () => {
                       {booking.creator_services?.service_type.replace(/_/g, " ") || "Service removed"}
                     </CardDescription>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 justify-end">
                     <Badge className={`${getStatusColor(booking.status)} text-white capitalize`}>
                       {booking.status}
                     </Badge>
-                    <Badge className={`${getPaymentStatusColor(booking.payment_status)} text-white capitalize`}>
-                      {booking.payment_status}
-                    </Badge>
+                    {booking.status === "accepted" && booking.delivery_status && (
+                      <Badge className={`${getDeliveryStatusColor(booking.delivery_status)} text-white`}>
+                        {getDeliveryStatusLabel(booking.delivery_status)}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Status guidance messages */}
-                {booking.status === "accepted" && (
-                  <div className="flex items-start gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium text-blue-600 dark:text-blue-400">You accepted this booking!</p>
-                      <p className="text-sm text-muted-foreground">Work on the deliverables and mark as complete when done.</p>
-                    </div>
-                  </div>
-                )}
-
-                {booking.status === "completed" && (
-                  <div className="flex items-start gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium text-green-600 dark:text-green-400">Completed!</p>
-                      <p className="text-sm text-muted-foreground">The brand has been notified. Payment will be processed soon.</p>
-                    </div>
-                  </div>
-                )}
-
+                {/* Pending booking message */}
                 {booking.status === "pending" && (
                   <div className="flex items-start gap-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                     <AlertCircle className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
@@ -247,6 +264,67 @@ const BookingsTab = () => {
                   </div>
                 )}
 
+                {/* Accepted - awaiting delivery */}
+                {booking.status === "accepted" && booking.delivery_status === "in_progress" && (
+                  <div className="flex items-start gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                    <Upload className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-medium text-blue-600 dark:text-blue-400">Ready to deliver!</p>
+                      <p className="text-sm text-muted-foreground">
+                        Upload your deliverables when ready. 
+                        {booking.delivery_deadline && (
+                          <span className={isPast(new Date(booking.delivery_deadline)) ? "text-red-500 font-medium" : ""}>
+                            {" "}Due {formatDistanceToNow(new Date(booking.delivery_deadline), { addSuffix: true })}.
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Delivered - awaiting brand review */}
+                {booking.delivery_status === "delivered" && (
+                  <div className="flex items-start gap-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                    <Clock className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-yellow-600 dark:text-yellow-400">Awaiting Brand Review</p>
+                      <p className="text-sm text-muted-foreground">Your deliverables are being reviewed. Payment will be released upon approval.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Revision requested */}
+                {booking.delivery_status === "revision_requested" && (
+                  <div className="flex items-start gap-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                    <RotateCcw className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-medium text-orange-600 dark:text-orange-400">
+                        Revision Requested (#{booking.revision_count || 1}/2)
+                      </p>
+                      {booking.revision_notes && (
+                        <p className="text-sm text-muted-foreground mt-1 p-2 bg-muted rounded">
+                          "{booking.revision_notes}"
+                        </p>
+                      )}
+                      <p className="text-sm text-muted-foreground mt-1">Upload revised deliverables to proceed.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Confirmed and paid */}
+                {booking.delivery_status === "confirmed" && (
+                  <div className="flex items-start gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <DollarSign className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-green-600 dark:text-green-400">Payment Released!</p>
+                      <p className="text-sm text-muted-foreground">
+                        ${(booking.total_price_cents / 100).toFixed(2)} has been released to your account.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Booking details */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Your earnings</p>
@@ -267,6 +345,22 @@ const BookingsTab = () => {
                   </div>
                 )}
 
+                {/* Timeline for accepted bookings */}
+                {booking.status !== "pending" && booking.status !== "declined" && booking.status !== "cancelled" && (
+                  <div className="pt-2 border-t">
+                    <p className="text-sm font-medium mb-3">Progress</p>
+                    <BookingTimeline
+                      status={booking.status}
+                      deliveryStatus={booking.delivery_status || "pending"}
+                      paymentStatus={booking.payment_status}
+                      createdAt={booking.created_at}
+                      confirmedAt={booking.confirmed_at}
+                      deliveryDeadline={booking.delivery_deadline}
+                    />
+                  </div>
+                )}
+
+                {/* Action buttons */}
                 {booking.status === "pending" && (
                   <div className="flex gap-2">
                     <Button
@@ -287,7 +381,7 @@ const BookingsTab = () => {
                   </div>
                 )}
 
-                {booking.status === "accepted" && (
+                {booking.status === "accepted" && (booking.delivery_status === "in_progress" || booking.delivery_status === "revision_requested") && (
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
@@ -298,16 +392,16 @@ const BookingsTab = () => {
                       Message Brand
                     </Button>
                     <Button
-                      onClick={() => handleMarkComplete(booking.id)}
+                      onClick={() => handleUploadDeliverables(booking)}
                       className="flex-1 gap-2"
                     >
-                      <Check className="h-4 w-4" />
-                      Mark as Completed
+                      <Upload className="h-4 w-4" />
+                      Upload Deliverables
                     </Button>
                   </div>
                 )}
 
-                {booking.status === "completed" && (
+                {(booking.delivery_status === "delivered" || booking.delivery_status === "confirmed") && (
                   <Button
                     variant="outline"
                     onClick={() => handleMessageBrand(booking.brand_profile_id)}
@@ -348,6 +442,19 @@ const BookingsTab = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delivery Upload Dialog */}
+      {selectedBookingForUpload && (
+        <DeliveryUploadDialog
+          open={uploadDialogOpen}
+          onOpenChange={setUploadDialogOpen}
+          bookingId={selectedBookingForUpload.id}
+          creatorProfileId={creatorProfileId}
+          brandName={selectedBookingForUpload.brand_profiles.company_name}
+          currentVersion={selectedBookingForUpload.revision_count || 0}
+          onDeliverySubmitted={fetchBookings}
+        />
+      )}
     </div>
   );
 };
