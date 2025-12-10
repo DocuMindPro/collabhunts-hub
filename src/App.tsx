@@ -27,6 +27,8 @@ import BackupHistory from "./pages/BackupHistory";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import KnowledgeBaseCategory from "./pages/KnowledgeBaseCategory";
 import KnowledgeBaseArticle from "./pages/KnowledgeBaseArticle";
+import WhatsNew from "./pages/WhatsNew";
+import Changelog from "./pages/Changelog";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorProtectedRoute from "./components/CreatorProtectedRoute";
@@ -111,6 +113,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <KnowledgeBaseArticle />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/knowledge-base/whats-new" 
+              element={
+                <ProtectedRoute>
+                  <WhatsNew />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/knowledge-base/changelog" 
+              element={
+                <ProtectedRoute>
+                  <Changelog />
                 </ProtectedRoute>
               } 
             />
