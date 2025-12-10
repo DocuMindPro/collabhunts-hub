@@ -116,6 +116,48 @@ export const formatPrice = (cents: number): string => {
   return `$${(cents / 100).toFixed(2)}`;
 };
 
+// Mock card details interface
+export interface MockCardDetails {
+  cardNumber: string;
+  expiry: string;
+  cvv: string;
+  cardholderName: string;
+}
+
+// Test card numbers for different scenarios
+const TEST_CARDS = {
+  SUCCESS: "4242424242424242",
+  DECLINE: "4000000000000002",
+  INSUFFICIENT_FUNDS: "4000000000009995",
+};
+
+// Mock payment confirmation - simulates Stripe payment processing
+export const confirmMockPayment = async (
+  amountCents: number,
+  cardDetails: MockCardDetails
+): Promise<{ success: boolean; paymentId: string; error?: string }> => {
+  await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000));
+
+  const cleanCardNumber = cardDetails.cardNumber.replace(/\s/g, "");
+
+  if (cleanCardNumber === TEST_CARDS.DECLINE) {
+    return { success: false, paymentId: "", error: "Your card was declined." };
+  }
+
+  if (cleanCardNumber === TEST_CARDS.INSUFFICIENT_FUNDS) {
+    return { success: false, paymentId: "", error: "Insufficient funds." };
+  }
+
+  if (cleanCardNumber.length !== 16) {
+    return { success: false, paymentId: "", error: "Invalid card number." };
+  }
+
+  return {
+    success: true,
+    paymentId: `pi_mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+  };
+};
+
 // Mock Stripe checkout session creation
 export const createCheckoutSession = async (
   planType: PlanType,
