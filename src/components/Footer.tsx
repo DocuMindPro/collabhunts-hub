@@ -135,7 +135,7 @@ const Footer = () => {
                 )}
               </li>
               <li>
-                <Link to="/#how-it-works" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/brand" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   How It Works
                 </Link>
               </li>
