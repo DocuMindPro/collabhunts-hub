@@ -41,6 +41,7 @@ const BrandSignup = () => {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [industry, setIndustry] = useState("");
   const [companySize, setCompanySize] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Phone verification
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -173,6 +174,15 @@ const BrandSignup = () => {
       return;
     }
 
+    if (!termsAccepted) {
+      toast({
+        title: "Terms Required",
+        description: "Please accept the Terms of Service to continue",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -201,7 +211,7 @@ const BrandSignup = () => {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error("Failed to create user");
 
-      // Create brand profile with phone info
+      // Create brand profile with phone info and terms acceptance
       const { error: profileError } = await supabase
         .from("brand_profiles")
         .insert({
@@ -211,7 +221,9 @@ const BrandSignup = () => {
           industry,
           company_size: companySize,
           phone_number: phoneNumber,
-          phone_verified: true
+          phone_verified: true,
+          terms_accepted_at: new Date().toISOString(),
+          terms_version: '1.0'
         });
 
       if (profileError) throw profileError;
@@ -437,18 +449,36 @@ const BrandSignup = () => {
                   </div>
                 </div>
 
+                {/* Terms Agreement */}
+                <div className="border-t pt-4">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={termsAccepted}
+                      onChange={(e) => setTermsAccepted(e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-input"
+                      disabled={isLoading}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      I agree to the <a href="/terms" target="_blank" className="text-primary hover:underline">Terms of Service</a>, 
+                      including the <strong>72-hour auto-release policy</strong> and <strong>binding arbitration clause</strong>. 
+                      I understand that inaction on deliverables for 72 hours constitutes acceptance.
+                    </span>
+                  </label>
+                </div>
+
                 <Button 
                   type="submit" 
                   className="w-full gradient-hero hover:opacity-90" 
                   size="lg"
-                  disabled={isLoading || !phoneVerified}
+                  disabled={isLoading || !phoneVerified || !termsAccepted}
                 >
                   {isLoading ? "Creating Account..." : "Create Brand Account"}
                 </Button>
 
-                {!phoneVerified && (
+                {(!phoneVerified || !termsAccepted) && (
                   <p className="text-xs text-center text-muted-foreground">
-                    Phone verification required to create account
+                    {!phoneVerified ? "Phone verification required" : "Please accept Terms of Service"}
                   </p>
                 )}
 

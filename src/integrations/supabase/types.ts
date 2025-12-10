@@ -215,6 +215,7 @@ export type Database = {
           confirmed_at: string | null
           created_at: string | null
           creator_profile_id: string
+          delivered_at: string | null
           delivery_deadline: string | null
           delivery_status: string | null
           id: string
@@ -234,6 +235,7 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string | null
           creator_profile_id: string
+          delivered_at?: string | null
           delivery_deadline?: string | null
           delivery_status?: string | null
           id?: string
@@ -253,6 +255,7 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string | null
           creator_profile_id?: string
+          delivered_at?: string | null
           delivery_deadline?: string | null
           delivery_status?: string | null
           id?: string
@@ -305,6 +308,8 @@ export type Database = {
           phone_verified: boolean | null
           preferred_categories: string[] | null
           preferred_platforms: string[] | null
+          terms_accepted_at: string | null
+          terms_version: string | null
           updated_at: string | null
           user_id: string
           website_url: string | null
@@ -323,6 +328,8 @@ export type Database = {
           phone_verified?: boolean | null
           preferred_categories?: string[] | null
           preferred_platforms?: string[] | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string | null
           user_id: string
           website_url?: string | null
@@ -341,6 +348,8 @@ export type Database = {
           phone_verified?: boolean | null
           preferred_categories?: string[] | null
           preferred_platforms?: string[] | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string | null
           user_id?: string
           website_url?: string | null
@@ -862,6 +871,8 @@ export type Database = {
           rejection_reason: string | null
           secondary_languages: string[] | null
           status: string | null
+          terms_accepted_at: string | null
+          terms_version: string | null
           updated_at: string | null
           user_id: string
         }
@@ -887,6 +898,8 @@ export type Database = {
           rejection_reason?: string | null
           secondary_languages?: string[] | null
           status?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -912,6 +925,8 @@ export type Database = {
           rejection_reason?: string | null
           secondary_languages?: string[] | null
           status?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string | null
           user_id?: string
         }
