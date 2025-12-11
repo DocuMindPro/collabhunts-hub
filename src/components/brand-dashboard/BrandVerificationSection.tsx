@@ -21,6 +21,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import { SUBSCRIPTION_PLANS, PlanType } from "@/lib/stripe-mock";
 
 interface BrandVerificationSectionProps {
   planType: string;
@@ -47,7 +48,7 @@ const BrandVerificationSection = ({ planType }: BrandVerificationSectionProps) =
   const [additionalNotes, setAdditionalNotes] = useState("");
   const { toast } = useToast();
 
-  const isEligible = planType === "pro" || planType === "premium";
+  const isEligible = SUBSCRIPTION_PLANS[planType as PlanType]?.canRequestVerifiedBadge ?? false;
 
   useEffect(() => {
     fetchBrandProfile();
