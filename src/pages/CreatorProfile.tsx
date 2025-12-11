@@ -585,7 +585,7 @@ const CreatorProfile = () => {
                     <p className="text-muted-foreground max-w-2xl">{creator.bio}</p>
                   )}
 
-                  {/* Contact Creator Button - Under bio, above Social Media (hide on own profile) */}
+                  {/* Message Creator Button - Under bio, above Social Media (hide on own profile) */}
                   <div className="mt-4">
                     {isOwnProfile ? (
                       <Button 

@@ -472,7 +472,7 @@ All secrets are stored securely and accessible only in edge functions.
 | Feature | Basic (Free) | Pro ($99/mo) | Premium ($299/mo) |
 |---------|--------------|--------------|-------------------|
 | Marketplace Fee | 20% | 15% | 15% |
-| Contact Creators | ❌ | ✅ | ✅ |
+| Message Creators | ❌ | ✅ | ✅ |
 | Create Campaigns | ❌ | 1/month | Unlimited |
 | Advanced Filters | ❌ | ✅ | ✅ |
 | Creator CRM | ❌ | ✅ | ✅ |
