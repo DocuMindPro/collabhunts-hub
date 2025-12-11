@@ -11,11 +11,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface MassMessageDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  selectedCreators: Array<{ id: string; display_name: string }>;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedCreatorIds: string[];
   brandProfileId: string;
-  planType: string;
+  onSuccess?: () => void;
 }
 
 interface Template {
@@ -25,11 +25,11 @@ interface Template {
 }
 
 const MassMessageDialog = ({ 
-  isOpen, 
-  onClose, 
-  selectedCreators, 
+  open, 
+  onOpenChange, 
+  selectedCreatorIds, 
   brandProfileId,
-  planType 
+  onSuccess 
 }: MassMessageDialogProps) => {
   const [message, setMessage] = useState("");
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -39,16 +39,62 @@ const MassMessageDialog = ({
   const [sending, setSending] = useState(false);
   const [dailyUsed, setDailyUsed] = useState(0);
   const [weeklyUsed, setWeeklyUsed] = useState(0);
+  const [planType, setPlanType] = useState<string>("pro");
+  const [selectedCreators, setSelectedCreators] = useState<Array<{ id: string; display_name: string }>>([]);
 
   const dailyLimit = planType === 'premium' ? 100 : 50;
   const weeklyLimit = planType === 'premium' ? 300 : 150;
 
   useEffect(() => {
-    if (isOpen) {
+    if (open) {
       fetchTemplates();
       fetchUsage();
+      fetchCreatorNames();
+      fetchPlanType();
     }
-  }, [isOpen]);
+  }, [open, selectedCreatorIds]);
+
+  const fetchPlanType = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    const { data: brandProfile } = await supabase
+      .from('brand_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!brandProfile) return;
+
+    const { data: subscription } = await supabase
+      .from('brand_subscriptions')
+      .select('plan_type')
+      .eq('brand_profile_id', brandProfile.id)
+      .eq('status', 'active')
+      .order('plan_type', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (subscription) {
+      setPlanType(subscription.plan_type);
+    }
+  };
+
+  const fetchCreatorNames = async () => {
+    if (selectedCreatorIds.length === 0) {
+      setSelectedCreators([]);
+      return;
+    }
+
+    const { data } = await supabase
+      .from('creator_profiles')
+      .select('id, display_name')
+      .in('id', selectedCreatorIds);
+
+    if (data) {
+      setSelectedCreators(data);
+    }
+  };
 
   const fetchTemplates = async () => {
     const { data } = await supabase
@@ -154,7 +200,8 @@ const MassMessageDialog = ({
       setSelectedTemplate("");
       setNewTemplateName("");
       setSaveAsTemplate(false);
-      onClose();
+      onOpenChange(false);
+      onSuccess?.();
     } catch (error) {
       console.error('Mass message error:', error);
       toast.error("Failed to send messages");
@@ -168,7 +215,7 @@ const MassMessageDialog = ({
   const wouldExceedLimit = selectedCreators.length > remainingDaily;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -280,7 +327,7 @@ const MassMessageDialog = ({
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={onClose} disabled={sending}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>
             Cancel
           </Button>
           <Button 

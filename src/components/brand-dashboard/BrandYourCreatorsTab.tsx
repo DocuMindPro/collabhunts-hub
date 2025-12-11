@@ -10,11 +10,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, HeartOff, Star, MapPin, Calendar, DollarSign, MessageSquare, Trash2, Edit2, Plus, FolderOpen, Users, Clock, StickyNote, Search, ExternalLink, Image } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Heart, HeartOff, Star, MapPin, Calendar, DollarSign, MessageSquare, Trash2, Edit2, Plus, FolderOpen, Users, Clock, StickyNote, Search, ExternalLink, Image, Mail, CheckSquare, Square } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, formatDistanceToNow } from "date-fns";
-import { canUserUseCRM } from "@/lib/subscription-utils";
+import { canUserUseCRM, getUserSubscriptionTier } from "@/lib/subscription-utils";
 import UpgradePrompt from "@/components/UpgradePrompt";
+import MassMessageDialog from "./MassMessageDialog";
 
 interface SavedCreator {
   id: string;
@@ -58,6 +60,7 @@ const BrandYourCreatorsTab = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [hasCRMAccess, setHasCRMAccess] = useState<boolean | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = useState<string>("basic");
   const [brandProfileId, setBrandProfileId] = useState<string | null>(null);
   const [savedCreators, setSavedCreators] = useState<SavedCreator[]>([]);
   const [workedWithCreators, setWorkedWithCreators] = useState<WorkedWithCreator[]>([]);
@@ -66,6 +69,11 @@ const BrandYourCreatorsTab = () => {
   const [folders, setFolders] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [contentCountMap, setContentCountMap] = useState<Record<string, number>>({});
+  
+  // Mass messaging state
+  const [selectedCreators, setSelectedCreators] = useState<Set<string>>(new Set());
+  const [massMessageDialogOpen, setMassMessageDialogOpen] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
   
   // Notes dialog state
   const [notesDialogOpen, setNotesDialogOpen] = useState(false);
@@ -89,9 +97,12 @@ const BrandYourCreatorsTab = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Check CRM access first
+      // Check CRM access and subscription tier
       const crmAccess = await canUserUseCRM(user.id);
       setHasCRMAccess(crmAccess);
+      
+      const tier = await getUserSubscriptionTier(user.id);
+      setSubscriptionTier(tier);
 
       // If no CRM access, stop fetching data
       if (!crmAccess) {
@@ -386,6 +397,35 @@ const BrandYourCreatorsTab = () => {
       c.categories.some(cat => cat.toLowerCase().includes(searchQuery.toLowerCase()));
   });
 
+  // Mass messaging handlers
+  const toggleCreatorSelection = (creatorId: string) => {
+    const newSelected = new Set(selectedCreators);
+    if (newSelected.has(creatorId)) {
+      newSelected.delete(creatorId);
+    } else {
+      newSelected.add(creatorId);
+    }
+    setSelectedCreators(newSelected);
+  };
+
+  const selectAllVisible = () => {
+    const newSelected = new Set(selectedCreators);
+    filteredSavedCreators.forEach(s => newSelected.add(s.creator_profile_id));
+    setSelectedCreators(newSelected);
+  };
+
+  const deselectAll = () => {
+    setSelectedCreators(new Set());
+  };
+
+  const handleMassMessageSuccess = () => {
+    setSelectedCreators(new Set());
+    setSelectionMode(false);
+    setMassMessageDialogOpen(false);
+  };
+
+  const canSendMassMessages = subscriptionTier === 'pro' || subscriptionTier === 'premium';
+
   // Show upgrade prompt for Basic tier users
   if (hasCRMAccess === false) {
   return (
@@ -429,9 +469,65 @@ const BrandYourCreatorsTab = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-heading font-bold mb-2">Your Creators</h2>
-        <p className="text-muted-foreground">Manage your saved creators and past collaborations</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-heading font-bold mb-2">Your Creators</h2>
+          <p className="text-muted-foreground">Manage your saved creators and past collaborations</p>
+        </div>
+        <div className="flex gap-2">
+          {canSendMassMessages && savedCreators.length > 0 && (
+            <>
+              {selectionMode ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={deselectAll}
+                    disabled={selectedCreators.size === 0}
+                  >
+                    Deselect All
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={selectAllVisible}
+                  >
+                    Select All ({filteredSavedCreators.length})
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setMassMessageDialogOpen(true)}
+                    disabled={selectedCreators.size === 0}
+                    className="gap-2"
+                  >
+                    <Mail className="h-4 w-4" />
+                    Message ({selectedCreators.size})
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectionMode(false);
+                      setSelectedCreators(new Set());
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectionMode(true)}
+                  className="gap-2"
+                >
+                  <Mail className="h-4 w-4" />
+                  Mass Message
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Stats Overview */}
@@ -540,10 +636,29 @@ const BrandYourCreatorsTab = () => {
               {filteredSavedCreators.map((saved) => {
                 const creatorNotes = getCreatorNotes(saved.creator_profile_id);
                 const contentCount = contentCountMap[saved.creator_profile_id] || 0;
+                const isSelected = selectedCreators.has(saved.creator_profile_id);
                 return (
-                  <Card key={saved.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <Card 
+                    key={saved.id} 
+                    className={`overflow-hidden transition-all ${
+                      selectionMode 
+                        ? isSelected 
+                          ? 'ring-2 ring-primary shadow-lg' 
+                          : 'hover:shadow-lg cursor-pointer' 
+                        : 'hover:shadow-lg'
+                    }`}
+                    onClick={selectionMode ? () => toggleCreatorSelection(saved.creator_profile_id) : undefined}
+                  >
                     <CardHeader className="pb-3">
                       <div className="flex items-start gap-3">
+                        {selectionMode && (
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleCreatorSelection(saved.creator_profile_id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="mt-1"
+                          />
+                        )}
                         <Avatar className="h-12 w-12">
                           {saved.creator.profile_image_url ? (
                             <AvatarImage src={saved.creator.profile_image_url} />
@@ -587,51 +702,53 @@ const BrandYourCreatorsTab = () => {
                         )}
                       </div>
 
-                      <div className="flex gap-2 flex-wrap">
-                        <Button
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => window.location.href = `/creator/${saved.creator.id}`}
-                        >
-                          View Profile
-                        </Button>
-                        {contentCount > 0 && (
+                      {!selectionMode && (
+                        <div className="flex gap-2 flex-wrap">
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => window.location.href = `/creator/${saved.creator.id}`}
+                          >
+                            View Profile
+                          </Button>
+                          {contentCount > 0 && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.location.href = `/brand-dashboard?tab=content-library&creatorId=${saved.creator_profile_id}`}
+                              className="gap-1"
+                            >
+                              <Image className="h-4 w-4" />
+                              Content
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => window.location.href = `/brand-dashboard?tab=content-library&creatorId=${saved.creator_profile_id}`}
-                            className="gap-1"
+                            onClick={() => openNotesDialog(saved.creator_profile_id, saved.creator.display_name)}
                           >
-                            <Image className="h-4 w-4" />
-                            Content
+                            <StickyNote className="h-4 w-4" />
                           </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openNotesDialog(saved.creator_profile_id, saved.creator.display_name)}
-                        >
-                          <StickyNote className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedCreatorToMove(saved.id);
-                            setMoveDialogOpen(true);
-                          }}
-                        >
-                          <FolderOpen className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleUnsaveCreator(saved.id)}
-                        >
-                          <HeartOff className="h-4 w-4" />
-                        </Button>
-                      </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedCreatorToMove(saved.id);
+                              setMoveDialogOpen(true);
+                            }}
+                          >
+                            <FolderOpen className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleUnsaveCreator(saved.id)}
+                          >
+                            <HeartOff className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 );
@@ -876,6 +993,17 @@ const BrandYourCreatorsTab = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Mass Message Dialog */}
+      {brandProfileId && (
+        <MassMessageDialog
+          open={massMessageDialogOpen}
+          onOpenChange={setMassMessageDialogOpen}
+          brandProfileId={brandProfileId}
+          selectedCreatorIds={Array.from(selectedCreators)}
+          onSuccess={handleMassMessageSuccess}
+        />
+      )}
     </div>
   );
 };

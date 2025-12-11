@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, X, Camera, Images, ImagePlus, Phone, CheckCircle } from "lucide-react";
+import { Loader2, Upload, X, Camera, Images, ImagePlus, Phone, CheckCircle, Shield } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import SocialAccountsSection from "./SocialAccountsSection";
 import PortfolioUploadSection from "./PortfolioUploadSection";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
@@ -53,6 +54,7 @@ const ProfileTab = () => {
     secondary_languages: [] as string[],
     phone_number: "",
     phone_verified: false,
+    allow_mass_messages: true,
   });
 
   useEffect(() => {
@@ -92,6 +94,7 @@ const ProfileTab = () => {
           secondary_languages: data.secondary_languages || [],
           phone_number: data.phone_number || "",
           phone_verified: data.phone_verified || false,
+          allow_mass_messages: data.allow_mass_messages ?? true,
         });
       }
     } catch (error) {
@@ -420,6 +423,7 @@ const ProfileTab = () => {
           ethnicity: profile.ethnicity || null,
           primary_language: profile.primary_language || "English",
           secondary_languages: profile.secondary_languages.length > 0 ? profile.secondary_languages : null,
+          allow_mass_messages: profile.allow_mass_messages,
         })
         .eq("id", profile.id);
 
@@ -903,6 +907,32 @@ const ProfileTab = () => {
                 </Badge>
               ))}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Privacy Settings Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Privacy Settings
+          </CardTitle>
+          <CardDescription>Control how brands can contact you</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="allow-mass-messages" className="text-base">Allow Mass Messages</Label>
+              <p className="text-sm text-muted-foreground">
+                When enabled, brands can include you in mass outreach messages for collaboration opportunities
+              </p>
+            </div>
+            <Switch
+              id="allow-mass-messages"
+              checked={profile.allow_mass_messages}
+              onCheckedChange={(checked) => setProfile({ ...profile, allow_mass_messages: checked })}
+            />
           </div>
         </CardContent>
       </Card>
