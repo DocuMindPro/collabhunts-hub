@@ -305,7 +305,7 @@ const AdminPlatformManualTab = () => {
 
       toast({
         title: "Notifications Sent",
-        description: `Update sent to ${data?.sentCount || 0} users`,
+        description: `Update sent to ${data?.sent || 0} users`,
       });
 
       fetchChangelog();
