@@ -103,14 +103,35 @@ const BrandMessagesTab = () => {
     }
   }, [selectedConversation]);
 
-  const scrollToBottom = () => {
-    requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
-    });
+  const scrollToBottom = (immediate = false) => {
+    const doScroll = () => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+    };
+
+    if (immediate) {
+      doScroll();
+    } else {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          doScroll();
+        });
+      });
+    }
   };
 
   useLayoutEffect(() => {
-    scrollToBottom();
+    if (messages.length > 0) {
+      scrollToBottom(true);
+      const timers = [
+        setTimeout(() => scrollToBottom(true), 50),
+        setTimeout(() => scrollToBottom(true), 200),
+        setTimeout(() => scrollToBottom(true), 500),
+      ];
+      return () => timers.forEach(clearTimeout);
+    }
   }, [messages]);
 
   const fetchConversations = async () => {
@@ -197,11 +218,6 @@ const BrandMessagesTab = () => {
 
       if (error) throw error;
       setMessages(data || []);
-      
-      // Multiple scroll attempts for reliability
-      setTimeout(() => scrollToBottom(), 50);
-      setTimeout(() => scrollToBottom(), 150);
-      setTimeout(() => scrollToBottom(), 300);
 
       await supabase
         .from("messages")
