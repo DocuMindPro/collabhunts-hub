@@ -27,6 +27,7 @@ interface Creator {
   primary_language: string | null;
   secondary_languages: string[] | null;
   social_accounts: Array<{
+    platform: string;
     follower_count: number;
   }>;
   services: Array<{
@@ -155,6 +156,8 @@ const BrandCreatorsTab = () => {
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [selectedEthnicities, setSelectedEthnicities] = useState<string[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState("all");
+  const [followerPlatform, setFollowerPlatform] = useState("all");
+  const [minPlatformFollowers, setMinPlatformFollowers] = useState("");
 
   useEffect(() => {
     fetchCreators();
@@ -193,7 +196,7 @@ const BrandCreatorsTab = () => {
           const [socialData, servicesData, reviewsData] = await Promise.all([
             supabase
               .from("creator_social_accounts")
-              .select("follower_count")
+              .select("platform, follower_count")
               .eq("creator_profile_id", profile.id),
             supabase
               .from("creator_services")
@@ -269,7 +272,8 @@ const BrandCreatorsTab = () => {
   };
 
   const hasActiveAdvancedFilters = ageRange[0] > 18 || ageRange[1] < 65 || 
-    selectedGenders.length > 0 || selectedEthnicities.length > 0 || selectedLanguage !== "all";
+    selectedGenders.length > 0 || selectedEthnicities.length > 0 || selectedLanguage !== "all" ||
+    (followerPlatform !== "all" && minPlatformFollowers !== "");
 
   const clearAllFilters = () => {
     setSelectedCategories([]);
@@ -282,6 +286,8 @@ const BrandCreatorsTab = () => {
     setSelectedGenders([]);
     setSelectedEthnicities([]);
     setSelectedLanguage("all");
+    setFollowerPlatform("all");
+    setMinPlatformFollowers("");
   };
 
   const hasActiveFilters = selectedCategories.length > 0 || 
@@ -339,6 +345,17 @@ const BrandCreatorsTab = () => {
         const matchesLanguage = c.primary_language === selectedLanguage || 
           (c.secondary_languages && c.secondary_languages.includes(selectedLanguage));
         matchesAdvanced = matchesAdvanced && matchesLanguage;
+      }
+
+      // Platform-specific follower filter
+      if (followerPlatform !== "all" && minPlatformFollowers !== "") {
+        const minCount = parseInt(minPlatformFollowers);
+        if (!isNaN(minCount)) {
+          const platformAccount = c.social_accounts.find(
+            acc => acc.platform.toLowerCase() === followerPlatform.toLowerCase()
+          );
+          matchesAdvanced = matchesAdvanced && !!platformAccount && platformAccount.follower_count >= minCount;
+        }
       }
     }
     
@@ -621,6 +638,40 @@ const BrandCreatorsTab = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Platform-Specific Followers */}
+                  <div className="space-y-3">
+                    <Label>Followers by Platform</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Filter by minimum followers on a specific platform
+                    </p>
+                    <div className="flex flex-col md:flex-row gap-3">
+                      <Select value={followerPlatform} onValueChange={(value) => {
+                        setFollowerPlatform(value);
+                        if (value === "all") setMinPlatformFollowers("");
+                      }}>
+                        <SelectTrigger className="w-full md:w-[200px]">
+                          <SelectValue placeholder="Select platform" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Platforms</SelectItem>
+                          <SelectItem value="instagram">Instagram</SelectItem>
+                          <SelectItem value="tiktok">TikTok</SelectItem>
+                          <SelectItem value="youtube">YouTube</SelectItem>
+                          <SelectItem value="twitter">Twitter</SelectItem>
+                          <SelectItem value="twitch">Twitch</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number"
+                        placeholder="Min followers (e.g., 10000)"
+                        value={minPlatformFollowers}
+                        onChange={(e) => setMinPlatformFollowers(e.target.value)}
+                        disabled={followerPlatform === "all"}
+                        className="w-full md:w-[200px]"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

@@ -70,6 +70,8 @@ const Influencers = () => {
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const navigate = useNavigate();
   const [selectedLanguage, setSelectedLanguage] = useState("all");
+  const [followerPlatform, setFollowerPlatform] = useState("all");
+  const [minPlatformFollowers, setMinPlatformFollowers] = useState("");
 
   const platforms = ["All", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch"];
   const categories = [
@@ -216,13 +218,16 @@ const Influencers = () => {
   };
 
   const hasActiveAdvancedFilters = ageRange[0] > 18 || ageRange[1] < 65 || 
-    selectedGenders.length > 0 || selectedEthnicities.length > 0 || selectedLanguage !== "all";
+    selectedGenders.length > 0 || selectedEthnicities.length > 0 || selectedLanguage !== "all" ||
+    (followerPlatform !== "all" && minPlatformFollowers !== "");
 
   const clearAdvancedFilters = () => {
     setAgeRange([18, 65]);
     setSelectedGenders([]);
     setSelectedEthnicities([]);
     setSelectedLanguage("all");
+    setFollowerPlatform("all");
+    setMinPlatformFollowers("");
   };
 
   const filteredCreators = creators.filter((creator) => {
@@ -262,6 +267,17 @@ const Influencers = () => {
         const matchesLanguage = creator.primary_language === selectedLanguage || 
           (creator.secondary_languages && creator.secondary_languages.includes(selectedLanguage));
         matchesAdvanced = matchesAdvanced && matchesLanguage;
+      }
+
+      // Platform-specific follower filter
+      if (followerPlatform !== "all" && minPlatformFollowers !== "") {
+        const minCount = parseInt(minPlatformFollowers);
+        if (!isNaN(minCount)) {
+          const platformAccount = creator.social_accounts.find(
+            acc => acc.platform.toLowerCase() === followerPlatform.toLowerCase()
+          );
+          matchesAdvanced = matchesAdvanced && !!platformAccount && platformAccount.follower_count >= minCount;
+        }
       }
     }
 
@@ -483,6 +499,42 @@ const Influencers = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    <Separator />
+
+                    {/* Platform-Specific Followers */}
+                    <div className="space-y-3">
+                      <Label className="text-base font-semibold">Followers by Platform</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Filter creators by minimum followers on a specific platform
+                      </p>
+                      <div className="flex flex-col md:flex-row gap-3">
+                        <Select value={followerPlatform} onValueChange={(value) => {
+                          setFollowerPlatform(value);
+                          if (value === "all") setMinPlatformFollowers("");
+                        }}>
+                          <SelectTrigger className="w-full md:w-[200px]">
+                            <SelectValue placeholder="Select platform" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Platforms</SelectItem>
+                            <SelectItem value="instagram">Instagram</SelectItem>
+                            <SelectItem value="tiktok">TikTok</SelectItem>
+                            <SelectItem value="youtube">YouTube</SelectItem>
+                            <SelectItem value="twitter">Twitter</SelectItem>
+                            <SelectItem value="twitch">Twitch</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="number"
+                          placeholder="Min followers (e.g., 10000)"
+                          value={minPlatformFollowers}
+                          onChange={(e) => setMinPlatformFollowers(e.target.value)}
+                          disabled={followerPlatform === "all"}
+                          className="w-full md:w-[200px]"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
