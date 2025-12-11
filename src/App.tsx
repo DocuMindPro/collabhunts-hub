@@ -31,6 +31,7 @@ import KnowledgeBaseCategory from "./pages/KnowledgeBaseCategory";
 import KnowledgeBaseArticle from "./pages/KnowledgeBaseArticle";
 import WhatsNew from "./pages/WhatsNew";
 import Changelog from "./pages/Changelog";
+import Advertising from "./pages/Advertising";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorProtectedRoute from "./components/CreatorProtectedRoute";
@@ -136,6 +137,7 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            <Route path="/advertising" element={<Advertising />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
