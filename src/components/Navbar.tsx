@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Menu, Shield, LogOut, LayoutDashboard, ChevronDown, ChevronUp, BookOpen, Sparkles,
-  BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Megaphone, Wallet, Users, CreditCard, Crown
+  BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Megaphone, Wallet, Users, CreditCard, Crown, Zap
 } from "lucide-react";
 import Notifications from "@/components/Notifications";
+import NavbarUpgradeBadge from "@/components/NavbarUpgradeBadge";
 import { useState, useEffect } from "react";
 import {
   Sheet,
@@ -208,6 +209,8 @@ const Navbar = () => {
                   <BookOpen className="h-4 w-4" />
                 </Link>
                 <Notifications />
+                {/* Upgrade badge for brands on free tier */}
+                {hasBrandProfile && <NavbarUpgradeBadge />}
                 {isAdmin && (
                   <Link to="/admin">
                     <Button variant="outline" size="sm" className="gap-2">
