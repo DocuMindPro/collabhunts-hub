@@ -69,6 +69,41 @@ const pageUrlMap: Record<string, string> = {
   all: "/",
 };
 
+// Suggested pricing for each placement (monthly)
+const placementPricing: Record<string, { min: number; max: number; tier: 'premium' | 'high' | 'mid' | 'low'; reason: string }> = {
+  // Premium Tier - $800-2000+/mo
+  "home_hero_banner": { min: 1500, max: 2500, tier: 'premium', reason: "First thing every visitor sees, highest traffic" },
+  "home_hero_sidebar": { min: 800, max: 1200, tier: 'premium', reason: "Prime above-fold position on homepage" },
+  "influencers_top_banner": { min: 1000, max: 1800, tier: 'premium', reason: "High-intent brand traffic, top of search" },
+  
+  // High Tier - $400-800/mo
+  "influencers_mid_banner": { min: 500, max: 900, tier: 'high', reason: "Mid-scroll visibility, engaged users" },
+  "influencers_sidebar_1": { min: 400, max: 700, tier: 'high', reason: "Sticky sidebar, visible during browsing" },
+  "influencers_sidebar_2": { min: 350, max: 600, tier: 'high', reason: "Secondary sidebar, good engagement" },
+  "home_featured_1": { min: 400, max: 700, tier: 'high', reason: "Featured section, high homepage visibility" },
+  "home_featured_2": { min: 350, max: 600, tier: 'high', reason: "Featured section, homepage visibility" },
+  "home_featured_3": { min: 300, max: 500, tier: 'high', reason: "Featured section, homepage visibility" },
+  
+  // Mid Tier - $150-400/mo
+  "brand_cta_banner": { min: 200, max: 400, tier: 'mid', reason: "Brand landing page, targeted audience" },
+  "creator_cta_banner": { min: 200, max: 400, tier: 'mid', reason: "Creator landing page, targeted audience" },
+  "home_bottom_banner": { min: 150, max: 300, tier: 'mid', reason: "Bottom of homepage, lower visibility" },
+  "influencers_bottom_banner": { min: 200, max: 350, tier: 'mid', reason: "Bottom of results, scroll completion" },
+  
+  // Low Tier - $50-150/mo
+  "campaigns_sidebar": { min: 75, max: 150, tier: 'low', reason: "Niche page, creator-only traffic" },
+  "campaigns_bottom": { min: 50, max: 100, tier: 'low', reason: "Bottom of niche page, limited views" },
+};
+
+const getTierColor = (tier: 'premium' | 'high' | 'mid' | 'low') => {
+  switch (tier) {
+    case 'premium': return 'text-amber-600 bg-amber-50';
+    case 'high': return 'text-green-600 bg-green-50';
+    case 'mid': return 'text-blue-600 bg-blue-50';
+    case 'low': return 'text-muted-foreground bg-muted';
+  }
+};
+
 interface AdPlacement {
   id: string;
   placement_id: string;
@@ -542,6 +577,7 @@ const AdminAdsTab = () => {
             <TableRow>
               <TableHead>Placement</TableHead>
               <TableHead>Page</TableHead>
+              <TableHead>Suggested Price</TableHead>
               <TableHead>Advertiser</TableHead>
               <TableHead>Preview</TableHead>
               <TableHead>Status</TableHead>
@@ -552,13 +588,13 @@ const AdminAdsTab = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   Loading placements...
                 </TableCell>
               </TableRow>
             ) : filteredPlacements.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No placements found
                 </TableCell>
               </TableRow>
@@ -566,6 +602,7 @@ const AdminAdsTab = () => {
               filteredPlacements.map((ad) => {
                 const status = getAdStatus(ad);
                 const hasData = ad.advertiser_name || ad.image_url;
+                const pricing = placementPricing[ad.placement_id];
                 
                 return (
                   <TableRow key={ad.id}>
@@ -588,6 +625,20 @@ const AdminAdsTab = () => {
                           <MapPin className="h-3.5 w-3.5" />
                         </a>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {pricing ? (
+                        <div className="space-y-1">
+                          <div className={`text-xs font-medium px-2 py-0.5 rounded-full inline-block ${getTierColor(pricing.tier)}`}>
+                            ${pricing.min}-${pricing.max}/mo
+                          </div>
+                          <p className="text-xs text-muted-foreground max-w-[150px]" title={pricing.reason}>
+                            {pricing.reason}
+                          </p>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Not set</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       {ad.advertiser_name ? (
