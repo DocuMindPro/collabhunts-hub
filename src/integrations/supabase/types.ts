@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_placements: {
+        Row: {
+          advertiser_name: string | null
+          advertiser_type: string | null
+          created_at: string | null
+          created_by: string | null
+          end_date: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          link_type: string | null
+          link_url: string | null
+          notes: string | null
+          page: string
+          placement_id: string
+          placement_name: string
+          position: string
+          start_date: string | null
+          target_creator_profile_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          advertiser_name?: string | null
+          advertiser_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link_type?: string | null
+          link_url?: string | null
+          notes?: string | null
+          page: string
+          placement_id: string
+          placement_name: string
+          position: string
+          start_date?: string | null
+          target_creator_profile_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          advertiser_name?: string | null
+          advertiser_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link_type?: string | null
+          link_url?: string | null
+          notes?: string | null
+          page?: string
+          placement_id?: string
+          placement_name?: string
+          position?: string
+          start_date?: string | null
+          target_creator_profile_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_placements_target_creator_profile_id_fkey"
+            columns: ["target_creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backup_history: {
         Row: {
           backup_type: string

@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone, X, Gavel, BookOpen, BadgeCheck } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone, X, Gavel, BookOpen, BadgeCheck, ImageIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AdminBrandSubscriptionsTab from "@/components/brand-dashboard/AdminBrandSubscriptionsTab";
 import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
@@ -28,6 +28,7 @@ import AdminBrandsTab from "@/components/admin/AdminBrandsTab";
 import AdminDisputesTab from "@/components/admin/AdminDisputesTab";
 import AdminPlatformManualTab from "@/components/admin/AdminPlatformManualTab";
 import AdminVerificationsTab from "@/components/admin/AdminVerificationsTab";
+import AdminAdsTab from "@/components/admin/AdminAdsTab";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface Profile {
@@ -827,6 +828,10 @@ const Admin = () => {
                 <BadgeCheck className="h-4 w-4" />
                 <span className="hidden sm:inline">Verifications</span>
               </TabsTrigger>
+              <TabsTrigger value="ads" className="gap-2 shrink-0">
+                <ImageIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Ads</span>
+              </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -1360,6 +1365,11 @@ const Admin = () => {
             {/* Verifications Tab */}
             <TabsContent value="verifications">
               <AdminVerificationsTab />
+            </TabsContent>
+
+            {/* Ads Manager Tab */}
+            <TabsContent value="ads">
+              <AdminAdsTab />
             </TabsContent>
           </Tabs>
         </div>
