@@ -1,24 +1,25 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Check, X, Lock } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Pricing = () => {
   const plans = [
     {
       name: "Basic",
-      price: "Free",
-      period: "",
-      description: "Perfect for getting started",
+      price: "$39",
+      period: "/mo",
+      description: "Start connecting with creators",
       features: [
         { text: "Search influencers on the marketplace", included: true },
-        { text: "20% marketplace fee on bookings", included: true },
-        { text: "Chat & negotiate with creators", included: false, locked: true },
+        { text: "Chat & negotiate with creators", included: true },
+        { text: "Content Library with 10 GB storage", included: true },
+        { text: "15% marketplace fee on bookings", included: true },
         { text: "Post campaigns", included: false, locked: true },
         { text: "Advanced filters", included: false, locked: true },
         { text: "Save creators & add notes (CRM)", included: false, locked: true },
-        { text: "Content Library", included: false, locked: true },
+        { text: "Verified Business Badge", included: false, locked: true },
       ],
       cta: "Get Started",
       link: "/brand-signup",
@@ -31,11 +32,9 @@ const Pricing = () => {
       description: "For growing brands",
       features: [
         { text: "Everything in Basic", included: true },
-        { text: "Chat & negotiate with creators before hiring", included: true },
         { text: "Post 1 campaign per month", included: true },
         { text: "Advanced filters for age, ethnicity, language and more", included: true },
         { text: "Save creators & add private notes (CRM)", included: true },
-        { text: "Content Library with 10 GB storage", included: true },
         { text: "Verified Business Badge (upon approval)", included: true },
         { text: "15% marketplace fee on bookings", included: true },
         { text: "Priority support", included: false },
@@ -77,8 +76,11 @@ const Pricing = () => {
                 Influencer Marketing
               </span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-4">
               Choose the perfect plan for your brand's growth
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Not ready to commit? Sign up free to browse creators with 20% marketplace fee on bookings.
             </p>
           </div>
         </section>
@@ -129,7 +131,7 @@ const Pricing = () => {
                         ) : feature.locked ? (
                           <Lock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                         ) : (
-                          <X className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                          <Lock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                         )}
                         <span
                           className={
@@ -158,6 +160,18 @@ const Pricing = () => {
                   </Link>
                 </div>
               ))}
+            </div>
+
+            {/* Free tier note */}
+            <div className="mt-12 text-center">
+              <div className="inline-flex items-center gap-2 px-6 py-3 bg-muted rounded-full">
+                <span className="text-sm text-muted-foreground">
+                  <strong>No subscription?</strong> You can still browse creators and book with a 20% marketplace fee.
+                </span>
+                <Link to="/brand-signup" className="text-sm text-primary font-medium hover:underline">
+                  Sign up free →
+                </Link>
+              </div>
             </div>
           </div>
         </section>
