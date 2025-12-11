@@ -228,10 +228,7 @@ const BrandCampaignsTab = () => {
         {!canPostCampaigns ? (
           <UpgradePrompt feature="campaigns" inline />
         ) : campaignLimit !== Infinity && campaignsThisMonth >= campaignLimit ? (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Lock className="h-4 w-4" />
-            <span className="text-sm">Monthly limit reached</span>
-          </div>
+          <UpgradePrompt feature="unlimited_campaigns" inline targetTier="premium" />
         ) : (
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>

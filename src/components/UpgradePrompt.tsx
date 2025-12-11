@@ -1,13 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lock, Zap, Sparkles, MessageCircle, Users, Filter, BadgeCheck, FolderOpen } from "lucide-react";
+import { Lock, Zap, Sparkles, MessageCircle, Users, Filter, BadgeCheck, FolderOpen, Mail, HardDrive, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface UpgradePromptProps {
-  feature: "contact" | "campaigns" | "filters" | "crm" | "content_library" | "badge";
+  feature: "contact" | "campaigns" | "filters" | "crm" | "content_library" | "badge" | "unlimited_campaigns" | "more_storage" | "mass_message";
   className?: string;
   inline?: boolean;
+  targetTier?: "basic" | "pro" | "premium";
 }
 
 const featureMessages = {
@@ -52,13 +53,44 @@ const featureMessages = {
     cta: "Upgrade to Pro - $99/mo",
     icon: BadgeCheck,
     gradient: "from-amber-500/20 to-orange-500/20"
+  },
+  unlimited_campaigns: {
+    title: "Unlock Unlimited Campaigns",
+    description: "You've hit your monthly campaign limit! Upgrade to Premium ($199/mo) for unlimited campaigns and more.",
+    cta: "Upgrade to Premium - $199/mo",
+    icon: Crown,
+    gradient: "from-amber-500/20 to-yellow-500/20"
+  },
+  more_storage: {
+    title: "Need More Storage?",
+    description: "You're running low on storage! Upgrade to Premium ($199/mo) for 50 GB storage (vs 10 GB on Pro).",
+    cta: "Upgrade to Premium - $199/mo",
+    icon: HardDrive,
+    gradient: "from-purple-500/20 to-indigo-500/20"
+  },
+  mass_message: {
+    title: "Unlock Mass Messaging",
+    description: "Send messages to multiple creators at once. Pro includes 50/day, Premium includes 100/day.",
+    cta: "Upgrade to Pro - $99/mo",
+    icon: Mail,
+    gradient: "from-teal-500/20 to-cyan-500/20"
   }
 };
 
-const UpgradePrompt = ({ feature, className = "", inline = false }: UpgradePromptProps) => {
+const UpgradePrompt = ({ feature, className = "", inline = false, targetTier }: UpgradePromptProps) => {
   const navigate = useNavigate();
   const message = featureMessages[feature];
   const Icon = message.icon;
+
+  // Override CTA text based on target tier
+  let ctaText = message.cta;
+  if (targetTier === "premium") {
+    ctaText = "Upgrade to Premium - $199/mo";
+  } else if (targetTier === "pro") {
+    ctaText = "Upgrade to Pro - $99/mo";
+  } else if (targetTier === "basic") {
+    ctaText = "Upgrade to Basic - $39/mo";
+  }
 
   if (inline) {
     return (
@@ -107,7 +139,7 @@ const UpgradePrompt = ({ feature, className = "", inline = false }: UpgradePromp
           className="gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
         >
           <Zap className="h-4 w-4" />
-          {message.cta}
+          {ctaText}
         </Button>
       </CardContent>
     </Card>
