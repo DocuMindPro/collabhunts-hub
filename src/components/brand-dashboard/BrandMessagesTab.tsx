@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useLayoutEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -84,7 +84,7 @@ const BrandMessagesTab = () => {
               if (exists) return prev;
               return [...prev, payload.new as Message];
             });
-            setTimeout(() => scrollToBottom(), 100);
+            
           }
           // Refresh conversation list for unread counts
           fetchConversations();
@@ -103,36 +103,6 @@ const BrandMessagesTab = () => {
     }
   }, [selectedConversation]);
 
-  const scrollToBottom = (immediate = false) => {
-    const doScroll = () => {
-      if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-      }
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
-    };
-
-    if (immediate) {
-      doScroll();
-    } else {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          doScroll();
-        });
-      });
-    }
-  };
-
-  useLayoutEffect(() => {
-    if (messages.length > 0) {
-      scrollToBottom(true);
-      const timers = [
-        setTimeout(() => scrollToBottom(true), 50),
-        setTimeout(() => scrollToBottom(true), 200),
-        setTimeout(() => scrollToBottom(true), 500),
-      ];
-      return () => timers.forEach(clearTimeout);
-    }
-  }, [messages]);
 
   const fetchConversations = async () => {
     try {
@@ -252,7 +222,6 @@ const BrandMessagesTab = () => {
     setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
     setTyping(false);
-    setTimeout(() => scrollToBottom(), 50);
 
     try {
       const { error } = await supabase.from("messages").insert({
@@ -444,8 +413,9 @@ const BrandMessagesTab = () => {
         {/* Messages */}
         <div 
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/30"
+          className="flex-1 overflow-y-auto flex flex-col-reverse bg-muted/30"
         >
+          <div className="p-4 space-y-4">
           {messageGroups.map((group, groupIndex) => (
             <div key={groupIndex}>
               <div className="flex justify-center mb-4">
@@ -498,6 +468,7 @@ const BrandMessagesTab = () => {
           ))}
           {isOtherUserTyping && <TypingIndicator />}
           <div ref={messagesEndRef} />
+          </div>
         </div>
 
         {/* Input */}

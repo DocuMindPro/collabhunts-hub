@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useLayoutEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -64,7 +64,6 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
               if (exists) return prev;
               return [...prev, payload.new as Message];
             });
-            scrollToBottom();
           }
         )
         .subscribe();
@@ -114,36 +113,6 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
     }
   };
 
-  const scrollToBottom = (immediate = false) => {
-    const doScroll = () => {
-      if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-      }
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
-    };
-
-    if (immediate) {
-      doScroll();
-    } else {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          doScroll();
-        });
-      });
-    }
-  };
-
-  useLayoutEffect(() => {
-    if (messages.length > 0) {
-      scrollToBottom(true);
-      const timers = [
-        setTimeout(() => scrollToBottom(true), 50),
-        setTimeout(() => scrollToBottom(true), 200),
-        setTimeout(() => scrollToBottom(true), 500),
-      ];
-      return () => timers.forEach(clearTimeout);
-    }
-  }, [messages]);
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !conversationId || !userId) return;
@@ -161,7 +130,6 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
     setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
     setTyping(false);
-    scrollToBottom();
 
     try {
       const { error } = await supabase.from("messages").insert({
@@ -208,7 +176,7 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
             <>
               <div 
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto pr-4 mb-4"
+                className="flex-1 overflow-y-auto flex flex-col-reverse pr-4 mb-4"
               >
                 <div className="space-y-4 py-4">
                   {messages.length === 0 ? (
