@@ -9,6 +9,9 @@ import { toast } from "sonner";
 import { Send, MessageSquare, ArrowLeft, Circle } from "lucide-react";
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import TypingIndicator from "@/components/chat/TypingIndicator";
+import MessageReadReceipt from "@/components/chat/MessageReadReceipt";
 
 interface Conversation {
   id: string;
@@ -47,6 +50,7 @@ const MessagesTab = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const { isOtherUserTyping, setTyping } = useTypingIndicator(selectedConversation, userId);
 
   // Auto-select conversation from URL param
   useEffect(() => {
@@ -225,6 +229,7 @@ const MessagesTab = () => {
 
     setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
+    setTyping(false);
     setTimeout(() => scrollToBottom(), 50);
 
     try {
@@ -452,10 +457,11 @@ const MessagesTab = () => {
                         }`}
                       >
                         <p className="break-words text-sm">{msg.content}</p>
-                        <p className={`text-[10px] mt-1 ${
+                        <p className={`text-[10px] mt-1 flex items-center gap-1 ${
                           isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
                         }`}>
                           {format(new Date(msg.created_at), "HH:mm")}
+                          <MessageReadReceipt isOwn={isOwn} isRead={msg.is_read} />
                         </p>
                       </div>
                     </div>
@@ -464,6 +470,7 @@ const MessagesTab = () => {
               </div>
             </div>
           ))}
+          {isOtherUserTyping && <TypingIndicator />}
           <div ref={messagesEndRef} />
         </div>
 
@@ -471,7 +478,11 @@ const MessagesTab = () => {
           <div className="flex gap-2">
             <Input
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+                setTyping(e.target.value.length > 0);
+              }}
+              onBlur={() => setTyping(false)}
               placeholder="Type a message..."
               onKeyPress={(e) => e.key === "Enter" && sendMessage()}
               className="flex-1"
