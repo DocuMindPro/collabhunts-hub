@@ -312,7 +312,7 @@ const BrandMessagesTab = () => {
             <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-center">No conversations yet</p>
             <p className="text-sm text-muted-foreground text-center mt-1">
-              Contact creators to start messaging
+              Message creators to start a conversation
             </p>
           </div>
         ) : (
