@@ -108,7 +108,7 @@ const Influencers = () => {
         setHasBrandProfile(!!brandProfile);
         
         if (brandProfile) {
-          const subscription = await getBrandSubscription(brandProfile.id);
+          const subscription = await getBrandSubscription(user.id);
           setCurrentPlan(subscription?.plan_type || "none");
         }
       } else {
