@@ -12,6 +12,7 @@ import FloatingCard from "@/components/FloatingCard";
 import AnimatedSection from "@/components/AnimatedSection";
 import BrandMarquee from "@/components/BrandMarquee";
 import FloatingShapes from "@/components/FloatingShapes";
+import AdPlacement from "@/components/AdPlacement";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -209,6 +210,13 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Hero Banner Ad Placement */}
+      <section className="py-8 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <AdPlacement placementId="home_hero_banner" className="max-w-4xl mx-auto h-32 md:h-40" />
+        </div>
+      </section>
+
       {/* Brand Marquee Section */}
       <BrandMarquee />
 
@@ -255,7 +263,7 @@ const Index = () => {
       {/* CTA Sections */}
       <section className="py-20 gradient-accent animate-gradient-shift">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             <AnimatedSection animation="slide-left">
               <div className="bg-card/95 backdrop-blur p-8 rounded-2xl shadow-card hover:shadow-hover transition-shadow duration-300">
                 <h3 className="text-3xl font-heading font-bold mb-4">For Brands</h3>
@@ -320,6 +328,11 @@ const Index = () => {
                   </Link>
                 )}
               </div>
+            </AnimatedSection>
+
+            {/* CTA Ad Card */}
+            <AnimatedSection animation="fade-up" delay={200}>
+              <AdPlacement placementId="home_cta_card" className="h-full min-h-[200px]" />
             </AnimatedSection>
           </div>
         </div>

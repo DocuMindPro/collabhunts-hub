@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
+import AdPlacement from "@/components/AdPlacement";
 
 const Footer = () => {
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
@@ -194,7 +195,12 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-border">
+        {/* Footer Sponsors Section */}
+        <div className="mt-8 pt-8 border-t border-border">
+          <AdPlacement placementId="footer_sponsors" className="max-w-2xl mx-auto h-20" showAdvertiseHere={false} />
+        </div>
+
+        <div className="mt-8 pt-8 border-t border-border">
           <p className="text-center text-sm text-muted-foreground">
             © {new Date().getFullYear()} CollabHunts. All rights reserved.
           </p>

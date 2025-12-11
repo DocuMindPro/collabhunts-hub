@@ -42,8 +42,19 @@ import {
   XCircle,
   Calendar,
   Upload,
-  Loader2
+  Loader2,
+  MapPin
 } from "lucide-react";
+
+// URL mapping for each page
+const pageUrlMap: Record<string, string> = {
+  home: "/",
+  creator: "/creator",
+  brand: "/brand",
+  influencers: "/influencers",
+  campaigns: "/campaigns",
+  all: "/",
+};
 
 interface AdPlacement {
   id: string;
@@ -381,7 +392,18 @@ const AdminAdsTab = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{ad.page}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{ad.page}</Badge>
+                      <a 
+                        href={pageUrlMap[ad.page] || "/"} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        title="View on page"
+                        className="text-muted-foreground hover:text-primary"
+                      >
+                        <MapPin className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
                   </TableCell>
                   <TableCell>
                     {ad.advertiser_name ? (

@@ -23,6 +23,7 @@ import {
 import UpgradePrompt from "@/components/UpgradePrompt";
 import UpgradeBanner from "@/components/UpgradeBanner";
 import { userHasAdvancedFilters, getBrandSubscription } from "@/lib/subscription-utils";
+import AdPlacement from "@/components/AdPlacement";
 
 interface CreatorWithDetails {
   id: string;
@@ -587,9 +588,14 @@ const Influencers = () => {
             </div>
           ) : (
             <>
+              {/* Sidebar Ad for Desktop */}
+              <div className="hidden lg:block mb-6">
+                <AdPlacement placementId="influencers_sidebar" className="h-48" />
+              </div>
+
               {/* Collabstr-style Grid - 4 columns, taller cards */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {filteredCreators.map((creator) => {
+                {filteredCreators.slice(0, 8).map((creator) => {
                   const mainPlatform = getMainPlatform(creator.social_accounts);
                   const lowestPrice = getLowestPrice(creator.services);
                   const PlatformIcon = getPlatformIcon(mainPlatform.platform);
@@ -649,6 +655,172 @@ const Influencers = () => {
                         </div>
 
                         {/* Price & Location Bar */}
+                        <div className="p-4 flex items-center justify-between">
+                          <div>
+                            {lowestPrice > 0 ? (
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-xl font-heading font-bold">
+                                  ${(lowestPrice / 100).toFixed(0)}
+                                </span>
+                                <span className="text-xs text-muted-foreground">+</span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">Contact</span>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground truncate max-w-[100px]">
+                            {creator.location_country || "—"}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+
+                {/* Inline Ad 1 - After first 8 cards */}
+                {filteredCreators.length > 8 && (
+                  <div className="col-span-2 md:col-span-3 lg:col-span-4">
+                    <AdPlacement placementId="influencers_inline_1" className="h-24 md:h-32" />
+                  </div>
+                )}
+
+                {/* Rest of the creators */}
+                {filteredCreators.slice(8, 16).map((creator) => {
+                  const mainPlatform = getMainPlatform(creator.social_accounts);
+                  const lowestPrice = getLowestPrice(creator.services);
+                  const PlatformIcon = getPlatformIcon(mainPlatform.platform);
+
+                  return (
+                    <Link
+                      key={creator.id}
+                      to={`/creator/${creator.id}`}
+                      className="group block"
+                    >
+                      <div className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-all duration-300 hover:-translate-y-1">
+                        <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+                          {!failedImages.has(creator.id) && !loadedImages.has(creator.id) && (
+                            <Skeleton className="absolute inset-0 w-full h-full" />
+                          )}
+                          
+                          {!failedImages.has(creator.id) && loadedImages.has(creator.id) ? (
+                            <img 
+                              src={creator.profile_image_url!} 
+                              alt={creator.display_name}
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
+                            />
+                          ) : failedImages.has(creator.id) ? (
+                            <div className="absolute inset-0 bg-gradient-accent flex items-center justify-center">
+                              <span className="text-7xl font-heading font-bold text-white/30">
+                                {creator.display_name.charAt(0)}
+                              </span>
+                            </div>
+                          ) : null}
+                          
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          
+                          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+                            <PlatformIcon className="h-3.5 w-3.5" />
+                            <span>{formatFollowers(mainPlatform.followers)}</span>
+                          </div>
+
+                          <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium">
+                            <Star className="h-3 w-3 fill-primary text-primary" />
+                            <span>5.0</span>
+                          </div>
+
+                          <div className="absolute bottom-0 left-0 right-0 p-4">
+                            <h3 className="font-heading font-semibold text-lg text-white mb-0.5 line-clamp-1">
+                              {creator.display_name}
+                            </h3>
+                            <p className="text-sm text-white/80 line-clamp-1">
+                              {creator.categories[0] || "Content Creator"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="p-4 flex items-center justify-between">
+                          <div>
+                            {lowestPrice > 0 ? (
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-xl font-heading font-bold">
+                                  ${(lowestPrice / 100).toFixed(0)}
+                                </span>
+                                <span className="text-xs text-muted-foreground">+</span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">Contact</span>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground truncate max-w-[100px]">
+                            {creator.location_country || "—"}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+
+                {/* Inline Ad 2 - After 16 cards */}
+                {filteredCreators.length > 16 && (
+                  <div className="col-span-2 md:col-span-3 lg:col-span-4">
+                    <AdPlacement placementId="influencers_inline_2" className="h-24 md:h-32" />
+                  </div>
+                )}
+
+                {/* Remaining creators */}
+                {filteredCreators.slice(16).map((creator) => {
+                  const mainPlatform = getMainPlatform(creator.social_accounts);
+                  const lowestPrice = getLowestPrice(creator.services);
+                  const PlatformIcon = getPlatformIcon(mainPlatform.platform);
+
+                  return (
+                    <Link
+                      key={creator.id}
+                      to={`/creator/${creator.id}`}
+                      className="group block"
+                    >
+                      <div className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-all duration-300 hover:-translate-y-1">
+                        <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+                          {!failedImages.has(creator.id) && !loadedImages.has(creator.id) && (
+                            <Skeleton className="absolute inset-0 w-full h-full" />
+                          )}
+                          
+                          {!failedImages.has(creator.id) && loadedImages.has(creator.id) ? (
+                            <img 
+                              src={creator.profile_image_url!} 
+                              alt={creator.display_name}
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
+                            />
+                          ) : failedImages.has(creator.id) ? (
+                            <div className="absolute inset-0 bg-gradient-accent flex items-center justify-center">
+                              <span className="text-7xl font-heading font-bold text-white/30">
+                                {creator.display_name.charAt(0)}
+                              </span>
+                            </div>
+                          ) : null}
+                          
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          
+                          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+                            <PlatformIcon className="h-3.5 w-3.5" />
+                            <span>{formatFollowers(mainPlatform.followers)}</span>
+                          </div>
+
+                          <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium">
+                            <Star className="h-3 w-3 fill-primary text-primary" />
+                            <span>5.0</span>
+                          </div>
+
+                          <div className="absolute bottom-0 left-0 right-0 p-4">
+                            <h3 className="font-heading font-semibold text-lg text-white mb-0.5 line-clamp-1">
+                              {creator.display_name}
+                            </h3>
+                            <p className="text-sm text-white/80 line-clamp-1">
+                              {creator.categories[0] || "Content Creator"}
+                            </p>
+                          </div>
+                        </div>
+
                         <div className="p-4 flex items-center justify-between">
                           <div>
                             {lowestPrice > 0 ? (

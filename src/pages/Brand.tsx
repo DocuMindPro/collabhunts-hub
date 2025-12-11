@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-brand-page.jpg";
+import AdPlacement from "@/components/AdPlacement";
 
 const Brand = () => {
   const [user, setUser] = useState<any>(null);
@@ -197,19 +198,26 @@ const Brand = () => {
             ))}
           </div>
 
+          {/* Testimonial / Sponsored Section */}
           <div className="bg-muted/50 rounded-2xl p-8 md:p-12">
-            <div className="max-w-3xl mx-auto text-center">
-              <p className="text-xl text-muted-foreground mb-6">
-                "CollabHunts made finding the perfect influencers incredibly easy. The platform saved us hours of research and negotiations. Highly recommended!"
-              </p>
-              <div className="flex items-center justify-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-accent" />
-                <div className="text-left">
-                  <p className="font-semibold">Sarah Johnson</p>
-                  <p className="text-sm text-muted-foreground">Marketing Director, TechCorp</p>
+            <AdPlacement 
+              placementId="brand_testimonial" 
+              className="max-w-3xl mx-auto"
+              fallback={
+                <div className="max-w-3xl mx-auto text-center">
+                  <p className="text-xl text-muted-foreground mb-6">
+                    "CollabHunts made finding the perfect influencers incredibly easy. The platform saved us hours of research and negotiations. Highly recommended!"
+                  </p>
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-accent" />
+                    <div className="text-left">
+                      <p className="font-semibold">Sarah Johnson</p>
+                      <p className="text-sm text-muted-foreground">Marketing Director, TechCorp</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              }
+            />
           </div>
         </div>
       </section>
