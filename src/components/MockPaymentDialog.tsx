@@ -14,16 +14,27 @@ import { CreditCard, Lock, CheckCircle, AlertCircle } from "lucide-react";
 import { confirmMockPayment, type MockCardDetails } from "@/lib/stripe-mock";
 import { Link } from "react-router-dom";
 
+interface BookingOrderSummary {
+  type: 'booking';
+  serviceType: string;
+  priceCents: number;
+  platformFeeCents: number;
+  deliveryDays: number;
+}
+
+interface SubscriptionOrderSummary {
+  type: 'subscription';
+  planName: string;
+  priceCents: number;
+}
+
+type OrderSummary = BookingOrderSummary | SubscriptionOrderSummary;
+
 interface MockPaymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (paymentId: string) => void;
-  orderSummary: {
-    serviceType: string;
-    priceCents: number;
-    platformFeeCents: number;
-    deliveryDays: number;
-  };
+  orderSummary: OrderSummary;
 }
 
 const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPaymentDialogProps) => {
@@ -36,6 +47,9 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
   const [errorMessage, setErrorMessage] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [autoReleaseAccepted, setAutoReleaseAccepted] = useState(false);
+
+  const isBooking = orderSummary.type === 'booking';
+  const isSubscription = orderSummary.type === 'subscription';
 
   const formatCardNumber = (value: string) => {
     const numbers = value.replace(/\D/g, "");
@@ -63,7 +77,9 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
     setCvv(e.target.value.replace(/\D/g, "").substr(0, 3));
   };
 
-  const totalCents = orderSummary.priceCents + orderSummary.platformFeeCents;
+  const totalCents = isBooking 
+    ? orderSummary.priceCents + orderSummary.platformFeeCents 
+    : orderSummary.priceCents;
 
   const handlePayment = async () => {
     if (!cardNumber || !expiry || !cvv || !cardholderName) {
@@ -71,7 +87,8 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
       return;
     }
 
-    if (!termsAccepted || !autoReleaseAccepted) {
+    // For bookings, require both checkboxes. For subscriptions, only terms
+    if (!termsAccepted || (isBooking && !autoReleaseAccepted)) {
       setErrorMessage("Please accept all terms and conditions");
       return;
     }
@@ -145,29 +162,48 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
             </div>
             <div>
               <h3 className="font-semibold text-lg">Payment Successful!</h3>
-              <p className="text-sm text-muted-foreground">Your booking request is being processed...</p>
+              <p className="text-sm text-muted-foreground">
+                {isSubscription 
+                  ? "Your subscription is now active!" 
+                  : "Your booking request is being processed..."}
+              </p>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             {/* Order Summary */}
             <div className="bg-muted p-4 rounded-lg space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Service:</span>
-                <span className="capitalize">{orderSummary.serviceType.replace(/_/g, " ")}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Delivery:</span>
-                <span>{orderSummary.deliveryDays} days</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Service Price:</span>
-                <span>${(orderSummary.priceCents / 100).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Platform Fee:</span>
-                <span>${(orderSummary.platformFeeCents / 100).toFixed(2)}</span>
-              </div>
+              {isBooking ? (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Service:</span>
+                    <span className="capitalize">{orderSummary.serviceType.replace(/_/g, " ")}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Delivery:</span>
+                    <span>{orderSummary.deliveryDays} days</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Service Price:</span>
+                    <span>${(orderSummary.priceCents / 100).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Platform Fee:</span>
+                    <span>${(orderSummary.platformFeeCents / 100).toFixed(2)}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Plan:</span>
+                    <span className="font-medium">{orderSummary.planName}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Billing:</span>
+                    <span>Monthly</span>
+                  </div>
+                </>
+              )}
               <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
                 <span>Total:</span>
                 <span className="text-primary">${(totalCents / 100).toFixed(2)}</span>
@@ -257,17 +293,19 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
                   </Link>
                 </label>
               </div>
-              <div className="flex items-start gap-3">
-                <Checkbox 
-                  id="auto-release" 
-                  checked={autoReleaseAccepted} 
-                  onCheckedChange={(checked) => setAutoReleaseAccepted(checked === true)}
-                  disabled={processing}
-                />
-                <label htmlFor="auto-release" className="text-xs leading-tight cursor-pointer">
-                  I understand payment will auto-release to the creator after 72 hours if I don't approve or dispute the deliverables
-                </label>
-              </div>
+              {isBooking && (
+                <div className="flex items-start gap-3">
+                  <Checkbox 
+                    id="auto-release" 
+                    checked={autoReleaseAccepted} 
+                    onCheckedChange={(checked) => setAutoReleaseAccepted(checked === true)}
+                    disabled={processing}
+                  />
+                  <label htmlFor="auto-release" className="text-xs leading-tight cursor-pointer">
+                    I understand payment will auto-release to the creator after 72 hours if I don't approve or dispute the deliverables
+                  </label>
+                </div>
+              )}
             </div>
 
             {/* Test Card Info */}

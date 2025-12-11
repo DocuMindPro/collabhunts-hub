@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Check, Crown, Zap, Shield, Lock, MessageCircle, Filter, Megaphone, Database, BadgeCheck } from "lucide-react";
-import { SUBSCRIPTION_PLANS, PlanType, formatPrice, createCheckoutSession, cancelSubscription } from "@/lib/stripe-mock";
+import { SUBSCRIPTION_PLANS, PlanType, formatPrice, cancelSubscription } from "@/lib/stripe-mock";
 import { checkAndHandleExpiredSubscriptions } from "@/lib/subscription-utils";
 import BrandVerificationSection from "./BrandVerificationSection";
+import MockPaymentDialog from "@/components/MockPaymentDialog";
 
 interface Subscription {
   id: string;
@@ -22,6 +23,8 @@ const BrandSubscriptionTab = () => {
   const [brandProfileId, setBrandProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [selectedPlanType, setSelectedPlanType] = useState<PlanType | null>(null);
 
   useEffect(() => {
     fetchSubscription();
@@ -63,45 +66,48 @@ const BrandSubscriptionTab = () => {
     }
   };
 
-  const handleUpgrade = async (planType: PlanType) => {
-    if (!brandProfileId) return;
-    
+  const handleUpgrade = (planType: PlanType) => {
+    setSelectedPlanType(planType);
+    setShowPaymentDialog(true);
+  };
+
+  const handlePaymentSuccess = async (paymentId: string) => {
+    if (!brandProfileId || !selectedPlanType) return;
+
     setActionLoading(true);
     try {
-      const result = await createCheckoutSession(planType, brandProfileId);
+      // First, cancel any existing active subscriptions
+      const { error: cancelError } = await supabase
+        .from('brand_subscriptions')
+        .update({ status: 'canceled' })
+        .eq('brand_profile_id', brandProfileId)
+        .eq('status', 'active');
       
-      if (result.success) {
-        // First, cancel any existing active subscriptions
-        const { error: cancelError } = await supabase
-          .from('brand_subscriptions')
-          .update({ status: 'canceled' })
-          .eq('brand_profile_id', brandProfileId)
-          .eq('status', 'active');
-        
-        if (cancelError) {
-          console.error('Error canceling existing subscriptions:', cancelError);
-        }
-
-        // Create new subscription with 1 month period
-        const periodEnd = new Date();
-        periodEnd.setMonth(periodEnd.getMonth() + 1);
-
-        const { error } = await supabase
-          .from('brand_subscriptions')
-          .insert({
-            brand_profile_id: brandProfileId,
-            plan_type: planType,
-            status: 'active',
-            stripe_subscription_id: `sub_mock_${Date.now()}`,
-            stripe_customer_id: `cus_mock_${Date.now()}`,
-            current_period_end: periodEnd.toISOString(),
-          });
-
-        if (error) throw error;
-
-        toast.success(`Successfully subscribed to ${SUBSCRIPTION_PLANS[planType].name} plan! Valid for 1 month.`);
-        fetchSubscription();
+      if (cancelError) {
+        console.error('Error canceling existing subscriptions:', cancelError);
       }
+
+      // Create new subscription with 1 month period
+      const periodEnd = new Date();
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+      const { error } = await supabase
+        .from('brand_subscriptions')
+        .insert({
+          brand_profile_id: brandProfileId,
+          plan_type: selectedPlanType,
+          status: 'active',
+          stripe_subscription_id: `sub_mock_${Date.now()}`,
+          stripe_customer_id: `cus_mock_${Date.now()}`,
+          current_period_end: periodEnd.toISOString(),
+        });
+
+      if (error) throw error;
+
+      toast.success(`Successfully subscribed to ${SUBSCRIPTION_PLANS[selectedPlanType].name} plan! Valid for 1 month.`);
+      setShowPaymentDialog(false);
+      setSelectedPlanType(null);
+      fetchSubscription();
     } catch (error) {
       console.error('Error upgrading subscription:', error);
       toast.error('Failed to upgrade subscription');
@@ -341,6 +347,23 @@ const BrandSubscriptionTab = () => {
           );
         })}
       </div>
+
+      {/* Payment Dialog for Subscription */}
+      {selectedPlanType && (
+        <MockPaymentDialog
+          isOpen={showPaymentDialog}
+          onClose={() => {
+            setShowPaymentDialog(false);
+            setSelectedPlanType(null);
+          }}
+          onSuccess={handlePaymentSuccess}
+          orderSummary={{
+            type: 'subscription',
+            planName: SUBSCRIPTION_PLANS[selectedPlanType].name,
+            priceCents: SUBSCRIPTION_PLANS[selectedPlanType].price,
+          }}
+        />
+      )}
     </div>
   );
 };

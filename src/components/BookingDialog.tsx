@@ -89,8 +89,11 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId }: BookingDi
         .eq("status", "active")
         .maybeSingle();
 
-      const planType = (subscription?.plan_type || "basic") as PlanType;
-      setCanContact(SUBSCRIPTION_PLANS[planType].canContactCreators);
+      const planType = (subscription?.plan_type || "none") as PlanType;
+      
+      // All tiers can book (even 'none'), they just need to pay
+      // canContact just determines if they can message freely
+      setCanContact(SUBSCRIPTION_PLANS[planType].canBookCreators);
       
       // Calculate platform fee for display
       if (service) {
@@ -164,12 +167,12 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId }: BookingDi
         .eq("status", "active")
         .maybeSingle();
 
-      const planType = (subscription?.plan_type || "basic") as PlanType;
+      const planType = (subscription?.plan_type || "none") as PlanType;
       
-      // Double-check subscription allows contact (unless admin)
-      if (!adminCheck && !SUBSCRIPTION_PLANS[planType].canContactCreators) {
-        toast.error("Please upgrade your subscription to book services");
-        navigate("/brand-dashboard?tab=subscription");
+      // All tiers can book - we just need to check they have a brand profile
+      // canBookCreators is true for all plans including 'none'
+      if (!SUBSCRIPTION_PLANS[planType].canBookCreators) {
+        toast.error("Booking is not available for your plan");
         return;
       }
 
@@ -301,6 +304,7 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId }: BookingDi
         onClose={() => setShowPaymentDialog(false)}
         onSuccess={handlePaymentSuccess}
         orderSummary={{
+          type: 'booking',
           serviceType: service.service_type,
           priceCents: service.price_cents,
           platformFeeCents: platformFeeCents,
