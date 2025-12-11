@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { PlanType, SUBSCRIPTION_PLANS } from "./stripe-mock";
 
+export type { PlanType } from "./stripe-mock";
+
 export interface BrandSubscription {
   id: string;
   plan_type: PlanType;
