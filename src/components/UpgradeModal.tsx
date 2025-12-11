@@ -6,8 +6,9 @@ import { useNavigate } from "react-router-dom";
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  feature: "chat" | "campaigns" | "crm" | "filters" | "badge" | "content_library" | "post_booking";
+  feature: "chat" | "campaigns" | "crm" | "filters" | "badge" | "content_library" | "post_booking" | "mass_message" | "unlimited_campaigns" | "more_storage";
   creatorName?: string;
+  currentPlan?: string;
 }
 
 const featureConfig = {
@@ -31,7 +32,7 @@ const featureConfig = {
     plan: "Pro",
     price: 99,
     benefits: [
-      "Post unlimited campaigns",
+      "Post 1 campaign per month",
       "Receive creator applications",
       "Advanced creator filters",
       "Verified business badge"
@@ -101,16 +102,63 @@ const featureConfig = {
       "Get notified of availability",
       "Track collaboration history"
     ]
+  },
+  mass_message: {
+    title: "Send Mass Messages",
+    description: "Reach multiple creators at once to find the perfect match for your campaigns.",
+    icon: MessageCircle,
+    plan: "Pro",
+    price: 99,
+    benefits: [
+      "Message up to 50 creators/day",
+      "Save message templates",
+      "Filter by criteria first",
+      "Track message history"
+    ]
+  },
+  unlimited_campaigns: {
+    title: "Unlock Unlimited Campaigns",
+    description: "Remove campaign limits and post as many campaigns as you need.",
+    icon: Users,
+    plan: "Premium",
+    price: 299,
+    benefits: [
+      "Post unlimited campaigns",
+      "50 GB content storage",
+      "100 mass messages/day",
+      "Priority support"
+    ]
+  },
+  more_storage: {
+    title: "Get More Storage",
+    description: "Running low on space? Upgrade to Premium for 5x more storage.",
+    icon: FolderOpen,
+    plan: "Premium",
+    price: 299,
+    benefits: [
+      "50 GB content storage",
+      "Unlimited campaigns",
+      "100 mass messages/day",
+      "Priority support"
+    ]
   }
 };
 
-const UpgradeModal = ({ isOpen, onClose, feature, creatorName }: UpgradeModalProps) => {
+const UpgradeModal = ({ isOpen, onClose, feature, creatorName, currentPlan }: UpgradeModalProps) => {
   const navigate = useNavigate();
   const config = featureConfig[feature];
 
   const handleUpgrade = () => {
     onClose();
     navigate('/brand-dashboard?tab=subscription');
+  };
+
+  // Show different button text based on current plan and target
+  const getButtonText = () => {
+    if (config.plan === "Premium" && currentPlan === "pro") {
+      return `Upgrade to Premium - $${config.price}/mo`;
+    }
+    return `Upgrade to ${config.plan} - $${config.price}/mo`;
   };
 
   return (
@@ -157,7 +205,7 @@ const UpgradeModal = ({ isOpen, onClose, feature, creatorName }: UpgradeModalPro
             className="w-full gap-2 bg-primary hover:bg-primary/90"
           >
             <Zap className="h-4 w-4" />
-            Upgrade to {config.plan} - ${config.price}/mo
+            {getButtonText()}
           </Button>
           <Button 
             variant="ghost" 

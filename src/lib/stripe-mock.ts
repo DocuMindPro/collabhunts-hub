@@ -14,6 +14,7 @@ export const SUBSCRIPTION_PLANS = {
     hasContentLibrary: false,
     storageLimit: 0, // 0 bytes - no access
     canRequestVerifiedBadge: false,
+    massMessageLimit: 0,
     features: [
       'Search influencers on the marketplace',
       'Book creators with 20% marketplace fee',
@@ -23,6 +24,7 @@ export const SUBSCRIPTION_PLANS = {
       'Post campaigns',
       'Advanced filters for age, language, and more',
       'Save creators & add notes (CRM)',
+      'Mass message creators',
       'Content Library',
       'Verified Business Badge',
     ]
@@ -39,6 +41,7 @@ export const SUBSCRIPTION_PLANS = {
     hasContentLibrary: true,
     storageLimit: 10 * 1024 * 1024 * 1024, // 10 GB
     canRequestVerifiedBadge: false,
+    massMessageLimit: 0,
     features: [
       'Search influencers on the marketplace',
       'Chat & negotiate with creators',
@@ -49,6 +52,7 @@ export const SUBSCRIPTION_PLANS = {
       'Post campaigns',
       'Advanced filters for age, language, and more',
       'Save creators & add notes (CRM)',
+      'Mass message creators',
       'Verified Business Badge',
     ]
   },
@@ -64,15 +68,21 @@ export const SUBSCRIPTION_PLANS = {
     hasContentLibrary: true,
     storageLimit: 10 * 1024 * 1024 * 1024, // 10 GB
     canRequestVerifiedBadge: true,
+    massMessageLimit: 50, // per day
     features: [
       'Everything in Basic',
       'Post 1 campaign per month',
       'Advanced filters for age, ethnicity, language and more',
       'Save creators & add private notes (CRM)',
+      'Mass message up to 50 creators/day',
       'Verified Business Badge (upon approval)',
       '15% marketplace fee on bookings',
     ],
-    lockedFeatures: []
+    lockedFeatures: [
+      'Unlimited campaigns',
+      '50 GB storage',
+      '100 mass messages/day',
+    ]
   },
   premium: {
     name: 'Premium',
@@ -86,10 +96,12 @@ export const SUBSCRIPTION_PLANS = {
     hasContentLibrary: true,
     storageLimit: 50 * 1024 * 1024 * 1024, // 50 GB
     canRequestVerifiedBadge: true,
+    massMessageLimit: 100, // per day
     features: [
       'Everything in Pro',
       'Post unlimited campaigns',
       'Content Library with 50 GB storage',
+      'Mass message up to 100 creators/day',
       '15% marketplace fee on bookings',
       'Priority customer support (Coming Soon)',
       'Dedicated account manager (Coming Soon)',
