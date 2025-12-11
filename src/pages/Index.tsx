@@ -21,52 +21,44 @@ const Index = () => {
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
 
   useEffect(() => {
-    const checkUserProfiles = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        
-        const { data: brandProfile } = await supabase
-          .from('brand_profiles')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-        
-        const { data: creatorProfile } = await supabase
-          .from('creator_profiles')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-        
-        setHasBrandProfile(!!brandProfile);
-        setHasCreatorProfile(!!creatorProfile);
-      }
+    const checkUserProfiles = async (userId: string) => {
+      const { data: brandProfile } = await supabase
+        .from('brand_profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      const { data: creatorProfile } = await supabase
+        .from('creator_profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      setHasBrandProfile(!!brandProfile);
+      setHasCreatorProfile(!!creatorProfile);
     };
 
-    checkUserProfiles();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Set up auth listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Index: Auth state changed:', event, session?.user?.email);
       if (session?.user) {
         setUser(session.user);
-        
-        const { data: brandProfile } = await supabase
-          .from('brand_profiles')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-        
-        const { data: creatorProfile } = await supabase
-          .from('creator_profiles')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-        
-        setHasBrandProfile(!!brandProfile);
-        setHasCreatorProfile(!!creatorProfile);
+        // Defer async calls to avoid deadlock
+        setTimeout(() => {
+          checkUserProfiles(session.user.id);
+        }, 0);
       } else {
         setUser(null);
         setHasBrandProfile(false);
         setHasCreatorProfile(false);
+      }
+    });
+
+    // THEN check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user);
+        checkUserProfiles(session.user.id);
       }
     });
 
