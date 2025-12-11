@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import { Calendar, DollarSign, Users, Search } from "lucide-react";
 import { formatPrice } from "@/lib/stripe-mock";
 import { toast } from "sonner";
+import AdPlacement from "@/components/AdPlacement";
 
 interface Campaign {
   id: string;
@@ -180,7 +181,12 @@ const Campaigns = () => {
                 <SelectItem value="youtube_video">YouTube Video</SelectItem>
                 <SelectItem value="ugc_content">UGC Content</SelectItem>
               </SelectContent>
-            </Select>
+          </Select>
+          </div>
+
+          {/* Campaigns Banner Ad */}
+          <div className="mb-8">
+            <AdPlacement placementId="campaigns_banner" className="h-24 md:h-32" />
           </div>
 
           {filteredCampaigns.length === 0 ? (
