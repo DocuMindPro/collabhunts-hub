@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Building2, CreditCard, Search, AlertCircle, CheckCircle } from "lucide-react";
 import { format, isPast } from "date-fns";
 import { SUBSCRIPTION_PLANS, PlanType } from "@/lib/stripe-mock";
+
 interface BrandSubscription {
   id: string;
   brand_profile_id: string;
@@ -189,11 +190,18 @@ const AdminBrandSubscriptionsTab = () => {
 
   const getPlanBadge = (planType: string) => {
     const colors: Record<string, string> = {
-      basic: "bg-gray-500",
+      none: "bg-gray-400",
+      basic: "bg-green-500",
       pro: "bg-blue-500",
       premium: "bg-purple-500"
     };
-    return <Badge className={colors[planType] || "bg-gray-500"}>{planType.toUpperCase()}</Badge>;
+    const labels: Record<string, string> = {
+      none: "FREE",
+      basic: "BASIC",
+      pro: "PRO",
+      premium: "PREMIUM"
+    };
+    return <Badge className={colors[planType] || "bg-gray-500"}>{labels[planType] || planType.toUpperCase()}</Badge>;
   };
 
   const getMarketplaceFee = (planType: string) => {
@@ -201,7 +209,7 @@ const AdminBrandSubscriptionsTab = () => {
     if (plan) {
       return `${(plan.marketplaceFee * 100).toFixed(0)}%`;
     }
-    return "20%"; // Default to Basic fee
+    return "20%"; // Default to none tier fee
   };
 
   if (loading) {
@@ -247,12 +255,12 @@ const AdminBrandSubscriptionsTab = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Premium Brands</CardTitle>
+            <CardTitle className="text-sm font-medium">Paid Brands</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {latestSubscriptionsPerBrand.filter(s => s.plan_type === "premium").length}
+              {latestSubscriptionsPerBrand.filter(s => s.plan_type !== "none").length}
             </div>
           </CardContent>
         </Card>

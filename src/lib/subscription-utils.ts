@@ -13,17 +13,17 @@ export interface BrandSubscription {
 export const checkAndHandleExpiredSubscriptions = async (brandProfileId: string): Promise<void> => {
   const now = new Date().toISOString();
   
-  // Find expired paid subscriptions (Pro/Premium that have passed their end date)
+  // Find expired paid subscriptions (non-none that have passed their end date)
   const { data: expiredSubs } = await supabase
     .from('brand_subscriptions')
     .select('*')
     .eq('brand_profile_id', brandProfileId)
     .eq('status', 'active')
-    .neq('plan_type', 'basic')
+    .neq('plan_type', 'none')
     .lt('current_period_end', now);
   
   if (expiredSubs && expiredSubs.length > 0) {
-    console.log(`Found ${expiredSubs.length} expired subscription(s), downgrading to basic...`);
+    console.log(`Found ${expiredSubs.length} expired subscription(s), downgrading to none...`);
     
     // Mark expired subscriptions as expired
     await supabase
@@ -31,27 +31,27 @@ export const checkAndHandleExpiredSubscriptions = async (brandProfileId: string)
       .update({ status: 'expired' })
       .in('id', expiredSubs.map(s => s.id));
     
-    // Check if there's already a basic subscription
-    const { data: existingBasic } = await supabase
+    // Check if there's already a 'none' subscription
+    const { data: existingNone } = await supabase
       .from('brand_subscriptions')
       .select('id')
       .eq('brand_profile_id', brandProfileId)
-      .eq('plan_type', 'basic')
+      .eq('plan_type', 'none')
       .eq('status', 'active')
       .maybeSingle();
     
-    // Only create new basic subscription if none exists
-    if (!existingBasic) {
-      const basicPeriodEnd = new Date();
-      basicPeriodEnd.setFullYear(basicPeriodEnd.getFullYear() + 1);
+    // Only create new 'none' subscription if none exists
+    if (!existingNone) {
+      const nonePeriodEnd = new Date();
+      nonePeriodEnd.setFullYear(nonePeriodEnd.getFullYear() + 1);
       
       await supabase
         .from('brand_subscriptions')
         .insert({
           brand_profile_id: brandProfileId,
-          plan_type: 'basic',
+          plan_type: 'none',
           status: 'active',
-          current_period_end: basicPeriodEnd.toISOString()
+          current_period_end: nonePeriodEnd.toISOString()
         });
     }
   }
@@ -80,13 +80,14 @@ export const getBrandSubscription = async (userId: string): Promise<BrandSubscri
     // Check for expired subscriptions first
     await checkAndHandleExpiredSubscriptions(brandProfile.id);
 
-    // Get active subscription (prefer non-basic if multiple exist)
+    // Get active subscription (prefer non-none if multiple exist)
+    // Order: premium > pro > basic > none
     const { data: subs } = await supabase
       .from('brand_subscriptions')
       .select('*')
       .eq('brand_profile_id', brandProfile.id)
       .eq('status', 'active')
-      .order('plan_type', { ascending: false }); // premium > pro > basic
+      .order('plan_type', { ascending: false }); // premium > pro > basic > none
 
     if (!subs || subs.length === 0) return null;
     
@@ -100,7 +101,7 @@ export const getBrandSubscription = async (userId: string): Promise<BrandSubscri
 
 export const getCurrentPlanType = async (userId: string): Promise<PlanType> => {
   const subscription = await getBrandSubscription(userId);
-  return (subscription?.plan_type as PlanType) || 'basic';
+  return (subscription?.plan_type as PlanType) || 'none';
 };
 
 export const canUserContactCreators = async (userId: string): Promise<boolean> => {
@@ -155,4 +156,9 @@ export const userHasAdvancedFilters = async (userId: string): Promise<boolean> =
 export const canUserUseCRM = async (userId: string): Promise<boolean> => {
   const planType = await getCurrentPlanType(userId);
   return SUBSCRIPTION_PLANS[planType].hasCRM;
+};
+
+export const canUserRequestVerifiedBadge = async (userId: string): Promise<boolean> => {
+  const planType = await getCurrentPlanType(userId);
+  return SUBSCRIPTION_PLANS[planType].canRequestVerifiedBadge;
 };

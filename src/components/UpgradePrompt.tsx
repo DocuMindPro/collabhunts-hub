@@ -4,7 +4,7 @@ import { Lock, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface UpgradePromptProps {
-  feature: "contact" | "campaigns" | "filters" | "crm" | "content_library";
+  feature: "contact" | "campaigns" | "filters" | "crm" | "content_library" | "badge";
   className?: string;
   inline?: boolean;
 }
@@ -12,27 +12,32 @@ interface UpgradePromptProps {
 const featureMessages = {
   contact: {
     title: "Upgrade to Contact Creators",
-    description: "Chat and negotiate with creators before hiring. Upgrade to Pro to unlock messaging.",
-    cta: "Upgrade to Pro - $99/mo"
+    description: "Chat and negotiate with creators before hiring. Subscribe to Basic ($39/mo) to unlock messaging.",
+    cta: "Upgrade to Basic - $39/mo"
   },
   campaigns: {
     title: "Upgrade to Post Campaigns",
-    description: "Post campaigns to attract creators. Upgrade to Pro for 1 campaign/month or Premium for unlimited.",
-    cta: "View Plans"
+    description: "Post campaigns to attract creators. Subscribe to Pro ($99/mo) for 1 campaign/month or Premium for unlimited.",
+    cta: "Upgrade to Pro - $99/mo"
   },
   filters: {
     title: "Unlock Advanced Filters",
-    description: "Filter creators by age, ethnicity, language and more. Upgrade to Pro to access advanced filters.",
+    description: "Filter creators by age, ethnicity, language and more. Subscribe to Pro ($99/mo) to access advanced filters.",
     cta: "Upgrade to Pro - $99/mo"
   },
   crm: {
     title: "Upgrade for Creator CRM",
-    description: "Save your favorite creators, organize them in folders, and add private notes. Upgrade to Pro to unlock.",
+    description: "Save your favorite creators, organize them in folders, and add private notes. Subscribe to Pro ($99/mo) to unlock.",
     cta: "Upgrade to Pro - $99/mo"
   },
   content_library: {
     title: "Upgrade for Content Library",
-    description: "Store your UGC content, track usage rights, and re-download files anytime. Pro includes 10 GB, Premium includes 50 GB.",
+    description: "Store your UGC content, track usage rights, and re-download files anytime. Basic includes 10 GB, Premium includes 50 GB.",
+    cta: "Upgrade to Basic - $39/mo"
+  },
+  badge: {
+    title: "Upgrade for Verified Badge",
+    description: "Get a verified business badge to build trust with creators. Subscribe to Pro ($99/mo) or Premium to apply for verification.",
     cta: "Upgrade to Pro - $99/mo"
   }
 };

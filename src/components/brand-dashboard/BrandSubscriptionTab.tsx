@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Check, Crown, Zap, Shield, Lock, MessageCircle, Filter, Megaphone } from "lucide-react";
+import { Check, Crown, Zap, Shield, Lock, MessageCircle, Filter, Megaphone, Database, BadgeCheck } from "lucide-react";
 import { SUBSCRIPTION_PLANS, PlanType, formatPrice, createCheckoutSession, cancelSubscription } from "@/lib/stripe-mock";
 import { checkAndHandleExpiredSubscriptions } from "@/lib/subscription-utils";
 import BrandVerificationSection from "./BrandVerificationSection";
@@ -45,13 +45,13 @@ const BrandSubscriptionTab = () => {
       // Check for expired subscriptions and handle them
       await checkAndHandleExpiredSubscriptions(brandProfile.id);
 
-      // Get active subscription (prefer non-basic if exists)
+      // Get active subscription (prefer non-none if exists)
       const { data: subs } = await supabase
         .from('brand_subscriptions')
         .select('*')
         .eq('brand_profile_id', brandProfile.id)
         .eq('status', 'active')
-        .order('plan_type', { ascending: false }); // premium > pro > basic
+        .order('plan_type', { ascending: false }); // premium > pro > basic > none
 
       // Return highest tier active subscription
       const sub = subs && subs.length > 0 ? subs[0] : null;
@@ -136,38 +136,48 @@ const BrandSubscriptionTab = () => {
     }
   };
 
-  const currentPlan = subscription?.plan_type || 'basic';
+  const currentPlan = subscription?.plan_type || 'none';
 
   const getPlanIcon = (plan: PlanType) => {
     switch (plan) {
-      case 'pro': return <Zap className="h-5 w-5" />;
       case 'premium': return <Crown className="h-5 w-5" />;
-      default: return <Shield className="h-5 w-5" />;
+      case 'pro': return <Zap className="h-5 w-5" />;
+      case 'basic': return <Shield className="h-5 w-5" />;
+      default: return <Shield className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
   const getPlanHighlights = (plan: PlanType) => {
     switch (plan) {
+      case 'none':
+        return [
+          { icon: <Lock className="h-4 w-4" />, text: "Cannot chat with creators", locked: true },
+          { icon: <Lock className="h-4 w-4" />, text: "Cannot post campaigns", locked: true },
+          { icon: <Lock className="h-4 w-4" />, text: "20% marketplace fee", locked: true },
+        ];
       case 'basic':
         return [
-          { icon: <Lock className="h-4 w-4" />, text: "Cannot contact creators", locked: true },
-          { icon: <Lock className="h-4 w-4" />, text: "Cannot post campaigns", locked: true },
-          { icon: <Lock className="h-4 w-4" />, text: "No advanced filters", locked: true },
+          { icon: <MessageCircle className="h-4 w-4" />, text: "Chat with creators", locked: false },
+          { icon: <Database className="h-4 w-4" />, text: "10 GB Content Library", locked: false },
+          { icon: <Lock className="h-4 w-4" />, text: "No campaigns", locked: true },
         ];
       case 'pro':
         return [
           { icon: <MessageCircle className="h-4 w-4" />, text: "Chat with creators", locked: false },
           { icon: <Megaphone className="h-4 w-4" />, text: "1 campaign/month", locked: false },
-          { icon: <Filter className="h-4 w-4" />, text: "Advanced filters", locked: false },
+          { icon: <Filter className="h-4 w-4" />, text: "Advanced filters + CRM", locked: false },
         ];
       case 'premium':
         return [
           { icon: <MessageCircle className="h-4 w-4" />, text: "Chat with creators", locked: false },
           { icon: <Megaphone className="h-4 w-4" />, text: "Unlimited campaigns", locked: false },
-          { icon: <Filter className="h-4 w-4" />, text: "Advanced filters", locked: false },
+          { icon: <Database className="h-4 w-4" />, text: "50 GB Content Library", locked: false },
         ];
     }
   };
+
+  // Only show paid plans for upgrade (excluding 'none')
+  const paidPlans: PlanType[] = ['basic', 'pro', 'premium'];
 
   if (loading) {
     return <div className="text-center py-8">Loading subscription details...</div>;
@@ -175,15 +185,17 @@ const BrandSubscriptionTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Verification Section */}
-      <BrandVerificationSection planType={currentPlan} />
+      {/* Verification Section - only show for pro/premium */}
+      {(currentPlan === 'pro' || currentPlan === 'premium') && (
+        <BrandVerificationSection planType={currentPlan} />
+      )}
 
       {subscription && (
         <Card>
           <CardHeader>
             <CardTitle>Current Subscription</CardTitle>
             <CardDescription>
-              You are currently on the {SUBSCRIPTION_PLANS[currentPlan].name} plan
+              You are currently on the {SUBSCRIPTION_PLANS[currentPlan].name} {currentPlan === 'none' ? '(Free)' : 'plan'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -216,7 +228,7 @@ const BrandSubscriptionTab = () => {
               </div>
             )}
 
-            {!subscription.cancel_at_period_end && currentPlan !== 'basic' && (
+            {!subscription.cancel_at_period_end && currentPlan !== 'none' && (
               <Button 
                 variant="outline" 
                 onClick={handleCancel}
@@ -229,12 +241,25 @@ const BrandSubscriptionTab = () => {
         </Card>
       )}
 
+      {/* No subscription state */}
+      {!subscription && (
+        <Card className="border-dashed">
+          <CardHeader>
+            <CardTitle>No Active Subscription</CardTitle>
+            <CardDescription>
+              You're currently browsing with a 20% marketplace fee. Subscribe to unlock more features!
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
       <div className="grid md:grid-cols-3 gap-6">
-        {(Object.keys(SUBSCRIPTION_PLANS) as PlanType[]).map((planKey) => {
+        {paidPlans.map((planKey) => {
           const plan = SUBSCRIPTION_PLANS[planKey];
           const isCurrent = currentPlan === planKey;
-          const isUpgrade = planKey !== 'basic' && (
-            currentPlan === 'basic' || 
+          const isUpgrade = (
+            currentPlan === 'none' || 
+            (currentPlan === 'basic' && (planKey === 'pro' || planKey === 'premium')) ||
             (currentPlan === 'pro' && planKey === 'premium')
           );
           const highlights = getPlanHighlights(planKey);
@@ -249,12 +274,15 @@ const BrandSubscriptionTab = () => {
                   {getPlanIcon(planKey)}
                   <CardTitle>{plan.name}</CardTitle>
                   {isCurrent && <Badge>Current</Badge>}
+                  {planKey === 'pro' && !isCurrent && (
+                    <Badge variant="secondary" className="bg-primary/10 text-primary">Popular</Badge>
+                  )}
                 </div>
                 <CardDescription>
                   <span className="text-3xl font-bold">
-                    {plan.price === 0 ? 'Free' : formatPrice(plan.price)}
+                    {formatPrice(plan.price)}
                   </span>
-                  {plan.price > 0 && <span className="text-muted-foreground">/month</span>}
+                  <span className="text-muted-foreground">/month</span>
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -279,6 +307,12 @@ const BrandSubscriptionTab = () => {
                       <span className="text-sm">{feature}</span>
                     </div>
                   ))}
+                  {plan.lockedFeatures.map((feature, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-muted-foreground">
+                      <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm">{feature}</span>
+                    </div>
+                  ))}
                 </div>
 
                 {isUpgrade && (
@@ -287,7 +321,7 @@ const BrandSubscriptionTab = () => {
                     onClick={() => handleUpgrade(planKey)}
                     disabled={actionLoading}
                   >
-                    Upgrade to {plan.name}
+                    {currentPlan === 'none' ? `Get ${plan.name}` : `Upgrade to ${plan.name}`}
                   </Button>
                 )}
                 
