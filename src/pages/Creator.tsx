@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Users, Shield, TrendingUp, Calendar, Award } from "lucide-react";
+import { DollarSign, Users, Shield, Calendar, Award } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import AdPlacement from "@/components/AdPlacement";
 
 const Creator = () => {
   const [username, setUsername] = useState("");
@@ -75,8 +76,8 @@ const Creator = () => {
     },
     {
       icon: Users,
-      title: "250K+ Brands",
-      description: "Connect with top brands actively looking for creators"
+      title: "Growing Brand Network",
+      description: "Connect with brands actively looking for creators like you"
     },
     {
       icon: Shield,
@@ -156,7 +157,7 @@ const Creator = () => {
             )}
 
             <p className="text-sm text-muted-foreground">
-              Join 350,000+ creators already earning on CollabHunts
+              Join our growing community of creators earning on CollabHunts
             </p>
           </div>
         </div>
@@ -167,26 +168,34 @@ const Creator = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-heading font-bold mb-4">
-              Work with 250,000+ Brands
+              Work with Brands of All Sizes
             </h2>
             <p className="text-xl text-muted-foreground">
-              Collaborate with brands like Fortune 500 companies and startups
+              Collaborate with startups, growing businesses, and established brands
             </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-            <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-muted-foreground">Brand</span>
-            </div>
-            <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-muted-foreground">Brand</span>
-            </div>
-            <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-muted-foreground">Brand</span>
-            </div>
-            <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-muted-foreground">Brand</span>
-            </div>
+            <AdPlacement 
+              placementId="creator_brand_spotlight_1" 
+              className="aspect-video"
+              showAdvertiseHere={true}
+            />
+            <AdPlacement 
+              placementId="creator_brand_spotlight_2" 
+              className="aspect-video"
+              showAdvertiseHere={true}
+            />
+            <AdPlacement 
+              placementId="creator_brand_spotlight_3" 
+              className="aspect-video"
+              showAdvertiseHere={true}
+            />
+            <AdPlacement 
+              placementId="creator_brand_spotlight_4" 
+              className="aspect-video"
+              showAdvertiseHere={true}
+            />
           </div>
         </div>
       </section>
@@ -196,7 +205,7 @@ const Creator = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-heading font-bold mb-4">
-              Loved by 350,000+ Creators
+              Trusted by Creators Everywhere
             </h2>
             <p className="text-xl text-muted-foreground">
               Find your niche and start earning
@@ -215,22 +224,33 @@ const Creator = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-card rounded-xl overflow-hidden shadow-card">
-                <div className="aspect-square bg-muted"></div>
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Award className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-medium">Top Creator</span>
+            {[
+              { id: "creator_featured_1", num: 1 },
+              { id: "creator_featured_2", num: 2 },
+              { id: "creator_featured_3", num: 3 }
+            ].map((item) => (
+              <AdPlacement 
+                key={item.id}
+                placementId={item.id} 
+                className="aspect-[3/4]"
+                fallback={
+                  <div className="bg-card rounded-xl overflow-hidden shadow-card h-full">
+                    <div className="aspect-square bg-muted"></div>
+                    <div className="p-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Award className="h-5 w-5 text-primary" />
+                        <span className="text-sm font-medium">Featured Creator</span>
+                      </div>
+                      <h3 className="font-heading font-semibold text-lg mb-1">
+                        Creator Spotlight {item.num}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Coming Soon
+                      </p>
+                    </div>
                   </div>
-                  <h3 className="font-heading font-semibold text-lg mb-1">
-                    Example Creator {i}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Fashion & Lifestyle Influencer
-                  </p>
-                </div>
-              </div>
+                }
+              />
             ))}
           </div>
         </div>

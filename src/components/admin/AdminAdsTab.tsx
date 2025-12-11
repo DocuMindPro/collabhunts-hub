@@ -1,0 +1,503 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Megaphone, 
+  Image, 
+  ExternalLink, 
+  Eye, 
+  EyeOff, 
+  Edit, 
+  Search,
+  CheckCircle,
+  XCircle,
+  Calendar
+} from "lucide-react";
+
+interface AdPlacement {
+  id: string;
+  placement_id: string;
+  placement_name: string;
+  page: string;
+  position: string;
+  advertiser_name: string | null;
+  advertiser_type: string | null;
+  image_url: string | null;
+  link_url: string | null;
+  link_type: string | null;
+  target_creator_profile_id: string | null;
+  is_active: boolean;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+const AdminAdsTab = () => {
+  const [placements, setPlacements] = useState<AdPlacement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [pageFilter, setPageFilter] = useState("all");
+  const [editingAd, setEditingAd] = useState<AdPlacement | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    advertiser_name: "",
+    advertiser_type: "external",
+    image_url: "",
+    link_url: "",
+    link_type: "external",
+    is_active: false,
+    start_date: "",
+    end_date: "",
+    notes: "",
+  });
+
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchPlacements();
+  }, []);
+
+  const fetchPlacements = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("ad_placements")
+        .select("*")
+        .order("page", { ascending: true })
+        .order("position", { ascending: true });
+
+      if (error) throw error;
+      setPlacements(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error loading ads",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (ad: AdPlacement) => {
+    setEditingAd(ad);
+    setFormData({
+      advertiser_name: ad.advertiser_name || "",
+      advertiser_type: ad.advertiser_type || "external",
+      image_url: ad.image_url || "",
+      link_url: ad.link_url || "",
+      link_type: ad.link_type || "external",
+      is_active: ad.is_active,
+      start_date: ad.start_date ? ad.start_date.split("T")[0] : "",
+      end_date: ad.end_date ? ad.end_date.split("T")[0] : "",
+      notes: ad.notes || "",
+    });
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    if (!editingAd) return;
+
+    try {
+      setSaving(true);
+
+      const updateData: any = {
+        advertiser_name: formData.advertiser_name || null,
+        advertiser_type: formData.advertiser_type,
+        image_url: formData.image_url || null,
+        link_url: formData.link_url || null,
+        link_type: formData.link_type,
+        is_active: formData.is_active,
+        start_date: formData.start_date ? new Date(formData.start_date).toISOString() : null,
+        end_date: formData.end_date ? new Date(formData.end_date).toISOString() : null,
+        notes: formData.notes || null,
+      };
+
+      const { error } = await supabase
+        .from("ad_placements")
+        .update(updateData)
+        .eq("id", editingAd.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Ad Updated",
+        description: `${editingAd.placement_name} has been updated successfully.`,
+      });
+
+      setIsEditing(false);
+      setEditingAd(null);
+      fetchPlacements();
+    } catch (error: any) {
+      toast({
+        title: "Error saving ad",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleActive = async (ad: AdPlacement) => {
+    try {
+      const { error } = await supabase
+        .from("ad_placements")
+        .update({ is_active: !ad.is_active })
+        .eq("id", ad.id);
+
+      if (error) throw error;
+
+      toast({
+        title: ad.is_active ? "Ad Deactivated" : "Ad Activated",
+        description: `${ad.placement_name} is now ${ad.is_active ? "inactive" : "active"}.`,
+      });
+
+      fetchPlacements();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filteredPlacements = placements.filter(ad => {
+    const matchesSearch = 
+      ad.placement_name.toLowerCase().includes(search.toLowerCase()) ||
+      ad.advertiser_name?.toLowerCase().includes(search.toLowerCase()) ||
+      ad.placement_id.toLowerCase().includes(search.toLowerCase());
+    const matchesPage = pageFilter === "all" || ad.page === pageFilter;
+    return matchesSearch && matchesPage;
+  });
+
+  const activeCount = placements.filter(ad => ad.is_active).length;
+  const pages = [...new Set(placements.map(ad => ad.page))];
+
+  return (
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Placements</CardTitle>
+            <Megaphone className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{placements.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Ads</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{activeCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Empty Slots</CardTitle>
+            <XCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-muted-foreground">{placements.length - activeCount}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search placements..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={pageFilter} onValueChange={setPageFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by page" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Pages</SelectItem>
+            {pages.map(page => (
+              <SelectItem key={page} value={page}>{page.charAt(0).toUpperCase() + page.slice(1)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Placements Table */}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Placement</TableHead>
+              <TableHead>Page</TableHead>
+              <TableHead>Advertiser</TableHead>
+              <TableHead>Preview</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Schedule</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  Loading placements...
+                </TableCell>
+              </TableRow>
+            ) : filteredPlacements.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  No placements found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredPlacements.map((ad) => (
+                <TableRow key={ad.id}>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{ad.placement_name}</p>
+                      <p className="text-xs text-muted-foreground">{ad.placement_id}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{ad.page}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {ad.advertiser_name ? (
+                      <div className="flex items-center gap-2">
+                        <span>{ad.advertiser_name}</span>
+                        {ad.link_url && (
+                          <a href={ad.link_url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                          </a>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground italic">Empty slot</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {ad.image_url ? (
+                      <a href={ad.image_url} target="_blank" rel="noopener noreferrer">
+                        <img 
+                          src={ad.image_url} 
+                          alt={ad.advertiser_name || "Ad"} 
+                          className="w-16 h-10 object-cover rounded border"
+                        />
+                      </a>
+                    ) : (
+                      <div className="w-16 h-10 bg-muted rounded border flex items-center justify-center">
+                        <Image className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <button 
+                      onClick={() => toggleActive(ad)}
+                      className="flex items-center gap-2"
+                    >
+                      {ad.is_active ? (
+                        <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                          <Eye className="h-3 w-3 mr-1" /> Active
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">
+                          <EyeOff className="h-3 w-3 mr-1" /> Inactive
+                        </Badge>
+                      )}
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    {ad.start_date || ad.end_date ? (
+                      <div className="text-xs text-muted-foreground">
+                        {ad.start_date && <div>From: {new Date(ad.start_date).toLocaleDateString()}</div>}
+                        {ad.end_date && <div>To: {new Date(ad.end_date).toLocaleDateString()}</div>}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">No schedule</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(ad)}>
+                      <Edit className="h-4 w-4 mr-1" /> Edit
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Ad Placement: {editingAd?.placement_name}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Advertiser Name</Label>
+              <Input
+                value={formData.advertiser_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, advertiser_name: e.target.value }))}
+                placeholder="e.g., Nike, Creator Name, Company XYZ"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Advertiser Type</Label>
+              <Select
+                value={formData.advertiser_type}
+                onValueChange={(val) => setFormData(prev => ({ ...prev, advertiser_type: val }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="brand">Brand</SelectItem>
+                  <SelectItem value="creator">Creator</SelectItem>
+                  <SelectItem value="external">External</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Image URL</Label>
+              <Input
+                value={formData.image_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                placeholder="https://..."
+              />
+              {formData.image_url && (
+                <img 
+                  src={formData.image_url} 
+                  alt="Preview" 
+                  className="w-full h-32 object-cover rounded border mt-2"
+                />
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Link URL</Label>
+              <Input
+                value={formData.link_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, link_url: e.target.value }))}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Link Type</Label>
+              <Select
+                value={formData.link_type}
+                onValueChange={(val) => setFormData(prev => ({ ...prev, link_type: val }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="external">External URL</SelectItem>
+                  <SelectItem value="creator_profile">Creator Profile</SelectItem>
+                  <SelectItem value="brand_website">Brand Website</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Date (Optional)</Label>
+                <Input
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>End Date (Optional)</Label>
+                <Input
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={formData.is_active}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+              />
+              <Label>Active</Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Internal Notes</Label>
+              <Textarea
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Internal notes about the advertising deal..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditing(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default AdminAdsTab;
