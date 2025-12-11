@@ -9,6 +9,8 @@ export const SUBSCRIPTION_PLANS = {
     marketplaceFee: 0.20, // 20%
     campaignLimit: 0,
     canContactCreators: false,
+    canBookCreators: true, // Can book but need to pay first
+    canMessageAfterDelivery: false, // Cannot message after booking is completed
     hasAdvancedFilters: false,
     hasCRM: false,
     hasContentLibrary: false,
@@ -36,6 +38,8 @@ export const SUBSCRIPTION_PLANS = {
     marketplaceFee: 0.15, // 15%
     campaignLimit: 0,
     canContactCreators: true,
+    canBookCreators: true,
+    canMessageAfterDelivery: true,
     hasAdvancedFilters: false,
     hasCRM: false,
     hasContentLibrary: true,
@@ -63,6 +67,8 @@ export const SUBSCRIPTION_PLANS = {
     marketplaceFee: 0.15, // 15%
     campaignLimit: 1,
     canContactCreators: true,
+    canBookCreators: true,
+    canMessageAfterDelivery: true,
     hasAdvancedFilters: true,
     hasCRM: true,
     hasContentLibrary: true,
@@ -91,6 +97,8 @@ export const SUBSCRIPTION_PLANS = {
     marketplaceFee: 0.15, // 15%
     campaignLimit: Infinity,
     canContactCreators: true,
+    canBookCreators: true,
+    canMessageAfterDelivery: true,
     hasAdvancedFilters: true,
     hasCRM: true,
     hasContentLibrary: true,

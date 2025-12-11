@@ -169,3 +169,41 @@ export const getUserSubscriptionTier = async (userId: string): Promise<string> =
   const planType = await getCurrentPlanType(userId);
   return planType;
 };
+
+// Check if brand can continue messaging a creator after booking completion
+export const canBrandMessageCreator = async (
+  brandProfileId: string,
+  creatorProfileId: string
+): Promise<{ canMessage: boolean; reason?: string }> => {
+  const { data: subscription } = await supabase
+    .from('brand_subscriptions')
+    .select('plan_type')
+    .eq('brand_profile_id', brandProfileId)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  const planType = (subscription?.plan_type || 'none') as PlanType;
+
+  // If paid tier, can always message
+  if (SUBSCRIPTION_PLANS[planType].canMessageAfterDelivery) {
+    return { canMessage: true };
+  }
+
+  // For 'none' tier, check if there's an active booking
+  const { data: activeBooking } = await supabase
+    .from('bookings')
+    .select('id, status, delivery_status')
+    .eq('brand_profile_id', brandProfileId)
+    .eq('creator_profile_id', creatorProfileId)
+    .not('delivery_status', 'eq', 'confirmed')
+    .maybeSingle();
+
+  if (activeBooking) {
+    return { canMessage: true };
+  }
+
+  return { 
+    canMessage: false, 
+    reason: 'Your booking is complete. Subscribe to continue messaging.' 
+  };
+};
