@@ -53,7 +53,6 @@ const Pricing = () => {
         { text: "Everything in Pro", included: true },
         { text: "Post unlimited campaigns", included: true },
         { text: "Content Library with 50 GB storage", included: true },
-        { text: "Verified Business Badge (upon approval)", included: true },
         { text: "15% marketplace fee on bookings", included: true },
         { text: "Priority customer support (Coming Soon)", included: true },
         { text: "Dedicated account manager (Coming Soon)", included: true },
