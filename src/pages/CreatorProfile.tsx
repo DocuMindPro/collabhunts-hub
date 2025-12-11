@@ -99,7 +99,7 @@ const CreatorProfile = () => {
       if (!user) {
         toast({
           title: "Login Required",
-          description: "Please login to contact creators",
+          description: "Please login to message creators",
           variant: "destructive"
         });
         navigate("/login");
@@ -145,7 +145,7 @@ const CreatorProfile = () => {
       if (!brandProfile) {
         toast({
           title: "Brand Profile Required",
-          description: "Please create a brand profile to contact creators",
+          description: "Please create a brand profile to message creators",
           variant: "destructive"
         });
         navigate("/brand-signup");
@@ -165,7 +165,7 @@ const CreatorProfile = () => {
         if (!SUBSCRIPTION_PLANS[planType].canContactCreators) {
           toast({
             title: "Upgrade Required",
-            description: "Upgrade to Pro to contact creators",
+            description: "Upgrade to Pro to message creators",
             variant: "destructive"
           });
           navigate("/brand-dashboard?tab=subscription");
@@ -603,7 +603,7 @@ const CreatorProfile = () => {
                           onClick={handleContactCreator}
                         >
                           <MessageCircle className="h-5 w-5 mr-2" />
-                          Contact Creator
+                          Message Creator
                         </Button>
                         {hasBrandProfile && (
                           <Button
@@ -805,7 +805,7 @@ const CreatorProfile = () => {
               onClick={handleContactCreator}
             >
               <MessageCircle className="h-5 w-5 mr-2" />
-              Contact Creator
+              Message Creator
             </Button>
             {hasBrandProfile && (
               <Button

@@ -13,7 +13,7 @@ interface UpgradePromptProps {
 
 const featureMessages = {
   contact: {
-    title: "Upgrade to Contact Creators",
+    title: "Upgrade to Message Creators",
     description: "Chat and negotiate with creators before hiring. Subscribe to Basic ($39/mo) to unlock messaging.",
     cta: "Upgrade to Basic - $39/mo",
     icon: MessageCircle,
