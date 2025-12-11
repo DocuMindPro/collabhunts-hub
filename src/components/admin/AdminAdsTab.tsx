@@ -71,28 +71,28 @@ const pageUrlMap: Record<string, string> = {
 
 // Suggested pricing for each placement (monthly)
 const placementPricing: Record<string, { min: number; max: number; tier: 'premium' | 'high' | 'mid' | 'low'; reason: string }> = {
-  // Premium Tier - $800-2000+/mo
+  // Premium Tier - $1500-2500/mo - Highest visibility, hero positions
   "home_hero_banner": { min: 1500, max: 2500, tier: 'premium', reason: "First thing every visitor sees, highest traffic" },
-  "home_hero_sidebar": { min: 800, max: 1200, tier: 'premium', reason: "Prime above-fold position on homepage" },
-  "influencers_top_banner": { min: 1000, max: 1800, tier: 'premium', reason: "High-intent brand traffic, top of search" },
   
-  // High Tier - $400-800/mo
-  "influencers_mid_banner": { min: 500, max: 900, tier: 'high', reason: "Mid-scroll visibility, engaged users" },
-  "influencers_sidebar_1": { min: 400, max: 700, tier: 'high', reason: "Sticky sidebar, visible during browsing" },
-  "influencers_sidebar_2": { min: 350, max: 600, tier: 'high', reason: "Secondary sidebar, good engagement" },
-  "home_featured_1": { min: 400, max: 700, tier: 'high', reason: "Featured section, high homepage visibility" },
-  "home_featured_2": { min: 350, max: 600, tier: 'high', reason: "Featured section, homepage visibility" },
-  "home_featured_3": { min: 300, max: 500, tier: 'high', reason: "Featured section, homepage visibility" },
+  // High Tier - $400-1200/mo - Featured sections, high engagement
+  "home_cta_card": { min: 600, max: 1000, tier: 'high', reason: "Featured CTA section, high homepage visibility" },
+  "influencers_sidebar": { min: 500, max: 900, tier: 'high', reason: "Sticky sidebar, visible during creator browsing" },
+  "creator_brand_spotlight_1": { min: 400, max: 700, tier: 'high', reason: "First brand spotlight, premium creator page position" },
+  "creator_featured_1": { min: 400, max: 700, tier: 'high', reason: "Featured creator showcase, high visibility" },
   
-  // Mid Tier - $150-400/mo
-  "brand_cta_banner": { min: 200, max: 400, tier: 'mid', reason: "Brand landing page, targeted audience" },
-  "creator_cta_banner": { min: 200, max: 400, tier: 'mid', reason: "Creator landing page, targeted audience" },
-  "home_bottom_banner": { min: 150, max: 300, tier: 'mid', reason: "Bottom of homepage, lower visibility" },
-  "influencers_bottom_banner": { min: 200, max: 350, tier: 'mid', reason: "Bottom of results, scroll completion" },
+  // Mid Tier - $200-500/mo - Good visibility, targeted audience
+  "influencers_inline_1": { min: 300, max: 500, tier: 'mid', reason: "First inline ad in search results, high visibility" },
+  "influencers_inline_2": { min: 200, max: 400, tier: 'mid', reason: "Second inline ad, mid-scroll engaged users" },
+  "creator_brand_spotlight_2": { min: 300, max: 500, tier: 'mid', reason: "Second brand spotlight, good visibility" },
+  "creator_brand_spotlight_3": { min: 250, max: 400, tier: 'mid', reason: "Third brand spotlight, solid engagement" },
+  "creator_featured_2": { min: 300, max: 500, tier: 'mid', reason: "Featured creator, good engagement" },
+  "brand_testimonial": { min: 300, max: 500, tier: 'mid', reason: "Brand landing testimonial, targeted brand audience" },
   
-  // Low Tier - $50-150/mo
-  "campaigns_sidebar": { min: 75, max: 150, tier: 'low', reason: "Niche page, creator-only traffic" },
-  "campaigns_bottom": { min: 50, max: 100, tier: 'low', reason: "Bottom of niche page, limited views" },
+  // Low Tier - $75-350/mo - Lower visibility, niche pages
+  "creator_brand_spotlight_4": { min: 150, max: 300, tier: 'low', reason: "Fourth brand spotlight, lower position" },
+  "creator_featured_3": { min: 200, max: 350, tier: 'low', reason: "Featured creator, standard visibility" },
+  "campaigns_banner": { min: 150, max: 300, tier: 'low', reason: "Campaigns page banner, creator-only traffic" },
+  "footer_sponsors": { min: 100, max: 200, tier: 'low', reason: "Footer sponsors, site-wide visibility but low attention" },
 };
 
 const getTierColor = (tier: 'premium' | 'high' | 'mid' | 'low') => {
