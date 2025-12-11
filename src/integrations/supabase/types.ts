@@ -871,6 +871,7 @@ export type Database = {
       }
       creator_profiles: {
         Row: {
+          allow_mass_messages: boolean | null
           bio: string | null
           birth_date: string | null
           categories: string[] | null
@@ -898,6 +899,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          allow_mass_messages?: boolean | null
           bio?: string | null
           birth_date?: string | null
           categories?: string[] | null
@@ -925,6 +927,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          allow_mass_messages?: boolean | null
           bio?: string | null
           birth_date?: string | null
           categories?: string[] | null
@@ -1028,6 +1031,83 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mass_message_templates: {
+        Row: {
+          brand_profile_id: string
+          content: string
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          brand_profile_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          brand_profile_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mass_message_templates_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mass_messages_log: {
+        Row: {
+          brand_profile_id: string
+          creator_profile_ids: string[]
+          id: string
+          message_count: number
+          sent_at: string | null
+          template_id: string | null
+        }
+        Insert: {
+          brand_profile_id: string
+          creator_profile_ids: string[]
+          id?: string
+          message_count: number
+          sent_at?: string | null
+          template_id?: string | null
+        }
+        Update: {
+          brand_profile_id?: string
+          creator_profile_ids?: string[]
+          id?: string
+          message_count?: number
+          sent_at?: string | null
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mass_messages_log_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mass_messages_log_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "mass_message_templates"
             referencedColumns: ["id"]
           },
         ]

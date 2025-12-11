@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { Zap, Lock, Sparkles, MessageCircle, Users, Filter, BadgeCheck, FolderOpen } from "lucide-react";
+import { Zap, Lock, Sparkles, MessageCircle, Users, Filter, BadgeCheck, FolderOpen, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface UpgradeBannerProps {
   variant?: "default" | "compact" | "inline";
   currentPlan?: string;
-  targetFeature?: "chat" | "campaigns" | "crm" | "filters" | "badge" | "content_library";
+  targetFeature?: "chat" | "campaigns" | "crm" | "filters" | "badge" | "content_library" | "mass_message" | "unlimited_campaigns" | "more_storage";
   className?: string;
   onDismiss?: () => void;
 }
@@ -53,6 +53,27 @@ const featureHighlights = {
     icon: FolderOpen,
     plan: "Basic",
     price: "$39/mo"
+  },
+  mass_message: {
+    title: "Send mass messages",
+    description: "Reach multiple creators at once to find perfect matches faster",
+    icon: Send,
+    plan: "Pro",
+    price: "$99/mo"
+  },
+  unlimited_campaigns: {
+    title: "Unlimited campaigns",
+    description: "Remove the 1 campaign/month limit and post as many as you need",
+    icon: Users,
+    plan: "Premium",
+    price: "$299/mo"
+  },
+  more_storage: {
+    title: "50 GB storage",
+    description: "Get 5x more storage space for your content library",
+    icon: FolderOpen,
+    plan: "Premium",
+    price: "$299/mo"
   }
 };
 
