@@ -11,12 +11,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Heart, HeartOff, Star, MapPin, Calendar, DollarSign, MessageSquare, Trash2, Edit2, Plus, FolderOpen, Users, Clock, StickyNote, Search, ExternalLink, Image, Mail, CheckSquare, Square } from "lucide-react";
+import { Heart, HeartOff, Star, MapPin, Calendar, DollarSign, MessageSquare, Trash2, Edit2, Plus, FolderOpen, Users, Clock, StickyNote, Search, ExternalLink, Image, Megaphone, CheckSquare, Square } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, formatDistanceToNow } from "date-fns";
 import { canUserUseCRM, getUserSubscriptionTier } from "@/lib/subscription-utils";
 import UpgradePrompt from "@/components/UpgradePrompt";
-import MassMessageDialog from "./MassMessageDialog";
+import MassCampaignInviteDialog from "./MassCampaignInviteDialog";
 
 interface SavedCreator {
   id: string;
@@ -70,9 +70,9 @@ const BrandYourCreatorsTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [contentCountMap, setContentCountMap] = useState<Record<string, number>>({});
   
-  // Mass messaging state
+  // Mass campaign invite state
   const [selectedCreators, setSelectedCreators] = useState<Set<string>>(new Set());
-  const [massMessageDialogOpen, setMassMessageDialogOpen] = useState(false);
+  const [campaignInviteDialogOpen, setCampaignInviteDialogOpen] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   
   // Notes dialog state
@@ -418,13 +418,13 @@ const BrandYourCreatorsTab = () => {
     setSelectedCreators(new Set());
   };
 
-  const handleMassMessageSuccess = () => {
+  const handleCampaignInviteSuccess = () => {
     setSelectedCreators(new Set());
     setSelectionMode(false);
-    setMassMessageDialogOpen(false);
+    setCampaignInviteDialogOpen(false);
   };
 
-  const canSendMassMessages = subscriptionTier === 'pro' || subscriptionTier === 'premium';
+  const canSendCampaignInvites = subscriptionTier === 'pro' || subscriptionTier === 'premium';
 
   // Show upgrade prompt for Basic tier users
   if (hasCRMAccess === false) {
@@ -475,7 +475,7 @@ const BrandYourCreatorsTab = () => {
           <p className="text-muted-foreground">Manage your saved creators and past collaborations</p>
         </div>
         <div className="flex gap-2">
-          {canSendMassMessages && savedCreators.length > 0 && (
+          {canSendCampaignInvites && savedCreators.length > 0 && (
             <>
               {selectionMode ? (
                 <>
@@ -496,12 +496,12 @@ const BrandYourCreatorsTab = () => {
                   </Button>
                   <Button
                     size="sm"
-                    onClick={() => setMassMessageDialogOpen(true)}
+                    onClick={() => setCampaignInviteDialogOpen(true)}
                     disabled={selectedCreators.size === 0}
                     className="gap-2"
                   >
-                    <Mail className="h-4 w-4" />
-                    Message ({selectedCreators.size})
+                    <Megaphone className="h-4 w-4" />
+                    Send Invite ({selectedCreators.size})
                   </Button>
                   <Button
                     variant="ghost"
@@ -521,8 +521,8 @@ const BrandYourCreatorsTab = () => {
                   onClick={() => setSelectionMode(true)}
                   className="gap-2"
                 >
-                  <Mail className="h-4 w-4" />
-                  Mass Message
+                  <Megaphone className="h-4 w-4" />
+                  Invite to Campaign
                 </Button>
               )}
             </>
@@ -994,14 +994,14 @@ const BrandYourCreatorsTab = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Mass Message Dialog */}
+      {/* Mass Campaign Invite Dialog */}
       {brandProfileId && (
-        <MassMessageDialog
-          open={massMessageDialogOpen}
-          onOpenChange={setMassMessageDialogOpen}
+        <MassCampaignInviteDialog
+          open={campaignInviteDialogOpen}
+          onOpenChange={setCampaignInviteDialogOpen}
           brandProfileId={brandProfileId}
           selectedCreatorIds={Array.from(selectedCreators)}
-          onSuccess={handleMassMessageSuccess}
+          onSuccess={handleCampaignInviteSuccess}
         />
       )}
     </div>

@@ -6,16 +6,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Send, Users, AlertTriangle, Save, Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Send, Users, AlertTriangle, Save, Loader2, Megaphone, DollarSign, Calendar, Target } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
-interface MassMessageDialogProps {
+interface MassCampaignInviteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedCreatorIds: string[];
   brandProfileId: string;
   onSuccess?: () => void;
+}
+
+interface Campaign {
+  id: string;
+  title: string;
+  description: string;
+  budget_cents: number;
+  spots_available: number;
+  spots_filled: number;
+  deadline: string;
+  status: string;
 }
 
 interface Template {
@@ -24,14 +37,16 @@ interface Template {
   content: string;
 }
 
-const MassMessageDialog = ({ 
+const MassCampaignInviteDialog = ({ 
   open, 
   onOpenChange, 
   selectedCreatorIds, 
   brandProfileId,
   onSuccess 
-}: MassMessageDialogProps) => {
-  const [message, setMessage] = useState("");
+}: MassCampaignInviteDialogProps) => {
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
+  const [customMessage, setCustomMessage] = useState("");
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [newTemplateName, setNewTemplateName] = useState("");
@@ -47,12 +62,24 @@ const MassMessageDialog = ({
 
   useEffect(() => {
     if (open) {
+      fetchCampaigns();
       fetchTemplates();
       fetchUsage();
       fetchCreatorNames();
       fetchPlanType();
     }
   }, [open, selectedCreatorIds]);
+
+  const fetchCampaigns = async () => {
+    const { data } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('brand_profile_id', brandProfileId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+
+    if (data) setCampaigns(data);
+  };
 
   const fetchPlanType = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -133,13 +160,15 @@ const MassMessageDialog = ({
     setSelectedTemplate(templateId);
     const template = templates.find(t => t.id === templateId);
     if (template) {
-      setMessage(template.content);
+      setCustomMessage(template.content);
     }
   };
 
+  const selectedCampaign = campaigns.find(c => c.id === selectedCampaignId);
+
   const handleSend = async () => {
-    if (!message.trim()) {
-      toast.error("Please enter a message");
+    if (!selectedCampaignId) {
+      toast.error("Please select a campaign");
       return;
     }
 
@@ -170,7 +199,8 @@ const MassMessageDialog = ({
       const response = await supabase.functions.invoke('send-mass-message', {
         body: {
           creatorProfileIds: selectedCreators.map(c => c.id),
-          message: message.trim(),
+          campaignId: selectedCampaignId,
+          customMessage: customMessage.trim() || undefined,
           templateId: selectedTemplate || undefined,
           templateName: saveAsTemplate && newTemplateName ? newTemplateName : undefined,
         },
@@ -188,7 +218,7 @@ const MassMessageDialog = ({
       }
 
       toast.success(
-        `Messages sent to ${result.sent}/${result.total} creators`,
+        `Campaign invitations sent to ${result.sent}/${result.total} creators`,
         {
           description: result.filtered > 0 
             ? `${result.filtered} creators filtered (opted out or recently messaged)`
@@ -196,15 +226,16 @@ const MassMessageDialog = ({
         }
       );
 
-      setMessage("");
+      setCustomMessage("");
       setSelectedTemplate("");
+      setSelectedCampaignId("");
       setNewTemplateName("");
       setSaveAsTemplate(false);
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
-      console.error('Mass message error:', error);
-      toast.error("Failed to send messages");
+      console.error('Campaign invite error:', error);
+      toast.error("Failed to send invitations");
     } finally {
       setSending(false);
     }
@@ -216,14 +247,14 @@ const MassMessageDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5 text-primary" />
-            Send Mass Message
+            <Megaphone className="h-5 w-5 text-primary" />
+            Invite Creators to Campaign
           </DialogTitle>
           <DialogDescription>
-            Message {selectedCreators.length} selected creator{selectedCreators.length !== 1 ? 's' : ''} at once
+            Invite {selectedCreators.length} creator{selectedCreators.length !== 1 ? 's' : ''} to apply to your campaign
           </DialogDescription>
         </DialogHeader>
 
@@ -266,10 +297,61 @@ const MassMessageDialog = ({
             </div>
           </div>
 
-          {/* Template Selector */}
+          {/* Campaign Selector */}
+          <div className="space-y-2">
+            <Label>Select Campaign *</Label>
+            {campaigns.length === 0 ? (
+              <div className="p-4 border border-dashed rounded-lg text-center text-muted-foreground text-sm">
+                <Megaphone className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No active campaigns found.</p>
+                <p className="text-xs mt-1">Create a campaign first to invite creators.</p>
+              </div>
+            ) : (
+              <Select value={selectedCampaignId} onValueChange={setSelectedCampaignId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a campaign to invite creators to" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaigns.map(campaign => (
+                    <SelectItem key={campaign.id} value={campaign.id}>
+                      {campaign.title} - ${(campaign.budget_cents / 100).toFixed(0)} budget
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          {/* Campaign Preview */}
+          {selectedCampaign && (
+            <Card className="bg-muted/50">
+              <CardContent className="pt-4 space-y-2">
+                <div className="font-medium">{selectedCampaign.title}</div>
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {selectedCampaign.description}
+                </p>
+                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <DollarSign className="h-3 w-3" />
+                    ${(selectedCampaign.budget_cents / 100).toFixed(0)} budget
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Target className="h-3 w-3" />
+                    {selectedCampaign.spots_available - selectedCampaign.spots_filled} spots left
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    Deadline: {format(new Date(selectedCampaign.deadline), "MMM d, yyyy")}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Personal Message Template Selector */}
           {templates.length > 0 && (
             <div className="space-y-2">
-              <Label>Use Template (optional)</Label>
+              <Label>Use Message Template (optional)</Label>
               <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a saved template" />
@@ -285,23 +367,23 @@ const MassMessageDialog = ({
             </div>
           )}
 
-          {/* Message Input */}
+          {/* Custom Message Input */}
           <div className="space-y-2">
-            <Label>Message</Label>
+            <Label>Personal Message (optional)</Label>
             <Textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Write your message to creators..."
-              rows={5}
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              placeholder="Add a personal note to your invitation (e.g., why you think they'd be a great fit)..."
+              rows={3}
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground">
-              {message.length}/500 characters
+              {customMessage.length}/300 characters
             </p>
           </div>
 
           {/* Save as Template */}
-          {!selectedTemplate && (
+          {!selectedTemplate && customMessage.trim() && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <input
@@ -312,12 +394,12 @@ const MassMessageDialog = ({
                   className="rounded border-border"
                 />
                 <Label htmlFor="saveTemplate" className="text-sm cursor-pointer">
-                  Save as template for future use
+                  Save message as template for future use
                 </Label>
               </div>
               {saveAsTemplate && (
                 <Input
-                  placeholder="Template name (e.g., 'Collaboration Intro')"
+                  placeholder="Template name (e.g., 'Warm Intro')"
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}
                 />
@@ -332,7 +414,7 @@ const MassMessageDialog = ({
           </Button>
           <Button 
             onClick={handleSend} 
-            disabled={sending || !message.trim() || wouldExceedLimit}
+            disabled={sending || !selectedCampaignId || wouldExceedLimit || campaigns.length === 0}
             className="gap-2"
           >
             {sending ? (
@@ -343,7 +425,7 @@ const MassMessageDialog = ({
             ) : (
               <>
                 <Send className="h-4 w-4" />
-                Send to {selectedCreators.length} Creator{selectedCreators.length !== 1 ? 's' : ''}
+                Send Invitation{selectedCreators.length !== 1 ? 's' : ''}
               </>
             )}
           </Button>
@@ -353,4 +435,4 @@ const MassMessageDialog = ({
   );
 };
 
-export default MassMessageDialog;
+export default MassCampaignInviteDialog;
