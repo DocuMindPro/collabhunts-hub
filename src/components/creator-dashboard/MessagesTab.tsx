@@ -101,14 +101,41 @@ const MessagesTab = () => {
     }
   }, [selectedConversation]);
 
-  const scrollToBottom = () => {
-    requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
-    });
+  const scrollToBottom = (immediate = false) => {
+    const doScroll = () => {
+      // Method 1: Use scrollTop on container
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+      // Method 2: Use scrollIntoView as backup
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+    };
+
+    if (immediate) {
+      doScroll();
+    } else {
+      // Use double RAF to ensure DOM is fully painted
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          doScroll();
+        });
+      });
+    }
   };
 
+  // Scroll when messages change
   useLayoutEffect(() => {
-    scrollToBottom();
+    if (messages.length > 0) {
+      // Immediate scroll attempt
+      scrollToBottom(true);
+      // Delayed attempts to catch any late renders
+      const timers = [
+        setTimeout(() => scrollToBottom(true), 50),
+        setTimeout(() => scrollToBottom(true), 200),
+        setTimeout(() => scrollToBottom(true), 500),
+      ];
+      return () => timers.forEach(clearTimeout);
+    }
   }, [messages]);
 
   const fetchConversations = async () => {
@@ -193,10 +220,6 @@ const MessagesTab = () => {
 
       if (error) throw error;
       setMessages(data || []);
-      
-      setTimeout(() => scrollToBottom(), 50);
-      setTimeout(() => scrollToBottom(), 150);
-      setTimeout(() => scrollToBottom(), 300);
 
       await supabase
         .from("messages")
