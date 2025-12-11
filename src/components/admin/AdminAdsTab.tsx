@@ -29,6 +29,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Megaphone, 
@@ -43,7 +53,10 @@ import {
   Calendar,
   Upload,
   Loader2,
-  MapPin
+  MapPin,
+  RotateCcw,
+  AlertTriangle,
+  Clock
 } from "lucide-react";
 
 // URL mapping for each page
@@ -76,6 +89,77 @@ interface AdPlacement {
   updated_at: string;
 }
 
+type AdStatus = "available" | "active" | "inactive" | "expired" | "expiring_soon";
+
+const getAdStatus = (ad: AdPlacement): AdStatus => {
+  const now = new Date();
+  const hasData = ad.advertiser_name || ad.image_url;
+  
+  // Check if expired
+  if (ad.end_date && new Date(ad.end_date) < now) {
+    return "expired";
+  }
+  
+  // Check if expiring soon (within 3 days)
+  if (ad.end_date) {
+    const endDate = new Date(ad.end_date);
+    const daysUntilExpiry = (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    if (daysUntilExpiry <= 3 && daysUntilExpiry > 0 && ad.is_active) {
+      return "expiring_soon";
+    }
+  }
+  
+  // No advertiser data = available slot
+  if (!hasData) {
+    return "available";
+  }
+  
+  // Has data and is active
+  if (ad.is_active) {
+    return "active";
+  }
+  
+  // Has data but inactive
+  return "inactive";
+};
+
+const StatusBadge = ({ status }: { status: AdStatus }) => {
+  switch (status) {
+    case "available":
+      return (
+        <Badge variant="outline" className="text-muted-foreground border-dashed">
+          <XCircle className="h-3 w-3 mr-1" /> Available
+        </Badge>
+      );
+    case "active":
+      return (
+        <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+          <Eye className="h-3 w-3 mr-1" /> Active
+        </Badge>
+      );
+    case "inactive":
+      return (
+        <Badge variant="secondary">
+          <EyeOff className="h-3 w-3 mr-1" /> Inactive
+        </Badge>
+      );
+    case "expired":
+      return (
+        <Badge variant="destructive">
+          <Clock className="h-3 w-3 mr-1" /> Expired
+        </Badge>
+      );
+    case "expiring_soon":
+      return (
+        <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">
+          <AlertTriangle className="h-3 w-3 mr-1" /> Expiring Soon
+        </Badge>
+      );
+    default:
+      return null;
+  }
+};
+
 const AdminAdsTab = () => {
   const [placements, setPlacements] = useState<AdPlacement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,6 +169,8 @@ const AdminAdsTab = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [resetConfirmAd, setResetConfirmAd] = useState<AdPlacement | null>(null);
+  const [resetting, setResetting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Form state
@@ -185,6 +271,89 @@ const AdminAdsTab = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleReset = async (ad: AdPlacement) => {
+    try {
+      setResetting(true);
+
+      const { error } = await supabase
+        .from("ad_placements")
+        .update({
+          advertiser_name: null,
+          advertiser_type: "external",
+          image_url: null,
+          link_url: null,
+          link_type: "external",
+          is_active: false,
+          start_date: null,
+          end_date: null,
+          notes: null,
+          target_creator_profile_id: null,
+        })
+        .eq("id", ad.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Placement Reset",
+        description: `${ad.placement_name} has been reset to "Advertise Here".`,
+      });
+
+      setResetConfirmAd(null);
+      fetchPlacements();
+    } catch (error: any) {
+      toast({
+        title: "Error resetting placement",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const handleResetFromDialog = async () => {
+    if (!editingAd) return;
+    
+    try {
+      setResetting(true);
+
+      const { error } = await supabase
+        .from("ad_placements")
+        .update({
+          advertiser_name: null,
+          advertiser_type: "external",
+          image_url: null,
+          link_url: null,
+          link_type: "external",
+          is_active: false,
+          start_date: null,
+          end_date: null,
+          notes: null,
+          target_creator_profile_id: null,
+        })
+        .eq("id", editingAd.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Placement Reset",
+        description: `${editingAd.placement_name} has been reset to "Advertise Here".`,
+      });
+
+      setIsEditing(false);
+      setEditingAd(null);
+      fetchPlacements();
+    } catch (error: any) {
+      toast({
+        title: "Error resetting placement",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -296,12 +465,14 @@ const AdminAdsTab = () => {
   });
 
   const activeCount = placements.filter(ad => ad.is_active).length;
+  const expiredCount = placements.filter(ad => getAdStatus(ad) === "expired").length;
+  const availableCount = placements.filter(ad => getAdStatus(ad) === "available").length;
   const pages = [...new Set(placements.map(ad => ad.page))];
 
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Placements</CardTitle>
@@ -322,11 +493,20 @@ const AdminAdsTab = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Empty Slots</CardTitle>
+            <CardTitle className="text-sm font-medium">Available Slots</CardTitle>
             <XCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-muted-foreground">{placements.length - activeCount}</div>
+            <div className="text-2xl font-bold text-muted-foreground">{availableCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Expired</CardTitle>
+            <Clock className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">{expiredCount}</div>
           </CardContent>
         </Card>
       </div>
@@ -383,98 +563,134 @@ const AdminAdsTab = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredPlacements.map((ad) => (
-                <TableRow key={ad.id}>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{ad.placement_name}</p>
-                      <p className="text-xs text-muted-foreground">{ad.placement_id}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">{ad.page}</Badge>
-                      <a 
-                        href={pageUrlMap[ad.page] || "/"} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        title="View on page"
-                        className="text-muted-foreground hover:text-primary"
-                      >
-                        <MapPin className="h-3.5 w-3.5" />
-                      </a>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {ad.advertiser_name ? (
+              filteredPlacements.map((ad) => {
+                const status = getAdStatus(ad);
+                const hasData = ad.advertiser_name || ad.image_url;
+                
+                return (
+                  <TableRow key={ad.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{ad.placement_name}</p>
+                        <p className="text-xs text-muted-foreground">{ad.placement_id}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-2">
-                        <span>{ad.advertiser_name}</span>
-                        {ad.link_url && (
-                          <a href={ad.link_url} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary" />
-                          </a>
-                        )}
+                        <Badge variant="outline">{ad.page}</Badge>
+                        <a 
+                          href={pageUrlMap[ad.page] || "/"} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          title="View on page"
+                          className="text-muted-foreground hover:text-primary"
+                        >
+                          <MapPin className="h-3.5 w-3.5" />
+                        </a>
                       </div>
-                    ) : (
-                      <span className="text-muted-foreground italic">Empty slot</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {ad.image_url ? (
-                      <a href={ad.image_url} target="_blank" rel="noopener noreferrer">
-                        <img 
-                          src={ad.image_url} 
-                          alt={ad.advertiser_name || "Ad"} 
-                          className="w-16 h-10 object-cover rounded border"
-                        />
-                      </a>
-                    ) : (
-                      <div className="w-16 h-10 bg-muted rounded border flex items-center justify-center">
-                        <Image className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <button 
-                      onClick={() => toggleActive(ad)}
-                      className="flex items-center gap-2"
-                    >
-                      {ad.is_active ? (
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                          <Eye className="h-3 w-3 mr-1" /> Active
-                        </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {ad.advertiser_name ? (
+                        <div className="flex items-center gap-2">
+                          <span>{ad.advertiser_name}</span>
+                          {ad.link_url && (
+                            <a href={ad.link_url} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                            </a>
+                          )}
+                        </div>
                       ) : (
-                        <Badge variant="secondary">
-                          <EyeOff className="h-3 w-3 mr-1" /> Inactive
-                        </Badge>
+                        <span className="text-muted-foreground italic">Empty slot</span>
                       )}
-                    </button>
-                  </TableCell>
-                  <TableCell>
-                    {ad.start_date || ad.end_date ? (
-                      <div className="text-xs text-muted-foreground">
-                        {ad.start_date && <div>From: {new Date(ad.start_date).toLocaleDateString()}</div>}
-                        {ad.end_date && <div>To: {new Date(ad.end_date).toLocaleDateString()}</div>}
+                    </TableCell>
+                    <TableCell>
+                      {ad.image_url ? (
+                        <a href={ad.image_url} target="_blank" rel="noopener noreferrer">
+                          <img 
+                            src={ad.image_url} 
+                            alt={ad.advertiser_name || "Ad"} 
+                            className="w-16 h-10 object-cover rounded border"
+                          />
+                        </a>
+                      ) : (
+                        <div className="w-16 h-10 bg-muted rounded border flex items-center justify-center">
+                          <Image className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <button 
+                        onClick={() => hasData && toggleActive(ad)}
+                        className={hasData ? "cursor-pointer" : "cursor-default"}
+                        disabled={!hasData}
+                      >
+                        <StatusBadge status={status} />
+                      </button>
+                    </TableCell>
+                    <TableCell>
+                      {ad.start_date || ad.end_date ? (
+                        <div className="text-xs text-muted-foreground">
+                          {ad.start_date && <div>From: {new Date(ad.start_date).toLocaleDateString()}</div>}
+                          {ad.end_date && (
+                            <div className={status === "expired" ? "text-destructive font-medium" : ""}>
+                              To: {new Date(ad.end_date).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No schedule</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {hasData && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setResetConfirmAd(ad)}
+                            title="Reset to Advertise Here"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(ad)}>
+                          <Edit className="h-4 w-4 mr-1" /> Edit
+                        </Button>
                       </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">No schedule</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(ad)}>
-                      <Edit className="h-4 w-4 mr-1" /> Edit
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
       </div>
 
+      {/* Reset Confirmation Dialog */}
+      <AlertDialog open={!!resetConfirmAd} onOpenChange={() => setResetConfirmAd(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Ad Placement?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will clear all advertiser data from "{resetConfirmAd?.placement_name}" and return it to "Advertise Here" state. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resetting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => resetConfirmAd && handleReset(resetConfirmAd)}
+              disabled={resetting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {resetting ? "Resetting..." : "Reset Placement"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Edit Dialog */}
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Ad Placement: {editingAd?.placement_name}</DialogTitle>
           </DialogHeader>
@@ -609,6 +825,21 @@ const AdminAdsTab = () => {
                 rows={3}
               />
             </div>
+
+            {/* Reset Button in Dialog */}
+            {(formData.advertiser_name || formData.image_url) && (
+              <div className="pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={handleResetFromDialog}
+                  disabled={resetting}
+                  className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  {resetting ? "Resetting..." : "Reset to Advertise Here"}
+                </Button>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
