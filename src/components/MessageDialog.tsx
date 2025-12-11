@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useLayoutEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -34,6 +34,7 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -115,12 +116,12 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
   };
 
   const scrollToBottom = () => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    });
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     scrollToBottom();
   }, [messages]);
 
@@ -216,6 +217,7 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
                       </div>
                     ))
                   )}
+                  <div ref={messagesEndRef} />
                 </div>
               </div>
 
