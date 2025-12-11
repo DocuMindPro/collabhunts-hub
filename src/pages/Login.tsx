@@ -146,10 +146,38 @@ const Login = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (error) {
+        toast({
+          title: "Login failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSocialLogin = (provider: string) => {
     toast({
       title: "Coming Soon",
-      description: `${provider} login will be available soon. Please use email login for now.`,
+      description: `${provider} login will be available soon.`,
     });
   };
 
@@ -470,7 +498,7 @@ const Login = () => {
               type="button"
               variant="outline"
               className="w-full h-12 text-base font-medium border-border hover:bg-muted/50"
-              onClick={() => handleSocialLogin("Google")}
+              onClick={handleGoogleLogin}
               disabled={isLoading}
             >
               <GoogleIcon />
@@ -488,6 +516,7 @@ const Login = () => {
               <span className="ml-3">Sign in with Apple</span>
             </Button>
 
+            {/* Phone login temporarily disabled until Twilio is configured
             <Button
               type="button"
               variant="outline"
@@ -498,6 +527,7 @@ const Login = () => {
               <Phone className="h-[18px] w-[18px]" />
               <span className="ml-3">Sign in with Phone</span>
             </Button>
+            */}
           </div>
 
           {/* Divider */}
