@@ -162,3 +162,8 @@ export const canUserRequestVerifiedBadge = async (userId: string): Promise<boole
   const planType = await getCurrentPlanType(userId);
   return SUBSCRIPTION_PLANS[planType].canRequestVerifiedBadge;
 };
+
+export const getUserSubscriptionTier = async (userId: string): Promise<string> => {
+  const planType = await getCurrentPlanType(userId);
+  return planType;
+};
