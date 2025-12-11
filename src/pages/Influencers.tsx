@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { Search, Star, Instagram, Youtube, Play, Filter, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Star, Instagram, Youtube, Play, Filter, X, ChevronDown, ChevronUp, Zap, Sparkles } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -21,7 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import UpgradePrompt from "@/components/UpgradePrompt";
-import { userHasAdvancedFilters } from "@/lib/subscription-utils";
+import UpgradeBanner from "@/components/UpgradeBanner";
+import { userHasAdvancedFilters, getBrandSubscription } from "@/lib/subscription-utils";
 
 interface CreatorWithDetails {
   id: string;
@@ -65,6 +66,9 @@ const Influencers = () => {
   const [ageRange, setAgeRange] = useState([18, 65]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [selectedEthnicities, setSelectedEthnicities] = useState<string[]>([]);
+  const [currentPlan, setCurrentPlan] = useState<string>("none");
+  const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const navigate = useNavigate();
   const [selectedLanguage, setSelectedLanguage] = useState("all");
 
   const platforms = ["All", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch"];
@@ -93,8 +97,23 @@ const Influencers = () => {
       if (user) {
         const canUseFilters = await userHasAdvancedFilters(user.id);
         setHasAdvancedFilters(canUseFilters);
+        
+        // Check brand profile and subscription
+        const { data: brandProfile } = await supabase
+          .from("brand_profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        setHasBrandProfile(!!brandProfile);
+        
+        if (brandProfile) {
+          const subscription = await getBrandSubscription(brandProfile.id);
+          setCurrentPlan(subscription?.plan_type || "none");
+        }
       } else {
         setHasAdvancedFilters(false);
+        setHasBrandProfile(false);
       }
     } catch (error) {
       console.error("Error checking subscription:", error);
@@ -469,6 +488,39 @@ const Influencers = () => {
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {/* Top Upsell Banner for brands on free/basic plans */}
+          {hasBrandProfile && (currentPlan === "none" || currentPlan === "basic") && (
+            <div className="mb-6">
+              <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/5 p-4 md:p-6">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">
+                        {currentPlan === "none" ? "Upgrade to chat with creators" : "Upgrade to Pro for advanced filters"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {currentPlan === "none" 
+                          ? "Start at $39/mo - Plus get 10GB content library storage" 
+                          : "Filter by age, ethnicity, language + save favorites & post campaigns"}
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => navigate('/brand-dashboard?tab=subscription')}
+                    className="gap-2 bg-primary hover:bg-primary/90 whitespace-nowrap"
+                  >
+                    <Zap className="h-4 w-4" />
+                    {currentPlan === "none" ? "Get Basic - $39/mo" : "Get Pro - $99/mo"}
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Results */}

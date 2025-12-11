@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lock, Zap } from "lucide-react";
+import { Lock, Zap, Sparkles, MessageCircle, Users, Filter, BadgeCheck, FolderOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface UpgradePromptProps {
   feature: "contact" | "campaigns" | "filters" | "crm" | "content_library" | "badge";
@@ -13,53 +14,73 @@ const featureMessages = {
   contact: {
     title: "Upgrade to Contact Creators",
     description: "Chat and negotiate with creators before hiring. Subscribe to Basic ($39/mo) to unlock messaging.",
-    cta: "Upgrade to Basic - $39/mo"
+    cta: "Upgrade to Basic - $39/mo",
+    icon: MessageCircle,
+    gradient: "from-blue-500/20 to-purple-500/20"
   },
   campaigns: {
     title: "Upgrade to Post Campaigns",
-    description: "Post campaigns to attract creators. Subscribe to Pro ($99/mo) for 1 campaign/month or Premium for unlimited.",
-    cta: "Upgrade to Pro - $99/mo"
+    description: "Post campaigns to attract creators. Subscribe to Pro ($99/mo) for campaigns or Premium for unlimited.",
+    cta: "Upgrade to Pro - $99/mo",
+    icon: Users,
+    gradient: "from-orange-500/20 to-red-500/20"
   },
   filters: {
     title: "Unlock Advanced Filters",
     description: "Filter creators by age, ethnicity, language and more. Subscribe to Pro ($99/mo) to access advanced filters.",
-    cta: "Upgrade to Pro - $99/mo"
+    cta: "Upgrade to Pro - $99/mo",
+    icon: Filter,
+    gradient: "from-green-500/20 to-teal-500/20"
   },
   crm: {
     title: "Upgrade for Creator CRM",
     description: "Save your favorite creators, organize them in folders, and add private notes. Subscribe to Pro ($99/mo) to unlock.",
-    cta: "Upgrade to Pro - $99/mo"
+    cta: "Upgrade to Pro - $99/mo",
+    icon: FolderOpen,
+    gradient: "from-purple-500/20 to-pink-500/20"
   },
   content_library: {
     title: "Upgrade for Content Library",
     description: "Store your UGC content, track usage rights, and re-download files anytime. Basic includes 10 GB, Premium includes 50 GB.",
-    cta: "Upgrade to Basic - $39/mo"
+    cta: "Upgrade to Basic - $39/mo",
+    icon: FolderOpen,
+    gradient: "from-cyan-500/20 to-blue-500/20"
   },
   badge: {
     title: "Upgrade for Verified Badge",
     description: "Get a verified business badge to build trust with creators. Subscribe to Pro ($99/mo) or Premium to apply for verification.",
-    cta: "Upgrade to Pro - $99/mo"
+    cta: "Upgrade to Pro - $99/mo",
+    icon: BadgeCheck,
+    gradient: "from-amber-500/20 to-orange-500/20"
   }
 };
 
 const UpgradePrompt = ({ feature, className = "", inline = false }: UpgradePromptProps) => {
   const navigate = useNavigate();
   const message = featureMessages[feature];
+  const Icon = message.icon;
 
   if (inline) {
     return (
-      <div className={`flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-dashed ${className}`}>
-        <Lock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium">{message.title}</p>
-          <p className="text-xs text-muted-foreground">{message.description}</p>
+      <div className={cn(
+        "relative overflow-hidden flex items-center gap-3 p-4 rounded-xl border border-primary/20",
+        `bg-gradient-to-r ${message.gradient}`,
+        className
+      )}>
+        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+        <div className="relative flex-shrink-0 w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+          <Icon className="h-5 w-5 text-primary" />
+        </div>
+        <div className="relative flex-1 min-w-0">
+          <p className="text-sm font-semibold">{message.title}</p>
+          <p className="text-xs text-muted-foreground line-clamp-2">{message.description}</p>
         </div>
         <Button 
           size="sm" 
           onClick={() => navigate('/brand-dashboard?tab=subscription')}
-          className="flex-shrink-0 gap-1"
+          className="relative flex-shrink-0 gap-1.5 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
         >
-          <Zap className="h-3 w-3" />
+          <Zap className="h-3.5 w-3.5" />
           Upgrade
         </Button>
       </div>
@@ -67,18 +88,23 @@ const UpgradePrompt = ({ feature, className = "", inline = false }: UpgradePromp
   }
 
   return (
-    <Card className={className}>
-      <CardHeader className="text-center">
-        <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-          <Lock className="h-6 w-6 text-primary" />
+    <Card className={cn("relative overflow-hidden", className)}>
+      {/* Animated gradient background */}
+      <div className={cn("absolute inset-0 bg-gradient-to-br", message.gradient, "opacity-50")} />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
+      
+      <CardHeader className="relative text-center">
+        <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-3 shadow-lg">
+          <Icon className="h-8 w-8 text-primary" />
         </div>
-        <CardTitle>{message.title}</CardTitle>
-        <CardDescription>{message.description}</CardDescription>
+        <CardTitle className="text-xl">{message.title}</CardTitle>
+        <CardDescription className="text-sm">{message.description}</CardDescription>
       </CardHeader>
-      <CardContent className="text-center">
+      <CardContent className="relative text-center pb-6">
         <Button 
           onClick={() => navigate('/brand-dashboard?tab=subscription')}
-          className="gap-2"
+          size="lg"
+          className="gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
         >
           <Zap className="h-4 w-4" />
           {message.cta}
