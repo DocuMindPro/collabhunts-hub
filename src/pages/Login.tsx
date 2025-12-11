@@ -57,14 +57,20 @@ const Login = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/");
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Login: Auth state changed:', event, session?.user?.email);
+      if (event === 'SIGNED_IN' && session && !isPhoneMode) {
+        // Use a slight delay to ensure state is propagated
+        setTimeout(() => {
+          navigate("/");
+        }, 100);
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session && !isPhoneMode) {
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
         navigate("/");
       }
     });

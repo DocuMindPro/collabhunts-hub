@@ -82,18 +82,12 @@ const Navbar = () => {
   const navLinks = getNavLinks();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdminRole(session.user.id);
-        checkCreatorStatus(session.user.id);
-        checkBrandProfile(session.user.id);
-      }
-    });
-
+    // Set up auth state listener FIRST (critical for proper sync)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Navbar: Auth state changed:', event, session?.user?.email);
       setUser(session?.user ?? null);
       if (session?.user) {
+        // Defer data fetching to avoid deadlock
         setTimeout(() => {
           checkAdminRole(session.user.id);
           checkCreatorStatus(session.user.id);
@@ -103,6 +97,17 @@ const Navbar = () => {
         setIsAdmin(false);
         setHasCreatorProfile(false);
         setHasBrandProfile(false);
+      }
+    });
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Navbar: Initial session check:', session?.user?.email);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        checkAdminRole(session.user.id);
+        checkCreatorStatus(session.user.id);
+        checkBrandProfile(session.user.id);
       }
     });
 
