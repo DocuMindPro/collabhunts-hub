@@ -239,7 +239,7 @@ const BrandOverviewTab = () => {
               <div>
                 <CardTitle className="text-lg">Current Plan</CardTitle>
                 <CardDescription>
-                  {plan.name} - {plan.price === 0 ? "Free" : `$${plan.price}/mo`}
+                  {plan.name} - {plan.price === 0 ? "Free" : `$${plan.price / 100}/mo`}
                 </CardDescription>
               </div>
             </div>
@@ -256,7 +256,7 @@ const BrandOverviewTab = () => {
         </CardHeader>
         <CardContent>
           <div className="text-sm text-muted-foreground">
-            Marketplace fee: <span className="font-semibold text-foreground">{plan.marketplaceFee}%</span> on bookings
+            Marketplace fee: <span className="font-semibold text-foreground">{(plan.marketplaceFee * 100).toFixed(0)}%</span> on bookings
           </div>
         </CardContent>
       </Card>
