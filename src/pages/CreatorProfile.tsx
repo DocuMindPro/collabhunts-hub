@@ -182,9 +182,8 @@ const CreatorProfile = () => {
         .single();
 
       if (existingConversation) {
-        // Open dialog with existing conversation
-        setConversationId(existingConversation.id);
-        setIsMessageDialogOpen(true);
+        // Navigate to messages tab with conversation
+        navigate(`/brand-dashboard?tab=messages&conversation=${existingConversation.id}`);
         return;
       }
 
@@ -200,9 +199,8 @@ const CreatorProfile = () => {
 
       if (conversationError) throw conversationError;
 
-      // Open dialog with new conversation
-      setConversationId(newConversation.id);
-      setIsMessageDialogOpen(true);
+      // Navigate to messages tab with new conversation
+      navigate(`/brand-dashboard?tab=messages&conversation=${newConversation.id}`);
 
     } catch (error: any) {
       console.error("Error creating conversation:", error);

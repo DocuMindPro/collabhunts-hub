@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Send } from "lucide-react";
 import { format } from "date-fns";
@@ -34,7 +33,7 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
   const [newMessage, setNewMessage] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -93,10 +92,10 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
       if (error) throw error;
       setMessages(data || []);
       
-      // Multiple scroll attempts for mobile compatibility
-      setTimeout(() => scrollToBottom(true), 50);
-      setTimeout(() => scrollToBottom(true), 150);
-      setTimeout(() => scrollToBottom(true), 300);
+      // Multiple scroll attempts for reliability
+      setTimeout(() => scrollToBottom(), 50);
+      setTimeout(() => scrollToBottom(), 150);
+      setTimeout(() => scrollToBottom(), 300);
 
       // Mark messages as read
       const { data: { user } } = await supabase.auth.getUser();
@@ -115,8 +114,10 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
     }
   };
 
-  const scrollToBottom = (instant = false) => {
-    messagesEndRef.current?.scrollIntoView({ behavior: instant ? "instant" : "smooth" });
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
@@ -183,7 +184,10 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
             </div>
           ) : (
             <>
-              <ScrollArea className="flex-1 pr-4 mb-4">
+              <div 
+                ref={messagesContainerRef}
+                className="flex-1 overflow-y-auto pr-4 mb-4"
+              >
                 <div className="space-y-4 py-4">
                   {messages.length === 0 ? (
                     <div className="text-center text-muted-foreground py-12">
@@ -196,23 +200,24 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
                         className={`flex ${msg.sender_id === userId ? "justify-end" : "justify-start"}`}
                       >
                         <div
-                          className={`max-w-[70%] p-3 rounded-lg ${
+                          className={`max-w-[70%] px-4 py-2 rounded-2xl ${
                             msg.sender_id === userId
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted"
+                              ? "bg-primary text-primary-foreground rounded-br-md"
+                              : "bg-muted rounded-bl-md"
                           }`}
                         >
-                          <p className="break-words">{msg.content}</p>
-                          <p className="text-xs opacity-70 mt-1">
+                          <p className="break-words text-sm">{msg.content}</p>
+                          <p className={`text-[10px] mt-1 ${
+                            msg.sender_id === userId ? "text-primary-foreground/70" : "text-muted-foreground"
+                          }`}>
                             {format(new Date(msg.created_at), "HH:mm")}
                           </p>
                         </div>
                       </div>
                     ))
                   )}
-                  <div ref={messagesEndRef} />
                 </div>
-              </ScrollArea>
+              </div>
 
               <div className="flex gap-2 pt-4 border-t">
                 <Input
