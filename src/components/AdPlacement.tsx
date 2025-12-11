@@ -71,8 +71,8 @@ const AdPlacement = ({ placementId, className = "", fallback, showAdvertiseHere 
           href="mailto:advertise@collabhunts.com?subject=Advertising%20Inquiry" 
           className={`block ${className}`}
         >
-          <div className="bg-muted/50 border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 hover:bg-muted transition-colors">
-            <ExternalLink className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+          <div className="h-full bg-muted/50 border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center text-center hover:border-primary/50 hover:bg-muted transition-colors">
+            <ExternalLink className="h-6 w-6 mb-2 text-muted-foreground" />
             <p className="font-medium text-muted-foreground">Advertise Here</p>
             <p className="text-xs text-muted-foreground mt-1">advertise@collabhunts.com</p>
           </div>

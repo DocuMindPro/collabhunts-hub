@@ -256,10 +256,10 @@ const Index = () => {
       <section className="py-20 gradient-accent animate-gradient-shift">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8">
-            <AnimatedSection animation="slide-left">
-              <div className="bg-card/95 backdrop-blur p-8 rounded-2xl shadow-card hover:shadow-hover transition-shadow duration-300">
+            <AnimatedSection animation="slide-left" className="h-full">
+              <div className="h-full bg-card/95 backdrop-blur p-8 rounded-2xl shadow-card hover:shadow-hover transition-shadow duration-300 flex flex-col">
                 <h3 className="text-3xl font-heading font-bold mb-4">For Brands</h3>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-muted-foreground mb-6 flex-1">
                   Search influencers, post campaigns, track analytics, and get unique content for your brand
                 </p>
                 {hasBrandProfile ? (
@@ -289,10 +289,10 @@ const Index = () => {
               </div>
             </AnimatedSection>
 
-            <AnimatedSection animation="slide-right">
-              <div className="bg-card/95 backdrop-blur p-8 rounded-2xl shadow-card hover:shadow-hover transition-shadow duration-300">
+            <AnimatedSection animation="slide-right" className="h-full">
+              <div className="h-full bg-card/95 backdrop-blur p-8 rounded-2xl shadow-card hover:shadow-hover transition-shadow duration-300 flex flex-col">
                 <h3 className="text-3xl font-heading font-bold mb-4">For Creators</h3>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-muted-foreground mb-6 flex-1">
                   Get paid to work with brands you love and showcase your talent to thousands of companies
                 </p>
                 {hasCreatorProfile ? (
