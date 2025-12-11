@@ -42,12 +42,12 @@ serve(async (req) => {
       });
     }
 
-    const { creatorProfileIds, message, templateId, templateName } = await req.json();
+    const { creatorProfileIds, campaignId, customMessage, message, templateId, templateName } = await req.json();
 
     // Get brand profile
     const { data: brandProfile, error: brandError } = await supabase
       .from('brand_profiles')
-      .select('id')
+      .select('id, company_name')
       .eq('user_id', user.id)
       .single();
 
@@ -72,7 +72,7 @@ serve(async (req) => {
     
     if (planType === 'none' || planType === 'basic') {
       return new Response(JSON.stringify({ 
-        error: 'Mass messaging requires Pro or Premium subscription' 
+        error: 'Mass campaign invitations require Pro or Premium subscription' 
       }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -106,7 +106,7 @@ serve(async (req) => {
     
     if (todayCount + creatorProfileIds.length > dailyLimit) {
       return new Response(JSON.stringify({ 
-        error: `Daily limit of ${dailyLimit} messages reached. Sent today: ${todayCount}`,
+        error: `Daily limit of ${dailyLimit} invitations reached. Sent today: ${todayCount}`,
         remaining: dailyLimit - todayCount
       }), {
         status: 429,
@@ -128,12 +128,32 @@ serve(async (req) => {
     
     if (weekCount + creatorProfileIds.length > weeklyLimit) {
       return new Response(JSON.stringify({ 
-        error: `Weekly limit of ${weeklyLimit} messages reached. Sent this week: ${weekCount}`,
+        error: `Weekly limit of ${weeklyLimit} invitations reached. Sent this week: ${weekCount}`,
         remaining: weeklyLimit - weekCount
       }), {
         status: 429,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Fetch campaign details if campaignId provided
+    let campaign = null;
+    if (campaignId) {
+      const { data: campaignData } = await supabase
+        .from('campaigns')
+        .select('id, title, description, budget_cents, deadline, spots_available, spots_filled')
+        .eq('id', campaignId)
+        .eq('brand_profile_id', brandProfile.id)
+        .single();
+      
+      campaign = campaignData;
+      
+      if (!campaign) {
+        return new Response(JSON.stringify({ error: 'Campaign not found or does not belong to your brand' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     // Filter out creators who opted out or were messaged in cooldown period
@@ -175,17 +195,45 @@ serve(async (req) => {
 
     // Save template if new
     let savedTemplateId = templateId;
-    if (!templateId && templateName) {
+    if (!templateId && templateName && (customMessage || message)) {
       const { data: newTemplate } = await supabase
         .from('mass_message_templates')
         .insert({
           brand_profile_id: brandProfile.id,
           name: templateName,
-          content: message,
+          content: customMessage || message,
         })
         .select('id')
         .single();
       savedTemplateId = newTemplate?.id;
+    }
+
+    // Build the message content
+    let messageContent: string;
+    if (campaign) {
+      // Campaign invitation message
+      const budgetStr = `$${(campaign.budget_cents / 100).toFixed(0)}`;
+      const spotsLeft = campaign.spots_available - campaign.spots_filled;
+      const deadlineDate = new Date(campaign.deadline).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+      
+      messageContent = `🎯 **${brandProfile.company_name}** has invited you to apply for their campaign!\n\n`;
+      messageContent += `**${campaign.title}**\n`;
+      messageContent += `💰 Budget: ${budgetStr}\n`;
+      messageContent += `👥 ${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} remaining\n`;
+      messageContent += `📅 Deadline: ${deadlineDate}\n`;
+      
+      if (customMessage) {
+        messageContent += `\n💬 Personal note from ${brandProfile.company_name}:\n"${customMessage}"`;
+      }
+      
+      messageContent += `\n\n👉 Check your Campaigns tab to apply!`;
+    } else {
+      // Legacy support for plain messages
+      messageContent = message || customMessage || '';
     }
 
     // Create conversations and send messages
@@ -226,11 +274,11 @@ serve(async (req) => {
           .insert({
             conversation_id: conversation.id,
             sender_id: user.id,
-            content: message,
+            content: messageContent,
           });
 
         if (msgError) {
-          errors.push(`Failed to send message to ${creator.display_name}`);
+          errors.push(`Failed to send invitation to ${creator.display_name}`);
           continue;
         }
 
@@ -241,19 +289,20 @@ serve(async (req) => {
       }
     }
 
-    // Log the mass message
+    // Log the mass message/campaign invitation
     if (sentCreatorIds.length > 0) {
       await supabase
         .from('mass_messages_log')
         .insert({
           brand_profile_id: brandProfile.id,
           template_id: savedTemplateId,
+          campaign_id: campaign?.id || null,
           creator_profile_ids: sentCreatorIds,
           message_count: sentCreatorIds.length,
         });
     }
 
-    console.log(`Mass message sent: ${sentCreatorIds.length}/${creatorProfileIds.length} creators`);
+    console.log(`Campaign invitation sent: ${sentCreatorIds.length}/${creatorProfileIds.length} creators${campaign ? ` for campaign "${campaign.title}"` : ''}`);
 
     return new Response(JSON.stringify({
       success: true,
@@ -263,6 +312,7 @@ serve(async (req) => {
       errors: errors.length > 0 ? errors : undefined,
       remainingToday: dailyLimit - todayCount - sentCreatorIds.length,
       remainingWeek: weeklyLimit - weekCount - sentCreatorIds.length,
+      campaignTitle: campaign?.title,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -1073,6 +1073,7 @@ export type Database = {
       mass_messages_log: {
         Row: {
           brand_profile_id: string
+          campaign_id: string | null
           creator_profile_ids: string[]
           id: string
           message_count: number
@@ -1081,6 +1082,7 @@ export type Database = {
         }
         Insert: {
           brand_profile_id: string
+          campaign_id?: string | null
           creator_profile_ids: string[]
           id?: string
           message_count: number
@@ -1089,6 +1091,7 @@ export type Database = {
         }
         Update: {
           brand_profile_id?: string
+          campaign_id?: string | null
           creator_profile_ids?: string[]
           id?: string
           message_count?: number
@@ -1101,6 +1104,13 @@ export type Database = {
             columns: ["brand_profile_id"]
             isOneToOne: false
             referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mass_messages_log_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
           {

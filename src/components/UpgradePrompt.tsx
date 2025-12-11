@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lock, Zap, Sparkles, MessageCircle, Users, Filter, BadgeCheck, FolderOpen, Mail, HardDrive, Crown } from "lucide-react";
+import { Lock, Zap, Sparkles, MessageCircle, Users, Filter, BadgeCheck, FolderOpen, Mail, HardDrive, Crown, Megaphone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -69,10 +69,10 @@ const featureMessages = {
     gradient: "from-purple-500/20 to-indigo-500/20"
   },
   mass_message: {
-    title: "Unlock Mass Messaging",
-    description: "Send messages to multiple creators at once. Pro includes 50/day, Premium includes 100/day.",
+    title: "Unlock Campaign Invitations",
+    description: "Invite multiple creators to your campaigns at once. Pro includes 50/day, Premium includes 100/day.",
     cta: "Upgrade to Pro - $99/mo",
-    icon: Mail,
+    icon: Megaphone,
     gradient: "from-teal-500/20 to-cyan-500/20"
   }
 };

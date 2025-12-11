@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Zap, Lock, Check, MessageCircle, Users, Filter, BadgeCheck, FolderOpen, Star } from "lucide-react";
+import { Zap, Lock, Check, MessageCircle, Users, Filter, BadgeCheck, FolderOpen, Star, Megaphone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface UpgradeModalProps {
@@ -104,16 +104,16 @@ const featureConfig = {
     ]
   },
   mass_message: {
-    title: "Send Mass Messages",
-    description: "Reach multiple creators at once to find the perfect match for your campaigns.",
-    icon: MessageCircle,
+    title: "Send Campaign Invitations",
+    description: "Invite multiple creators to apply for your campaigns at once.",
+    icon: Megaphone,
     plan: "Pro",
     price: 99,
     benefits: [
-      "Message up to 50 creators/day",
-      "Save message templates",
-      "Filter by criteria first",
-      "Track message history"
+      "Invite up to 50 creators/day",
+      "Select from active campaigns",
+      "Add personal messages",
+      "Track invitation history"
     ]
   },
   unlimited_campaigns: {
