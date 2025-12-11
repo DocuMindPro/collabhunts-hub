@@ -41,3 +41,9 @@ verify_jwt = false
 
 [functions.send-platform-update]
 verify_jwt = false
+
+[functions.upload-ad-image]
+verify_jwt = false
+
+[functions.check-ad-expiration]
+verify_jwt = false
