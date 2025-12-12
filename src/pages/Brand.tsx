@@ -159,12 +159,12 @@ const Brand = () => {
   ];
 
   const categories = [
-    { name: "Lifestyle", count: "2,500+ creators" },
-    { name: "Fashion", count: "1,800+ creators" },
-    { name: "Beauty", count: "2,100+ creators" },
-    { name: "Fitness", count: "1,400+ creators" },
-    { name: "Travel", count: "900+ creators" },
-    { name: "Food", count: "1,200+ creators" },
+    { name: "Lifestyle" },
+    { name: "Fashion" },
+    { name: "Beauty" },
+    { name: "Fitness" },
+    { name: "Travel" },
+    { name: "Food" },
   ];
 
   const subscriptionTiers = [
@@ -436,16 +436,36 @@ const Brand = () => {
                   <div className="w-3 h-3 rounded-full bg-yellow-500" />
                   <div className="w-3 h-3 rounded-full bg-green-500" />
                 </div>
-                <div className="grid grid-cols-3 gap-2 mb-4">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="aspect-square rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center">
-                      {i <= 3 ? (
-                        <Video className="h-6 w-6 text-muted-foreground" />
-                      ) : (
-                        <Camera className="h-6 w-6 text-muted-foreground" />
-                      )}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                  {/* Video thumbnails */}
+                  <div className="aspect-square rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-border/50 flex items-center justify-center relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1611162616475-46b635cb6868?w=200&h=200&fit=crop" alt="Video content" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <Play className="h-6 w-6 text-white fill-white" />
                     </div>
-                  ))}
+                  </div>
+                  <div className="aspect-square rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 border border-border/50 flex items-center justify-center relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1616469829581-73993eb86b02?w=200&h=200&fit=crop" alt="Video content" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <Play className="h-6 w-6 text-white fill-white" />
+                    </div>
+                  </div>
+                  <div className="aspect-square rounded-lg bg-gradient-to-br from-secondary/20 to-secondary/5 border border-border/50 flex items-center justify-center relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=200&h=200&fit=crop" alt="Video content" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <Play className="h-6 w-6 text-white fill-white" />
+                    </div>
+                  </div>
+                  {/* Image thumbnails */}
+                  <div className="aspect-square rounded-lg border border-border/50 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=200&h=200&fit=crop" alt="Fashion content" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="aspect-square rounded-lg border border-border/50 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=200&h=200&fit=crop" alt="Beauty content" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="aspect-square rounded-lg border border-border/50 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&h=200&fit=crop" alt="Lifestyle content" className="w-full h-full object-cover" />
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <span className="px-2 py-1 rounded bg-primary/10 text-primary text-xs">Summer Campaign</span>
@@ -559,7 +579,6 @@ const Brand = () => {
                 className="px-6 py-3 rounded-full bg-card border border-border hover:border-primary hover:bg-primary/5 transition-all duration-300 group"
               >
                 <span className="font-medium group-hover:text-primary transition-colors">{category.name}</span>
-                <span className="text-sm text-muted-foreground ml-2">{category.count}</span>
               </Link>
             ))}
           </div>
@@ -729,7 +748,7 @@ const Brand = () => {
                 </Link>
               )}
               <Link to="/pricing">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 text-lg px-8 py-6">
+                <Button size="lg" className="bg-white/20 text-white border-2 border-white hover:bg-white hover:text-primary text-lg px-8 py-6">
                   View Pricing
                 </Button>
               </Link>
