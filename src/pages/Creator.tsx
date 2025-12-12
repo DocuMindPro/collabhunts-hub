@@ -77,7 +77,7 @@ const Creator = () => {
     {
       icon: DollarSign,
       title: "Get Paid Faster",
-      description: "Receive payments securely within 7 days of completing work"
+      description: "Receive payments securely and in a timely manner"
     },
     {
       icon: Users,
@@ -87,7 +87,7 @@ const Creator = () => {
     {
       icon: Shield,
       title: "Safe & Secure",
-      description: "Protected payments and professional contracts"
+      description: "Verified brands and professional contracts protect your work"
     },
     {
       icon: Calendar,
