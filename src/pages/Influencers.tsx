@@ -52,6 +52,11 @@ const ETHNICITIES = ["African American", "Asian", "Caucasian", "Hispanic/Latino"
 const LANGUAGES = ["English", "Spanish", "French", "German", "Portuguese", "Arabic", "Hindi", "Chinese", "Japanese", "Korean"];
 
 const Influencers = () => {
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");

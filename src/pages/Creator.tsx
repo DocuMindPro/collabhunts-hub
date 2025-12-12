@@ -14,6 +14,11 @@ const Creator = () => {
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
 
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     const checkUserProfiles = async () => {
       const { data: { session } } = await supabase.auth.getSession();
