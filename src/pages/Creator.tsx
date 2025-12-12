@@ -2,12 +2,11 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Users, Shield, Calendar, Award } from "lucide-react";
+import { DollarSign, Users, Shield, Calendar, Award, Clock } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import AdPlacement from "@/components/AdPlacement";
-
 const Creator = () => {
   const [username, setUsername] = useState("");
   const [user, setUser] = useState<any>(null);
@@ -75,6 +74,11 @@ const Creator = () => {
 
   const benefits = [
     {
+      icon: Clock,
+      title: "Save Valuable Time",
+      description: "No more filtering through endless DMs — only verified, serious brands ready to collaborate will contact you"
+    },
+    {
       icon: DollarSign,
       title: "Get Paid Faster",
       description: "Receive payments securely and in a timely manner"
@@ -82,7 +86,7 @@ const Creator = () => {
     {
       icon: Users,
       title: "Growing Brand Network",
-      description: "Connect with brands actively looking for creators like you"
+      description: "Connect with verified brands actively looking to hire and pay creators like you"
     },
     {
       icon: Shield,
@@ -115,8 +119,11 @@ const Creator = () => {
                 Brands You Love
               </span>
             </h1>
-            <p className="text-xl text-muted-foreground mb-8">
+            <p className="text-xl text-muted-foreground mb-4">
               The simple way to sell, manage, and get paid for your Instagram, TikTok, YouTube, and UGC brand deals
+            </p>
+            <p className="text-lg text-muted-foreground mb-8">
+              No more wasting time on unserious DMs — only verified brands ready to pay will reach out to you.
             </p>
 
             {/* Username Claim or Dashboard Link */}
@@ -175,8 +182,11 @@ const Creator = () => {
             <h2 className="text-4xl md:text-5xl font-heading font-bold mb-4">
               Work with Brands of All Sizes
             </h2>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-xl text-muted-foreground mb-3">
               Collaborate with startups, growing businesses, and established brands
+            </p>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Every brand on CollabHunts has been verified and is ready to work. Say goodbye to sorting through social media DMs from people who waste your time.
             </p>
           </div>
 
@@ -268,7 +278,7 @@ const Creator = () => {
             Why Creators Choose CollabHunts
           </h2>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8">
             {benefits.map((benefit, index) => (
               <div key={index} className="text-center space-y-4">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
@@ -290,7 +300,7 @@ const Creator = () => {
               Ready to Start Earning?
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Create your profile in minutes and start getting paid
+              Create your profile in minutes and let serious, verified brands come to you — no more time wasted on dead-end inquiries
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {hasCreatorProfile ? (
