@@ -6,7 +6,7 @@ import { Users, Target, Sparkles, Heart } from "lucide-react";
 const AboutUs = () => {
   // Scroll to top when component mounts
   useEffect(() => {
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   return (

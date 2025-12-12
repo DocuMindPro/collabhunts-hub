@@ -54,7 +54,7 @@ const LANGUAGES = ["English", "Spanish", "French", "German", "Portuguese", "Arab
 const Influencers = () => {
   // Scroll to top when component mounts
   useEffect(() => {
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
