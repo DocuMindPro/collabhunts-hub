@@ -16,6 +16,11 @@ const KnowledgeBase = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Array<{ category: KBCategory; article: KBArticle }>>([]);
 
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     const checkAuthAndRole = async () => {
       const { data: { session } } = await supabase.auth.getSession();
