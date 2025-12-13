@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Menu, Shield, LogOut, LayoutDashboard, ChevronDown, ChevronUp, BookOpen, Sparkles,
-  BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Megaphone, Wallet, Users, CreditCard, Crown, Zap
+  BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Megaphone, Wallet, Users, CreditCard, Crown, Zap, Globe, Link as LinkIcon
 } from "lucide-react";
 import Notifications from "@/components/Notifications";
 import NavbarUpgradeBadge from "@/components/NavbarUpgradeBadge";
@@ -31,6 +31,8 @@ const Navbar = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [hasFranchiseProfile, setHasFranchiseProfile] = useState(false);
+  const [hasAffiliateProfile, setHasAffiliateProfile] = useState(false);
   const [creatorMenuOpen, setCreatorMenuOpen] = useState(false);
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   const [hasNewUpdates, setHasNewUpdates] = useState(false);
@@ -92,11 +94,15 @@ const Navbar = () => {
           checkAdminRole(session.user.id);
           checkCreatorStatus(session.user.id);
           checkBrandProfile(session.user.id);
+          checkFranchiseProfile(session.user.id);
+          checkAffiliateProfile(session.user.id);
         }, 0);
       } else {
         setIsAdmin(false);
         setHasCreatorProfile(false);
         setHasBrandProfile(false);
+        setHasFranchiseProfile(false);
+        setHasAffiliateProfile(false);
       }
     });
 
@@ -108,6 +114,8 @@ const Navbar = () => {
         checkAdminRole(session.user.id);
         checkCreatorStatus(session.user.id);
         checkBrandProfile(session.user.id);
+        checkFranchiseProfile(session.user.id);
+        checkAffiliateProfile(session.user.id);
       }
     });
 
@@ -166,6 +174,26 @@ const Navbar = () => {
       .eq('user_id', userId)
       .maybeSingle();
     setHasBrandProfile(!!data);
+  };
+
+  const checkFranchiseProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from('franchise_owners')
+      .select('id, status')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .maybeSingle();
+    setHasFranchiseProfile(!!data);
+  };
+
+  const checkAffiliateProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from('affiliates')
+      .select('id, status')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .maybeSingle();
+    setHasAffiliateProfile(!!data);
   };
 
   const handleLogout = async () => {
@@ -237,6 +265,22 @@ const Navbar = () => {
                     <Button variant="outline" size="sm" className="gap-2">
                       <LayoutDashboard className="h-4 w-4" />
                       Brand Dashboard
+                    </Button>
+                  </Link>
+                )}
+                {hasFranchiseProfile && (
+                  <Link to="/franchise-dashboard">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Globe className="h-4 w-4" />
+                      Franchise
+                    </Button>
+                  </Link>
+                )}
+                {hasAffiliateProfile && (
+                  <Link to="/affiliate-dashboard">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <LinkIcon className="h-4 w-4" />
+                      Affiliate
                     </Button>
                   </Link>
                 )}
@@ -384,6 +428,24 @@ const Navbar = () => {
                             </div>
                           )}
                         </div>
+                      )}
+
+                      {hasFranchiseProfile && (
+                        <Link to="/franchise-dashboard" onClick={() => setIsOpen(false)}>
+                          <Button variant="outline" className="w-full gap-2">
+                            <Globe className="h-4 w-4" />
+                            Franchise Dashboard
+                          </Button>
+                        </Link>
+                      )}
+
+                      {hasAffiliateProfile && (
+                        <Link to="/affiliate-dashboard" onClick={() => setIsOpen(false)}>
+                          <Button variant="outline" className="w-full gap-2">
+                            <LinkIcon className="h-4 w-4" />
+                            Affiliate Dashboard
+                          </Button>
+                        </Link>
                       )}
                       <div className="pt-4 border-t">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
