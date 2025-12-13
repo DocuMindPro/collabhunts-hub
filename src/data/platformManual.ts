@@ -803,6 +803,452 @@ pending → active (approved)
         tags: ["support", "contact", "help"]
       }
     ]
+  },
+  {
+    id: "franchise-system",
+    title: "Franchise System",
+    icon: "Globe",
+    category: "operational",
+    articles: [
+      {
+        id: "franchise-overview",
+        title: "Franchise System Overview",
+        content: `## Franchise System
+
+### Purpose
+Allow regional partners to own territorial rights and earn commission from platform activity in their assigned countries.
+
+### Database Tables
+- \`franchise_owners\` - Franchise partner profiles
+- \`franchise_countries\` - Country assignments to franchises
+- \`franchise_earnings\` - Commission tracking
+- \`franchise_payout_requests\` - Payout request management
+
+### Commission Structure
+- **Default Rate:** 70% of platform fees go to franchise owner
+- **Platform Retains:** 30% of platform fees
+- Rates are configurable per franchise in \`commission_rate\` field
+
+### Revenue Sources
+1. **Bookings** - Commission on bookings where creator is in franchise territory
+2. **Subscriptions** - Commission on brand subscriptions where brand is in franchise territory`,
+        lastUpdated: "2024-12-13",
+        tags: ["franchise", "territory", "commission", "partners"]
+      },
+      {
+        id: "franchise-activation",
+        title: "Franchise Activation Process",
+        content: `## Activating a Franchise
+
+### Steps:
+1. Admin creates franchise owner in \`franchise_owners\` table
+2. Admin assigns countries in \`franchise_countries\` table
+3. Admin sets status to "active"
+4. Franchise owner receives dashboard access
+
+### Franchise Owner Fields
+| Field | Purpose |
+|-------|---------|
+| \`user_id\` | Links to auth user |
+| \`company_name\` | Franchise company name |
+| \`contact_email\` | Primary contact email |
+| \`commission_rate\` | % of platform fees (default 0.70) |
+| \`platform_rate\` | Platform's share (default 0.30) |
+| \`status\` | pending / active / suspended |
+
+### Country Assignment
+| Field | Purpose |
+|-------|---------|
+| \`franchise_owner_id\` | Links to franchise owner |
+| \`country_code\` | ISO country code (e.g., "US", "LB") |
+| \`country_name\` | Full country name |`,
+        lastUpdated: "2024-12-13",
+        tags: ["franchise", "activation", "setup"]
+      },
+      {
+        id: "franchise-earnings",
+        title: "Franchise Earnings Distribution",
+        content: `## Automatic Earnings Distribution
+
+### Trigger: Booking Payment
+When \`payment_status\` changes to "paid":
+1. Check creator's \`location_country\`
+2. Find active franchise owner for that country
+3. Calculate franchise share: \`platform_fee * commission_rate\`
+4. Insert record in \`franchise_earnings\`
+5. Update \`total_earnings_cents\` and \`available_balance_cents\`
+
+### Trigger: Brand Subscription
+When new subscription is created (not "none" tier):
+1. Check brand's \`location_country\`
+2. Find active franchise owner for that country
+3. Calculate commission on subscription amount
+4. Insert record in \`franchise_earnings\`
+
+### Earnings Record Fields
+| Field | Purpose |
+|-------|---------|
+| \`source_type\` | "booking" or "subscription" |
+| \`source_id\` | ID of the booking/subscription |
+| \`user_id\` | Creator or brand user ID |
+| \`user_type\` | "creator" or "brand" |
+| \`gross_amount_cents\` | Total transaction amount |
+| \`franchise_amount_cents\` | Franchise owner's share |
+| \`platform_amount_cents\` | Platform's share |`,
+        lastUpdated: "2024-12-13",
+        tags: ["franchise", "earnings", "distribution", "commission"]
+      },
+      {
+        id: "franchise-payouts",
+        title: "Franchise Payouts",
+        content: `## Requesting Payouts
+
+### Payout Request Process
+1. Franchise owner requests payout from dashboard
+2. Request created with status "pending"
+3. Email notification sent to admin
+4. Admin reviews and approves/rejects
+5. On approval, balance is deducted
+
+### Payout Request Fields
+| Field | Purpose |
+|-------|---------|
+| \`amount_cents\` | Requested payout amount |
+| \`payout_method\` | bank_transfer / paypal / wise / crypto |
+| \`payout_details\` | JSON with account details |
+| \`status\` | pending / approved / rejected |
+| \`admin_notes\` | Notes from admin |
+
+### Email Notifications
+| Event | Recipients |
+|-------|------------|
+| Payout requested | Admin + Franchise owner |
+| Payout approved | Franchise owner |
+| Payout rejected | Franchise owner |
+
+### Balance Management
+- \`total_earnings_cents\` - Cumulative all-time earnings
+- \`available_balance_cents\` - Current withdrawable balance
+- Balance auto-deducted when payout approved`,
+        lastUpdated: "2024-12-13",
+        tags: ["franchise", "payout", "withdrawal"]
+      },
+      {
+        id: "franchise-dashboard",
+        title: "Franchise Dashboard",
+        content: `## Franchise Owner Dashboard
+
+### Access
+- Route: \`/franchise-dashboard\`
+- Requires: Active franchise owner profile
+- Navbar shows "Franchise" button when active
+
+### Dashboard Features
+1. **Overview Tab**
+   - Total earnings
+   - Available balance
+   - Users in territory (creators + brands)
+   - Recent earnings chart
+
+2. **Creators Tab**
+   - View all creators from assigned countries
+   - Monitor creator activity
+
+3. **Brands Tab**
+   - View all brands from assigned countries
+   - Monitor brand subscriptions
+
+4. **Earnings Tab**
+   - Detailed earnings history
+   - Filter by source type
+   - Export to CSV
+
+5. **Payouts Tab**
+   - Request new payouts
+   - View payout history
+   - Track pending requests`,
+        lastUpdated: "2024-12-13",
+        tags: ["franchise", "dashboard", "features"]
+      }
+    ]
+  },
+  {
+    id: "affiliate-system",
+    title: "Affiliate System",
+    icon: "Link",
+    category: "operational",
+    articles: [
+      {
+        id: "affiliate-overview",
+        title: "Affiliate System Overview",
+        content: `## Affiliate Program
+
+### Purpose
+Allow partners to earn commission by referring new users (creators and brands) to the platform.
+
+### Database Tables
+- \`affiliates\` - Affiliate partner profiles
+- \`referrals\` - Tracked referral signups
+- \`affiliate_earnings\` - Commission records
+- \`affiliate_payout_requests\` - Payout management
+
+### Commission Structure
+- **Default Rate:** 50% of platform fees from referred users
+- **Platform Retains:** 50% of platform fees
+- Rates configurable per affiliate in \`commission_rate\` field
+
+### Referral Tracking
+- Unique referral code per affiliate (e.g., "JOHN50")
+- Code passed via URL: \`?ref=JOHN50\`
+- Stored in localStorage until signup
+- Permanent link to affiliate once user signs up`,
+        lastUpdated: "2024-12-13",
+        tags: ["affiliate", "referral", "commission", "partners"]
+      },
+      {
+        id: "affiliate-referral-flow",
+        title: "Referral Code Tracking",
+        content: `## How Referral Codes Work
+
+### Landing Page Capture
+All landing pages (\`/\`, \`/creator\`, \`/brand\`) check for \`?ref=\` parameter:
+\`\`\`javascript
+const refCode = urlParams.get('ref');
+if (refCode) {
+  localStorage.setItem('affiliate_referral_code', refCode);
+}
+\`\`\`
+
+### Signup Capture
+During creator/brand signup, code is retrieved from localStorage and linked:
+1. User completes signup form
+2. System checks \`localStorage.getItem('affiliate_referral_code')\`
+3. If code exists, lookup affiliate by code
+4. Create \`referrals\` record linking user to affiliate
+
+### Referral Record Fields
+| Field | Purpose |
+|-------|---------|
+| \`affiliate_id\` | The affiliate who referred |
+| \`referred_user_id\` | The new user |
+| \`referred_user_type\` | "creator" or "brand" |
+| \`referral_code_used\` | The code used at signup |`,
+        lastUpdated: "2024-12-13",
+        tags: ["affiliate", "referral", "tracking", "signup"]
+      },
+      {
+        id: "affiliate-earnings",
+        title: "Affiliate Earnings Distribution",
+        content: `## Automatic Earnings Distribution
+
+### Trigger: Booking Payment
+When \`payment_status\` changes to "paid":
+1. Check if creator was referred (lookup in \`referrals\`)
+2. Check if brand was referred (lookup in \`referrals\`)
+3. For each referred party:
+   - Calculate affiliate share: \`platform_fee * commission_rate\`
+   - Insert record in \`affiliate_earnings\`
+   - Update affiliate's \`total_earnings_cents\` and \`available_balance_cents\`
+
+### Key Difference from Franchise
+- Franchise earnings based on **geography** (user's country)
+- Affiliate earnings based on **referral** (who referred the user)
+- Both can apply to the same transaction!
+
+### Earnings Record Fields
+| Field | Purpose |
+|-------|---------|
+| \`affiliate_id\` | The affiliate earning commission |
+| \`referral_id\` | Link to original referral record |
+| \`source_type\` | "booking" or "subscription" |
+| \`source_id\` | ID of the booking/subscription |
+| \`gross_revenue_cents\` | Platform fee amount |
+| \`affiliate_amount_cents\` | Affiliate's share |
+| \`platform_amount_cents\` | Platform's share |`,
+        lastUpdated: "2024-12-13",
+        tags: ["affiliate", "earnings", "distribution", "commission"]
+      },
+      {
+        id: "affiliate-payouts",
+        title: "Affiliate Payouts",
+        content: `## Requesting Payouts
+
+### Payout Request Process
+1. Affiliate requests payout from dashboard
+2. Request created with status "pending"
+3. Email notification sent to admin
+4. Admin reviews and approves/rejects
+5. On approval, balance is deducted
+
+### Payout Request Fields
+| Field | Purpose |
+|-------|---------|
+| \`amount_cents\` | Requested payout amount |
+| \`payout_method\` | bank_transfer / paypal / wise / crypto |
+| \`payout_details\` | JSON with account details |
+| \`status\` | pending / approved / rejected |
+| \`admin_notes\` | Notes from admin |
+
+### Email Notifications
+| Event | Recipients |
+|-------|------------|
+| Payout requested | Admin + Affiliate |
+| Payout approved | Affiliate |
+| Payout rejected | Affiliate |
+
+### Balance Management
+- \`total_earnings_cents\` - Cumulative all-time earnings
+- \`available_balance_cents\` - Current withdrawable balance
+- Balance auto-deducted when payout approved`,
+        lastUpdated: "2024-12-13",
+        tags: ["affiliate", "payout", "withdrawal"]
+      },
+      {
+        id: "affiliate-dashboard",
+        title: "Affiliate Dashboard",
+        content: `## Affiliate Dashboard
+
+### Access
+- Route: \`/affiliate-dashboard\`
+- Requires: Active affiliate profile
+- Navbar shows "Affiliate" button when active
+
+### Dashboard Features
+1. **Overview Tab**
+   - Unique referral link with copy button
+   - Total referrals count
+   - Total earnings
+   - Available balance
+
+2. **Referrals Tab**
+   - List of all referred users
+   - User type (creator/brand)
+   - Signup date
+   - Status
+
+3. **Earnings Tab**
+   - Detailed earnings history
+   - Filter by source type
+   - Export to CSV
+
+4. **Payouts Tab**
+   - Request new payouts
+   - View payout history
+   - Track pending requests
+
+### Referral Link Format
+\`https://collabhunts.com/?ref={REFERRAL_CODE}\`
+
+Example: \`https://collabhunts.com/?ref=JOHN50\``,
+        lastUpdated: "2024-12-13",
+        tags: ["affiliate", "dashboard", "features"]
+      },
+      {
+        id: "affiliate-activation",
+        title: "Creating Affiliates",
+        content: `## Affiliate Management
+
+### Admin-Only Creation
+Currently affiliates can only be created by admins:
+1. Go to Admin Dashboard > Affiliates Tab
+2. Click "Create Affiliate"
+3. Fill in details (name, email, referral code)
+4. Set commission rate (default 50%)
+5. Activate when ready
+
+### Affiliate Profile Fields
+| Field | Purpose |
+|-------|---------|
+| \`user_id\` | Links to auth user |
+| \`display_name\` | Affiliate's name |
+| \`email\` | Contact email |
+| \`referral_code\` | Unique code (e.g., "JOHN50") |
+| \`commission_rate\` | % of platform fees (default 0.50) |
+| \`status\` | pending / active / suspended |
+
+### Activation
+- Set status to "active" to enable dashboard access
+- Referral code only works when affiliate is active
+- Suspended affiliates still receive earnings but can't get new referrals`,
+        lastUpdated: "2024-12-13",
+        tags: ["affiliate", "activation", "setup", "admin"]
+      }
+    ]
+  },
+  {
+    id: "admin-partner-management",
+    title: "Admin Partner Management",
+    icon: "Shield",
+    category: "operational",
+    articles: [
+      {
+        id: "admin-franchise-management",
+        title: "Managing Franchises (Admin)",
+        content: `## Admin Franchise Management
+
+### Admin Dashboard > Franchises Tab
+
+### Creating a Franchise
+1. Create user account for franchise owner
+2. Insert record in \`franchise_owners\` table
+3. Insert country assignments in \`franchise_countries\`
+4. Set status to "active"
+
+### Viewing Franchises
+- List all franchise owners with status
+- See assigned countries per franchise
+- View earnings and balances
+
+### Processing Payout Requests
+1. Review pending payout requests
+2. Verify amount vs available balance
+3. Approve or reject with notes
+4. Payment processed manually outside platform
+5. Update request status
+
+### Notifications Sent
+- New user in territory → Franchise owner notified
+- Earning recorded → Franchise owner notified
+- Payout requested → Admin notified
+- Payout processed → Franchise owner notified`,
+        lastUpdated: "2024-12-13",
+        tags: ["admin", "franchise", "management", "payouts"]
+      },
+      {
+        id: "admin-affiliate-management",
+        title: "Managing Affiliates (Admin)",
+        content: `## Admin Affiliate Management
+
+### Admin Dashboard > Affiliates Tab
+
+### Creating an Affiliate
+1. User ID of the affiliate
+2. Display name and email
+3. Unique referral code (must be unique)
+4. Commission rate (default 50%)
+5. Set status to "active"
+
+### Viewing Affiliates
+- List all affiliates with status
+- See referral counts and earnings
+- View referral code for each
+
+### Processing Payout Requests
+1. Review pending payout requests
+2. Verify amount vs available balance
+3. Approve or reject with notes
+4. Payment processed manually outside platform
+5. Update request status
+
+### Notifications Sent
+- New referral signup → Affiliate notified
+- Earning recorded → Affiliate notified
+- Payout requested → Admin notified
+- Payout processed → Affiliate notified`,
+        lastUpdated: "2024-12-13",
+        tags: ["admin", "affiliate", "management", "payouts"]
+      }
+    ]
   }
 ];
 
