@@ -127,6 +127,17 @@ const AdminPlatformManualTab = () => {
   
   const { toast } = useToast();
 
+  // Offline access reminder banner state
+  const [showOfflineReminder, setShowOfflineReminder] = useState(() => {
+    const dismissed = localStorage.getItem("offlineReminderDismissed");
+    return !dismissed;
+  });
+
+  const dismissOfflineReminder = () => {
+    localStorage.setItem("offlineReminderDismissed", "true");
+    setShowOfflineReminder(false);
+  };
+
   useEffect(() => {
     fetchLiveStats();
     fetchChangelog();
@@ -537,6 +548,65 @@ const AdminPlatformManualTab = () => {
 
   return (
     <div className="space-y-6">
+      {/* Offline Access Reminder Banner */}
+      {showOfflineReminder && (
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-semibold text-amber-900 dark:text-amber-200">
+                  📥 Save Disaster Recovery Docs Offline
+                </h4>
+                <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
+                  Download and save this documentation to Google Drive, Dropbox, or locally. 
+                  If the website goes down, you'll need offline access to recover.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={exportToPdf} disabled={exportingPdf} className="border-amber-400 text-amber-900 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-200 dark:hover:bg-amber-900/50">
+                    <Download className="h-4 w-4 mr-2" />
+                    {exportingPdf ? 'Exporting...' : 'Download PDF'}
+                  </Button>
+                  <div className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                    <span>Also in S3:</span>
+                    <code className="bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 rounded text-xs">
+                      collabhunts-backups/recovery-docs/
+                    </code>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={dismissOfflineReminder}
+              className="text-amber-700 hover:text-amber-900 hover:bg-amber-100 dark:text-amber-400 dark:hover:text-amber-200 dark:hover:bg-amber-900/50"
+            >
+              Dismiss
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* S3 Bootstrap Card */}
+      <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm flex items-center gap-2 text-blue-900 dark:text-blue-200">
+            <Key className="h-4 w-4" />
+            In Case of Complete Outage
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="py-2 text-sm">
+          <ol className="list-decimal list-inside space-y-1 text-blue-800 dark:text-blue-300">
+            <li>Access AWS S3 Console: <a href="https://s3.console.aws.amazon.com" target="_blank" rel="noopener" className="underline">s3.console.aws.amazon.com</a></li>
+            <li>Navigate to bucket: <code className="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">collabhunts-backups</code></li>
+            <li>Find folder: <code className="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">recovery-docs/</code></li>
+            <li>Download: <code className="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">DISASTER_RECOVERY.md</code></li>
+            <li>Follow instructions inside</li>
+          </ol>
+        </CardContent>
+      </Card>
+
       {/* Header with Live Stats */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
