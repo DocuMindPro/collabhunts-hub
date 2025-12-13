@@ -415,6 +415,125 @@ Deno.serve(async (req) => {
       awsSecretAccessKey
     );
     
+    // Also upload DISASTER_RECOVERY.md to S3 for offline access
+    console.log("Uploading DISASTER_RECOVERY.md to S3 for offline access...");
+    const disasterRecoveryContent = `# CollabHunts Disaster Recovery Guide
+
+## EMERGENCY BOOTSTRAP INSTRUCTIONS
+
+If the website is completely down and you need to recover:
+
+1. **Access AWS S3 Console:** https://s3.console.aws.amazon.com
+2. **Navigate to bucket:** collabhunts-backups
+3. **Download latest backup:** backups/collabhunts-backup-{latest-timestamp}.json
+4. **Follow recovery steps below**
+
+---
+
+## Quick Reference
+
+| Component | Location | Recovery Method |
+|-----------|----------|-----------------|
+| Database Backup | AWS S3: collabhunts-backups/backups/ | Restore via Supabase client |
+| Profile Images | Supabase Storage: profile-images | Re-upload from users or backup |
+| Portfolio Media | Supabase Storage: portfolio-media | Re-upload from users or backup |
+| Content Library | Cloudflare R2 | Restore from R2 backup |
+| Deliverables | Cloudflare R2 | Restore from R2 backup |
+| Edge Functions | Git repository: supabase/functions/ | Auto-deploy on push |
+| Recovery Docs | S3: collabhunts-backups/recovery-docs/ | This file |
+
+---
+
+## Required Secrets (18 total)
+
+\`\`\`
+# Supabase
+SUPABASE_URL
+SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_PUBLISHABLE_KEY
+SUPABASE_DB_URL
+
+# AWS S3 (Backups)
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+AWS_BUCKET_NAME=collabhunts-backups
+AWS_REGION=us-east-1
+
+# Cloudflare R2 (Content Storage)
+R2_ACCOUNT_ID
+R2_ACCESS_KEY_ID
+R2_SECRET_ACCESS_KEY
+R2_BUCKET_NAME
+R2_PUBLIC_URL
+
+# Email Services
+SENDGRID_API_KEY
+RESEND_API_KEY
+ADMIN_EMAIL
+
+# Other
+BACKUP_CRON_SECRET
+LOVABLE_API_KEY
+\`\`\`
+
+---
+
+## Database Tables (31 total)
+
+User Management: profiles, user_roles, brand_profiles, creator_profiles
+Creator Data: creator_services, creator_social_accounts, creator_portfolio_media, creator_payout_settings, creator_notes
+Brand Data: brand_subscriptions, brand_storage_usage, saved_creators, storage_purchases
+Transactions: bookings, booking_deliverables, booking_disputes, payouts, reviews
+Campaigns: campaigns, campaign_applications
+Messaging: conversations, messages, notifications, mass_message_templates, mass_messages_log
+Content: content_library, content_folders
+System: profile_views, backup_history, platform_changelog, ad_placements
+
+---
+
+## Recovery Steps Summary
+
+1. Download latest backup from S3: collabhunts-backups/backups/
+2. Create new Supabase project (if needed)
+3. Run migrations from Git: supabase/migrations/
+4. Configure all 18 secrets
+5. Restore database data using backup JSON
+6. Recreate storage buckets and RLS policies
+7. Deploy edge functions
+8. Restore cron jobs
+9. Verify all functionality
+
+---
+
+## GitHub Repository
+
+Full documentation and migration files at:
+https://github.com/[your-org]/collabhunts
+
+---
+
+## Emergency Contacts
+
+- Primary Admin: care@collabhunts.com
+- Supabase Support: https://supabase.com/support
+
+---
+
+Last Updated: ${new Date().toISOString()}
+Generated with backup: ${fileName}
+`;
+
+    await uploadToS3(
+      disasterRecoveryContent,
+      "recovery-docs/DISASTER_RECOVERY.md",
+      awsBucketName,
+      awsRegion,
+      awsAccessKeyId,
+      awsSecretAccessKey
+    );
+    console.log("DISASTER_RECOVERY.md uploaded to S3 successfully");
+    
     const executionTime = Date.now() - startTime;
     
     // Record backup history
