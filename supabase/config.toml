@@ -47,3 +47,12 @@ verify_jwt = false
 
 [functions.check-ad-expiration]
 verify_jwt = false
+
+[functions.upload-profile-image]
+verify_jwt = false
+
+[functions.upload-portfolio-media]
+verify_jwt = false
+
+[functions.send-mass-message]
+verify_jwt = false

@@ -135,36 +135,22 @@ const ProfileTab = () => {
 
     setUploading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session found");
 
-      // Delete old image if exists
-      if (profile.profile_image_url) {
-        const oldPath = profile.profile_image_url.split("/").pop();
-        if (oldPath) {
-          await supabase.storage
-            .from("profile-images")
-            .remove([`${user.id}/${oldPath}`]);
-        }
-      }
+      // Upload via R2 edge function
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('image_type', 'profile');
 
-      // Upload new image
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
+      const response = await supabase.functions.invoke('upload-profile-image', {
+        body: formData,
+      });
 
-      const { error: uploadError } = await supabase.storage
-        .from("profile-images")
-        .upload(filePath, file);
+      if (response.error) throw new Error(response.error.message);
+      if (!response.data.success) throw new Error(response.data.error || 'Upload failed');
 
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("profile-images")
-        .getPublicUrl(filePath);
-
-      setProfile({ ...profile, profile_image_url: publicUrl });
+      setProfile({ ...profile, profile_image_url: response.data.url });
 
       toast({
         title: "Success",
@@ -206,39 +192,25 @@ const ProfileTab = () => {
 
     setUploadingCoverIndex(index);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session found");
 
       const coverKey = index === 0 ? 'cover_image_url' : 
                        index === 1 ? 'cover_image_url_2' : 'cover_image_url_3';
-      const currentUrl = profile[coverKey];
 
-      // Delete old cover image if exists
-      if (currentUrl) {
-        const oldPath = currentUrl.split("/").pop();
-        if (oldPath) {
-          await supabase.storage
-            .from("profile-images")
-            .remove([`${user.id}/${oldPath}`]);
-        }
-      }
+      // Upload via R2 edge function
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('image_type', `cover-${index + 1}`);
 
-      // Upload new cover image
-      const fileExt = file.name.split(".").pop();
-      const fileName = `cover-${index + 1}-${Date.now()}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
+      const response = await supabase.functions.invoke('upload-profile-image', {
+        body: formData,
+      });
 
-      const { error: uploadError } = await supabase.storage
-        .from("profile-images")
-        .upload(filePath, file);
+      if (response.error) throw new Error(response.error.message);
+      if (!response.data.success) throw new Error(response.data.error || 'Upload failed');
 
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("profile-images")
-        .getPublicUrl(filePath);
-
-      setProfile({ ...profile, [coverKey]: publicUrl });
+      setProfile({ ...profile, [coverKey]: response.data.url });
 
       toast({
         title: "Success",
@@ -271,31 +243,13 @@ const ProfileTab = () => {
 
     if (!currentUrl) return;
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+    // Just clear from state - R2 cleanup can be handled later if needed
+    setProfile({ ...profile, [coverKey]: "" });
 
-      const oldPath = currentUrl.split("/").pop();
-      if (oldPath) {
-        await supabase.storage
-          .from("profile-images")
-          .remove([`${user.id}/${oldPath}`]);
-      }
-
-      setProfile({ ...profile, [coverKey]: "" });
-
-      toast({
-        title: "Removed",
-        description: `Cover image ${index + 1} removed`,
-      });
-    } catch (error) {
-      console.error("Error removing cover image:", error);
-      toast({
-        title: "Error",
-        description: "Failed to remove cover image",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Removed",
+      description: `Cover image ${index + 1} removed`,
+    });
   };
 
   const toggleCategory = (category: string) => {
