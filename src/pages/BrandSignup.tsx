@@ -17,6 +17,7 @@ import {
 import { z } from "zod";
 import { Phone, CheckCircle, Loader2 } from "lucide-react";
 import PhoneInput from "@/components/PhoneInput";
+import CountrySelect from "@/components/CountrySelect";
 
 // Validation schemas
 const emailSchema = z.string().email("Invalid email address").max(255);
@@ -42,6 +43,7 @@ const BrandSignup = () => {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [industry, setIndustry] = useState("");
   const [companySize, setCompanySize] = useState("");
+  const [locationCountry, setLocationCountry] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Phone verification
@@ -231,7 +233,7 @@ const BrandSignup = () => {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error("Failed to create user");
 
-      // Create brand profile with phone info and terms acceptance
+      // Create brand profile with phone info, country and terms acceptance
       const { error: profileError } = await supabase
         .from("brand_profiles")
         .insert({
@@ -240,6 +242,7 @@ const BrandSignup = () => {
           website_url: websiteUrl || null,
           industry,
           company_size: companySize,
+          location_country: locationCountry || null,
           phone_number: phoneNumber,
           phone_verified: true,
           terms_accepted_at: new Date().toISOString(),
@@ -487,6 +490,16 @@ const BrandSignup = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="country">Country</Label>
+                      <CountrySelect
+                        value={locationCountry}
+                        onChange={setLocationCountry}
+                        disabled={isLoading}
+                        placeholder="Select your country"
+                      />
                     </div>
                   </div>
                 </div>
