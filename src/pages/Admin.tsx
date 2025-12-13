@@ -1381,6 +1381,16 @@ const Admin = () => {
             <TabsContent value="ads">
               <AdminAdsTab />
             </TabsContent>
+
+            {/* Franchises Tab */}
+            <TabsContent value="franchises">
+              <AdminFranchisesTab />
+            </TabsContent>
+
+            {/* Affiliates Tab */}
+            <TabsContent value="affiliates">
+              <AdminAffiliatesTab />
+            </TabsContent>
           </Tabs>
         </div>
       </main>

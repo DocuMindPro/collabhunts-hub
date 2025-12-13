@@ -96,6 +96,12 @@ const BrandSignup = () => {
         description: "Your phone number has been pre-verified. Complete your profile to continue.",
       });
     }
+
+    // Store referral code if present
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      localStorage.setItem('affiliate_referral_code', refCode);
+    }
   }, [navigate, searchParams, toast]);
 
   const handleSendOtp = async () => {
@@ -241,6 +247,28 @@ const BrandSignup = () => {
         });
 
       if (profileError) throw profileError;
+
+      // Track affiliate referral if present
+      const referralCode = localStorage.getItem('affiliate_referral_code');
+      if (referralCode) {
+        try {
+          // Get affiliate by code
+          const { data: affiliateId } = await supabase.rpc('get_affiliate_by_code', { _code: referralCode });
+          
+          if (affiliateId) {
+            await supabase.from('referrals').insert({
+              affiliate_id: affiliateId,
+              referred_user_id: authData.user.id,
+              referred_user_type: 'brand',
+              referral_code_used: referralCode
+            });
+          }
+          // Clear the stored code
+          localStorage.removeItem('affiliate_referral_code');
+        } catch (refError) {
+          console.error('Error tracking referral:', refError);
+        }
+      }
 
       toast({
         title: "Welcome to CollabHunts!",
