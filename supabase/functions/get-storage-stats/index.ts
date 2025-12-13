@@ -151,8 +151,16 @@ serve(async (req: Request): Promise<Response> => {
     const deliverablesSize = deliverablesStats?.reduce((sum, item) => sum + (item.file_size_bytes || 0), 0) || 0;
     const deliverablesCount = deliverablesStats?.length || 0;
 
-    const r2TotalSize = contentLibrarySize + deliverablesSize;
-    const r2TotalFiles = contentLibraryCount + deliverablesCount;
+    // Portfolio Media stats (also stored in R2)
+    const { data: portfolioStats } = await supabase
+      .from("creator_portfolio_media")
+      .select("file_size_bytes");
+
+    const portfolioSize = portfolioStats?.reduce((sum, item) => sum + (item.file_size_bytes || 0), 0) || 0;
+    const portfolioCount = portfolioStats?.length || 0;
+
+    const r2TotalSize = contentLibrarySize + deliverablesSize + portfolioSize;
+    const r2TotalFiles = contentLibraryCount + deliverablesCount + portfolioCount;
 
     // ========== AWS S3 BACKUP STATS ==========
     console.log("Fetching AWS S3 backup stats...");
@@ -184,7 +192,7 @@ serve(async (req: Request): Promise<Response> => {
         totalSize: supabaseTotalSize,
         formattedTotalSize: formatBytes(supabaseTotalSize),
       },
-      // Cloudflare R2 (Content Library + Deliverables)
+      // Cloudflare R2 (Content Library + Deliverables + Portfolio Media)
       r2: {
         contentLibrary: {
           fileCount: contentLibraryCount,
@@ -195,6 +203,11 @@ serve(async (req: Request): Promise<Response> => {
           fileCount: deliverablesCount,
           totalSize: deliverablesSize,
           formattedSize: formatBytes(deliverablesSize),
+        },
+        portfolioMedia: {
+          fileCount: portfolioCount,
+          totalSize: portfolioSize,
+          formattedSize: formatBytes(portfolioSize),
         },
         totalFiles: r2TotalFiles,
         totalSize: r2TotalSize,

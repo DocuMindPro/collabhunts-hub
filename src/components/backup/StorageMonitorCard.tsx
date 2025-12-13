@@ -31,6 +31,11 @@ interface StorageStats {
       totalSize: number;
       formattedSize: string;
     };
+    portfolioMedia: {
+      fileCount: number;
+      totalSize: number;
+      formattedSize: string;
+    };
     totalFiles: number;
     totalSize: number;
     formattedTotalSize: string;
@@ -179,7 +184,7 @@ const StorageMonitorCard = () => {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Content Library & deliverables
+            Content Library, deliverables & portfolio media
           </p>
 
           <div className="pt-2 border-t border-border/50 space-y-2">
@@ -204,6 +209,18 @@ const StorageMonitorCard = () => {
                 <span className="text-muted-foreground">{storageStats.r2.deliverables.fileCount} files</span>
                 <Badge variant="secondary" className="text-xs">
                   {storageStats.r2.deliverables.formattedSize}
+                </Badge>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1">
+                <Image className="h-3 w-3 text-muted-foreground" />
+                <span>Portfolio Media</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">{storageStats.r2.portfolioMedia?.fileCount || 0} files</span>
+                <Badge variant="secondary" className="text-xs">
+                  {storageStats.r2.portfolioMedia?.formattedSize || '0 B'}
                 </Badge>
               </div>
             </div>
