@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { HardDrive, Image, AlertTriangle, RefreshCw, FolderOpen } from "lucide-react";
+import { HardDrive, Image, Cloud, Database, RefreshCw, FolderOpen, Package, FileVideo } from "lucide-react";
 
 interface BucketStats {
   name: string;
@@ -14,15 +14,39 @@ interface BucketStats {
 
 interface StorageStats {
   success: boolean;
-  storage: {
+  supabase: {
     buckets: BucketStats[];
     totalFiles: number;
     totalSize: number;
     formattedTotalSize: string;
   };
-  database: {
+  r2: {
+    contentLibrary: {
+      fileCount: number;
+      totalSize: number;
+      formattedSize: string;
+    };
+    deliverables: {
+      fileCount: number;
+      totalSize: number;
+      formattedSize: string;
+    };
+    totalFiles: number;
+    totalSize: number;
+    formattedTotalSize: string;
+  };
+  s3: {
+    backupCount: number;
+    totalSize: number;
+    formattedTotalSize: string;
     latestBackupSize: number;
-    formattedBackupSize: string;
+    formattedLatestBackupSize: string;
+    latestBackupDate: string | null;
+  };
+  combined: {
+    totalFiles: number;
+    totalSize: number;
+    formattedTotalSize: string;
   };
   recommendations: {
     storageWarning: boolean;
@@ -30,14 +54,6 @@ interface StorageStats {
     message: string;
   };
 }
-
-const formatBytes = (bytes: number): string => {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-};
 
 const StorageMonitorCard = () => {
   const { data: storageStats, isLoading, error } = useQuery({
@@ -62,14 +78,8 @@ const StorageMonitorCard = () => {
       return response.data as StorageStats;
     },
     retry: false,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
-
-  // Assume 5GB soft limit for display purposes
-  const storageLimit = 5 * 1024 * 1024 * 1024;
-  const usagePercent = storageStats 
-    ? Math.min((storageStats.storage.totalSize / storageLimit) * 100, 100)
-    : 0;
 
   if (isLoading) {
     return (
@@ -77,7 +87,7 @@ const StorageMonitorCard = () => {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <HardDrive className="h-4 w-4" />
-            Cloud Storage
+            Storage Overview
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -96,7 +106,7 @@ const StorageMonitorCard = () => {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <HardDrive className="h-4 w-4" />
-            Cloud Storage
+            Storage Overview
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -109,61 +119,163 @@ const StorageMonitorCard = () => {
   }
 
   return (
-    <Card className={storageStats.recommendations.storageWarning ? "border-amber-500/50" : ""}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-          <HardDrive className="h-4 w-4" />
-          Cloud Storage (Files)
-          {storageStats.recommendations.storageWarning && (
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
+    <div className="grid gap-4 md:grid-cols-3">
+      {/* Supabase Storage Card */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <Database className="h-4 w-4 text-green-500" />
+            Supabase Storage
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold">
+              {storageStats.supabase.formattedTotalSize}
+            </span>
+            <Badge variant="outline" className="text-xs">
+              {storageStats.supabase.totalFiles} files
+            </Badge>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Profile images & portfolio media
+          </p>
+
+          {storageStats.supabase.buckets.length > 0 && (
+            <div className="pt-2 border-t border-border/50 space-y-2">
+              {storageStats.supabase.buckets.map((bucket) => (
+                <div key={bucket.name} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1">
+                    <FolderOpen className="h-3 w-3 text-muted-foreground" />
+                    <span>{bucket.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">{bucket.fileCount} files</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold">
-            {storageStats.storage.formattedTotalSize}
-          </span>
-          <Badge variant="outline" className="text-xs">
-            {storageStats.storage.totalFiles} files
-          </Badge>
-        </div>
+        </CardContent>
+      </Card>
 
-        <Progress value={usagePercent} className="h-2" />
-        <p className="text-xs text-muted-foreground">
-          {usagePercent.toFixed(1)}% of 5GB soft limit
-        </p>
+      {/* Cloudflare R2 Card */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <Cloud className="h-4 w-4 text-orange-500" />
+            Cloudflare R2
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold">
+              {storageStats.r2.formattedTotalSize}
+            </span>
+            <Badge variant="outline" className="text-xs">
+              {storageStats.r2.totalFiles} files
+            </Badge>
+          </div>
 
-        {storageStats.storage.buckets.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Content Library & deliverables
+          </p>
+
           <div className="pt-2 border-t border-border/50 space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">By Bucket:</p>
-            {storageStats.storage.buckets.map((bucket) => (
-              <div key={bucket.name} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1">
-                  <FolderOpen className="h-3 w-3 text-muted-foreground" />
-                  <span>{bucket.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">{bucket.fileCount} files</span>
-                  <Badge variant="secondary" className="text-xs">
-                    {formatBytes(bucket.totalSize)}
-                  </Badge>
-                </div>
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1">
+                <Package className="h-3 w-3 text-muted-foreground" />
+                <span>Content Library</span>
               </div>
-            ))}
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">{storageStats.r2.contentLibrary.fileCount} files</span>
+                <Badge variant="secondary" className="text-xs">
+                  {storageStats.r2.contentLibrary.formattedSize}
+                </Badge>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1">
+                <FileVideo className="h-3 w-3 text-muted-foreground" />
+                <span>Deliverables</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">{storageStats.r2.deliverables.fileCount} files</span>
+                <Badge variant="secondary" className="text-xs">
+                  {storageStats.r2.deliverables.formattedSize}
+                </Badge>
+              </div>
+            </div>
           </div>
-        )}
+        </CardContent>
+      </Card>
 
-        {storageStats.recommendations.storageWarning && (
-          <div className="pt-2 border-t border-border/50">
-            <p className="text-xs text-amber-600 flex items-center gap-1">
-              <Image className="h-3 w-3" />
-              Consider enabling image optimization
-            </p>
+      {/* AWS S3 Backups Card */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <HardDrive className="h-4 w-4 text-yellow-500" />
+            AWS S3 Backups
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold">
+              {storageStats.s3.formattedTotalSize}
+            </span>
+            <Badge variant="outline" className="text-xs">
+              {storageStats.s3.backupCount} backups
+            </Badge>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          <p className="text-xs text-muted-foreground">
+            Database backups & recovery docs
+          </p>
+
+          <div className="pt-2 border-t border-border/50 space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Latest backup:</span>
+              <Badge variant="secondary" className="text-xs">
+                {storageStats.s3.formattedLatestBackupSize}
+              </Badge>
+            </div>
+            {storageStats.s3.latestBackupDate && (
+              <div className="text-xs text-muted-foreground">
+                {new Date(storageStats.s3.latestBackupDate).toLocaleDateString()}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Combined Total Card */}
+      <Card className={`md:col-span-3 ${storageStats.recommendations.storageWarning ? "border-amber-500/50" : ""}`}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <Image className="h-4 w-4" />
+            Total Platform Storage
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-3xl font-bold">
+                {storageStats.combined.formattedTotalSize}
+              </span>
+              <Badge variant="outline">
+                {storageStats.combined.totalFiles} total files
+              </Badge>
+            </div>
+            {storageStats.recommendations.storageWarning && (
+              <p className="text-xs text-amber-600">
+                Consider enabling image optimization
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
