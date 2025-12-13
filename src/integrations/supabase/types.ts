@@ -1849,6 +1849,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      distribute_affiliate_earnings_for_user: {
+        Args: {
+          p_platform_fee_cents: number
+          p_source_id: string
+          p_source_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       get_affiliate_by_code: { Args: { _code: string }; Returns: string }
       has_role: {
         Args: {
