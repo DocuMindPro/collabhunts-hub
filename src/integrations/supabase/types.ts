@@ -136,10 +136,61 @@ export type Database = {
           },
         ]
       }
+      affiliate_payout_requests: {
+        Row: {
+          admin_notes: string | null
+          affiliate_id: string
+          amount_cents: number
+          created_at: string
+          id: string
+          payout_details: Json | null
+          payout_method: string | null
+          processed_at: string | null
+          processed_by: string | null
+          requested_at: string
+          status: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          affiliate_id: string
+          amount_cents: number
+          created_at?: string
+          id?: string
+          payout_details?: Json | null
+          payout_method?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          affiliate_id?: string
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          payout_details?: Json | null
+          payout_method?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_payout_requests_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliates: {
         Row: {
           activated_at: string | null
           activated_by: string | null
+          available_balance_cents: number
           commission_rate: number
           created_at: string
           display_name: string
@@ -154,6 +205,7 @@ export type Database = {
         Insert: {
           activated_at?: string | null
           activated_by?: string | null
+          available_balance_cents?: number
           commission_rate?: number
           created_at?: string
           display_name: string
@@ -168,6 +220,7 @@ export type Database = {
         Update: {
           activated_at?: string | null
           activated_by?: string | null
+          available_balance_cents?: number
           commission_rate?: number
           created_at?: string
           display_name?: string
@@ -1297,6 +1350,7 @@ export type Database = {
         Row: {
           activated_at: string | null
           activated_by: string | null
+          available_balance_cents: number
           commission_rate: number
           company_name: string
           contact_email: string
@@ -1312,6 +1366,7 @@ export type Database = {
         Insert: {
           activated_at?: string | null
           activated_by?: string | null
+          available_balance_cents?: number
           commission_rate?: number
           company_name: string
           contact_email: string
@@ -1327,6 +1382,7 @@ export type Database = {
         Update: {
           activated_at?: string | null
           activated_by?: string | null
+          available_balance_cents?: number
           commission_rate?: number
           company_name?: string
           contact_email?: string
@@ -1340,6 +1396,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      franchise_payout_requests: {
+        Row: {
+          admin_notes: string | null
+          amount_cents: number
+          created_at: string
+          franchise_owner_id: string
+          id: string
+          payout_details: Json | null
+          payout_method: string | null
+          processed_at: string | null
+          processed_by: string | null
+          requested_at: string
+          status: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount_cents: number
+          created_at?: string
+          franchise_owner_id: string
+          id?: string
+          payout_details?: Json | null
+          payout_method?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount_cents?: number
+          created_at?: string
+          franchise_owner_id?: string
+          id?: string
+          payout_details?: Json | null
+          payout_method?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "franchise_payout_requests_franchise_owner_id_fkey"
+            columns: ["franchise_owner_id"]
+            isOneToOne: false
+            referencedRelation: "franchise_owners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mass_message_templates: {
         Row: {

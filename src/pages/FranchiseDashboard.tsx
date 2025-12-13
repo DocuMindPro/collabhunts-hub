@@ -7,14 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart3, Users, Building2, DollarSign, Globe, CheckCircle, XCircle, Eye } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { BarChart3, Users, Building2, DollarSign, Globe, CheckCircle, XCircle, Eye, Wallet, ArrowUpRight } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
 interface FranchiseOwner {
   id: string;
   company_name: string;
   commission_rate: number;
   total_earnings_cents: number;
+  available_balance_cents: number;
   status: string;
 }
 
@@ -48,6 +53,16 @@ interface Earning {
   franchise_amount_cents: number;
   created_at: string;
   user_type: string;
+  country_code: string;
+}
+
+interface PayoutRequest {
+  id: string;
+  amount_cents: number;
+  status: string;
+  requested_at: string;
+  processed_at: string | null;
+  admin_notes: string | null;
 }
 
 const FranchiseDashboard = () => {
@@ -59,6 +74,10 @@ const FranchiseDashboard = () => {
   const [creators, setCreators] = useState<CreatorProfile[]>([]);
   const [brands, setBrands] = useState<BrandProfile[]>([]);
   const [earnings, setEarnings] = useState<Earning[]>([]);
+  const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
+  const [payoutDialogOpen, setPayoutDialogOpen] = useState(false);
+  const [payoutAmount, setPayoutAmount] = useState("");
+  const [submittingPayout, setSubmittingPayout] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -117,9 +136,18 @@ const FranchiseDashboard = () => {
         .select("*")
         .eq("franchise_owner_id", ownerData.id)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(100);
 
       setEarnings(earningsData || []);
+
+      // Fetch payout requests
+      const { data: payoutData } = await supabase
+        .from("franchise_payout_requests")
+        .select("*")
+        .eq("franchise_owner_id", ownerData.id)
+        .order("requested_at", { ascending: false });
+
+      setPayoutRequests(payoutData || []);
 
     } catch (error: any) {
       toast({
@@ -172,11 +200,76 @@ const FranchiseDashboard = () => {
     }
   };
 
+  const handleRequestPayout = async () => {
+    if (!franchiseOwner) return;
+    
+    const amountCents = Math.round(parseFloat(payoutAmount) * 100);
+    if (isNaN(amountCents) || amountCents <= 0) {
+      toast({ title: "Invalid amount", variant: "destructive" });
+      return;
+    }
+
+    if (amountCents > (franchiseOwner.available_balance_cents || 0)) {
+      toast({ title: "Insufficient balance", variant: "destructive" });
+      return;
+    }
+
+    setSubmittingPayout(true);
+    try {
+      const { error } = await supabase
+        .from("franchise_payout_requests")
+        .insert({
+          franchise_owner_id: franchiseOwner.id,
+          amount_cents: amountCents,
+        });
+
+      if (error) throw error;
+
+      toast({ title: "Payout request submitted" });
+      setPayoutDialogOpen(false);
+      setPayoutAmount("");
+      fetchFranchiseData();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setSubmittingPayout(false);
+    }
+  };
+
+  // Calculate chart data
+  const getMonthlyEarningsData = () => {
+    const months: { [key: string]: number } = {};
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      months[key] = 0;
+    }
+    earnings.forEach(e => {
+      const d = new Date(e.created_at);
+      const key = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      if (months[key] !== undefined) {
+        months[key] += e.franchise_amount_cents / 100;
+      }
+    });
+    return Object.entries(months).map(([month, amount]) => ({ month, amount: Math.round(amount * 100) / 100 }));
+  };
+
+  const getEarningsByCountry = () => {
+    const byCountry: { [key: string]: number } = {};
+    earnings.forEach(e => {
+      byCountry[e.country_code] = (byCountry[e.country_code] || 0) + e.franchise_amount_cents / 100;
+    });
+    return Object.entries(byCountry).map(([country, amount]) => ({ country, amount: Math.round(amount * 100) / 100 }));
+  };
+
   const totalEarnings = franchiseOwner?.total_earnings_cents || 0;
+  const availableBalance = franchiseOwner?.available_balance_cents || 0;
   const monthlyEarnings = earnings
     .filter(e => new Date(e.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
     .reduce((sum, e) => sum + e.franchise_amount_cents, 0);
   const pendingCreators = creators.filter(c => c.status === "pending").length;
+  const pendingPayouts = payoutRequests.filter(p => p.status === "pending").reduce((sum, p) => sum + p.amount_cents, 0);
 
   if (loading) {
     return (
@@ -201,7 +294,7 @@ const FranchiseDashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardDescription className="flex items-center gap-2">
@@ -209,6 +302,15 @@ const FranchiseDashboard = () => {
                 Total Earnings
               </CardDescription>
               <CardTitle className="text-2xl">${(totalEarnings / 100).toLocaleString()}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="border-primary/50 bg-primary/5">
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center gap-2">
+                <Wallet className="h-4 w-4" />
+                Available Balance
+              </CardDescription>
+              <CardTitle className="text-2xl text-primary">${(availableBalance / 100).toLocaleString()}</CardTitle>
             </CardHeader>
           </Card>
           <Card>
@@ -241,7 +343,7 @@ const FranchiseDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 flex-wrap">
             <TabsTrigger value="overview" className="gap-2">
               <BarChart3 className="h-4 w-4" />
               Overview
@@ -259,6 +361,10 @@ const FranchiseDashboard = () => {
               <DollarSign className="h-4 w-4" />
               Earnings
             </TabsTrigger>
+            <TabsTrigger value="payouts" className="gap-2">
+              <Wallet className="h-4 w-4" />
+              Payouts
+            </TabsTrigger>
             <TabsTrigger value="countries" className="gap-2">
               <Globe className="h-4 w-4" />
               Countries
@@ -266,8 +372,51 @@ const FranchiseDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview">
-            <div className="grid gap-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Earnings Chart */}
               <Card>
+                <CardHeader>
+                  <CardTitle>Monthly Earnings</CardTitle>
+                  <CardDescription>Last 6 months performance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={getMonthlyEarningsData()}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="month" className="text-xs" />
+                        <YAxis className="text-xs" tickFormatter={(v) => `$${v}`} />
+                        <Tooltip formatter={(value) => [`$${value}`, 'Earnings']} />
+                        <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Earnings by Country */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Earnings by Country</CardTitle>
+                  <CardDescription>Revenue distribution across territories</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={getEarningsByCountry()} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis type="number" tickFormatter={(v) => `$${v}`} />
+                        <YAxis dataKey="country" type="category" width={50} />
+                        <Tooltip formatter={(value) => [`$${value}`, 'Earnings']} />
+                        <Bar dataKey="amount" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Activity */}
+              <Card className="md:col-span-2">
                 <CardHeader>
                   <CardTitle>Recent Activity</CardTitle>
                 </CardHeader>
@@ -277,7 +426,7 @@ const FranchiseDashboard = () => {
                       <div key={earning.id} className="flex justify-between items-center border-b pb-2">
                         <div>
                           <p className="font-medium capitalize">{earning.source_type} Revenue</p>
-                          <p className="text-sm text-muted-foreground">From {earning.user_type}</p>
+                          <p className="text-sm text-muted-foreground">From {earning.user_type} in {earning.country_code}</p>
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-green-600">+${(earning.franchise_amount_cents / 100).toFixed(2)}</p>
@@ -319,7 +468,7 @@ const FranchiseDashboard = () => {
                         <TableCell>{creator.location_country}</TableCell>
                         <TableCell>
                           <div className="flex gap-1 flex-wrap">
-                            {creator.categories.slice(0, 2).map(cat => (
+                            {creator.categories?.slice(0, 2).map(cat => (
                               <Badge key={cat} variant="outline" className="text-xs">{cat}</Badge>
                             ))}
                           </div>
@@ -398,6 +547,7 @@ const FranchiseDashboard = () => {
                       <TableHead>Date</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Source</TableHead>
+                      <TableHead>Country</TableHead>
                       <TableHead>Gross</TableHead>
                       <TableHead>Your Earnings (70%)</TableHead>
                     </TableRow>
@@ -408,6 +558,7 @@ const FranchiseDashboard = () => {
                         <TableCell>{new Date(earning.created_at).toLocaleDateString()}</TableCell>
                         <TableCell className="capitalize">{earning.source_type}</TableCell>
                         <TableCell className="capitalize">{earning.user_type}</TableCell>
+                        <TableCell>{earning.country_code}</TableCell>
                         <TableCell>${(earning.gross_amount_cents / 100).toFixed(2)}</TableCell>
                         <TableCell className="font-bold text-green-600">
                           ${(earning.franchise_amount_cents / 100).toFixed(2)}
@@ -418,6 +569,130 @@ const FranchiseDashboard = () => {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="payouts">
+            <div className="space-y-6">
+              {/* Payout Request Card */}
+              <Card className="border-primary/20">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle>Request Payout</CardTitle>
+                      <CardDescription>Withdraw your available balance</CardDescription>
+                    </div>
+                    <Dialog open={payoutDialogOpen} onOpenChange={setPayoutDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button disabled={availableBalance <= 0}>
+                          <ArrowUpRight className="h-4 w-4 mr-2" />
+                          Request Payout
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Request Payout</DialogTitle>
+                          <DialogDescription>
+                            Available balance: ${(availableBalance / 100).toFixed(2)}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div>
+                            <Label htmlFor="amount">Amount ($)</Label>
+                            <Input
+                              id="amount"
+                              type="number"
+                              step="0.01"
+                              min="1"
+                              max={availableBalance / 100}
+                              value={payoutAmount}
+                              onChange={(e) => setPayoutAmount(e.target.value)}
+                              placeholder="Enter amount"
+                            />
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPayoutAmount((availableBalance / 100).toFixed(2))}
+                          >
+                            Withdraw All
+                          </Button>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setPayoutDialogOpen(false)}>Cancel</Button>
+                          <Button onClick={handleRequestPayout} disabled={submittingPayout}>
+                            {submittingPayout ? "Submitting..." : "Submit Request"}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-2xl font-bold text-primary">${(availableBalance / 100).toFixed(2)}</p>
+                      <p className="text-sm text-muted-foreground">Available</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-yellow-600">${(pendingPayouts / 100).toFixed(2)}</p>
+                      <p className="text-sm text-muted-foreground">Pending</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">${(totalEarnings / 100).toFixed(2)}</p>
+                      <p className="text-sm text-muted-foreground">Total Earned</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Payout History */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payout History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Requested</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Processed</TableHead>
+                        <TableHead>Notes</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {payoutRequests.map(payout => (
+                        <TableRow key={payout.id}>
+                          <TableCell>{new Date(payout.requested_at).toLocaleDateString()}</TableCell>
+                          <TableCell className="font-bold">${(payout.amount_cents / 100).toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              payout.status === "paid" ? "default" :
+                              payout.status === "approved" ? "secondary" :
+                              payout.status === "pending" ? "outline" : "destructive"
+                            }>
+                              {payout.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {payout.processed_at ? new Date(payout.processed_at).toLocaleDateString() : "-"}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{payout.admin_notes || "-"}</TableCell>
+                        </TableRow>
+                      ))}
+                      {payoutRequests.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                            No payout requests yet
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="countries">
