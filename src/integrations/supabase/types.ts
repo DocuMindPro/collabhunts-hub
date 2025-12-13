@@ -907,6 +907,7 @@ export type Database = {
           created_at: string | null
           creator_profile_id: string
           display_order: number | null
+          file_size_bytes: number | null
           id: string
           media_type: string
           thumbnail_url: string | null
@@ -916,6 +917,7 @@ export type Database = {
           created_at?: string | null
           creator_profile_id: string
           display_order?: number | null
+          file_size_bytes?: number | null
           id?: string
           media_type: string
           thumbnail_url?: string | null
@@ -925,6 +927,7 @@ export type Database = {
           created_at?: string | null
           creator_profile_id?: string
           display_order?: number | null
+          file_size_bytes?: number | null
           id?: string
           media_type?: string
           thumbnail_url?: string | null

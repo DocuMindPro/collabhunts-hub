@@ -254,6 +254,7 @@ Deno.serve(async (req) => {
         url: publicUrl,
         thumbnail_url: mediaType === 'image' ? publicUrl : null,
         display_order: nextOrder,
+        file_size_bytes: file.size,
       })
       .select()
       .single();
