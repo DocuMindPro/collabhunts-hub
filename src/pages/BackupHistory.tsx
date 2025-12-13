@@ -27,6 +27,8 @@ import {
   Calendar,
   Timer,
   AlertTriangle,
+  Upload,
+  Image,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import StorageMonitorCard from "@/components/backup/StorageMonitorCard";
@@ -71,6 +73,7 @@ const BackupHistory = () => {
   const queryClient = useQueryClient();
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isTestingFailure, setIsTestingFailure] = useState(false);
+  const [isTestingR2, setIsTestingR2] = useState(false);
 
   // Fetch backup history
   const { data: backups, isLoading } = useQuery({
@@ -229,6 +232,62 @@ const BackupHistory = () => {
     },
   });
 
+  // Test R2 Upload
+  const testR2Upload = useMutation({
+    mutationFn: async () => {
+      setIsTestingR2(true);
+      
+      const { data: session } = await supabase.auth.getSession();
+      
+      if (!session?.session?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      // Create a small test image (1x1 transparent PNG)
+      const testImageBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+      const testImageBlob = await fetch(`data:image/png;base64,${testImageBase64}`).then(r => r.blob());
+      
+      const formData = new FormData();
+      formData.append("file", testImageBlob, `r2-test-${Date.now()}.png`);
+      formData.append("type", "profile");
+
+      const response = await fetch(
+        `https://olcygpkghmaqkezmunyu.supabase.co/functions/v1/upload-profile-image`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.session.access_token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Upload failed");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "R2 Upload Test Successful",
+        description: `File uploaded to: ${data.url}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["storage-stats"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "R2 Upload Test Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setIsTestingR2(false);
+    },
+  });
+
   // Calculate statistics
   const stats = {
     total: backups?.length || 0,
@@ -265,8 +324,21 @@ const BackupHistory = () => {
           </div>
           <div className="flex gap-2">
             <Button
+              onClick={() => testR2Upload.mutate()}
+              disabled={isTestingR2 || isBackingUp || isTestingFailure}
+              variant="outline"
+              className="gap-2 border-blue-500/50 text-blue-600 hover:bg-blue-500/10"
+            >
+              {isTestingR2 ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Image className="h-4 w-4" />
+              )}
+              {isTestingR2 ? "Testing R2..." : "Test R2 Upload"}
+            </Button>
+            <Button
               onClick={() => testFailure.mutate()}
-              disabled={isTestingFailure || isBackingUp}
+              disabled={isTestingFailure || isBackingUp || isTestingR2}
               variant="outline"
               className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10"
             >
@@ -279,7 +351,7 @@ const BackupHistory = () => {
             </Button>
             <Button
               onClick={() => triggerBackup.mutate()}
-              disabled={isBackingUp || isTestingFailure}
+              disabled={isBackingUp || isTestingFailure || isTestingR2}
               className="gap-2"
             >
               {isBackingUp ? (

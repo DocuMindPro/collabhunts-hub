@@ -67,14 +67,37 @@ export const platformManual: ManualSection[] = [
 
 ### Storage Structure
 \`\`\`
-/content-library/{brand_id}/{timestamp}-{filename}
-/backups/{date}/backup-{timestamp}.json
-/deliverables/{booking_id}/{filename}
+/profile-images/{user_id}/{timestamp}-{filename}     ← Profile & cover images
+/portfolio-media/{user_id}/{timestamp}-{filename}    ← Portfolio images & videos
+/content-library/{brand_id}/{timestamp}-{filename}   ← Brand UGC content
+/deliverables/{booking_id}/{filename}                ← Booking deliverables
 \`\`\`
+
+### Upload Edge Functions
+| Function | Purpose |
+|----------|---------|
+| \`upload-profile-image\` | Profile & cover image uploads |
+| \`upload-portfolio-media\` | Portfolio images (5MB) & videos (100MB) |
+| \`upload-content\` | Content Library uploads for brands |
+| \`upload-deliverable\` | Booking deliverable uploads |
+
+### File Size Limits
+- **Profile images:** 5 MB max
+- **Cover images:** 5 MB max
+- **Portfolio images:** 5 MB max
+- **Portfolio videos:** 100 MB max (limit: 3 videos)
+- **Content Library:** Based on subscription tier
 
 ### Cost Benefits
 - Zero egress fees (vs AWS S3 ~$0.09/GB)
-- 50-60% cost savings over traditional S3`,
+- 50-60% cost savings over traditional S3
+
+### Migration Status
+- ✅ Content Library: R2 (new uploads)
+- ✅ Deliverables: R2 (new uploads)
+- ✅ Profile/Cover Images: R2 (new uploads)
+- ✅ Portfolio Media: R2 (new uploads)
+- ⚠️ Legacy Supabase Storage: ~52 MB pending migration`,
         lastUpdated: "2024-12-10",
         tags: ["storage", "r2", "cloudflare", "files"]
       },
@@ -158,23 +181,28 @@ Full recovery guide: \`public/DISASTER_RECOVERY.md\``,
       {
         id: "edge-functions-list",
         title: "All Edge Functions",
-        content: `## Edge Functions Overview
+        content: `## Edge Functions Overview (19 total)
 
 | Function | Purpose |
 |----------|---------|
 | \`send-notification-email\` | Send all transactional emails via SendGrid |
 | \`send-platform-update\` | Broadcast platform updates to all users |
+| \`send-mass-message\` | Send bulk messages/campaign invites |
 | \`database-backup\` | Create automated/manual database backups |
 | \`verify-backup\` | Validate backup file integrity |
 | \`get-cron-status\` | Return scheduled job status |
 | \`get-storage-stats\` | Return storage bucket statistics |
 | \`check-dispute-deadlines\` | Monitor and auto-escalate disputes |
 | \`check-content-expiration\` | Send content rights expiration reminders |
+| \`check-ad-expiration\` | Auto-expire ad placements |
 | \`admin-reset-password\` | Allow admins to reset user passwords |
 | \`improve-bio\` | AI-powered text improvement suggestions |
 | \`optimize-image\` | Image optimization for uploads |
+| \`upload-profile-image\` | Profile & cover image uploads to R2 |
+| \`upload-portfolio-media\` | Portfolio images & videos to R2 |
 | \`upload-content\` | Handle Content Library uploads to R2 |
-| \`upload-deliverable\` | Handle booking deliverable uploads |
+| \`upload-deliverable\` | Handle booking deliverable uploads to R2 |
+| \`upload-ad-image\` | Ad placement image uploads |
 | \`delete-content\` | Remove content from R2 and database |
 
 ### Deployment
