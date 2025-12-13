@@ -51,7 +51,7 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log("Fetching storage statistics...");
 
-    // Get list of buckets
+    // ========== SUPABASE STORAGE STATS ==========
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
     
     if (bucketsError) {
@@ -60,18 +60,17 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     const bucketStats: BucketStats[] = [];
-    let totalFiles = 0;
-    let totalSize = 0;
+    let supabaseTotalFiles = 0;
+    let supabaseTotalSize = 0;
 
-    // Get stats for each bucket
+    // Get stats for each Supabase bucket
     for (const bucket of buckets) {
-      console.log(`Analyzing bucket: ${bucket.name}`);
+      console.log(`Analyzing Supabase bucket: ${bucket.name}`);
       
       let bucketFileCount = 0;
       let bucketTotalSize = 0;
       let largestFile: { name: string; size: number } | null = null;
 
-      // List all files in the bucket (recursively through folders)
       const { data: files, error: filesError } = await supabase.storage
         .from(bucket.name)
         .list("", { limit: 1000 });
@@ -81,7 +80,7 @@ serve(async (req: Request): Promise<Response> => {
         continue;
       }
 
-      // Process files and folders
+      // Process files and folders recursively
       const processFolder = async (folderPath: string) => {
         const { data: items } = await supabase.storage
           .from(bucket.name)
@@ -93,10 +92,8 @@ serve(async (req: Request): Promise<Response> => {
           const fullPath = folderPath ? `${folderPath}/${item.name}` : item.name;
           
           if (item.id === null) {
-            // It's a folder, recurse
             await processFolder(fullPath);
           } else {
-            // It's a file
             const fileSize = item.metadata?.size || 0;
             bucketFileCount++;
             bucketTotalSize += fileSize;
@@ -108,14 +105,11 @@ serve(async (req: Request): Promise<Response> => {
         }
       };
 
-      // Process root level
       if (files) {
         for (const item of files) {
           if (item.id === null) {
-            // It's a folder
             await processFolder(item.name);
           } else {
-            // It's a file
             const fileSize = item.metadata?.size || 0;
             bucketFileCount++;
             bucketTotalSize += fileSize;
@@ -134,14 +128,48 @@ serve(async (req: Request): Promise<Response> => {
         largestFile,
       });
 
-      totalFiles += bucketFileCount;
-      totalSize += bucketTotalSize;
+      supabaseTotalFiles += bucketFileCount;
+      supabaseTotalSize += bucketTotalSize;
     }
 
-    // Get database size estimate from backup history
+    // ========== CLOUDFLARE R2 STATS (from database tables) ==========
+    console.log("Fetching Cloudflare R2 stats from database...");
+
+    // Content Library stats
+    const { data: contentLibraryStats } = await supabase
+      .from("content_library")
+      .select("file_size_bytes");
+
+    const contentLibrarySize = contentLibraryStats?.reduce((sum, item) => sum + (item.file_size_bytes || 0), 0) || 0;
+    const contentLibraryCount = contentLibraryStats?.length || 0;
+
+    // Booking Deliverables stats  
+    const { data: deliverablesStats } = await supabase
+      .from("booking_deliverables")
+      .select("file_size_bytes");
+
+    const deliverablesSize = deliverablesStats?.reduce((sum, item) => sum + (item.file_size_bytes || 0), 0) || 0;
+    const deliverablesCount = deliverablesStats?.length || 0;
+
+    const r2TotalSize = contentLibrarySize + deliverablesSize;
+    const r2TotalFiles = contentLibraryCount + deliverablesCount;
+
+    // ========== AWS S3 BACKUP STATS ==========
+    console.log("Fetching AWS S3 backup stats...");
+
+    // Get total backup size from all successful backups
+    const { data: backupStats } = await supabase
+      .from("backup_history")
+      .select("file_size, status")
+      .eq("status", "success");
+
+    const s3TotalSize = backupStats?.reduce((sum, item) => sum + (item.file_size || 0), 0) || 0;
+    const s3BackupCount = backupStats?.length || 0;
+
+    // Get latest backup info
     const { data: latestBackup } = await supabase
       .from("backup_history")
-      .select("file_size")
+      .select("file_size, created_at")
       .eq("status", "success")
       .order("created_at", { ascending: false })
       .limit(1)
@@ -149,26 +177,65 @@ serve(async (req: Request): Promise<Response> => {
 
     const response = {
       success: true,
+      // Supabase Storage (profile-images, portfolio-media)
+      supabase: {
+        buckets: bucketStats,
+        totalFiles: supabaseTotalFiles,
+        totalSize: supabaseTotalSize,
+        formattedTotalSize: formatBytes(supabaseTotalSize),
+      },
+      // Cloudflare R2 (Content Library + Deliverables)
+      r2: {
+        contentLibrary: {
+          fileCount: contentLibraryCount,
+          totalSize: contentLibrarySize,
+          formattedSize: formatBytes(contentLibrarySize),
+        },
+        deliverables: {
+          fileCount: deliverablesCount,
+          totalSize: deliverablesSize,
+          formattedSize: formatBytes(deliverablesSize),
+        },
+        totalFiles: r2TotalFiles,
+        totalSize: r2TotalSize,
+        formattedTotalSize: formatBytes(r2TotalSize),
+      },
+      // AWS S3 (Database Backups)
+      s3: {
+        backupCount: s3BackupCount,
+        totalSize: s3TotalSize,
+        formattedTotalSize: formatBytes(s3TotalSize),
+        latestBackupSize: latestBackup?.file_size || 0,
+        formattedLatestBackupSize: formatBytes(latestBackup?.file_size || 0),
+        latestBackupDate: latestBackup?.created_at || null,
+      },
+      // Combined totals
+      combined: {
+        totalFiles: supabaseTotalFiles + r2TotalFiles + s3BackupCount,
+        totalSize: supabaseTotalSize + r2TotalSize + s3TotalSize,
+        formattedTotalSize: formatBytes(supabaseTotalSize + r2TotalSize + s3TotalSize),
+      },
+      // Legacy fields for backwards compatibility
       storage: {
         buckets: bucketStats,
-        totalFiles,
-        totalSize,
-        formattedTotalSize: formatBytes(totalSize),
+        totalFiles: supabaseTotalFiles,
+        totalSize: supabaseTotalSize,
+        formattedTotalSize: formatBytes(supabaseTotalSize),
       },
       database: {
         latestBackupSize: latestBackup?.file_size || 0,
         formattedBackupSize: formatBytes(latestBackup?.file_size || 0),
       },
       recommendations: {
-        storageWarning: totalSize > 1024 * 1024 * 1024, // > 1GB
-        filesWarning: totalFiles > 10000,
-        message: totalSize > 1024 * 1024 * 1024 
+        storageWarning: (supabaseTotalSize + r2TotalSize) > 1024 * 1024 * 1024,
+        filesWarning: (supabaseTotalFiles + r2TotalFiles) > 10000,
+        message: (supabaseTotalSize + r2TotalSize) > 1024 * 1024 * 1024 
           ? "Consider implementing image optimization to reduce storage usage"
           : "Storage usage is within normal limits",
       },
     };
 
-    console.log("Storage stats:", JSON.stringify(response, null, 2));
+    console.log("Storage stats fetched successfully");
 
     return new Response(JSON.stringify(response), {
       status: 200,
