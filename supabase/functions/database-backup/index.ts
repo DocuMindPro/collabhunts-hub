@@ -145,33 +145,69 @@ async function uploadToS3(
   }
 }
 
-// Tables to backup
+// Tables to backup - ALL 31 database tables
 const TABLES_TO_BACKUP = [
+  // User Management (4 tables)
   "profiles",
   "user_roles",
   "brand_profiles",
   "creator_profiles",
-  "brand_subscriptions",
+  // Creator Data (5 tables)
   "creator_services",
   "creator_social_accounts",
+  "creator_portfolio_media",
   "creator_payout_settings",
+  "creator_notes",
+  // Brand Data (4 tables)
+  "brand_subscriptions",
+  "brand_storage_usage",
+  "saved_creators",
+  "storage_purchases",
+  // Transactions (5 tables)
   "bookings",
+  "booking_deliverables",
+  "booking_disputes",
+  "payouts",
+  "reviews",
+  // Campaigns (2 tables)
   "campaigns",
   "campaign_applications",
+  // Messaging (5 tables)
   "conversations",
   "messages",
   "notifications",
-  "reviews",
-  "payouts",
+  "mass_message_templates",
+  "mass_messages_log",
+  // Content Management (2 tables)
+  "content_library",
+  "content_folders",
+  // Analytics & System (3 tables)
   "profile_views",
   "backup_history",
+  "platform_changelog",
+  // Advertising (1 table)
+  "ad_placements",
 ];
 
 // Edge function descriptions for documentation
 const EDGE_FUNCTION_DESCRIPTIONS: Record<string, string> = {
   "admin-reset-password": "Allows administrators to reset user passwords. Validates admin role via JWT and uses service role to update passwords.",
-  "database-backup": "Creates comprehensive database backups including all data, schema, and configurations. Uploads to AWS S3 with versioning.",
+  "database-backup": "Creates comprehensive database backups including all 31 database tables, schema, and configurations. Uploads to AWS S3 with versioning.",
   "verify-backup": "Validates backup integrity by checking file existence and structure in S3.",
+  "send-notification-email": "Sends all transactional emails via SendGrid for bookings, disputes, payments, approvals, etc.",
+  "send-platform-update": "Broadcasts platform updates/announcements to all users by role.",
+  "check-dispute-deadlines": "Hourly job to monitor disputes, send reminders, auto-escalate, and auto-release payments after 72h.",
+  "check-content-expiration": "Daily job to send usage rights expiration reminders for Content Library.",
+  "check-ad-expiration": "Hourly job to auto-reset expired ad placements to available state.",
+  "get-cron-status": "Returns scheduled cron job status for admin dashboard.",
+  "get-storage-stats": "Returns storage bucket statistics for monitoring.",
+  "improve-bio": "AI-powered text improvement suggestions using Gemini.",
+  "optimize-image": "Image optimization for uploads.",
+  "upload-content": "Handle Content Library uploads to Cloudflare R2.",
+  "upload-deliverable": "Handle booking deliverable uploads to R2.",
+  "delete-content": "Remove content from R2 and database.",
+  "upload-ad-image": "Handle ad placement image uploads.",
+  "send-mass-message": "Send bulk messages/campaign invites to multiple creators.",
 };
 
 Deno.serve(async (req) => {
