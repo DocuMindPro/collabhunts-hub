@@ -85,6 +85,102 @@ export type Database = {
           },
         ]
       }
+      affiliate_earnings: {
+        Row: {
+          affiliate_amount_cents: number
+          affiliate_id: string
+          created_at: string
+          gross_revenue_cents: number
+          id: string
+          platform_amount_cents: number
+          referral_id: string
+          source_id: string
+          source_type: string
+        }
+        Insert: {
+          affiliate_amount_cents: number
+          affiliate_id: string
+          created_at?: string
+          gross_revenue_cents: number
+          id?: string
+          platform_amount_cents: number
+          referral_id: string
+          source_id: string
+          source_type: string
+        }
+        Update: {
+          affiliate_amount_cents?: number
+          affiliate_id?: string
+          created_at?: string
+          gross_revenue_cents?: number
+          id?: string
+          platform_amount_cents?: number
+          referral_id?: string
+          source_id?: string
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_earnings_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_earnings_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliates: {
+        Row: {
+          activated_at: string | null
+          activated_by: string | null
+          commission_rate: number
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          referral_code: string
+          status: string
+          total_earnings_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by?: string | null
+          commission_rate?: number
+          created_at?: string
+          display_name: string
+          email: string
+          id?: string
+          referral_code: string
+          status?: string
+          total_earnings_cents?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string | null
+          commission_rate?: number
+          created_at?: string
+          display_name?: string
+          email?: string
+          id?: string
+          referral_code?: string
+          status?: string
+          total_earnings_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       backup_history: {
         Row: {
           backup_type: string
@@ -372,6 +468,7 @@ export type Database = {
           id: string
           industry: string | null
           is_verified: boolean | null
+          location_country: string | null
           logo_url: string | null
           marketing_intent: string | null
           monthly_budget_range: string | null
@@ -399,6 +496,7 @@ export type Database = {
           id?: string
           industry?: string | null
           is_verified?: boolean | null
+          location_country?: string | null
           logo_url?: string | null
           marketing_intent?: string | null
           monthly_budget_range?: string | null
@@ -426,6 +524,7 @@ export type Database = {
           id?: string
           industry?: string | null
           is_verified?: boolean | null
+          location_country?: string | null
           logo_url?: string | null
           marketing_intent?: string | null
           monthly_budget_range?: string | null
@@ -1109,6 +1208,139 @@ export type Database = {
           },
         ]
       }
+      franchise_countries: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          country_code: string
+          country_name: string
+          franchise_owner_id: string
+          id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          country_code: string
+          country_name: string
+          franchise_owner_id: string
+          id?: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          country_code?: string
+          country_name?: string
+          franchise_owner_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "franchise_countries_franchise_owner_id_fkey"
+            columns: ["franchise_owner_id"]
+            isOneToOne: false
+            referencedRelation: "franchise_owners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      franchise_earnings: {
+        Row: {
+          country_code: string
+          created_at: string
+          franchise_amount_cents: number
+          franchise_owner_id: string
+          gross_amount_cents: number
+          id: string
+          platform_amount_cents: number
+          source_id: string
+          source_type: string
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          country_code: string
+          created_at?: string
+          franchise_amount_cents: number
+          franchise_owner_id: string
+          gross_amount_cents: number
+          id?: string
+          platform_amount_cents: number
+          source_id: string
+          source_type: string
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          franchise_amount_cents?: number
+          franchise_owner_id?: string
+          gross_amount_cents?: number
+          id?: string
+          platform_amount_cents?: number
+          source_id?: string
+          source_type?: string
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "franchise_earnings_franchise_owner_id_fkey"
+            columns: ["franchise_owner_id"]
+            isOneToOne: false
+            referencedRelation: "franchise_owners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      franchise_owners: {
+        Row: {
+          activated_at: string | null
+          activated_by: string | null
+          commission_rate: number
+          company_name: string
+          contact_email: string
+          contact_phone: string | null
+          created_at: string
+          id: string
+          platform_rate: number
+          status: string
+          total_earnings_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by?: string | null
+          commission_rate?: number
+          company_name: string
+          contact_email: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          platform_rate?: number
+          status?: string
+          total_earnings_cents?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string | null
+          commission_rate?: number
+          company_name?: string
+          contact_email?: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          platform_rate?: number
+          status?: string
+          total_earnings_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mass_message_templates: {
         Row: {
           brand_profile_id: string
@@ -1415,6 +1647,41 @@ export type Database = {
         }
         Relationships: []
       }
+      referrals: {
+        Row: {
+          affiliate_id: string
+          created_at: string
+          id: string
+          referral_code_used: string
+          referred_user_id: string
+          referred_user_type: string
+        }
+        Insert: {
+          affiliate_id: string
+          created_at?: string
+          id?: string
+          referral_code_used: string
+          referred_user_id: string
+          referred_user_type: string
+        }
+        Update: {
+          affiliate_id?: string
+          created_at?: string
+          id?: string
+          referral_code_used?: string
+          referred_user_id?: string
+          referred_user_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           booking_id: string
@@ -1582,6 +1849,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_affiliate_by_code: { Args: { _code: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1589,6 +1857,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_franchise_owner_for_country: {
+        Args: { _country_code: string; _user_id: string }
+        Returns: boolean
+      }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       record_profile_view: {
         Args: { p_creator_profile_id: string }
         Returns: boolean
@@ -1604,7 +1877,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "brand" | "creator"
+      app_role: "admin" | "brand" | "creator" | "franchise" | "affiliate"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1732,7 +2005,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "brand", "creator"],
+      app_role: ["admin", "brand", "creator", "franchise", "affiliate"],
     },
   },
 } as const
