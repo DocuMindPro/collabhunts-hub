@@ -75,6 +75,15 @@ type EmailType =
   | 'admin_dispute_escalated'
   | 'admin_dispute_resolution_reminder'
   | 'admin_verification_request'
+  | 'admin_payout_request'
+  // Franchise emails
+  | 'franchise_payout_submitted'
+  | 'franchise_payout_approved'
+  | 'franchise_payout_rejected'
+  // Affiliate emails
+  | 'affiliate_payout_submitted'
+  | 'affiliate_payout_approved'
+  | 'affiliate_payout_rejected'
   // Platform updates
   | 'platform_update'
   | 'test_email';
@@ -842,6 +851,89 @@ function getEmailContent(type: EmailType, data: Record<string, any>, toName?: st
           <div style="text-align: center;">
             ${getCtaButton('Review Request', `${baseUrl}/admin?tab=verifications`)}
           </div>
+        `)
+      };
+
+    // ============ PAYOUT EMAILS ============
+    case 'admin_payout_request':
+      return {
+        subject: `💸 New Payout Request - ${data.requester_name}`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">New Payout Request</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            A new payout request has been submitted and needs review.
+          </p>
+          <div style="background: #FFF8F0; border-left: 4px solid #FF7A00; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0 0 10px 0; color: #2F2F2F;"><strong>👤 Requester:</strong> ${data.requester_name}</p>
+            <p style="margin: 0 0 10px 0; color: #2F2F2F;"><strong>💰 Amount:</strong> $${(data.amount_cents / 100).toFixed(2)}</p>
+            <p style="margin: 0 0 10px 0; color: #2F2F2F;"><strong>📋 Type:</strong> ${data.payout_type === 'franchise' ? 'Franchise' : 'Affiliate'}</p>
+            ${data.payout_method ? `<p style="margin: 0; color: #2F2F2F;"><strong>💳 Method:</strong> ${data.payout_method}</p>` : ''}
+          </div>
+          <div style="text-align: center;">
+            ${getCtaButton('Review Request', `${baseUrl}/admin?tab=${data.payout_type}s`)}
+          </div>
+        `)
+      };
+
+    case 'franchise_payout_submitted':
+    case 'affiliate_payout_submitted':
+      return {
+        subject: `📝 Payout Request Submitted`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">${greeting}</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            Your payout request has been submitted successfully.
+          </p>
+          <div style="background: #F0FFF4; border-left: 4px solid #22C55E; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0; color: #2F2F2F; font-size: 18px;"><strong>💰 Amount Requested: $${(data.amount_cents / 100).toFixed(2)}</strong></p>
+          </div>
+          <p style="color: #666; line-height: 1.6;">
+            Our team will review your request and process it within 3-5 business days. You'll receive an email notification once it's processed.
+          </p>
+        `)
+      };
+
+    case 'franchise_payout_approved':
+    case 'affiliate_payout_approved':
+      return {
+        subject: `✅ Payout Approved - $${(data.amount_cents / 100).toFixed(2)}`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">${greeting}</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            Great news! Your payout request has been approved.
+          </p>
+          <div style="background: #F0FFF4; border-left: 4px solid #22C55E; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0; color: #2F2F2F; font-size: 18px;"><strong>💰 Amount: $${(data.amount_cents / 100).toFixed(2)}</strong></p>
+          </div>
+          ${data.admin_notes ? `
+          <div style="background: #F5F5F5; padding: 15px; margin: 20px 0; border-radius: 8px;">
+            <p style="margin: 0; color: #666;"><strong>Note:</strong> ${data.admin_notes}</p>
+          </div>
+          ` : ''}
+          <p style="color: #666; line-height: 1.6;">
+            The funds will be transferred to your account according to your payout method.
+          </p>
+        `)
+      };
+
+    case 'franchise_payout_rejected':
+    case 'affiliate_payout_rejected':
+      return {
+        subject: `❌ Payout Request Declined`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">${greeting}</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            Unfortunately, your payout request for $${(data.amount_cents / 100).toFixed(2)} was not approved.
+          </p>
+          ${data.admin_notes ? `
+          <div style="background: #FEF2F2; border-left: 4px solid #EF4444; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0 0 5px 0; color: #2F2F2F;"><strong>Reason:</strong></p>
+            <p style="margin: 0; color: #666;">${data.admin_notes}</p>
+          </div>
+          ` : ''}
+          <p style="color: #666; line-height: 1.6;">
+            If you have any questions, please contact our support team.
+          </p>
         `)
       };
 
