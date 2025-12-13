@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone, X, Gavel, BookOpen, BadgeCheck, ImageIcon } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone, X, Gavel, BookOpen, BadgeCheck, ImageIcon, Globe, Link as LinkIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AdminBrandSubscriptionsTab from "@/components/brand-dashboard/AdminBrandSubscriptionsTab";
 import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
@@ -29,6 +29,8 @@ import AdminDisputesTab from "@/components/admin/AdminDisputesTab";
 import AdminPlatformManualTab from "@/components/admin/AdminPlatformManualTab";
 import AdminVerificationsTab from "@/components/admin/AdminVerificationsTab";
 import AdminAdsTab from "@/components/admin/AdminAdsTab";
+import AdminFranchisesTab from "@/components/admin/AdminFranchisesTab";
+import AdminAffiliatesTab from "@/components/admin/AdminAffiliatesTab";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface Profile {
@@ -831,6 +833,14 @@ const Admin = () => {
               <TabsTrigger value="ads" className="gap-2 shrink-0">
                 <ImageIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Ads</span>
+              </TabsTrigger>
+              <TabsTrigger value="franchises" className="gap-2 shrink-0">
+                <Globe className="h-4 w-4" />
+                <span className="hidden sm:inline">Franchises</span>
+              </TabsTrigger>
+              <TabsTrigger value="affiliates" className="gap-2 shrink-0">
+                <LinkIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Affiliates</span>
               </TabsTrigger>
             </TabsList>
 

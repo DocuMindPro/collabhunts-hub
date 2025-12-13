@@ -24,6 +24,8 @@ import CreatorSignup from "./pages/CreatorSignup";
 import CreatorProfile from "./pages/CreatorProfile";
 import CreatorDashboard from "./pages/CreatorDashboard";
 import BrandDashboard from "./pages/BrandDashboard";
+import FranchiseDashboard from "./pages/FranchiseDashboard";
+import AffiliateDashboard from "./pages/AffiliateDashboard";
 import Admin from "./pages/Admin";
 import BackupHistory from "./pages/BackupHistory";
 import KnowledgeBase from "./pages/KnowledgeBase";
@@ -36,6 +38,8 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorProtectedRoute from "./components/CreatorProtectedRoute";
 import BrandProtectedRoute from "./components/BrandProtectedRoute";
+import FranchiseProtectedRoute from "./components/FranchiseProtectedRoute";
+import AffiliateProtectedRoute from "./components/AffiliateProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +90,22 @@ const App = () => (
                 <ProtectedRoute requireAdmin>
                   <Admin />
                 </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/franchise-dashboard" 
+              element={
+                <FranchiseProtectedRoute>
+                  <FranchiseDashboard />
+                </FranchiseProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/affiliate-dashboard" 
+              element={
+                <AffiliateProtectedRoute>
+                  <AffiliateDashboard />
+                </AffiliateProtectedRoute>
               } 
             />
             <Route 
