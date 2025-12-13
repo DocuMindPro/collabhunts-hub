@@ -19,6 +19,16 @@ Deno.serve(async (req) => {
     const r2BucketName = Deno.env.get('R2_BUCKET_NAME')!;
     const r2PublicUrl = Deno.env.get('R2_PUBLIC_URL')!;
 
+    // DEBUG: Log R2 configuration (mask sensitive data)
+    console.log('=== R2 CONFIGURATION DEBUG ===');
+    console.log('R2_ACCOUNT_ID:', r2AccountId || 'NOT SET');
+    console.log('R2_BUCKET_NAME:', r2BucketName || 'NOT SET');
+    console.log('R2_PUBLIC_URL:', r2PublicUrl || 'NOT SET');
+    console.log('R2_ACCESS_KEY_ID:', r2AccessKeyId ? `${r2AccessKeyId.substring(0, 8)}...` : 'NOT SET');
+    console.log('R2_SECRET_ACCESS_KEY:', r2SecretAccessKey ? 'SET (hidden)' : 'NOT SET');
+    console.log('R2 Endpoint:', `https://${r2AccountId}.r2.cloudflarestorage.com`);
+    console.log('==============================');
+
     // Authenticate user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -187,7 +197,15 @@ Deno.serve(async (req) => {
     const authorizationHeader = `${algorithm} Credential=${r2AccessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
     // Upload to R2
-    const uploadResponse = await fetch(`${r2Endpoint}/${r2BucketName}/${r2Key}`, {
+    const uploadUrl = `${r2Endpoint}/${r2BucketName}/${r2Key}`;
+    console.log('=== R2 UPLOAD DEBUG ===');
+    console.log('Upload URL:', uploadUrl);
+    console.log('R2 Key:', r2Key);
+    console.log('File Type:', file.type);
+    console.log('File Size:', file.size, 'bytes');
+    console.log('=======================');
+
+    const uploadResponse = await fetch(uploadUrl, {
       method: 'PUT',
       headers: {
         'Content-Type': file.type,
@@ -198,10 +216,16 @@ Deno.serve(async (req) => {
       body: fileBuffer,
     });
 
+    console.log('R2 Response Status:', uploadResponse.status);
+    console.log('R2 Response Headers:', Object.fromEntries(uploadResponse.headers.entries()));
+
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text();
-      console.error('R2 upload failed:', errorText);
-      return new Response(JSON.stringify({ error: 'Failed to upload file to storage' }), {
+      console.error('=== R2 UPLOAD FAILED ===');
+      console.error('Status:', uploadResponse.status);
+      console.error('Error Response:', errorText);
+      console.error('========================');
+      return new Response(JSON.stringify({ error: 'Failed to upload file to storage', details: errorText }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
