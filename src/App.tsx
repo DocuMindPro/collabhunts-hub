@@ -34,6 +34,8 @@ import KnowledgeBaseArticle from "./pages/KnowledgeBaseArticle";
 import WhatsNew from "./pages/WhatsNew";
 import Changelog from "./pages/Changelog";
 import Advertising from "./pages/Advertising";
+import BecomeAffiliate from "./pages/BecomeAffiliate";
+import FranchiseOpportunities from "./pages/FranchiseOpportunities";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorProtectedRoute from "./components/CreatorProtectedRoute";
@@ -158,6 +160,8 @@ const App = () => (
               } 
             />
             <Route path="/advertising" element={<Advertising />} />
+            <Route path="/become-affiliate" element={<BecomeAffiliate />} />
+            <Route path="/franchise" element={<FranchiseOpportunities />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

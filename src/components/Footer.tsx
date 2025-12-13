@@ -67,7 +67,7 @@ const Footer = () => {
   return (
     <footer className="border-t border-border bg-muted/30">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center">
@@ -189,6 +189,28 @@ const Footer = () => {
               <li>
                 <Link to="/refund" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Refund Policy
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Partners */}
+          <div>
+            <h3 className="font-heading font-semibold mb-4">Partners</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/become-affiliate" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Become an Affiliate
+                </Link>
+              </li>
+              <li>
+                <Link to="/franchise" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Franchise Opportunities
+                </Link>
+              </li>
+              <li>
+                <Link to="/advertising" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Advertise With Us
                 </Link>
               </li>
             </ul>
