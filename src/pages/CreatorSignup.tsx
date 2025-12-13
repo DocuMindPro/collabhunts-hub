@@ -16,6 +16,7 @@ import { z } from "zod";
 import PhoneInput from "@/components/PhoneInput";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
 import { Link } from "react-router-dom";
+import CountrySelect from "@/components/CountrySelect";
 
 // Validation schemas
 const emailSchema = z.string().email("Invalid email address").max(255);
@@ -967,10 +968,10 @@ const CreatorSignup = () => {
                     </div>
                     <div>
                       <Label htmlFor="country">Country</Label>
-                      <Input
-                        id="country"
+                      <CountrySelect
                         value={locationCountry}
-                        onChange={(e) => setLocationCountry(e.target.value)}
+                        onChange={setLocationCountry}
+                        placeholder="Select country"
                       />
                     </div>
                   </div>

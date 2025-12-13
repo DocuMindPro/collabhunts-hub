@@ -20,6 +20,15 @@ const Index = () => {
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
 
+  // Capture referral code from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+      localStorage.setItem('affiliate_referral_code', refCode);
+    }
+  }, []);
+
   useEffect(() => {
     const checkUserProfiles = async (userId: string) => {
       const { data: brandProfile } = await supabase

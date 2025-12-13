@@ -29,6 +29,15 @@ const Brand = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
+  // Capture referral code from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+      localStorage.setItem('affiliate_referral_code', refCode);
+    }
+  }, []);
+
   useEffect(() => {
     const checkUserProfiles = async () => {
       const { data: { session } } = await supabase.auth.getSession();
