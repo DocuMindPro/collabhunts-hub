@@ -61,12 +61,15 @@ const PortfolioUploadSection = ({ creatorProfileId, compact = false }: Portfolio
 
   const videoCount = media.filter((m) => m.media_type === "video").length;
 
-  // Upload with progress tracking using XMLHttpRequest
-  const uploadWithProgress = async (file: File, filePath: string, accessToken: string): Promise<void> => {
+  // Upload with progress tracking using XMLHttpRequest to R2 via edge function
+  const uploadWithProgress = async (file: File, type: "image" | "video", accessToken: string): Promise<{ id: string; url: string; media_type: string }> => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('media_type', type);
       
       xhr.upload.addEventListener('progress', (event) => {
         if (event.lengthComputable) {
@@ -77,7 +80,16 @@ const PortfolioUploadSection = ({ creatorProfileId, compact = false }: Portfolio
       
       xhr.addEventListener('load', () => {
         if (xhr.status >= 200 && xhr.status < 300) {
-          resolve();
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (response.success && response.media) {
+              resolve(response.media);
+            } else {
+              reject(new Error(response.error || 'Upload failed'));
+            }
+          } catch {
+            reject(new Error('Invalid response'));
+          }
         } else {
           reject(new Error(`Upload failed with status ${xhr.status}`));
         }
@@ -86,11 +98,10 @@ const PortfolioUploadSection = ({ creatorProfileId, compact = false }: Portfolio
       xhr.addEventListener('error', () => reject(new Error('Upload failed')));
       xhr.addEventListener('abort', () => reject(new Error('Upload aborted')));
       
-      const url = `${supabaseUrl}/storage/v1/object/portfolio-media/${filePath}`;
+      const url = `${supabaseUrl}/functions/v1/upload-portfolio-media`;
       xhr.open('POST', url);
       xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
-      xhr.setRequestHeader('Content-Type', file.type);
-      xhr.send(file);
+      xhr.send(formData);
     });
   };
 
@@ -146,41 +157,15 @@ const PortfolioUploadSection = ({ creatorProfileId, compact = false }: Portfolio
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No session found");
 
-      // Upload file with progress
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${type}.${fileExt}`;
-      const filePath = `${session.user.id}/${fileName}`;
-
-      await uploadWithProgress(file, filePath, session.access_token);
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("portfolio-media")
-        .getPublicUrl(filePath);
-
-      // Create database record
-      const nextOrder = media.length > 0 ? Math.max(...media.map((m) => m.display_order)) + 1 : 0;
-
-      const { data: insertedData, error: dbError } = await supabase
-        .from("creator_portfolio_media")
-        .insert({
-          creator_profile_id: creatorProfileId,
-          media_type: type,
-          url: publicUrl,
-          thumbnail_url: type === "video" ? null : publicUrl,
-          display_order: nextOrder,
-        })
-        .select()
-        .single();
-
-      if (dbError) throw dbError;
+      // Upload file via R2 edge function with progress
+      const uploadedMedia = await uploadWithProgress(file, type, session.access_token);
 
       const newMedia: PortfolioMedia = {
-        id: insertedData.id,
-        media_type: insertedData.media_type as "image" | "video",
-        url: insertedData.url,
-        thumbnail_url: insertedData.thumbnail_url,
-        display_order: insertedData.display_order,
+        id: uploadedMedia.id,
+        media_type: uploadedMedia.media_type as "image" | "video",
+        url: uploadedMedia.url,
+        thumbnail_url: type === "image" ? uploadedMedia.url : null,
+        display_order: media.length,
       };
 
       setMedia([...media, newMedia]);
@@ -207,17 +192,7 @@ const PortfolioUploadSection = ({ creatorProfileId, compact = false }: Portfolio
 
   const handleDeleteMedia = async (mediaItem: PortfolioMedia) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      // Delete from storage
-      const urlParts = mediaItem.url.split("/");
-      const fileName = urlParts[urlParts.length - 1];
-      const filePath = `${user.id}/${fileName}`;
-
-      await supabase.storage.from("portfolio-media").remove([filePath]);
-
-      // Delete from database
+      // Delete from database - R2 cleanup can be handled separately
       const { error } = await supabase
         .from("creator_portfolio_media")
         .delete()
