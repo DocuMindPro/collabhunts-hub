@@ -113,10 +113,21 @@ export const platformManual: ManualSection[] = [
 **Retention:** Indefinite
 
 ### Backup Contents
-- All 27 database tables (JSON format)
+- All 31 database tables (JSON format)
 - Complete schema (DDL, enums, functions, triggers)
 - RLS policies
-- Edge function descriptions
+- 17 Edge function descriptions
+
+### Tables Backed Up (31 total)
+**User Management:** profiles, user_roles, brand_profiles, creator_profiles
+**Creator Data:** creator_services, creator_social_accounts, creator_portfolio_media, creator_payout_settings, creator_notes
+**Brand Data:** brand_subscriptions, brand_storage_usage, saved_creators, storage_purchases
+**Transactions:** bookings, booking_deliverables, booking_disputes, payouts, reviews
+**Campaigns:** campaigns, campaign_applications
+**Messaging:** conversations, messages, notifications, mass_message_templates, mass_messages_log
+**Content:** content_library, content_folders
+**Analytics:** profile_views, backup_history, platform_changelog
+**Advertising:** ad_placements
 
 ### Edge Functions
 - \`database-backup\` - Performs the backup
@@ -129,7 +140,10 @@ On backup failure, email alert sent to:
 
 ### Manual Backup
 Admins can trigger manual backups from:
-\`/backup-history\` page`,
+\`/backup-history\` page
+
+### Disaster Recovery
+Full recovery guide: \`public/DISASTER_RECOVERY.md\``,
         lastUpdated: "2024-12-10",
         tags: ["backup", "disaster-recovery", "cron", "s3"]
       }
@@ -179,50 +193,56 @@ Edge functions are automatically deployed when code changes are pushed.`,
       {
         id: "core-tables",
         title: "Core Database Tables",
-        content: `## Database Tables (27 total)
+        content: `## Database Tables (31 total)
 
-### User Management
+### User Management (4 tables)
 - \`profiles\` - Base user accounts (auto-created on signup)
 - \`user_roles\` - Role assignments (admin, brand, creator)
 - \`creator_profiles\` - Creator-specific data
 - \`brand_profiles\` - Brand-specific data
 
-### Creator Data
+### Creator Data (5 tables)
 - \`creator_services\` - Service offerings with pricing
 - \`creator_social_accounts\` - Social media accounts
 - \`creator_portfolio_media\` - Portfolio images/videos
 - \`creator_payout_settings\` - Stripe payout configuration
 - \`creator_notes\` - Brand's private notes about creators
 
-### Brand Data
+### Brand Data (4 tables)
 - \`brand_subscriptions\` - Subscription tier tracking
 - \`brand_storage_usage\` - Content Library storage limits
 - \`saved_creators\` - Saved/favorited creators
+- \`storage_purchases\` - Extra storage purchases
 
-### Transactions
+### Transactions (5 tables)
 - \`bookings\` - Service bookings
 - \`booking_deliverables\` - Uploaded deliverable files
 - \`booking_disputes\` - Dispute cases
 - \`payouts\` - Creator payout records
 - \`reviews\` - Brand reviews of creators
 
-### Campaigns
+### Campaigns (2 tables)
 - \`campaigns\` - Brand campaign postings
 - \`campaign_applications\` - Creator applications
 
-### Messaging
+### Messaging (5 tables)
 - \`conversations\` - Chat threads
 - \`messages\` - Individual messages
 - \`notifications\` - In-app notifications
+- \`mass_message_templates\` - Saved bulk message templates
+- \`mass_messages_log\` - Mass message history
 
-### Content Management
+### Content Management (2 tables)
 - \`content_library\` - Stored UGC content
 - \`content_folders\` - Folder organization
-- \`storage_purchases\` - Extra storage purchases
 
-### Analytics
+### Analytics & System (3 tables)
 - \`profile_views\` - Creator profile view tracking
-- \`backup_history\` - Backup operation logs`,
+- \`backup_history\` - Backup operation logs
+- \`platform_changelog\` - Platform update announcements
+
+### Advertising (1 table)
+- \`ad_placements\` - Ad placement configurations`,
         lastUpdated: "2024-12-10",
         tags: ["database", "tables", "schema"]
       }
