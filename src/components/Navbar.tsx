@@ -487,6 +487,22 @@ const Navbar = () => {
                           Join as Creator
                         </Button>
                       </Link>
+                      <div className="pt-4 border-t border-border space-y-2">
+                        <Link 
+                          to="/become-affiliate" 
+                          onClick={() => setIsOpen(false)}
+                          className="block text-sm text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          Become an Affiliate
+                        </Link>
+                        <Link 
+                          to="/franchise" 
+                          onClick={() => setIsOpen(false)}
+                          className="block text-sm text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          Franchise Opportunities
+                        </Link>
+                      </div>
                     </>
                   )}
                 </div>

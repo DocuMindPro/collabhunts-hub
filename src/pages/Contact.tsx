@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,8 @@ import { Mail, MessageSquare, Clock, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
 const Contact = () => {
+  const [searchParams] = useSearchParams();
+  const prefilledSubject = searchParams.get("subject") || "";
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Scroll to top when component mounts
@@ -66,7 +69,14 @@ const Contact = () => {
               
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject</Label>
-                <Input id="subject" placeholder="How can we help?" required />
+                <Input 
+                  id="subject" 
+                  placeholder="How can we help?" 
+                  required 
+                  defaultValue={prefilledSubject}
+                  readOnly={!!prefilledSubject}
+                  className={prefilledSubject ? "bg-muted cursor-not-allowed" : ""}
+                />
               </div>
               
               <div className="space-y-2">

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
@@ -5,6 +6,10 @@ import Footer from "@/components/Footer";
 import { Globe, TrendingUp, Briefcase, Handshake, BadgeDollarSign, GraduationCap, Building2, Users, Rocket, Shield } from "lucide-react";
 
 const FranchiseOpportunities = () => {
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
   const benefits = [
     {
       icon: Globe,
@@ -94,7 +99,7 @@ const FranchiseOpportunities = () => {
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Own your market with an exclusive territory franchise. Join the creator economy revolution and build a profitable business in your region.
           </p>
-          <Link to="/contact">
+          <Link to="/contact?subject=Franchise%20Opportunity">
             <Button size="lg" className="text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all bg-secondary hover:bg-secondary/90">
               Schedule a Call
             </Button>
@@ -227,7 +232,7 @@ const FranchiseOpportunities = () => {
           <p className="text-xl text-primary-foreground/80 mb-8">
             Let's discuss how you can become a CollabHunts franchise partner and build your influencer marketing empire.
           </p>
-          <Link to="/contact">
+          <Link to="/contact?subject=Franchise%20Opportunity">
             <Button size="lg" variant="secondary" className="text-lg px-8 py-6 bg-background text-foreground hover:bg-background/90">
               Schedule a Discovery Call
             </Button>
