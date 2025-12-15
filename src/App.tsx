@@ -7,7 +7,7 @@ import { lazy, Suspense } from "react";
 import PageTransition from "./components/PageTransition";
 import CookieConsent from "./components/CookieConsent";
 import PageLoader from "./components/PageLoader";
-
+import useSiteSettings from "./hooks/useSiteSettings";
 // Eager load most visited pages
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -53,8 +53,15 @@ const AffiliateProtectedRoute = lazy(() => import("./components/AffiliateProtect
 
 const queryClient = new QueryClient();
 
+// Component to initialize site settings (favicon, meta tags)
+const SiteSettingsProvider = ({ children }: { children: React.ReactNode }) => {
+  useSiteSettings();
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <SiteSettingsProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -179,6 +186,7 @@ const App = () => (
         <CookieConsent />
       </BrowserRouter>
     </TooltipProvider>
+    </SiteSettingsProvider>
   </QueryClientProvider>
 );
 
