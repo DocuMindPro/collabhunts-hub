@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import collabhuntsIcon from "@/assets/collabhunts-icon.png";
 
 interface LogoProps {
   className?: string;
@@ -11,14 +12,14 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [iconUrl, setIconUrl] = useState<string | null>(null);
 
+  // Larger heights for uploaded logos to be readable
   const sizes = {
-    sm: { icon: 24, text: "text-lg" },
-    md: { icon: 32, text: "text-xl" },
-    lg: { icon: 40, text: "text-2xl" },
+    sm: { icon: 28, logoHeight: 32, text: "text-lg" },
+    md: { icon: 36, logoHeight: 40, text: "text-xl" },
+    lg: { icon: 44, logoHeight: 48, text: "text-2xl" },
   };
 
-  const { icon, text } = sizes[size];
-
+  const { icon, logoHeight, text } = sizes[size];
   useEffect(() => {
     const fetchLogos = async () => {
       const { data } = await supabase
@@ -46,10 +47,11 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
         <img
           src={displayLogoUrl}
           alt="CollabHunts"
-          style={{ height: icon, width: "auto" }}
+          style={{ height: logoHeight, width: "auto", maxWidth: showText ? 180 : logoHeight }}
           className="flex-shrink-0 object-contain"
         />
-        {showText && !logoUrl && (
+        {/* Show text if using icon-only logo */}
+        {showText && iconUrl && !logoUrl && (
           <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text}`}>
             CollabHunts
           </span>
@@ -58,38 +60,15 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
     );
   }
 
-  // Fallback to SVG if no uploaded logo
+  // Fallback to generated icon + text
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <svg
-        width={icon}
-        height={icon}
-        viewBox="0 0 40 40"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="flex-shrink-0"
-      >
-        <defs>
-          <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="hsl(var(--primary))" />
-            <stop offset="100%" stopColor="hsl(var(--secondary))" />
-          </linearGradient>
-        </defs>
-        <circle cx="20" cy="20" r="18" fill="url(#logoGradient)" />
-        <circle cx="20" cy="20" r="8" stroke="white" strokeWidth="2" fill="none" />
-        <circle cx="20" cy="20" r="3" fill="white" />
-        <path
-          d="M12 20 H8 M28 20 H32 M20 12 V8 M20 28 V32"
-          stroke="white"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <circle cx="8" cy="20" r="2" fill="white" />
-        <circle cx="32" cy="20" r="2" fill="white" />
-        <circle cx="20" cy="8" r="2" fill="white" />
-        <circle cx="20" cy="32" r="2" fill="white" />
-      </svg>
-
+      <img
+        src={collabhuntsIcon}
+        alt="CollabHunts"
+        style={{ height: icon, width: icon }}
+        className="flex-shrink-0 object-contain"
+      />
       {showText && (
         <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text}`}>
           CollabHunts
