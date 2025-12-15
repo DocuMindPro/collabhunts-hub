@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import collabhuntsIcon from "@/assets/collabhunts-icon.png";
-import collabhuntsLogo from "@/assets/collabhunts-logo.png";
 
 interface LogoProps {
   className?: string;
@@ -13,7 +11,6 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [iconUrl, setIconUrl] = useState<string | null>(null);
 
-  // Larger heights for uploaded logos to be readable
   const sizes = {
     sm: { icon: 28, logoHeight: 32, text: "text-lg" },
     md: { icon: 36, logoHeight: 40, text: "text-xl" },
@@ -21,6 +18,7 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
   };
 
   const { icon, logoHeight, text } = sizes[size];
+
   useEffect(() => {
     const fetchLogos = async () => {
       const { data } = await supabase
@@ -39,7 +37,6 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
     fetchLogos();
   }, []);
 
-  // Use uploaded logo if available
   const displayLogoUrl = showText ? logoUrl : (iconUrl || logoUrl);
 
   if (displayLogoUrl) {
@@ -51,34 +48,16 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
           style={{ height: logoHeight, width: "auto", maxWidth: showText ? 180 : logoHeight }}
           className="flex-shrink-0 object-contain"
         />
-        {/* Show text if using icon-only logo */}
-        {showText && iconUrl && !logoUrl && (
-          <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text}`}>
-            CollabHunts
-          </span>
-        )}
       </div>
     );
   }
 
-  // Fallback to generated logo
+  // Clean text-only fallback while database logo loads
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      {showText ? (
-        <img
-          src={collabhuntsLogo}
-          alt="CollabHunts"
-          style={{ height: logoHeight, width: "auto" }}
-          className="flex-shrink-0 object-contain"
-        />
-      ) : (
-        <img
-          src={collabhuntsIcon}
-          alt="CollabHunts"
-          style={{ height: icon, width: icon }}
-          className="flex-shrink-0 object-contain"
-        />
-      )}
+      <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text} whitespace-nowrap`}>
+        CollabHunts
+      </span>
     </div>
   );
 };
