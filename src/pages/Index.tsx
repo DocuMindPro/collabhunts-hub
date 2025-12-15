@@ -193,6 +193,7 @@ const Index = () => {
                   src={heroImage}
                   alt="Content creators collaboration"
                   className="rounded-2xl shadow-hover w-full"
+                  fetchPriority="high"
                 />
                 <FloatingCard className="absolute -bottom-6 -right-6 bg-card p-6 rounded-xl shadow-card border border-border animate-pulse-glow">
                   {(count: number) => (
