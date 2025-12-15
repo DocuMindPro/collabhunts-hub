@@ -31,6 +31,7 @@ import AdminVerificationsTab from "@/components/admin/AdminVerificationsTab";
 import AdminAdsTab from "@/components/admin/AdminAdsTab";
 import AdminFranchisesTab from "@/components/admin/AdminFranchisesTab";
 import AdminAffiliatesTab from "@/components/admin/AdminAffiliatesTab";
+import AdminBrandingSeoTab from "@/components/admin/AdminBrandingSeoTab";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface Profile {
@@ -842,6 +843,10 @@ const Admin = () => {
                 <LinkIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Affiliates</span>
               </TabsTrigger>
+              <TabsTrigger value="branding" className="gap-2 shrink-0">
+                <ImageIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Branding</span>
+              </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -1390,6 +1395,11 @@ const Admin = () => {
             {/* Affiliates Tab */}
             <TabsContent value="affiliates">
               <AdminAffiliatesTab />
+            </TabsContent>
+
+            {/* Branding Tab */}
+            <TabsContent value="branding">
+              <AdminBrandingSeoTab />
             </TabsContent>
           </Tabs>
         </div>
