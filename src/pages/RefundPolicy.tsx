@@ -151,7 +151,7 @@ const RefundPolicy = () => {
                 To request a subscription refund:
               </p>
               <ol className="list-decimal pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Email <a href="mailto:billing@collabhunts.com" className="text-primary hover:underline">billing@collabhunts.com</a> with subject line "Subscription Refund Request"</li>
+                <li>Email <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a> with subject line "Subscription Refund Request"</li>
                 <li>Include your registered email address and company name</li>
                 <li>Explain the reason for your refund request</li>
                 <li>We will respond within 2 business days</li>
@@ -239,13 +239,10 @@ const RefundPolicy = () => {
               </p>
               <div className="bg-muted/50 rounded-lg p-4 border border-border">
                 <p className="text-muted-foreground mb-2">
-                  <strong>CollabHunts Billing Support</strong>
+                  <strong>CollabHunts Support</strong>
                 </p>
                 <p className="text-muted-foreground mb-1">
-                  Email: <a href="mailto:billing@collabhunts.com" className="text-primary hover:underline">billing@collabhunts.com</a>
-                </p>
-                <p className="text-muted-foreground mb-1">
-                  General Support: <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a>
+                  Email: <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a>
                 </p>
                 <p className="text-muted-foreground text-sm mt-3">
                   Response time: Within 2 business days

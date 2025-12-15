@@ -68,13 +68,13 @@ const AdPlacement = ({ placementId, className = "", fallback, showAdvertiseHere 
     if (showAdvertiseHere) {
       return (
         <a 
-          href="mailto:advertise@collabhunts.com?subject=Advertising%20Inquiry" 
+          href="mailto:care@collabhunts.com?subject=Advertising%20Inquiry" 
           className={`block ${className}`}
         >
           <div className="h-full bg-muted/50 border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center text-center hover:border-primary/50 hover:bg-muted transition-colors">
             <ExternalLink className="h-6 w-6 mb-2 text-muted-foreground" />
             <p className="font-medium text-muted-foreground">Advertise Here</p>
-            <p className="text-xs text-muted-foreground mt-1">advertise@collabhunts.com</p>
+            <p className="text-xs text-muted-foreground mt-1">care@collabhunts.com</p>
           </div>
         </a>
       );

@@ -243,7 +243,7 @@ const PrivacyPolicy = () => {
               </p>
 
               <p className="text-muted-foreground mb-4">
-                To exercise any of these rights, please contact us at <a href="mailto:privacy@collabhunts.com" className="text-primary hover:underline">privacy@collabhunts.com</a>. 
+                To exercise any of these rights, please contact us at <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a>. 
                 We will respond to your request within 30 days.
               </p>
             </section>
@@ -352,16 +352,10 @@ const PrivacyPolicy = () => {
               </p>
               <div className="bg-muted/50 rounded-lg p-4 border border-border">
                 <p className="text-muted-foreground mb-2">
-                  <strong>CollabHunts Privacy Team</strong>
-                </p>
-                <p className="text-muted-foreground mb-1">
-                  Privacy Inquiries: <a href="mailto:privacy@collabhunts.com" className="text-primary hover:underline">privacy@collabhunts.com</a>
-                </p>
-                <p className="text-muted-foreground mb-1">
-                  Data Subject Requests: <a href="mailto:privacy@collabhunts.com" className="text-primary hover:underline">privacy@collabhunts.com</a>
+                  <strong>CollabHunts Support</strong>
                 </p>
                 <p className="text-muted-foreground">
-                  General Support: <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a>
+                  Email: <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a>
                 </p>
               </div>
             </section>
