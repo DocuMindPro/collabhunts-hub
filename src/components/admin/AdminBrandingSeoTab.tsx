@@ -20,7 +20,8 @@ import {
   Smartphone,
   Loader2,
   Check,
-  ExternalLink
+  ExternalLink,
+  Trash2
 } from "lucide-react";
 
 interface SiteSetting {
@@ -196,6 +197,39 @@ const AdminBrandingSeoTab = () => {
     }
   };
 
+  const handleRemoveAsset = async (assetKey: string, assetLabel: string) => {
+    try {
+      const { error } = await supabase
+        .from('site_settings')
+        .update({ value: null, updated_at: new Date().toISOString() })
+        .eq('key', assetKey);
+
+      if (error) throw error;
+
+      // Update local state
+      setSettings(prev => ({
+        ...prev,
+        [assetKey]: {
+          ...prev[assetKey],
+          value: null,
+          updated_at: new Date().toISOString(),
+        },
+      }));
+
+      toast({
+        title: "Removed",
+        description: `${assetLabel} has been removed`,
+      });
+    } catch (error: any) {
+      console.error('Remove error:', error);
+      toast({
+        title: "Remove Failed",
+        description: error.message || "Failed to remove asset",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSeoSave = async () => {
     setSaving(true);
     try {
@@ -304,30 +338,42 @@ const AdminBrandingSeoTab = () => {
                       }}
                     />
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      disabled={isUploading}
-                      onClick={() => fileInputRefs.current[config.key]?.click()}
-                    >
-                      {isUploading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Uploading...
-                        </>
-                      ) : setting?.value ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Replace
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload
-                        </>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        disabled={isUploading}
+                        onClick={() => fileInputRefs.current[config.key]?.click()}
+                      >
+                        {isUploading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : setting?.value ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Replace
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload
+                          </>
+                        )}
+                      </Button>
+
+                      {setting?.value && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleRemoveAsset(config.key, config.label)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       )}
-                    </Button>
+                    </div>
 
                     {setting?.value && (
                       <Button
