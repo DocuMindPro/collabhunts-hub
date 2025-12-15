@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import collabhuntsIcon from "@/assets/collabhunts-icon.png";
+import collabhuntsLogo from "@/assets/collabhunts-logo.png";
 
 interface LogoProps {
   className?: string;
@@ -60,19 +61,23 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
     );
   }
 
-  // Fallback to generated icon + text
+  // Fallback to generated logo
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <img
-        src={collabhuntsIcon}
-        alt="CollabHunts"
-        style={{ height: icon, width: icon }}
-        className="flex-shrink-0 object-contain"
-      />
-      {showText && (
-        <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text}`}>
-          CollabHunts
-        </span>
+      {showText ? (
+        <img
+          src={collabhuntsLogo}
+          alt="CollabHunts"
+          style={{ height: logoHeight, width: "auto" }}
+          className="flex-shrink-0 object-contain"
+        />
+      ) : (
+        <img
+          src={collabhuntsIcon}
+          alt="CollabHunts"
+          style={{ height: icon, width: icon }}
+          className="flex-shrink-0 object-contain"
+        />
       )}
     </div>
   );
