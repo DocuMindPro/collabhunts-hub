@@ -10,6 +10,7 @@ interface LogoProps {
 const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [iconUrl, setIconUrl] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const sizes = {
     sm: { icon: 28, logoHeight: 32, text: "text-lg" },
@@ -32,6 +33,7 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
         if (primary?.value) setLogoUrl(primary.value);
         if (iconLogo?.value) setIconUrl(iconLogo.value);
       }
+      setIsLoaded(true);
     };
 
     fetchLogos();
@@ -39,6 +41,7 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
 
   const displayLogoUrl = showText ? logoUrl : (iconUrl || logoUrl);
 
+  // Show database logo once loaded
   if (displayLogoUrl) {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
@@ -52,12 +55,21 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
     );
   }
 
-  // Clean text-only fallback while database logo loads
+  // Show text fallback only after we've checked and found no logo in database
+  if (isLoaded) {
+    return (
+      <div className={`flex items-center gap-2 ${className}`}>
+        <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text} whitespace-nowrap`}>
+          CollabHunts
+        </span>
+      </div>
+    );
+  }
+
+  // Show nothing while loading to prevent any flash
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text} whitespace-nowrap`}>
-        CollabHunts
-      </span>
+    <div className={`flex items-center gap-2 ${className}`} style={{ height: logoHeight, minWidth: 100 }}>
+      {/* Empty placeholder while loading */}
     </div>
   );
 };
