@@ -391,14 +391,8 @@ const TermsOfService = () => {
                 <p className="text-muted-foreground mb-2">
                   <strong>CollabHunts</strong>
                 </p>
-                <p className="text-muted-foreground mb-1">
-                  Legal: <a href="mailto:legal@collabhunts.com" className="text-primary hover:underline">legal@collabhunts.com</a>
-                </p>
-                <p className="text-muted-foreground mb-1">
-                  Billing: <a href="mailto:billing@collabhunts.com" className="text-primary hover:underline">billing@collabhunts.com</a>
-                </p>
                 <p className="text-muted-foreground">
-                  Support: <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a>
+                  Email: <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a>
                 </p>
               </div>
             </section>
