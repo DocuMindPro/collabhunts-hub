@@ -781,7 +781,7 @@ const Admin = () => {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 md:space-y-6">
-            <TabsList className="flex w-full overflow-x-auto gap-1 lg:w-auto lg:inline-flex h-auto p-1">
+            <TabsList className="flex flex-wrap w-full gap-1 h-auto p-2 justify-start">
               <TabsTrigger value="users" className="gap-2 shrink-0">
                 <Users className="h-4 w-4" />
                 <span className="hidden sm:inline">All Users</span>
