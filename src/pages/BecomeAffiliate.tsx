@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
@@ -5,6 +6,10 @@ import Footer from "@/components/Footer";
 import { DollarSign, Link2, BarChart3, Target, CreditCard, Users, Megaphone, Briefcase, Heart } from "lucide-react";
 
 const BecomeAffiliate = () => {
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
   const benefits = [
     {
       icon: DollarSign,
@@ -79,7 +84,7 @@ const BecomeAffiliate = () => {
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Join our affiliate program and earn generous commissions by connecting creators and brands with CollabHunts. No limits, no hassle.
           </p>
-          <Link to="/contact">
+          <Link to="/contact?subject=Become%20an%20Affiliate">
             <Button size="lg" className="text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all">
               Apply to Join
             </Button>
@@ -181,7 +186,7 @@ const BecomeAffiliate = () => {
           <p className="text-xl text-primary-foreground/80 mb-8">
             Join our growing network of affiliates and start earning today. Apply now and we'll be in touch.
           </p>
-          <Link to="/contact">
+          <Link to="/contact?subject=Become%20an%20Affiliate">
             <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
               Contact Us to Apply
             </Button>

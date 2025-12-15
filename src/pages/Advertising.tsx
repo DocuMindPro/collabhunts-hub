@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +19,10 @@ import {
 } from "lucide-react";
 
 const Advertising = () => {
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
   const placements = [
     {
       name: "Homepage Hero Banner",
@@ -90,12 +96,12 @@ const Advertising = () => {
             <p className="text-xl text-muted-foreground mb-8">
               Connect with creators, brands, and industry professionals through premium advertising placements on our growing platform.
             </p>
-            <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
-              <a href="mailto:care@collabhunts.com?subject=Advertising Inquiry">
+            <Link to="/contact?subject=Advertising%20Inquiry">
+              <Button size="lg" className="bg-primary hover:bg-primary/90">
                 <Mail className="w-5 h-5 mr-2" />
                 Contact for Advertising
-              </a>
-            </Button>
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -262,12 +268,12 @@ const Advertising = () => {
             Contact our advertising team to discuss your goals and find the perfect placement for your campaign.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
-              <a href="mailto:care@collabhunts.com?subject=Advertising Inquiry">
+            <Link to="/contact?subject=Advertising%20Inquiry">
+              <Button size="lg" className="bg-primary hover:bg-primary/90">
                 <Mail className="w-5 h-5 mr-2" />
-                Email: care@collabhunts.com
-              </a>
-            </Button>
+                Contact Us for Advertising
+              </Button>
+            </Link>
           </div>
           <p className="text-sm text-muted-foreground mt-6">
             <CheckCircle className="w-4 h-4 inline mr-1" />
