@@ -52,14 +52,32 @@ const BrandMessagesTab = () => {
   const isMobile = useIsMobile();
   const { isOtherUserTyping, setTyping } = useTypingIndicator(selectedConversation, userId);
 
-  // Auto-select conversation from URL param
+  // Auto-select conversation from URL param and handle package context
   useEffect(() => {
     const conversationParam = searchParams.get('conversation');
+    const packageParam = searchParams.get('package');
+    
     if (conversationParam && conversations.length > 0) {
       const exists = conversations.find(c => c.id === conversationParam);
       if (exists) {
         setSelectedConversation(conversationParam);
-        // Clear the URL param
+        
+        // Handle package pre-fill
+        if (packageParam) {
+          try {
+            const packageData = JSON.parse(decodeURIComponent(packageParam));
+            const serviceType = packageData.service_type?.replace(/_/g, ' ');
+            const price = (packageData.price_cents / 100).toFixed(2);
+            const deliveryDays = packageData.delivery_days;
+            
+            const prefillMessage = `Hi! I'm interested in your "${serviceType}" package ($${price}, ${deliveryDays} day${deliveryDays !== 1 ? 's' : ''} delivery). I'd like to discuss the details before we proceed.`;
+            setNewMessage(prefillMessage);
+          } catch (e) {
+            console.error("Error parsing package data:", e);
+          }
+        }
+        
+        // Clear the URL params
         setSearchParams({ tab: 'messages' });
       }
     }
