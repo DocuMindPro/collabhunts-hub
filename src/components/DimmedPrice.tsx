@@ -36,7 +36,7 @@ const DimmedPrice = ({ price, canViewPrice, className = "", size = "md" }: Dimme
         <TooltipTrigger asChild>
           <div className={`inline-flex items-center gap-1.5 ${className}`}>
             <span 
-              className={`font-heading font-bold ${sizeClasses[size]} opacity-40 blur-[2px] select-none`}
+              className={`font-heading font-bold ${sizeClasses[size]} opacity-30 blur-[6px] select-none pointer-events-none`}
             >
               {formattedPrice}
             </span>
