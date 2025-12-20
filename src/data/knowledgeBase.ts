@@ -1080,61 +1080,35 @@ export const knowledgeBaseCategories: KBCategory[] = [
         content: `
           <h2>Choose the Right Plan</h2>
           
-          <h3>Basic (Free)</h3>
+          <h3>Basic ($39/month)</h3>
           <ul>
-            <li>20% marketplace fee on bookings</li>
-            <li>Browse creators only</li>
-            <li>Cannot contact or book creators</li>
-            <li>No advanced filters</li>
+            <li>Contact and message creators</li>
+            <li>View all creator pricing</li>
+            <li>10 GB Content Library</li>
           </ul>
           
           <h3>Pro ($99/month)</h3>
           <ul>
-            <li>15% marketplace fee on bookings</li>
-            <li>Contact and book creators</li>
+            <li>All Basic features</li>
             <li>Creator CRM (save, notes, folders)</li>
-            <li>10 GB Content Library</li>
             <li>Advanced demographic filters</li>
             <li>1 active campaign per month</li>
+            <li>Mass messaging</li>
           </ul>
           
           <h3>Premium ($299/month)</h3>
           <ul>
-            <li>15% marketplace fee on bookings</li>
             <li>All Pro features</li>
             <li>50 GB Content Library</li>
             <li>Unlimited campaigns</li>
             <li>Priority support</li>
           </ul>
+          
+          <h3>How Bookings Work</h3>
+          <p>CollabHunts is a discovery platform. Once you find creators you want to work with, message them directly to discuss your project and negotiate terms. All payments and transactions are handled offline between you and the creator.</p>
         `,
         roles: ['brand'],
         order: 1
-      },
-      {
-        slug: "marketplace-fees",
-        title: "Understanding Marketplace Fees",
-        content: `
-          <h2>How Fees Work</h2>
-          <p>CollabHunts charges a marketplace fee on each booking to support platform operations.</p>
-          
-          <h3>Fee by Subscription Tier</h3>
-          <ul>
-            <li><strong>Basic:</strong> 20% of booking total</li>
-            <li><strong>Pro:</strong> 15% of booking total</li>
-            <li><strong>Premium:</strong> 15% of booking total</li>
-          </ul>
-          
-          <h3>Example</h3>
-          <p>If a creator charges $500 for a service:</p>
-          <ul>
-            <li>Basic: You pay $600 ($500 + $100 fee)</li>
-            <li>Pro/Premium: You pay $575 ($500 + $75 fee)</li>
-          </ul>
-          
-          <p>Pro and Premium subscriptions pay for themselves with just a few bookings!</p>
-        `,
-        roles: ['brand'],
-        order: 2
       }
     ]
   },

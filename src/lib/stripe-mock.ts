@@ -6,18 +6,17 @@ export const SUBSCRIPTION_PLANS = {
     name: 'No Package',
     price: 0,
     priceId: 'price_none_free',
-    marketplaceFee: 0.20, // 20%
     campaignLimit: 0,
     canContactCreators: false,
-    canBookCreators: true, // Can book but need to pay first
-    canMessageAfterDelivery: false, // Cannot message after booking is completed
+    canBookCreators: false,
+    canMessageAfterDelivery: false,
     hasAdvancedFilters: false,
     hasCRM: false,
     hasContentLibrary: false,
-    storageLimit: 0, // 0 bytes - no access
+    storageLimit: 0,
     canRequestVerifiedBadge: false,
     massMessageLimit: 0,
-    canViewCreatorPricing: false, // Cannot see creator pricing
+    canViewCreatorPricing: false,
     features: [
       'Search influencers on the marketplace',
     ],
@@ -34,9 +33,8 @@ export const SUBSCRIPTION_PLANS = {
   },
   basic: {
     name: 'Basic',
-    price: 3900, // $39 in cents
+    price: 3900,
     priceId: 'price_basic_monthly',
-    marketplaceFee: 0.15, // 15%
     campaignLimit: 0,
     canContactCreators: true,
     canBookCreators: true,
@@ -44,10 +42,10 @@ export const SUBSCRIPTION_PLANS = {
     hasAdvancedFilters: false,
     hasCRM: false,
     hasContentLibrary: true,
-    storageLimit: 10 * 1024 * 1024 * 1024, // 10 GB
+    storageLimit: 10 * 1024 * 1024 * 1024,
     canRequestVerifiedBadge: false,
     massMessageLimit: 0,
-    canViewCreatorPricing: true, // Can see all creator pricing
+    canViewCreatorPricing: true,
     features: [
       'Search influencers on the marketplace',
       'Chat & negotiate with creators',
@@ -64,9 +62,8 @@ export const SUBSCRIPTION_PLANS = {
   },
   pro: {
     name: 'Pro',
-    price: 9900, // $99 in cents
+    price: 9900,
     priceId: 'price_pro_monthly',
-    marketplaceFee: 0.15, // 15%
     campaignLimit: 1,
     canContactCreators: true,
     canBookCreators: true,
@@ -74,10 +71,10 @@ export const SUBSCRIPTION_PLANS = {
     hasAdvancedFilters: true,
     hasCRM: true,
     hasContentLibrary: true,
-    storageLimit: 10 * 1024 * 1024 * 1024, // 10 GB
+    storageLimit: 10 * 1024 * 1024 * 1024,
     canRequestVerifiedBadge: true,
-    massMessageLimit: 50, // per day
-    canViewCreatorPricing: true, // Can see all creator pricing
+    massMessageLimit: 50,
+    canViewCreatorPricing: true,
     features: [
       'Everything in Basic',
       'Post 1 campaign per month',
@@ -94,9 +91,8 @@ export const SUBSCRIPTION_PLANS = {
   },
   premium: {
     name: 'Premium',
-    price: 29900, // $299 in cents
+    price: 29900,
     priceId: 'price_premium_monthly',
-    marketplaceFee: 0.15, // 15%
     campaignLimit: Infinity,
     canContactCreators: true,
     canBookCreators: true,
@@ -104,10 +100,10 @@ export const SUBSCRIPTION_PLANS = {
     hasAdvancedFilters: true,
     hasCRM: true,
     hasContentLibrary: true,
-    storageLimit: 50 * 1024 * 1024 * 1024, // 50 GB
+    storageLimit: 50 * 1024 * 1024 * 1024,
     canRequestVerifiedBadge: true,
-    massMessageLimit: 100, // per day
-    canViewCreatorPricing: true, // Can see all creator pricing
+    massMessageLimit: 100,
+    canViewCreatorPricing: true,
     features: [
       'Everything in Pro',
       'Post unlimited campaigns',
@@ -133,10 +129,6 @@ export const STORAGE_ADDON = {
 } as const;
 
 export type PlanType = keyof typeof SUBSCRIPTION_PLANS;
-
-export const getMarketplaceFee = (planType: PlanType): number => {
-  return SUBSCRIPTION_PLANS[planType].marketplaceFee;
-};
 
 export const canContactCreators = (planType: PlanType): boolean => {
   return SUBSCRIPTION_PLANS[planType].canContactCreators;
@@ -164,11 +156,6 @@ export const getStorageLimit = (planType: PlanType): number => {
 
 export const canRequestVerifiedBadge = (planType: PlanType): boolean => {
   return SUBSCRIPTION_PLANS[planType].canRequestVerifiedBadge;
-};
-
-export const calculatePlatformFee = (totalPriceCents: number, planType: PlanType): number => {
-  const feePercentage = getMarketplaceFee(planType);
-  return Math.round(totalPriceCents * feePercentage);
 };
 
 export const formatPrice = (cents: number): string => {

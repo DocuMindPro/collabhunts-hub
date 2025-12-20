@@ -1254,7 +1254,7 @@ const Admin = () => {
                       <div>
                         <CardTitle className="text-lg md:text-xl">All Transactions</CardTitle>
                         <CardDescription className="text-xs md:text-sm">
-                          Transaction history with platform fees
+                          Transaction history
                         </CardDescription>
                       </div>
                       <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
@@ -1301,14 +1301,11 @@ const Admin = () => {
                               <TableHead>Brand</TableHead>
                               <TableHead>Service</TableHead>
                               <TableHead>Status</TableHead>
-                              <TableHead className="text-right">Total Amount</TableHead>
-                              <TableHead className="text-right">Platform Fee (15%)</TableHead>
-                              <TableHead className="text-right">Creator Payout (85%)</TableHead>
+                              <TableHead className="text-right">Amount</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {filteredBookings.map((booking) => {
-                              const creatorPayout = booking.total_price_cents - (booking.platform_fee_cents || 0);
                               return (
                                 <TableRow key={booking.id}>
                                   <TableCell>
@@ -1343,12 +1340,6 @@ const Admin = () => {
                                   </TableCell>
                                   <TableCell className="text-right font-medium">
                                     ${(booking.total_price_cents / 100).toFixed(2)}
-                                  </TableCell>
-                                  <TableCell className="text-right text-green-600 font-medium">
-                                    ${((booking.platform_fee_cents || 0) / 100).toFixed(2)}
-                                  </TableCell>
-                                  <TableCell className="text-right font-medium">
-                                    ${(creatorPayout / 100).toFixed(2)}
                                   </TableCell>
                                 </TableRow>
                               );
