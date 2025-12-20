@@ -570,6 +570,52 @@ const ProfileTab = () => {
         </CardContent>
       </Card>
 
+      {/* Privacy Settings Card - Prominent placement */}
+      <Card className="border-2 border-primary/30 bg-primary/5">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Shield className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Privacy & Visibility Settings</CardTitle>
+              <CardDescription>Control who can see your pricing and contact you</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-4 bg-background rounded-lg border">
+            <div className="space-y-1">
+              <Label htmlFor="show-pricing-to-public" className="text-base font-medium">Show Pricing to All Visitors</Label>
+              <p className="text-sm text-muted-foreground">
+                When disabled, only subscribed brands can see your package pricing. Non-subscribers will see dimmed prices.
+              </p>
+            </div>
+            <Switch
+              id="show-pricing-to-public"
+              checked={profile.show_pricing_to_public}
+              onCheckedChange={(checked) => setProfile({ ...profile, show_pricing_to_public: checked })}
+            />
+          </div>
+          
+          <Separator />
+          
+          <div className="flex items-center justify-between p-4 bg-background rounded-lg border">
+            <div className="space-y-1">
+              <Label htmlFor="allow-mass-messages" className="text-base font-medium">Allow Mass Messages</Label>
+              <p className="text-sm text-muted-foreground">
+                When enabled, brands can include you in mass outreach messages for collaboration opportunities
+              </p>
+            </div>
+            <Switch
+              id="allow-mass-messages"
+              checked={profile.allow_mass_messages}
+              onCheckedChange={(checked) => setProfile({ ...profile, allow_mass_messages: checked })}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Basic Information</CardTitle>
@@ -869,47 +915,6 @@ const ProfileTab = () => {
         </CardContent>
       </Card>
 
-      {/* Privacy Settings Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Privacy Settings
-          </CardTitle>
-          <CardDescription>Control how brands can contact you</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="allow-mass-messages" className="text-base">Allow Mass Messages</Label>
-              <p className="text-sm text-muted-foreground">
-                When enabled, brands can include you in mass outreach messages for collaboration opportunities
-              </p>
-            </div>
-            <Switch
-              id="allow-mass-messages"
-              checked={profile.allow_mass_messages}
-              onCheckedChange={(checked) => setProfile({ ...profile, allow_mass_messages: checked })}
-            />
-          </div>
-          
-          <Separator className="my-4" />
-          
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show-pricing-to-public" className="text-base">Show Pricing to All Visitors</Label>
-              <p className="text-sm text-muted-foreground">
-                When disabled, only brands with an active subscription can see your package pricing. Non-subscribers will see dimmed prices.
-              </p>
-            </div>
-            <Switch
-              id="show-pricing-to-public"
-              checked={profile.show_pricing_to_public}
-              onCheckedChange={(checked) => setProfile({ ...profile, show_pricing_to_public: checked })}
-            />
-          </div>
-        </CardContent>
-      </Card>
 
       <SocialAccountsSection creatorProfileId={profile.id} />
 
