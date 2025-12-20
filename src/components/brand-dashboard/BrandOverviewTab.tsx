@@ -254,11 +254,6 @@ const BrandOverviewTab = () => {
             )}
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="text-sm text-muted-foreground">
-            Marketplace fee: <span className="font-semibold text-foreground">{(plan.marketplaceFee * 100).toFixed(0)}%</span> on bookings
-          </div>
-        </CardContent>
       </Card>
 
       {/* Features Status Grid */}

@@ -19,7 +19,6 @@ export const SUBSCRIPTION_PLANS = {
     massMessageLimit: 0,
     features: [
       'Search influencers on the marketplace',
-      'Book creators with 20% marketplace fee',
     ],
     lockedFeatures: [
       'Chat & negotiate with creators',
@@ -50,7 +49,6 @@ export const SUBSCRIPTION_PLANS = {
       'Search influencers on the marketplace',
       'Chat & negotiate with creators',
       'Content Library with 10 GB storage',
-      '15% marketplace fee on bookings',
     ],
     lockedFeatures: [
       'Post campaigns',
@@ -82,7 +80,6 @@ export const SUBSCRIPTION_PLANS = {
       'Save creators & add private notes (CRM)',
       'Mass message up to 50 creators/day',
       'Verified Business Badge (upon approval)',
-      '15% marketplace fee on bookings',
     ],
     lockedFeatures: [
       'Unlimited campaigns',
@@ -110,7 +107,6 @@ export const SUBSCRIPTION_PLANS = {
       'Post unlimited campaigns',
       'Content Library with 50 GB storage',
       'Mass message up to 100 creators/day',
-      '15% marketplace fee on bookings',
       'Priority customer support (Coming Soon)',
       'Dedicated account manager (Coming Soon)',
     ],
