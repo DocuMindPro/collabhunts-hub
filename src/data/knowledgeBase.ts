@@ -275,26 +275,26 @@ export const platformUpdates: PlatformUpdate[] = [
     icon: AlertTriangle
   },
   {
-    id: "escrow-payments",
-    title: "Secure Escrow Payments",
-    description: "Payment protection for both brands and creators",
+    id: "direct-collaboration",
+    title: "Direct Creator Collaboration",
+    description: "Connect and work directly with creators",
     content: `
-      <h2>Payment Security</h2>
-      <p>All payments are held securely in escrow until work is delivered and approved, protecting both parties.</p>
+      <h2>How Collaborations Work</h2>
+      <p>CollabHunts connects brands with creators. All project terms and payments are arranged directly between parties.</p>
       
-      <h3>How Escrow Works</h3>
+      <h3>Collaboration Process</h3>
       <ul>
-        <li>Brand pays when booking</li>
-        <li>Payment held securely</li>
-        <li>Creator delivers work</li>
-        <li>Brand approves or 72-hour auto-release</li>
-        <li>Creator receives payment</li>
+        <li>Browse and discover verified creators</li>
+        <li>Message creators to discuss your project</li>
+        <li>Negotiate terms and deliverables directly</li>
+        <li>Arrange payment offline between parties</li>
+        <li>Receive high-quality content</li>
       </ul>
     `,
     publishedAt: new Date("2024-09-15"),
     roles: ['all'],
     category: 'feature',
-    icon: Wallet
+    icon: MessageSquare
   }
 ];
 

@@ -37,7 +37,7 @@ const PayoutsTab = () => {
               <div className="text-left">
                 <p className="text-sm font-medium">What's coming</p>
                 <p className="text-sm text-muted-foreground">
-                  Secure escrow payments, Stripe Connect for instant payouts, earnings dashboard, and payout history tracking.
+                  Stripe Connect for instant payouts, earnings dashboard, and payout history tracking.
                 </p>
               </div>
             </div>

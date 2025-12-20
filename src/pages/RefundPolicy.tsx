@@ -76,17 +76,17 @@ const RefundPolicy = () => {
               </ul>
             </section>
 
-            {/* Marketplace Transactions - Coming Soon */}
+            {/* Direct Collaboration */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">3. Marketplace Bookings (Coming Soon)</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">3. Creator Collaborations</h2>
               <p className="text-muted-foreground mb-4">
-                Our integrated booking and payment system with escrow protection is currently in development. 
-                Until this feature launches, brands and creators should arrange payments directly outside the platform.
+                CollabHunts is a discovery and connection platform. All transactions and payments between brands and creators 
+                are arranged directly between parties outside of our platform.
               </p>
               <p className="text-muted-foreground mb-4">
                 <strong>Note:</strong> CollabHunts is not responsible for any transactions, payments, or disputes 
-                that occur outside of our platform. We recommend using secure payment methods and maintaining clear 
-                communication records when working directly with creators.
+                that occur between users. We recommend using secure payment methods and maintaining clear 
+                communication records when collaborating with creators.
               </p>
             </section>
 
@@ -105,15 +105,15 @@ const RefundPolicy = () => {
                 <li>We will respond within 2 business days</li>
               </ol>
 
-              <h3 className="text-xl font-heading font-semibold mb-3">5.2 Booking/Transaction Refunds</h3>
+              <h3 className="text-xl font-heading font-semibold mb-3">5.2 Creator Collaboration Issues</h3>
               <p className="text-muted-foreground mb-4">
-                Booking refunds are handled through the Platform's dispute system:
+                Since all transactions between brands and creators occur directly between parties outside our platform, 
+                CollabHunts cannot process refunds for these transactions. If you encounter issues with a collaboration:
               </p>
               <ol className="list-decimal pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Go to your Brand Dashboard → Bookings</li>
-                <li>Find the relevant booking and click "Open Dispute"</li>
-                <li>Provide a detailed description and any supporting evidence</li>
-                <li>Follow the dispute resolution timeline</li>
+                <li>Contact the other party directly through our messaging system</li>
+                <li>If the issue persists, email <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a> to report the user</li>
+                <li>We may investigate and take action on user accounts violating our terms</li>
               </ol>
             </section>
 

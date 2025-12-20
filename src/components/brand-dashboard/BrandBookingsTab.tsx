@@ -20,7 +20,7 @@ const BrandBookingsTab = () => {
           </div>
           <h3 className="text-2xl font-heading font-bold mb-2">Booking System Coming Soon</h3>
           <p className="text-muted-foreground max-w-md mb-6">
-            We're building a seamless booking and payment system with escrow protection. For now, connect with creators directly through messages to negotiate and arrange collaborations offline.
+            We're building a seamless booking system. For now, connect with creators directly through messages to discuss your project and arrange collaborations.
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Button 

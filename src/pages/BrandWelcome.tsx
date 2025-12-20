@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, CreditCard, Package, ArrowRight, Sparkles } from "lucide-react";
+import { Search, MessageSquare, Package, ArrowRight, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 interface Creator {
@@ -72,9 +72,9 @@ const BrandWelcome = () => {
       description: "Browse creators by category, platform, or budget",
     },
     {
-      icon: CreditCard,
-      title: "Book & Pay",
-      description: "Secure payment with milestone protection",
+      icon: MessageSquare,
+      title: "Connect & Collaborate",
+      description: "Message creators to discuss and arrange terms directly",
     },
     {
       icon: Package,

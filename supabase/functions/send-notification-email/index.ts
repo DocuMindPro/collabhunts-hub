@@ -188,11 +188,11 @@ function getEmailContent(type: EmailType, data: Record<string, any>, toName?: st
             Your booking with <strong>${data.brand_name}</strong> has been confirmed!
           </p>
           <div style="background: #F0FFF4; border-left: 4px solid #22C55E; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
-            <p style="margin: 0 0 10px 0; color: #2F2F2F;"><strong>💰 Payment:</strong> $${(data.amount_cents / 100).toFixed(2)} (held in escrow)</p>
+            <p style="margin: 0 0 10px 0; color: #2F2F2F;"><strong>💰 Amount:</strong> $${(data.amount_cents / 100).toFixed(2)}</p>
             <p style="margin: 0; color: #2F2F2F;"><strong>📅 Deadline:</strong> ${data.delivery_deadline || 'As agreed'}</p>
           </div>
           <p style="color: #666; line-height: 1.6;">
-            Start working on the deliverables and submit them before the deadline. Payment will be released once the brand approves your work.
+            Start working on the deliverables and submit them before the deadline. Coordinate with the brand on payment terms directly.
           </p>
           <div style="text-align: center;">
             ${getCtaButton('View Booking Details', `${baseUrl}/creator-dashboard?tab=bookings`)}

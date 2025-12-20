@@ -89,8 +89,8 @@ export const DisputeDialog = ({
             Open a Dispute
           </DialogTitle>
           <DialogDescription>
-            File a dispute regarding your booking with {otherPartyName}. 
-            Payment of ${(totalPrice / 100).toFixed(2)} will be held until resolution.
+            File a dispute regarding your collaboration with {otherPartyName}. 
+            Our team will review and help resolve the issue.
           </DialogDescription>
         </DialogHeader>
 
