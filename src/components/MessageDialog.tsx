@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import TypingIndicator from "@/components/chat/TypingIndicator";
 import MessageReadReceipt from "@/components/chat/MessageReadReceipt";
+import PackageInquiryMessage, { isPackageInquiry } from "@/components/chat/PackageInquiryMessage";
 
 interface Message {
   id: string;
@@ -38,7 +39,24 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
   const [loading, setLoading] = useState(true);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const { isOtherUserTyping, setTyping } = useTypingIndicator(conversationId, userId);
+
+  const handleTypingChange = (value: string) => {
+    setNewMessage(value);
+    
+    if (typingDebounceRef.current) {
+      clearTimeout(typingDebounceRef.current);
+    }
+    
+    if (value.length > 0) {
+      typingDebounceRef.current = setTimeout(() => {
+        setTyping(true);
+      }, 300);
+    } else {
+      setTyping(false);
+    }
+  };
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -186,22 +204,27 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
                   ) : (
                     messages.map((msg) => {
                       const isOwn = msg.sender_id === userId;
+                      const isPackageInquiryMsg = isPackageInquiry(msg.content);
                       return (
                         <div
                           key={msg.id}
                           className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                         >
                           <div
-                            className={`max-w-[70%] px-4 py-2 rounded-2xl ${
+                            className={`max-w-[70%] ${!isPackageInquiryMsg ? 'px-4 py-2 rounded-2xl' : ''} ${
                               isOwn
-                                ? "bg-primary text-primary-foreground rounded-br-md"
-                                : "bg-muted rounded-bl-md"
+                                ? isPackageInquiryMsg ? '' : "bg-primary text-primary-foreground rounded-br-md"
+                                : isPackageInquiryMsg ? '' : "bg-muted rounded-bl-md"
                             }`}
                           >
-                            <p className="break-words text-sm">{msg.content}</p>
+                            {isPackageInquiryMsg ? (
+                              <PackageInquiryMessage content={msg.content} isOwn={isOwn} />
+                            ) : (
+                              <p className="break-words text-sm">{msg.content}</p>
+                            )}
                             <p className={`text-[10px] mt-1 flex items-center gap-1 ${
                               isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                            }`}>
+                            } ${isPackageInquiryMsg ? 'px-3 pb-1' : ''}`}>
                               {format(new Date(msg.created_at), "HH:mm")}
                               <MessageReadReceipt isOwn={isOwn} isRead={msg.is_read} />
                             </p>
@@ -218,11 +241,13 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
               <div className="flex gap-2 pt-4 border-t">
                 <Input
                   value={newMessage}
-                  onChange={(e) => {
-                    setNewMessage(e.target.value);
-                    setTyping(e.target.value.length > 0);
+                  onChange={(e) => handleTypingChange(e.target.value)}
+                  onBlur={() => {
+                    if (typingDebounceRef.current) {
+                      clearTimeout(typingDebounceRef.current);
+                    }
+                    setTyping(false);
                   }}
-                  onBlur={() => setTyping(false)}
                   placeholder="Type a message..."
                   onKeyPress={handleKeyPress}
                   className="flex-1"
