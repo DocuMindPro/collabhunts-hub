@@ -127,7 +127,7 @@ const Brand = () => {
     { icon: DollarSign, title: "No Upfront Cost", description: "Browse creators for free" },
     { icon: CheckCircle, title: "Vetted Creators", description: "All creators are verified" },
     { icon: MessageSquare, title: "Instant Chat", description: "Message creators directly" },
-    { icon: Shield, title: "Secure Payments", description: "Escrow protection on all orders" },
+    { icon: Shield, title: "Safe & Secure", description: "Verified creators you can trust" },
   ];
 
   const campaignFeatures = [
@@ -182,7 +182,7 @@ const Brand = () => {
       price: "$39",
       period: "/month",
       description: "Perfect for getting started",
-      features: ["Chat with creators", "10GB content storage", "15% marketplace fee"],
+      features: ["Chat with creators", "10GB content storage", "Browse all creators"],
       highlight: false,
     },
     {
@@ -219,7 +219,7 @@ const Brand = () => {
       rating: 5,
     },
     {
-      quote: "Secure payments and the dispute system gave us confidence to work with new creators without worry.",
+      quote: "The Creator CRM and direct messaging made managing our influencer relationships so much easier.",
       author: "Emma L.",
       role: "Social Media Manager",
       company: "Beauty Company",
@@ -229,28 +229,28 @@ const Brand = () => {
 
   const faqs = [
     {
-      question: "How do payments work?",
-      answer: "We use an escrow system. Your payment is held securely until you approve the delivered content. If there's an issue, you can request revisions or open a dispute."
+      question: "How do I work with creators?",
+      answer: "Browse our marketplace to find creators that match your brand. Message them directly to discuss your project, negotiate terms, and arrange payment offline. We're working on an integrated booking system - coming soon!"
     },
     {
       question: "How are creators vetted?",
       answer: "All creators go through a verification process before they can list their services. We check their social media accounts, content quality, and track record."
     },
     {
-      question: "What if I'm not satisfied with the content?",
-      answer: "You can request up to 2 revisions per booking. If issues persist, you can open a dispute and our team will help mediate a resolution."
+      question: "What can I do with a subscription?",
+      answer: "Subscriptions unlock features like messaging creators, posting campaigns, using the Creator CRM, and accessing the Content Library. Choose the plan that fits your needs."
     },
     {
-      question: "How long do creators have to deliver?",
-      answer: "Delivery times vary by creator and are shown on each service listing. Typical turnaround is 3-7 days for most content types."
+      question: "How do campaigns work?",
+      answer: "Post a campaign with your requirements and budget. Qualified creators will apply to work with you. Review applications and choose the best fit for your brand."
     },
     {
-      question: "Can I request revisions?",
-      answer: "Yes! Each booking includes up to 2 revision requests to ensure you get exactly what you need."
+      question: "Can I message creators for free?",
+      answer: "Basic subscribers can message creators. Upgrade to Pro for advanced features like CRM, campaigns, and verified badge eligibility."
     },
     {
       question: "How does the Content Library work?",
-      answer: "The Content Library lets you store all delivered content in one place, organized by folders. Track usage rights, set expiration alerts, and download content anytime."
+      answer: "The Content Library lets you store all your creator content in one place, organized by folders. Track usage rights, set expiration alerts, and download content anytime."
     },
   ];
 

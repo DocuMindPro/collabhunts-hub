@@ -76,69 +76,17 @@ const RefundPolicy = () => {
               </ul>
             </section>
 
-            {/* Marketplace Transaction Refunds */}
+            {/* Marketplace Transactions - Coming Soon */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">3. Marketplace Transactions (Bookings)</h2>
-              
-              <h3 className="text-xl font-heading font-semibold mb-3">3.1 Escrow Payment System</h3>
+              <h2 className="text-2xl font-heading font-bold mb-4">3. Marketplace Bookings (Coming Soon)</h2>
               <p className="text-muted-foreground mb-4">
-                When you book a Creator's services, your payment is held in escrow until the work is delivered and approved. 
-                This protects both Brands and Creators throughout the collaboration process.
+                Our integrated booking and payment system with escrow protection is currently in development. 
+                Until this feature launches, brands and creators should arrange payments directly outside the platform.
               </p>
-
-              <h3 className="text-xl font-heading font-semibold mb-3">3.2 Refund Scenarios for Bookings</h3>
-              
-              <div className="bg-muted/50 rounded-lg p-4 border border-border mb-4">
-                <h4 className="font-semibold mb-2">Full Refund (100%)</h4>
-                <ul className="list-disc pl-6 text-muted-foreground space-y-1">
-                  <li>Creator cancels the booking before starting work</li>
-                  <li>Creator fails to deliver by the agreed deadline (no deliverables submitted)</li>
-                  <li>Booking is declined by the Creator</li>
-                  <li>Creator's account is terminated for policy violations before delivery</li>
-                </ul>
-              </div>
-
-              <div className="bg-muted/50 rounded-lg p-4 border border-border mb-4">
-                <h4 className="font-semibold mb-2">Partial Refund (Determined by Dispute Resolution)</h4>
-                <ul className="list-disc pl-6 text-muted-foreground space-y-1">
-                  <li>Deliverables do not match the agreed scope or service description</li>
-                  <li>Quality disputes after delivery has been submitted</li>
-                  <li>Partial completion of the agreed work</li>
-                </ul>
-              </div>
-
-              <div className="bg-muted/50 rounded-lg p-4 border border-border mb-4">
-                <h4 className="font-semibold mb-2">No Refund</h4>
-                <ul className="list-disc pl-6 text-muted-foreground space-y-1">
-                  <li>Deliverables approved by Brand (payment released to Creator)</li>
-                  <li>72-hour auto-release triggered (Brand did not respond within 72 hours)</li>
-                  <li>Dispute resolved in favor of Creator</li>
-                  <li>Brand cancels after Creator has started work (unless Creator agrees)</li>
-                </ul>
-              </div>
-
-              <h3 className="text-xl font-heading font-semibold mb-3">3.3 Platform Fees</h3>
               <p className="text-muted-foreground mb-4">
-                <strong>Platform marketplace fees (15-20% depending on subscription tier) are non-refundable once work has been delivered.</strong> 
-                In cases where a full refund is issued before delivery, platform fees are also refunded.
-              </p>
-            </section>
-
-            {/* Dispute Process */}
-            <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">4. Dispute Resolution Process</h2>
-              <p className="text-muted-foreground mb-4">
-                If you are dissatisfied with delivered work, you must follow our dispute resolution process:
-              </p>
-              <ol className="list-decimal pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Open a Dispute:</strong> Within 72 hours of delivery, open a dispute through your Brand Dashboard explaining the issue</li>
-                <li><strong>Creator Response:</strong> The Creator has 3 days to respond to the dispute</li>
-                <li><strong>Admin Review:</strong> If not resolved between parties, our admin team reviews the case</li>
-                <li><strong>Final Decision:</strong> Admin issues a binding decision within 7 days, which may include full refund, partial refund, or release of payment to Creator</li>
-              </ol>
-              <p className="text-muted-foreground mb-4 bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
-                <strong>IMPORTANT:</strong> If you do not open a dispute or request revisions within 72 hours of delivery, 
-                payment is automatically released to the Creator and you forfeit your right to a refund.
+                <strong>Note:</strong> CollabHunts is not responsible for any transactions, payments, or disputes 
+                that occur outside of our platform. We recommend using secure payment methods and maintaining clear 
+                communication records when working directly with creators.
               </p>
             </section>
 

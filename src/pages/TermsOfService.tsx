@@ -146,24 +146,15 @@ const TermsOfService = () => {
               </p>
             </section>
 
-            {/* Section 6 - Escrow & Auto-Release */}
+            {/* Section 6 - Booking System (Coming Soon) */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">6. Escrow, Deliverables & 72-Hour Auto-Release</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">6. Marketplace Bookings (Coming Soon)</h2>
               <p className="text-muted-foreground mb-4">
-                <strong>Payment Escrow:</strong> When a Brand books a Creator's services, payment is collected upfront and held in escrow until the work is delivered and approved. 
-                This protects both parties during the transaction.
+                We are currently developing a secure booking and payment system with escrow protection. This feature is not yet available.
               </p>
               <p className="text-muted-foreground mb-4">
-                <strong>72-Hour Auto-Release Policy:</strong> After a Creator submits deliverables, Brands have <strong>72 hours (3 days)</strong> to:
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Approve the deliverables (releasing payment to Creator)</li>
-                <li>Request revisions (reasonable revision requests only, up to 2 revisions)</li>
-                <li>Open a dispute (if there are legitimate concerns)</li>
-              </ul>
-              <p className="text-muted-foreground mb-4 bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
-                <strong>IF A BRAND TAKES NO ACTION WITHIN 72 HOURS OF DELIVERY, PAYMENT IS AUTOMATICALLY RELEASED TO THE CREATOR.</strong> 
-                This constitutes deemed acceptance of the deliverables. Reminder notifications are sent at 48 hours and 24 hours before auto-release.
+                Until the booking system launches, brands and creators should communicate directly through our messaging system to discuss projects 
+                and arrange payment terms offline. CollabHunts is not responsible for any transactions conducted outside the platform.
               </p>
             </section>
 
@@ -188,17 +179,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">8. Dispute Resolution</h2>
               <p className="text-muted-foreground mb-4">
-                <strong>Platform Dispute Process:</strong> Disputes between Buyers and Sellers regarding bookings are handled through our internal dispute resolution process:
-              </p>
-              <ol className="list-decimal pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Either party may open a dispute within 72 hours of delivery</li>
-                <li>The other party has 3 days to respond</li>
-                <li>If unresolved, the dispute escalates to CollabHunts admin review</li>
-                <li>Admin decision is issued within 7 days</li>
-                <li><strong>Admin decisions are final and binding</strong> with respect to fund distribution</li>
-              </ol>
-              <p className="text-muted-foreground mb-4">
-                <strong>BINDING ARBITRATION:</strong> Any disputes between you and CollabHunts (not between Buyers and Sellers) shall be resolved through binding arbitration 
+                <strong>BINDING ARBITRATION:</strong> Any disputes between you and CollabHunts shall be resolved through binding arbitration 
                 in accordance with the American Arbitration Association rules. You agree to waive any right to a jury trial.
               </p>
               <p className="text-muted-foreground mb-4 bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">

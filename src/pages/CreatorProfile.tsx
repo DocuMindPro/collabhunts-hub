@@ -746,12 +746,18 @@ const CreatorProfile = () => {
                           </div>
                         </div>
                         {!isOwnProfile && (
-                          <Button 
-                            className="w-full gradient-hero hover:opacity-90"
-                            onClick={() => handleBookService(service)}
-                          >
-                            Book Now
-                          </Button>
+                          <div className="space-y-2">
+                            <Button 
+                              className="w-full"
+                              variant="outline"
+                              disabled
+                            >
+                              Booking Coming Soon
+                            </Button>
+                            <p className="text-xs text-center text-muted-foreground">
+                              Message creator to negotiate directly
+                            </p>
+                          </div>
                         )}
                       </div>
                     ))}
