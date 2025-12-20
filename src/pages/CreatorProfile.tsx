@@ -19,6 +19,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { SUBSCRIPTION_PLANS, type PlanType } from "@/lib/stripe-mock";
 import UpgradePrompt from "@/components/UpgradePrompt";
 import DimmedPrice from "@/components/DimmedPrice";
+import UpgradeModal from "@/components/UpgradeModal";
 interface CreatorData {
   id: string;
   user_id: string;
@@ -85,6 +86,7 @@ const CreatorProfile = () => {
   const [checkingSubscription, setCheckingSubscription] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [canViewPrice, setCanViewPrice] = useState(false);
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   
   const { isSaved, loading: saveLoading, toggleSave, hasBrandProfile, canUseCRM } = useSaveCreator(id);
 
@@ -794,6 +796,7 @@ const CreatorProfile = () => {
                               price={service.price_cents} 
                               canViewPrice={canViewPrice} 
                               size="lg"
+                              onClick={() => setIsPricingModalOpen(true)}
                             />
                             <div className="text-xs text-muted-foreground">
                               {service.delivery_days} day{service.delivery_days !== 1 ? "s" : ""} delivery
@@ -843,6 +846,7 @@ const CreatorProfile = () => {
                       price={Math.min(...creator.services.map(s => s.price_cents))} 
                       canViewPrice={canViewPrice} 
                       size="lg"
+                      onClick={() => setIsPricingModalOpen(true)}
                     />
                   </div>
                 </CardContent>
@@ -908,6 +912,12 @@ const CreatorProfile = () => {
         media={creator.portfolio_media}
         creatorName={creator.display_name}
         initialIndex={galleryStartIndex}
+      />
+
+      <UpgradeModal
+        isOpen={isPricingModalOpen}
+        onClose={() => setIsPricingModalOpen(false)}
+        feature="pricing"
       />
     </div>
   );

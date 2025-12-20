@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  feature: "chat" | "campaigns" | "crm" | "filters" | "badge" | "content_library" | "post_booking" | "mass_message" | "unlimited_campaigns" | "more_storage";
+  feature: "chat" | "campaigns" | "crm" | "filters" | "badge" | "content_library" | "post_booking" | "mass_message" | "unlimited_campaigns" | "more_storage" | "pricing";
   creatorName?: string;
   currentPlan?: string;
 }
@@ -139,6 +139,19 @@ const featureConfig = {
       "Unlimited campaigns",
       "100 mass messages/day",
       "Priority support"
+    ]
+  },
+  pricing: {
+    title: "Unlock Creator Pricing",
+    description: "See exactly what creators charge before reaching out.",
+    icon: Lock,
+    plan: "Basic",
+    price: 39,
+    benefits: [
+      "View all creator pricing",
+      "Unlimited messaging with creators",
+      "Negotiate rates before booking",
+      "10 GB content library storage"
     ]
   }
 };

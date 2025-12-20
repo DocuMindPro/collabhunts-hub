@@ -25,6 +25,7 @@ import UpgradeBanner from "@/components/UpgradeBanner";
 import { userHasAdvancedFilters, getBrandSubscription } from "@/lib/subscription-utils";
 import AdPlacement from "@/components/AdPlacement";
 import DimmedPrice from "@/components/DimmedPrice";
+import UpgradeModal from "@/components/UpgradeModal";
 import { canViewCreatorPricing, type PlanType } from "@/lib/stripe-mock";
 
 interface CreatorWithDetails {
@@ -78,6 +79,7 @@ const Influencers = () => {
   const [currentPlan, setCurrentPlan] = useState<PlanType>("none");
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const navigate = useNavigate();
   const [selectedLanguage, setSelectedLanguage] = useState("all");
   const [followerPlatform, setFollowerPlatform] = useState("all");
@@ -684,6 +686,7 @@ const Influencers = () => {
                                   price={lowestPrice} 
                                   canViewPrice={canViewPrice(creator)} 
                                   size="md"
+                                  onClick={() => setIsPricingModalOpen(true)}
                                 />
                                 <span className="text-xs text-muted-foreground">+</span>
                               </div>
@@ -765,9 +768,12 @@ const Influencers = () => {
                           <div>
                             {lowestPrice > 0 ? (
                               <div className="flex items-baseline gap-1">
-                                <span className="text-xl font-heading font-bold">
-                                  ${(lowestPrice / 100).toFixed(0)}
-                                </span>
+                                <DimmedPrice 
+                                  price={lowestPrice} 
+                                  canViewPrice={canViewPrice(creator)} 
+                                  size="md"
+                                  onClick={() => setIsPricingModalOpen(true)}
+                                />
                                 <span className="text-xs text-muted-foreground">+</span>
                               </div>
                             ) : (
@@ -848,9 +854,12 @@ const Influencers = () => {
                           <div>
                             {lowestPrice > 0 ? (
                               <div className="flex items-baseline gap-1">
-                                <span className="text-xl font-heading font-bold">
-                                  ${(lowestPrice / 100).toFixed(0)}
-                                </span>
+                                <DimmedPrice 
+                                  price={lowestPrice} 
+                                  canViewPrice={canViewPrice(creator)} 
+                                  size="md"
+                                  onClick={() => setIsPricingModalOpen(true)}
+                                />
                                 <span className="text-xs text-muted-foreground">+</span>
                               </div>
                             ) : (
@@ -878,6 +887,12 @@ const Influencers = () => {
       </main>
 
       <Footer />
+
+      <UpgradeModal
+        isOpen={isPricingModalOpen}
+        onClose={() => setIsPricingModalOpen(false)}
+        feature="pricing"
+      />
     </div>
   );
 };
