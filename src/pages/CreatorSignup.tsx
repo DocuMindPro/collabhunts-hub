@@ -98,6 +98,7 @@ const CreatorSignup = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [autoReleaseAccepted, setAutoReleaseAccepted] = useState(false);
   const [metricsAccurate, setMetricsAccurate] = useState(false);
+  const [showPricingToPublic, setShowPricingToPublic] = useState(true);
 
   const categories = [
     "Lifestyle", "Fashion", "Beauty", "Travel", "Health & Fitness",
@@ -587,7 +588,8 @@ const CreatorSignup = () => {
           phone_number: phoneNumber,
           phone_verified: phoneVerified,
           terms_accepted_at: new Date().toISOString(),
-          terms_version: "1.0"
+          terms_version: "1.0",
+          show_pricing_to_public: showPricingToPublic
         })
         .select()
         .single();
@@ -1556,6 +1558,21 @@ const CreatorSignup = () => {
                         />
                         <label htmlFor="metrics-accurate" className="text-sm leading-tight cursor-pointer">
                           I confirm my social media follower counts and metrics are accurate
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Pricing Visibility Setting */}
+                    <div className="space-y-3 bg-muted/50 rounded-lg p-4">
+                      <h3 className="font-semibold text-sm">Pricing Visibility</h3>
+                      <div className="flex items-start gap-3">
+                        <Checkbox 
+                          id="show-pricing-public" 
+                          checked={showPricingToPublic} 
+                          onCheckedChange={(checked) => setShowPricingToPublic(checked === true)}
+                        />
+                        <label htmlFor="show-pricing-public" className="text-sm leading-tight cursor-pointer">
+                          Show my package pricing to all visitors (when unchecked, only brands with an active subscription can see your prices)
                         </label>
                       </div>
                     </div>

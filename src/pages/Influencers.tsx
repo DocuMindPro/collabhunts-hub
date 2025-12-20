@@ -24,6 +24,8 @@ import UpgradePrompt from "@/components/UpgradePrompt";
 import UpgradeBanner from "@/components/UpgradeBanner";
 import { userHasAdvancedFilters, getBrandSubscription } from "@/lib/subscription-utils";
 import AdPlacement from "@/components/AdPlacement";
+import DimmedPrice from "@/components/DimmedPrice";
+import { canViewCreatorPricing, type PlanType } from "@/lib/stripe-mock";
 
 interface CreatorWithDetails {
   id: string;
@@ -36,6 +38,7 @@ interface CreatorWithDetails {
   ethnicity: string | null;
   primary_language: string | null;
   secondary_languages: string[] | null;
+  show_pricing_to_public: boolean | null;
   social_accounts: Array<{
     platform: string;
     username: string;
@@ -72,8 +75,9 @@ const Influencers = () => {
   const [ageRange, setAgeRange] = useState([18, 65]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [selectedEthnicities, setSelectedEthnicities] = useState<string[]>([]);
-  const [currentPlan, setCurrentPlan] = useState<string>("none");
+  const [currentPlan, setCurrentPlan] = useState<PlanType>("none");
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
   const [selectedLanguage, setSelectedLanguage] = useState("all");
   const [followerPlatform, setFollowerPlatform] = useState("all");
@@ -102,6 +106,7 @@ const Influencers = () => {
     setCheckingSubscription(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      setIsLoggedIn(!!user);
       if (user) {
         const canUseFilters = await userHasAdvancedFilters(user.id);
         setHasAdvancedFilters(canUseFilters);
@@ -117,11 +122,12 @@ const Influencers = () => {
         
         if (brandProfile) {
           const subscription = await getBrandSubscription(user.id);
-          setCurrentPlan(subscription?.plan_type || "none");
+          setCurrentPlan((subscription?.plan_type || "none") as PlanType);
         }
       } else {
         setHasAdvancedFilters(false);
         setHasBrandProfile(false);
+        setCurrentPlan("none");
       }
     } catch (error) {
       console.error("Error checking subscription:", error);
@@ -129,6 +135,14 @@ const Influencers = () => {
     } finally {
       setCheckingSubscription(false);
     }
+  };
+
+  // Check if user can view a creator's pricing
+  const canViewPrice = (creator: CreatorWithDetails): boolean => {
+    // If creator allows public pricing, everyone can see
+    if (creator.show_pricing_to_public !== false) return true;
+    // Otherwise, only subscribed users can see
+    return canViewCreatorPricing(currentPlan);
   };
 
   // Pre-validate images when creators change
@@ -180,6 +194,7 @@ const Influencers = () => {
           ethnicity,
           primary_language,
           secondary_languages,
+          show_pricing_to_public,
           creator_social_accounts(platform, username, follower_count),
           creator_services(service_type, price_cents)
         `)
@@ -199,6 +214,7 @@ const Influencers = () => {
         ethnicity: creator.ethnicity,
         primary_language: creator.primary_language,
         secondary_languages: creator.secondary_languages,
+        show_pricing_to_public: creator.show_pricing_to_public,
         social_accounts: creator.creator_social_accounts || [],
         services: creator.creator_services || []
       }));
@@ -664,9 +680,11 @@ const Influencers = () => {
                           <div>
                             {lowestPrice > 0 ? (
                               <div className="flex items-baseline gap-1">
-                                <span className="text-xl font-heading font-bold">
-                                  ${(lowestPrice / 100).toFixed(0)}
-                                </span>
+                                <DimmedPrice 
+                                  price={lowestPrice} 
+                                  canViewPrice={canViewPrice(creator)} 
+                                  size="md"
+                                />
                                 <span className="text-xs text-muted-foreground">+</span>
                               </div>
                             ) : (
