@@ -39,12 +39,8 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
   const [loading, setLoading] = useState(true);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { isOtherUserTyping, setTyping } = useTypingIndicator(conversationId, userId);
-
-  // Simple typing handler - no async operations during keystrokes
-  const handleTypingChange = (value: string) => {
-    setNewMessage(value);
-  };
+  // Typing indicator temporarily disabled to fix input focus issues
+  // const { isOtherUserTyping, setTyping } = useTypingIndicator(conversationId, userId);
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -135,7 +131,6 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
     // Optimistic update - show immediately
     setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
-    setTyping(false);
 
     try {
       const { error } = await supabase.from("messages").insert({
@@ -221,7 +216,7 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
                       );
                     })
                   )}
-                  {isOtherUserTyping && <TypingIndicator />}
+                  {/* Typing indicator temporarily disabled */}
                   <div ref={messagesEndRef} />
                 </div>
               </div>
@@ -229,9 +224,7 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
               <div className="flex gap-2 pt-4 border-t">
                 <Input
                   value={newMessage}
-                  onChange={(e) => handleTypingChange(e.target.value)}
-                  onFocus={() => setTyping(true)}
-                  onBlur={() => setTyping(false)}
+                  onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type a message..."
                   onKeyPress={handleKeyPress}
                   className="flex-1"

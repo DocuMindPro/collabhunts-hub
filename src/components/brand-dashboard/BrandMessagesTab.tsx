@@ -59,12 +59,8 @@ const BrandMessagesTab = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
-  const { isOtherUserTyping, setTyping } = useTypingIndicator(selectedConversation, userId);
-
-  // Simple typing handler - no async operations during keystrokes
-  const handleTypingChange = (value: string) => {
-    setNewMessage(value);
-  };
+  // Typing indicator temporarily disabled to fix input focus issues
+  // const { isOtherUserTyping, setTyping } = useTypingIndicator(selectedConversation, userId);
 
   // Auto-select conversation from URL param and handle package context
   useEffect(() => {
@@ -293,7 +289,6 @@ const BrandMessagesTab = () => {
 
     setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
-    setTyping(false);
 
     try {
       const { error } = await supabase.from("messages").insert({
@@ -541,7 +536,7 @@ const BrandMessagesTab = () => {
               </div>
             </div>
           ))}
-          {isOtherUserTyping && <TypingIndicator />}
+          {/* Typing indicator temporarily disabled */}
           <div ref={messagesEndRef} />
           </div>
         </div>
@@ -559,9 +554,7 @@ const BrandMessagesTab = () => {
           <div className="flex gap-2">
             <Input
               value={newMessage}
-              onChange={(e) => handleTypingChange(e.target.value)}
-              onFocus={() => setTyping(true)}
-              onBlur={() => setTyping(false)}
+              onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
               onKeyPress={(e) => e.key === "Enter" && sendMessage()}
               className="flex-1"
