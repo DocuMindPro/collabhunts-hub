@@ -91,7 +91,7 @@ const CreatorProfile = () => {
     setIsBookingDialogOpen(true);
   };
 
-  const handleContactCreator = async () => {
+  const handleContactCreator = async (service?: { service_type: string; price_cents: number; delivery_days: number }) => {
     try {
       // Check if user is logged in
       const { data: { user } } = await supabase.auth.getUser();
@@ -173,6 +173,18 @@ const CreatorProfile = () => {
         }
       }
 
+      // Build URL params for package context
+      let packageParams = "";
+      if (service) {
+        const packageData = encodeURIComponent(JSON.stringify({
+          service_type: service.service_type,
+          price_cents: service.price_cents,
+          delivery_days: service.delivery_days,
+          creator_name: creator?.display_name
+        }));
+        packageParams = `&package=${packageData}`;
+      }
+
       // Check if conversation already exists
       const { data: existingConversation } = await supabase
         .from("conversations")
@@ -183,7 +195,7 @@ const CreatorProfile = () => {
 
       if (existingConversation) {
         // Navigate to messages tab with conversation
-        navigate(`/brand-dashboard?tab=messages&conversation=${existingConversation.id}`);
+        navigate(`/brand-dashboard?tab=messages&conversation=${existingConversation.id}${packageParams}`);
         return;
       }
 
@@ -200,7 +212,7 @@ const CreatorProfile = () => {
       if (conversationError) throw conversationError;
 
       // Navigate to messages tab with new conversation
-      navigate(`/brand-dashboard?tab=messages&conversation=${newConversation.id}`);
+      navigate(`/brand-dashboard?tab=messages&conversation=${newConversation.id}${packageParams}`);
 
     } catch (error: any) {
       console.error("Error creating conversation:", error);
@@ -600,7 +612,7 @@ const CreatorProfile = () => {
                         <Button 
                           size="lg"
                           className="gradient-hero hover:opacity-90"
-                          onClick={handleContactCreator}
+                          onClick={() => handleContactCreator()}
                         >
                           <MessageCircle className="h-5 w-5 mr-2" />
                           Message Creator
@@ -746,18 +758,13 @@ const CreatorProfile = () => {
                           </div>
                         </div>
                         {!isOwnProfile && (
-                          <div className="space-y-2">
-                            <Button 
-                              className="w-full"
-                              variant="outline"
-                              disabled
-                            >
-                              Booking Coming Soon
-                            </Button>
-                            <p className="text-xs text-center text-muted-foreground">
-                              Message creator to negotiate directly
-                            </p>
-                          </div>
+                          <Button 
+                            className="w-full gradient-hero hover:opacity-90"
+                            onClick={() => handleContactCreator(service)}
+                          >
+                            <MessageCircle className="h-4 w-4 mr-2" />
+                            Inquire About Package
+                          </Button>
                         )}
                       </div>
                     ))}
@@ -808,7 +815,7 @@ const CreatorProfile = () => {
             <Button 
               size="lg"
               className="flex-1 gradient-hero hover:opacity-90 shadow-lg"
-              onClick={handleContactCreator}
+              onClick={() => handleContactCreator()}
             >
               <MessageCircle className="h-5 w-5 mr-2" />
               Message Creator
