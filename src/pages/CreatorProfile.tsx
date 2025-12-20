@@ -18,7 +18,7 @@ import MobilePortfolioCarousel from "@/components/MobilePortfolioCarousel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SUBSCRIPTION_PLANS, type PlanType } from "@/lib/stripe-mock";
 import UpgradePrompt from "@/components/UpgradePrompt";
-
+import DimmedPrice from "@/components/DimmedPrice";
 interface CreatorData {
   id: string;
   user_id: string;
@@ -32,6 +32,7 @@ interface CreatorData {
   location_state: string | null;
   location_country: string | null;
   categories: string[];
+  show_pricing_to_public: boolean;
   social_accounts: Array<{
     platform: string;
     username: string;
@@ -83,6 +84,7 @@ const CreatorProfile = () => {
   const [canContactCreators, setCanContactCreators] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [canViewPrice, setCanViewPrice] = useState(false);
   
   const { isSaved, loading: saveLoading, toggleSave, hasBrandProfile, canUseCRM } = useSaveCreator(id);
 
@@ -312,13 +314,51 @@ const CreatorProfile = () => {
 
       if (profileError) throw profileError;
 
-      // Check if this is the creator's own profile
+      // Check if this is the creator's own profile and determine price visibility
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && profileData.user_id === user.id) {
-        setIsOwnProfile(true);
-      } else {
-        setIsOwnProfile(false);
+      const isOwn = user && profileData.user_id === user.id;
+      setIsOwnProfile(!!isOwn);
+      
+      // Determine if user can view price
+      // Price is visible if: creator allows public pricing, OR user is the creator, OR user has active subscription
+      let priceVisible = profileData.show_pricing_to_public !== false; // Default true if null
+      
+      if (!priceVisible && user && !isOwn) {
+        // Check if user has an active brand subscription
+        const { data: brandProfile } = await supabase
+          .from("brand_profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+          
+        if (brandProfile) {
+          const { data: subscription } = await supabase
+            .from("brand_subscriptions")
+            .select("plan_type")
+            .eq("brand_profile_id", brandProfile.id)
+            .eq("status", "active")
+            .maybeSingle();
+            
+          if (subscription) {
+            priceVisible = true;
+          }
+        }
+        
+        // Also check if admin
+        const { data: adminCheck } = await supabase.rpc('has_role', {
+          _user_id: user.id,
+          _role: 'admin'
+        });
+        if (adminCheck) {
+          priceVisible = true;
+        }
       }
+      
+      if (isOwn) {
+        priceVisible = true; // Creators can always see their own prices
+      }
+      
+      setCanViewPrice(priceVisible);
 
       const { data: socialData } = await supabase
         .from("creator_social_accounts")
@@ -367,6 +407,7 @@ const CreatorProfile = () => {
         location_state: profileData.location_state,
         location_country: profileData.location_country,
         categories: profileData.categories,
+        show_pricing_to_public: profileData.show_pricing_to_public !== false,
         social_accounts: socialData || [],
         services: servicesData || [],
         reviews,
@@ -749,9 +790,11 @@ const CreatorProfile = () => {
                             )}
                           </div>
                           <div className="text-right">
-                            <div className="text-2xl font-heading font-bold">
-                              ${(service.price_cents / 100).toFixed(2)}
-                            </div>
+                            <DimmedPrice 
+                              price={service.price_cents} 
+                              canViewPrice={canViewPrice} 
+                              size="lg"
+                            />
                             <div className="text-xs text-muted-foreground">
                               {service.delivery_days} day{service.delivery_days !== 1 ? "s" : ""} delivery
                             </div>
@@ -796,9 +839,11 @@ const CreatorProfile = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Starting Price</p>
-                    <p className="text-2xl font-heading font-bold">
-                      ${Math.min(...creator.services.map(s => s.price_cents / 100)).toFixed(0)}
-                    </p>
+                    <DimmedPrice 
+                      price={Math.min(...creator.services.map(s => s.price_cents))} 
+                      canViewPrice={canViewPrice} 
+                      size="lg"
+                    />
                   </div>
                 </CardContent>
               </Card>
