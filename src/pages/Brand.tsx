@@ -296,12 +296,12 @@ const Brand = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent" />
               </div>
               <div className="absolute -bottom-6 -left-6 bg-card rounded-xl p-4 shadow-lg border border-border animate-float">
-                <p className="text-2xl font-bold text-primary">10K+</p>
-                <p className="text-sm text-muted-foreground">Active Creators</p>
+                <p className="text-2xl font-bold text-primary">100%</p>
+                <p className="text-sm text-muted-foreground">Verified Creators</p>
               </div>
               <div className="absolute -top-4 -right-4 bg-card rounded-xl p-4 shadow-lg border border-border">
-                <p className="text-2xl font-bold text-accent">72hr</p>
-                <p className="text-sm text-muted-foreground">Avg. Delivery</p>
+                <p className="text-2xl font-bold text-accent">24/7</p>
+                <p className="text-sm text-muted-foreground">Platform Access</p>
               </div>
             </div>
           </div>
