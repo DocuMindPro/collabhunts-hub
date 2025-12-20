@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, X, Camera, Images, ImagePlus, Phone, CheckCircle, Shield } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import SocialAccountsSection from "./SocialAccountsSection";
 import PortfolioUploadSection from "./PortfolioUploadSection";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
@@ -55,6 +56,7 @@ const ProfileTab = () => {
     phone_number: "",
     phone_verified: false,
     allow_mass_messages: true,
+    show_pricing_to_public: true,
   });
 
   useEffect(() => {
@@ -95,6 +97,7 @@ const ProfileTab = () => {
           phone_number: data.phone_number || "",
           phone_verified: data.phone_verified || false,
           allow_mass_messages: data.allow_mass_messages ?? true,
+          show_pricing_to_public: data.show_pricing_to_public ?? true,
         });
       }
     } catch (error) {
@@ -378,6 +381,7 @@ const ProfileTab = () => {
           primary_language: profile.primary_language || "English",
           secondary_languages: profile.secondary_languages.length > 0 ? profile.secondary_languages : null,
           allow_mass_messages: profile.allow_mass_messages,
+          show_pricing_to_public: profile.show_pricing_to_public,
         })
         .eq("id", profile.id);
 
@@ -886,6 +890,22 @@ const ProfileTab = () => {
               id="allow-mass-messages"
               checked={profile.allow_mass_messages}
               onCheckedChange={(checked) => setProfile({ ...profile, allow_mass_messages: checked })}
+            />
+          </div>
+          
+          <Separator className="my-4" />
+          
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="show-pricing-to-public" className="text-base">Show Pricing to All Visitors</Label>
+              <p className="text-sm text-muted-foreground">
+                When disabled, only brands with an active subscription can see your package pricing. Non-subscribers will see dimmed prices.
+              </p>
+            </div>
+            <Switch
+              id="show-pricing-to-public"
+              checked={profile.show_pricing_to_public}
+              onCheckedChange={(checked) => setProfile({ ...profile, show_pricing_to_public: checked })}
             />
           </div>
         </CardContent>

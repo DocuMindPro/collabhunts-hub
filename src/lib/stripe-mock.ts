@@ -17,11 +17,13 @@ export const SUBSCRIPTION_PLANS = {
     storageLimit: 0, // 0 bytes - no access
     canRequestVerifiedBadge: false,
     massMessageLimit: 0,
+    canViewCreatorPricing: false, // Cannot see creator pricing
     features: [
       'Search influencers on the marketplace',
     ],
     lockedFeatures: [
       'Chat & negotiate with creators',
+      'View all creator package pricing',
       'Post campaigns',
       'Advanced filters for age, language, and more',
       'Save creators & add notes (CRM)',
@@ -45,9 +47,11 @@ export const SUBSCRIPTION_PLANS = {
     storageLimit: 10 * 1024 * 1024 * 1024, // 10 GB
     canRequestVerifiedBadge: false,
     massMessageLimit: 0,
+    canViewCreatorPricing: true, // Can see all creator pricing
     features: [
       'Search influencers on the marketplace',
       'Chat & negotiate with creators',
+      'View all creator package pricing',
       'Content Library with 10 GB storage',
     ],
     lockedFeatures: [
@@ -73,6 +77,7 @@ export const SUBSCRIPTION_PLANS = {
     storageLimit: 10 * 1024 * 1024 * 1024, // 10 GB
     canRequestVerifiedBadge: true,
     massMessageLimit: 50, // per day
+    canViewCreatorPricing: true, // Can see all creator pricing
     features: [
       'Everything in Basic',
       'Post 1 campaign per month',
@@ -102,6 +107,7 @@ export const SUBSCRIPTION_PLANS = {
     storageLimit: 50 * 1024 * 1024 * 1024, // 50 GB
     canRequestVerifiedBadge: true,
     massMessageLimit: 100, // per day
+    canViewCreatorPricing: true, // Can see all creator pricing
     features: [
       'Everything in Pro',
       'Post unlimited campaigns',
@@ -113,6 +119,11 @@ export const SUBSCRIPTION_PLANS = {
     lockedFeatures: []
   }
 } as const;
+
+// Helper function to check if user can view creator pricing
+export const canViewCreatorPricing = (planType: PlanType): boolean => {
+  return SUBSCRIPTION_PLANS[planType].canViewCreatorPricing;
+};
 
 // Storage add-on configuration
 export const STORAGE_ADDON = {

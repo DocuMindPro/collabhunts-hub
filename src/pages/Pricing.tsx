@@ -95,6 +95,7 @@ const Pricing = () => {
       features: [
         { text: "Search influencers on the marketplace", included: true },
         { text: "Chat & negotiate with creators", included: true },
+        { text: "View all creator package pricing", included: true },
         { text: "Content Library with 10 GB storage", included: true },
         { text: "Post campaigns", included: false, locked: true },
         { text: "Advanced filters", included: false, locked: true },
