@@ -8,7 +8,7 @@ import Footer from "@/components/Footer";
 import heroImage from "@/assets/hero-creators-brand.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import RotatingText from "@/components/RotatingText";
-import FloatingCard from "@/components/FloatingCard";
+
 import AnimatedSection from "@/components/AnimatedSection";
 import BrandMarquee from "@/components/BrandMarquee";
 import FloatingShapes from "@/components/FloatingShapes";
@@ -195,17 +195,15 @@ const Index = () => {
                   className="rounded-2xl shadow-hover w-full"
                   fetchPriority="high"
                 />
-                <FloatingCard className="absolute -bottom-6 -right-6 bg-card p-6 rounded-xl shadow-card border border-border animate-pulse-glow">
-                  {(count: number) => (
-                    <div className="flex items-center gap-4">
-                      <Users className="h-8 w-8 text-primary" />
-                      <div>
-                        <p className="text-2xl font-bold font-heading">{count}K+</p>
-                        <p className="text-sm text-muted-foreground">Active Creators</p>
-                      </div>
+                <div className="absolute -bottom-6 -right-6 bg-card p-6 rounded-xl shadow-card border border-border animate-float">
+                  <div className="flex items-center gap-4">
+                    <Users className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-2xl font-bold font-heading">100%</p>
+                      <p className="text-sm text-muted-foreground">Verified Creators</p>
                     </div>
-                  )}
-                </FloatingCard>
+                  </div>
+                </div>
               </div>
             </AnimatedSection>
           </div>
