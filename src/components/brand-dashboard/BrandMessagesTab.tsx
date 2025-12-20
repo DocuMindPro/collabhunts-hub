@@ -435,8 +435,8 @@ const BrandMessagesTab = () => {
     </div>
   );
 
-  // Chat View Component
-  const ChatView = () => {
+  // Render Chat View content (not as a nested component to prevent re-mount on state changes)
+  const renderChatView = () => {
     if (!selectedConvo) return null;
     
     const creatorUserId = selectedConvo.creator_profiles.user_id;
@@ -445,7 +445,7 @@ const BrandMessagesTab = () => {
     const messageGroups = groupMessagesByDate(messages);
 
     return (
-      <div className="h-full flex flex-col">
+      <>
         {/* Chat Header */}
         <div className="p-4 border-b flex items-center gap-3 bg-card">
           {isMobile && (
@@ -549,30 +549,40 @@ const BrandMessagesTab = () => {
             onDismiss={handleDismissPackage}
           />
         )}
-
-        <div className="p-4 border-t bg-card">
-          <div className="flex gap-2">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type a message..."
-              onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-              className="flex-1"
-            />
-            <Button onClick={sendMessage} size="icon" disabled={!newMessage.trim()}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      </>
     );
   };
+
+  // Message input - kept separate to avoid re-renders causing focus loss
+  const renderMessageInput = () => (
+    <div className="p-4 border-t bg-card">
+      <div className="flex gap-2">
+        <Input
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Type a message..."
+          onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+          className="flex-1"
+        />
+        <Button onClick={sendMessage} size="icon" disabled={!newMessage.trim()}>
+          <Send className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
 
   // Mobile Layout
   if (isMobile) {
     return (
       <Card className="h-[calc(100vh-180px)] overflow-hidden">
-        {selectedConversation ? <ChatView /> : <ConversationList />}
+        {selectedConversation ? (
+          <div className="h-full flex flex-col">
+            {renderChatView()}
+            {renderMessageInput()}
+          </div>
+        ) : (
+          <ConversationList />
+        )}
       </Card>
     );
   }
@@ -585,7 +595,10 @@ const BrandMessagesTab = () => {
       </Card>
       <Card className="md:col-span-2 overflow-hidden">
         {selectedConversation ? (
-          <ChatView />
+          <div className="h-full flex flex-col">
+            {renderChatView()}
+            {renderMessageInput()}
+          </div>
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
