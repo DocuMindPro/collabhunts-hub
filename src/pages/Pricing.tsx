@@ -96,7 +96,6 @@ const Pricing = () => {
         { text: "Search influencers on the marketplace", included: true },
         { text: "Chat & negotiate with creators", included: true },
         { text: "Content Library with 10 GB storage", included: true },
-        { text: "15% marketplace fee on bookings", included: true },
         { text: "Post campaigns", included: false, locked: true },
         { text: "Advanced filters", included: false, locked: true },
         { text: "Save creators & add notes (CRM)", included: false, locked: true },
@@ -117,7 +116,6 @@ const Pricing = () => {
         { text: "Save creators & add private notes (CRM)", included: true },
         { text: "Mass campaign invites (50/day)", included: true },
         { text: "Verified Business Badge (upon approval)", included: true },
-        { text: "15% marketplace fee on bookings", included: true },
       ],
       popular: true,
     },
@@ -131,7 +129,6 @@ const Pricing = () => {
         { text: "Post unlimited campaigns", included: true },
         { text: "Content Library with 50 GB storage", included: true },
         { text: "Mass campaign invites (100/day)", included: true },
-        { text: "15% marketplace fee on bookings", included: true },
         { text: "Priority customer support (Coming Soon)", included: true },
         { text: "Dedicated account manager (Coming Soon)", included: true },
       ],
@@ -166,7 +163,7 @@ const Pricing = () => {
             )}
             {!isAuthenticated && (
               <p className="text-sm text-muted-foreground">
-                Not ready to commit? Sign up free to browse creators with 20% marketplace fee on bookings.
+                Not ready to commit? Sign up free and explore our creator marketplace.
               </p>
             )}
           </div>
@@ -281,13 +278,12 @@ const Pricing = () => {
               })}
             </div>
 
-            {/* Free tier note */}
             <div className="mt-12 text-center">
               <div className="inline-flex items-center gap-2 px-6 py-3 bg-muted rounded-full">
                 {isAuthenticated && hasBrandProfile && currentPlan === 'none' ? (
                   <>
                     <span className="text-sm text-muted-foreground">
-                      <strong>Subscribe now</strong> to reduce your marketplace fee from 20% to 15%.
+                      <strong>Subscribe now</strong> to unlock all platform features.
                     </span>
                     <Link to="/brand-dashboard?tab=subscription" className="text-sm text-primary font-medium hover:underline">
                       View plans →
@@ -296,7 +292,7 @@ const Pricing = () => {
                 ) : (
                   <>
                     <span className="text-sm text-muted-foreground">
-                      <strong>No subscription?</strong> You can still browse creators and book with a 20% marketplace fee.
+                      <strong>No subscription?</strong> You can still browse creators and explore the marketplace.
                     </span>
                     {!isAuthenticated && (
                       <Link to="/brand-signup" className="text-sm text-primary font-medium hover:underline">
