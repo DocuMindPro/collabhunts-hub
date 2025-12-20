@@ -1,8 +1,11 @@
-import { Instagram, Youtube, Facebook, Video, Package } from "lucide-react";
+import { Instagram, Youtube, Facebook, Video, Package, MessageCircle, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface PackageInquiryMessageProps {
   content: string;
   isOwn: boolean;
+  onReply?: (type: "quote" | "accept") => void;
+  showReplyActions?: boolean;
 }
 
 const PACKAGE_INQUIRY_PATTERN = /^Hi! I'm interested in your "([^"]+)" package \(\$([0-9.]+), (\d+) days? delivery\)\. I'd like to discuss the details before we proceed\.$/;
@@ -31,12 +34,13 @@ const getServiceIcon = (serviceType: string) => {
   return Package;
 };
 
-const PackageInquiryMessage = ({ content, isOwn }: PackageInquiryMessageProps) => {
+const PackageInquiryMessage = ({ content, isOwn, onReply, showReplyActions = false }: PackageInquiryMessageProps) => {
   const packageData = parsePackageInquiry(content);
   
   if (!packageData) return null;
 
   const Icon = getServiceIcon(packageData.serviceType);
+  const showActions = showReplyActions && !isOwn && onReply;
 
   return (
     <div className={`rounded-lg overflow-hidden ${isOwn ? 'bg-primary/90' : 'bg-card border'}`}>
@@ -65,9 +69,33 @@ const PackageInquiryMessage = ({ content, isOwn }: PackageInquiryMessageProps) =
       </div>
       
       {/* Footer message */}
-      <div className={`px-3 pb-3 text-xs ${isOwn ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+      <div className={`px-3 pb-2 text-xs ${isOwn ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
         {isOwn ? "You inquired about this package" : "Interested in discussing this package"}
       </div>
+
+      {/* Reply Actions for creators */}
+      {showActions && (
+        <div className="px-3 pb-3 flex gap-2">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="h-7 text-xs gap-1.5"
+            onClick={() => onReply("quote")}
+          >
+            <MessageCircle className="h-3 w-3" />
+            Send Quote
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="h-7 text-xs gap-1.5"
+            onClick={() => onReply("accept")}
+          >
+            <CheckCircle className="h-3 w-3" />
+            Accept
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

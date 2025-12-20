@@ -58,8 +58,25 @@ const BrandMessagesTab = () => {
   const [pendingPackage, setPendingPackage] = useState<PendingPackage | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
   const { isOtherUserTyping, setTyping } = useTypingIndicator(selectedConversation, userId);
+
+  const handleTypingChange = (value: string) => {
+    setNewMessage(value);
+    
+    if (typingDebounceRef.current) {
+      clearTimeout(typingDebounceRef.current);
+    }
+    
+    if (value.length > 0) {
+      typingDebounceRef.current = setTimeout(() => {
+        setTyping(true);
+      }, 300);
+    } else {
+      setTyping(false);
+    }
+  };
 
   // Auto-select conversation from URL param and handle package context
   useEffect(() => {
@@ -555,11 +572,13 @@ const BrandMessagesTab = () => {
           <div className="flex gap-2">
             <Input
               value={newMessage}
-              onChange={(e) => {
-                setNewMessage(e.target.value);
-                setTyping(e.target.value.length > 0);
+              onChange={(e) => handleTypingChange(e.target.value)}
+              onBlur={() => {
+                if (typingDebounceRef.current) {
+                  clearTimeout(typingDebounceRef.current);
+                }
+                setTyping(false);
               }}
-              onBlur={() => setTyping(false)}
               placeholder="Type a message..."
               onKeyPress={(e) => e.key === "Enter" && sendMessage()}
               className="flex-1"
