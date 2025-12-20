@@ -159,7 +159,6 @@ const BrandSubscriptionTab = () => {
         return [
           { icon: <Lock className="h-4 w-4" />, text: "Cannot chat with creators", locked: true },
           { icon: <Lock className="h-4 w-4" />, text: "Cannot post campaigns", locked: true },
-          { icon: <Lock className="h-4 w-4" />, text: "20% marketplace fee", locked: true },
         ];
       case 'basic':
         return [
@@ -213,12 +212,6 @@ const BrandSubscriptionTab = () => {
                 </Badge>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Marketplace Fee</p>
-                <p className="text-2xl font-bold">
-                  {(SUBSCRIPTION_PLANS[currentPlan].marketplaceFee * 100).toFixed(0)}%
-                </p>
-              </div>
-              <div>
                 <p className="text-sm text-muted-foreground">Renewal Date</p>
                 <p className="font-medium">
                   {new Date(subscription.current_period_end).toLocaleDateString()}
@@ -253,7 +246,7 @@ const BrandSubscriptionTab = () => {
           <CardHeader>
             <CardTitle>No Active Subscription</CardTitle>
             <CardDescription>
-              You're currently browsing with a 20% marketplace fee. Subscribe to unlock more features!
+              Subscribe to unlock more features and start collaborating with creators!
             </CardDescription>
           </CardHeader>
         </Card>
@@ -292,11 +285,6 @@ const BrandSubscriptionTab = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="text-center p-3 bg-muted rounded-lg">
-                  <span className="text-2xl font-bold">{(plan.marketplaceFee * 100).toFixed(0)}%</span>
-                  <span className="text-sm text-muted-foreground ml-1">marketplace fee</span>
-                </div>
-
                 <div className="space-y-2">
                   {highlights.map((highlight, idx) => (
                     <div key={idx} className={`flex items-center gap-2 ${highlight.locked ? 'text-muted-foreground' : ''}`}>

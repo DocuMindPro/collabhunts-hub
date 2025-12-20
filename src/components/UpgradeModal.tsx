@@ -21,8 +21,7 @@ const featureConfig = {
     benefits: [
       "Unlimited messaging with creators",
       "Negotiate rates before booking",
-      "10 GB content library storage",
-      "15% marketplace fee"
+      "10 GB content library storage"
     ]
   },
   campaigns: {
