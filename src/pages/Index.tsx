@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Users, Shield, TrendingUp, Instagram, Youtube, Video } from "lucide-react";
+import { Search, Users, MessageSquare, TrendingUp, Instagram, Youtube, Video } from "lucide-react";
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -94,9 +94,9 @@ const Index = () => {
       description: "Browse thousands of verified creators across all major platforms"
     },
     {
-      icon: Shield,
-      title: "Secure Payment",
-      description: "Safe transactions with escrow protection until work is completed"
+      icon: MessageSquare,
+      title: "Connect & Collaborate",
+      description: "Message creators directly to discuss and negotiate your project"
     },
     {
       icon: TrendingUp,

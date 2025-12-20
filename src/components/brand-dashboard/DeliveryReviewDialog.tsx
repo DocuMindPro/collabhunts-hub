@@ -196,7 +196,7 @@ const DeliveryReviewDialog = ({
             <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Payment held securely</p>
+                  <p className="text-sm text-muted-foreground">Collaboration value</p>
                   <p className="text-2xl font-bold">${(totalPrice / 100).toFixed(2)}</p>
                 </div>
                 <Badge variant="outline" className="gap-1">

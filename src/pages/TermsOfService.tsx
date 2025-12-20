@@ -47,7 +47,7 @@ const TermsOfService = () => {
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li><strong>Subscription Services:</strong> Monthly subscription plans for Brands (Basic, Pro, Premium) providing access to platform features</li>
-                <li><strong>Marketplace Services:</strong> Facilitating connections, bookings, and transactions between Brands and Creators</li>
+                <li><strong>Discovery Services:</strong> Facilitating connections and communication between Brands and Creators</li>
                 <li><strong>Content Library:</strong> Secure storage for UGC and marketing content with usage rights management</li>
                 <li><strong>Communication Tools:</strong> Messaging system for collaboration between parties</li>
               </ul>
@@ -135,13 +135,13 @@ const TermsOfService = () => {
 
             {/* Section 6 - Booking System (Coming Soon) */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">6. Marketplace Bookings (Coming Soon)</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">6. Direct Collaboration</h2>
               <p className="text-muted-foreground mb-4">
-                We are currently developing a secure booking and payment system with escrow protection. This feature is not yet available.
+                CollabHunts is a discovery and connection platform. We facilitate introductions between Brands and Creators.
               </p>
               <p className="text-muted-foreground mb-4">
-                Until the booking system launches, brands and creators should communicate directly through our messaging system to discuss projects 
-                and arrange payment terms offline. CollabHunts is not responsible for any transactions conducted outside the platform.
+                Brands and creators communicate directly through our messaging system to discuss projects 
+                and arrange terms. CollabHunts is not responsible for any transactions or payments conducted between parties.
               </p>
             </section>
 
