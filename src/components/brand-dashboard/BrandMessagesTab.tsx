@@ -12,6 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import TypingIndicator from "@/components/chat/TypingIndicator";
 import MessageReadReceipt from "@/components/chat/MessageReadReceipt";
+import PackageInquiryCard from "@/components/chat/PackageInquiryCard";
 
 interface Conversation {
   id: string;
@@ -38,6 +39,12 @@ interface OnlineStatus {
   [userId: string]: Date | null;
 }
 
+interface PendingPackage {
+  service_type: string;
+  price_cents: number;
+  delivery_days: number;
+}
+
 const BrandMessagesTab = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -47,6 +54,7 @@ const BrandMessagesTab = () => {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({});
+  const [pendingPackage, setPendingPackage] = useState<PendingPackage | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -62,16 +70,15 @@ const BrandMessagesTab = () => {
       if (exists) {
         setSelectedConversation(conversationParam);
         
-        // Handle package pre-fill
+        // Handle package context - store as pending package for the card
         if (packageParam) {
           try {
             const packageData = JSON.parse(decodeURIComponent(packageParam));
-            const serviceType = packageData.service_type?.replace(/_/g, ' ');
-            const price = (packageData.price_cents / 100).toFixed(2);
-            const deliveryDays = packageData.delivery_days;
-            
-            const prefillMessage = `Hi! I'm interested in your "${serviceType}" package ($${price}, ${deliveryDays} day${deliveryDays !== 1 ? 's' : ''} delivery). I'd like to discuss the details before we proceed.`;
-            setNewMessage(prefillMessage);
+            setPendingPackage({
+              service_type: packageData.service_type,
+              price_cents: packageData.price_cents,
+              delivery_days: packageData.delivery_days
+            });
           } catch (e) {
             console.error("Error parsing package data:", e);
           }
@@ -82,6 +89,47 @@ const BrandMessagesTab = () => {
       }
     }
   }, [searchParams, conversations]);
+
+  const handleSendPackageInquiry = async () => {
+    if (!pendingPackage || !selectedConversation || !userId) return;
+
+    const serviceType = pendingPackage.service_type.replace(/_/g, ' ').split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    const price = (pendingPackage.price_cents / 100).toFixed(2);
+    const deliveryDays = pendingPackage.delivery_days;
+
+    const inquiryMessage = `Hi! I'm interested in your "${serviceType}" package ($${price}, ${deliveryDays} day${deliveryDays !== 1 ? 's' : ''} delivery). I'd like to discuss the details before we proceed.`;
+
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      sender_id: userId,
+      content: inquiryMessage,
+      created_at: new Date().toISOString(),
+      is_read: false,
+    };
+
+    setMessages((prev) => [...prev, tempMessage]);
+    setPendingPackage(null);
+
+    try {
+      const { error } = await supabase.from("messages").insert({
+        conversation_id: selectedConversation,
+        sender_id: userId,
+        content: inquiryMessage,
+      });
+
+      if (error) throw error;
+      setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
+    } catch (error) {
+      console.error("Error sending package inquiry:", error);
+      setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
+      toast.error("Failed to send inquiry");
+    }
+  };
+
+  const handleDismissPackage = () => {
+    setPendingPackage(null);
+  };
 
   useEffect(() => {
     fetchConversations();
@@ -488,6 +536,15 @@ const BrandMessagesTab = () => {
           <div ref={messagesEndRef} />
           </div>
         </div>
+
+        {/* Package Inquiry Card */}
+        {pendingPackage && (
+          <PackageInquiryCard
+            packageData={pendingPackage}
+            onSend={handleSendPackageInquiry}
+            onDismiss={handleDismissPackage}
+          />
+        )}
 
         {/* Input */}
         <div className="p-4 border-t bg-card">
