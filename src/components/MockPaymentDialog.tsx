@@ -18,7 +18,6 @@ interface BookingOrderSummary {
   type: 'booking';
   serviceType: string;
   priceCents: number;
-  platformFeeCents: number;
   deliveryDays: number;
 }
 
@@ -77,9 +76,7 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
     setCvv(e.target.value.replace(/\D/g, "").substr(0, 3));
   };
 
-  const totalCents = isBooking 
-    ? orderSummary.priceCents + orderSummary.platformFeeCents 
-    : orderSummary.priceCents;
+  const totalCents = orderSummary.priceCents;
 
   const handlePayment = async () => {
     if (!cardNumber || !expiry || !cvv || !cardholderName) {
@@ -186,10 +183,6 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Service Price:</span>
                     <span>${(orderSummary.priceCents / 100).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Platform Fee:</span>
-                    <span>${(orderSummary.platformFeeCents / 100).toFixed(2)}</span>
                   </div>
                 </>
               ) : (

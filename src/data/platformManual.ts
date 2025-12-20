@@ -517,46 +517,20 @@ All secrets are stored securely and accessible only in edge functions.
         title: "Tier Comparison",
         content: `## Brand Subscription Tiers
 
-| Feature | Basic (Free) | Pro ($99/mo) | Premium ($299/mo) |
-|---------|--------------|--------------|-------------------|
-| Marketplace Fee | 20% | 15% | 15% |
-| Message Creators | ❌ | ✅ | ✅ |
-| Create Campaigns | ❌ | 1/month | Unlimited |
-| Advanced Filters | ❌ | ✅ | ✅ |
-| Creator CRM | ❌ | ✅ | ✅ |
-| Content Library | ❌ | 10 GB | 50 GB |
-| Extra Storage | ❌ | $10/100GB | $10/100GB |
+| Feature | No Package | Basic ($39/mo) | Pro ($99/mo) | Premium ($299/mo) |
+|---------|------------|----------------|--------------|-------------------|
+| Message Creators | ❌ | ✅ | ✅ | ✅ |
+| View Creator Pricing | ❌ | ✅ | ✅ | ✅ |
+| Create Campaigns | ❌ | ❌ | 1/month | Unlimited |
+| Advanced Filters | ❌ | ❌ | ✅ | ✅ |
+| Creator CRM | ❌ | ❌ | ✅ | ✅ |
+| Content Library | ❌ | 10 GB | 10 GB | 50 GB |
+| Extra Storage | ❌ | $10/100GB | $10/100GB | $10/100GB |
 
-### Feature Restrictions:
-- Basic users see upgrade prompts for locked features
-- Contact button hidden for Basic tier
-- Campaign creation blocked for Basic tier`,
-        lastUpdated: "2024-12-10",
+### How Bookings Work
+CollabHunts is a discovery and connection platform. All transactions, payments, and collaborations are handled directly between brands and creators offline. We facilitate the connection, not the transaction.`,
+        lastUpdated: "2024-12-20",
         tags: ["subscription", "pricing", "features"]
-      },
-      {
-        id: "marketplace-fees",
-        title: "Marketplace Fee Structure",
-        content: `## Fee Calculation
-
-### How Fees Work:
-- Fee is calculated as percentage of booking total
-- Fee is stored in \`bookings.platform_fee_cents\`
-- Creator receives: \`total_price_cents - platform_fee_cents\`
-
-### Fee by Tier:
-| Tier | Fee % | Example ($100 booking) |
-|------|-------|------------------------|
-| Basic | 20% | Platform: $20, Creator: $80 |
-| Pro | 15% | Platform: $15, Creator: $85 |
-| Premium | 15% | Platform: $15, Creator: $85 |
-
-### When Fee is Applied:
-- Calculated at booking creation time
-- Based on brand's active subscription at that moment
-- Does not change if subscription changes later`,
-        lastUpdated: "2024-12-10",
-        tags: ["fees", "commission", "pricing"]
       }
     ]
   },

@@ -204,13 +204,6 @@ const AdminBrandSubscriptionsTab = () => {
     return <Badge className={colors[planType] || "bg-gray-500"}>{labels[planType] || planType.toUpperCase()}</Badge>;
   };
 
-  const getMarketplaceFee = (planType: string) => {
-    const plan = SUBSCRIPTION_PLANS[planType as PlanType];
-    if (plan) {
-      return `${(plan.marketplaceFee * 100).toFixed(0)}%`;
-    }
-    return "20%"; // Default to none tier fee
-  };
 
   if (loading) {
     return (
@@ -302,7 +295,6 @@ const AdminBrandSubscriptionsTab = () => {
                 <TableHead>Company</TableHead>
                 <TableHead>Plan</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Marketplace Fee</TableHead>
                 <TableHead>Period End</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -333,7 +325,6 @@ const AdminBrandSubscriptionsTab = () => {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>{getMarketplaceFee(subscription.plan_type)}</TableCell>
                     <TableCell>
                       {format(new Date(subscription.current_period_end), "MMM dd, yyyy")}
                     </TableCell>
@@ -373,7 +364,7 @@ const AdminBrandSubscriptionsTab = () => {
                 <SelectContent>
                   {(Object.keys(SUBSCRIPTION_PLANS) as PlanType[]).map((key) => (
                     <SelectItem key={key} value={key}>
-                      {SUBSCRIPTION_PLANS[key].name} ({(SUBSCRIPTION_PLANS[key].marketplaceFee * 100).toFixed(0)}% fee)
+                      {SUBSCRIPTION_PLANS[key].name}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -155,15 +155,15 @@ const RefundPolicy = () => {
 
             {/* Creator Payouts */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">8. Creator Payouts</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">8. Creator & Brand Transactions</h2>
               <p className="text-muted-foreground mb-4">
-                For Creators receiving payments through the Platform:
+                CollabHunts is a discovery and connection platform. All transactions, payments, and collaborations are handled directly between brands and creators outside of our platform.
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Payouts are processed after payment is released (Brand approval or 72-hour auto-release)</li>
-                <li>Standard payout processing: 3-5 business days</li>
-                <li>Payouts may be held if there are open disputes on your account</li>
-                <li>Platform fees are deducted before payout</li>
+                <li>Brands and creators negotiate terms directly through messaging</li>
+                <li>All payments are arranged and processed offline between parties</li>
+                <li>CollabHunts is not responsible for any transactions conducted outside the platform</li>
+                <li>We recommend using secure payment methods and maintaining clear records</li>
               </ul>
             </section>
 

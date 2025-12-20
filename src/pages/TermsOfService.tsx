@@ -121,25 +121,12 @@ const TermsOfService = () => {
                 Prices are subject to change with 30 days notice.
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Basic (Free):</strong> Limited features, 20% marketplace fee</li>
-                <li><strong>Pro ($99/month):</strong> Full features, 15% marketplace fee, 10GB Content Library</li>
-                <li><strong>Premium ($299/month):</strong> All features, 15% marketplace fee, 50GB Content Library, unlimited campaigns</li>
+                <li><strong>Basic ($39/month):</strong> Contact creators, view pricing, 10GB Content Library</li>
+                <li><strong>Pro ($99/month):</strong> All Basic features plus CRM, campaigns, advanced filters</li>
+                <li><strong>Premium ($299/month):</strong> All features, 50GB Content Library, unlimited campaigns</li>
               </ul>
 
-              <h3 className="text-xl font-heading font-semibold mb-3">5.3 Marketplace Fees</h3>
-              <p className="text-muted-foreground mb-4">
-                CollabHunts charges marketplace fees on all booking transactions:
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Basic tier: 20% platform fee</li>
-                <li>Pro tier: 15% platform fee</li>
-                <li>Premium tier: 15% platform fee</li>
-              </ul>
-              <p className="text-muted-foreground mb-4">
-                Platform fees are non-refundable once work has been delivered.
-              </p>
-
-              <h3 className="text-xl font-heading font-semibold mb-3">5.4 Currency & Taxes</h3>
+              <h3 className="text-xl font-heading font-semibold mb-3">5.3 Currency & Taxes</h3>
               <p className="text-muted-foreground mb-4">
                 All prices are displayed in USD unless otherwise stated. Applicable taxes (VAT, sales tax, GST) are calculated and collected by Paddle 
                 based on your location and will be added at checkout where required by law.
@@ -167,8 +154,6 @@ const TermsOfService = () => {
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li><strong>14-Day Money-Back Guarantee:</strong> New subscribers can request a full refund within 14 days if no paid features have been used</li>
                 <li><strong>Subscription Cancellation:</strong> Cancel anytime; access continues until the end of the billing period</li>
-                <li><strong>Booking Refunds:</strong> Subject to dispute resolution process; full refund if Creator cancels or fails to deliver</li>
-                <li><strong>Platform Fees:</strong> Non-refundable once work has been delivered</li>
               </ul>
               <p className="text-muted-foreground mb-4">
                 All refunds are processed by Paddle within 5-10 business days to the original payment method.
@@ -260,7 +245,7 @@ const TermsOfService = () => {
                 <li>Transmit harmful code, viruses, or malware</li>
                 <li>Engage in fraudulent activities or misrepresentation</li>
                 <li>Harass, abuse, threaten, or harm other users</li>
-                <li><strong>Circumvent platform fees by conducting transactions outside the Platform</strong></li>
+                <li><strong>Use the Platform to spam or harass creators</strong></li>
                 <li>Create fake accounts or artificially inflate metrics</li>
                 <li>Share login credentials or allow unauthorized access to your account</li>
                 <li>Scrape, data mine, or extract data from the Platform</li>
