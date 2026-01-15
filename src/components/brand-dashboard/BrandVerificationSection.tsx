@@ -1,27 +1,25 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   BadgeCheck, 
   Clock, 
   XCircle, 
   CheckCircle, 
   AlertTriangle, 
-  Sparkles,
   Phone,
   Globe,
-  Building2,
-  ArrowRight
+  ChevronDown,
+  ChevronUp,
+  ExternalLink
 } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { SUBSCRIPTION_PLANS, PlanType } from "@/lib/stripe-mock";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface BrandVerificationSectionProps {
   planType: string;
@@ -45,7 +43,7 @@ const BrandVerificationSection = ({ planType }: BrandVerificationSectionProps) =
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [websiteUrl, setWebsiteUrl] = useState("");
-  const [additionalNotes, setAdditionalNotes] = useState("");
+  const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
 
   const isEligible = SUBSCRIPTION_PLANS[planType as PlanType]?.canRequestVerifiedBadge ?? false;
@@ -163,231 +161,137 @@ const BrandVerificationSection = ({ planType }: BrandVerificationSectionProps) =
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-muted rounded w-1/3" />
-            <div className="h-10 bg-muted rounded" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="h-12 bg-muted/50 rounded-lg animate-pulse" />
     );
   }
 
-  // Not eligible - show upgrade prompt
+  // Not eligible - show upgrade prompt (compact)
   if (!isEligible) {
     return (
-      <Card className="border-dashed">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BadgeCheck className="h-5 w-5 text-blue-500" />
-            Verified Business Badge
-          </CardTitle>
-          <CardDescription>
-            Stand out with a verified badge next to your company name
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <Sparkles className="h-4 w-4" />
-            <AlertTitle>Upgrade to Pro or Premium</AlertTitle>
-            <AlertDescription className="mt-2">
-              The Verified Business Badge is available exclusively for Pro and Premium subscribers. 
-              Upgrade your plan to build trust with creators and stand out from the crowd.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-between gap-4 p-3 bg-muted/30 border rounded-lg">
+        <div className="flex items-center gap-2">
+          <BadgeCheck className="h-4 w-4 text-blue-500" />
+          <span className="text-sm font-medium">Verified Business Badge</span>
+          <Badge variant="secondary" className="text-xs">Pro/Premium</Badge>
+        </div>
+        <span className="text-xs text-muted-foreground">Upgrade to unlock</span>
+      </div>
     );
   }
 
-  // Already verified
+  // Already verified - compact success banner
   if (brandProfile?.is_verified) {
     return (
-      <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20 dark:border-green-900">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <VerifiedBadge size="lg" showTooltip={false} />
+      <div className="flex items-center justify-between gap-4 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
+        <div className="flex items-center gap-2">
+          <VerifiedBadge size="sm" showTooltip={false} />
+          <span className="text-sm font-medium text-green-800 dark:text-green-200">
             Verified Business
-          </CardTitle>
-          <CardDescription>
-            Your business has been verified
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3 p-4 bg-green-100 dark:bg-green-900/30 rounded-lg">
-            <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-            <div>
-              <p className="font-medium text-green-800 dark:text-green-200">
-                Congratulations! Your business is verified.
-              </p>
-              <p className="text-sm text-green-700 dark:text-green-300">
-                Your verified badge is now displayed on your company name across the platform.
-              </p>
-              {brandProfile.verification_completed_at && (
-                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                  Verified on {new Date(brandProfile.verification_completed_at).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </span>
+        </div>
+        {brandProfile.verification_completed_at && (
+          <span className="text-xs text-green-600 dark:text-green-400">
+            Since {new Date(brandProfile.verification_completed_at).toLocaleDateString()}
+          </span>
+        )}
+      </div>
     );
   }
 
-  // Pending verification
+  // Pending verification - compact banner
   if (brandProfile?.verification_status === "pending") {
     return (
-      <Card className="border-yellow-200 bg-yellow-50/50 dark:bg-yellow-950/20 dark:border-yellow-900">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-yellow-600" />
-            Verification In Progress
-          </CardTitle>
-          <CardDescription>
-            Your verification request is being reviewed
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3 p-4 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
-            <Clock className="h-8 w-8 text-yellow-600 dark:text-yellow-400 animate-pulse" />
-            <div>
-              <p className="font-medium text-yellow-800 dark:text-yellow-200">
-                Your verification request is under review
-              </p>
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                We'll notify you via email and in-app notification once the review is complete. 
-                This typically takes 1-2 business days.
-              </p>
-              {brandProfile.verification_submitted_at && (
-                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                  Submitted on {new Date(brandProfile.verification_submitted_at).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-between gap-4 p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900 rounded-lg">
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4 text-yellow-600 animate-pulse" />
+          <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+            Verification in progress
+          </span>
+        </div>
+        <span className="text-xs text-yellow-600 dark:text-yellow-400">
+          Submitted {brandProfile.verification_submitted_at 
+            ? new Date(brandProfile.verification_submitted_at).toLocaleDateString() 
+            : "recently"}
+        </span>
+      </div>
     );
   }
 
-  // Rejected - can reapply
+  // Rejected - compact with reapply
   if (brandProfile?.verification_status === "rejected") {
     return (
-      <Card className="border-red-200 bg-red-50/50 dark:bg-red-950/20 dark:border-red-900">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <XCircle className="h-5 w-5 text-red-600" />
-            Verification Not Approved
-          </CardTitle>
-          <CardDescription>
-            Your verification request was not approved
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-start gap-3 p-4 bg-red-100 dark:bg-red-900/30 rounded-lg">
-            <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium text-red-800 dark:text-red-200">
-                Reason for rejection:
-              </p>
-              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                {brandProfile.verification_rejection_reason || "No specific reason provided."}
-              </p>
-            </div>
+      <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <XCircle className="h-4 w-4 text-red-600" />
+            <span className="text-sm font-medium text-red-800 dark:text-red-200">
+              Verification not approved
+            </span>
           </div>
-          <Button onClick={handleReapply} disabled={submitting}>
-            {submitting ? "Processing..." : "Reapply for Verification"}
+          <Button size="sm" variant="outline" onClick={handleReapply} disabled={submitting}>
+            Reapply
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+        {brandProfile.verification_rejection_reason && (
+          <p className="mt-2 text-xs text-red-600 dark:text-red-400 flex items-start gap-1">
+            <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+            {brandProfile.verification_rejection_reason}
+          </p>
+        )}
+      </div>
     );
   }
 
-  // Not started - show form
+  // Not started - collapsible form
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BadgeCheck className="h-5 w-5 text-blue-500" />
-          Get Verified
-        </CardTitle>
-        <CardDescription>
-          Build trust with creators by verifying your business
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Benefits */}
-        <div className="grid gap-3 p-4 bg-muted/50 rounded-lg">
-          <h4 className="font-medium text-sm">Benefits of Verification:</h4>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              Display a verified badge next to your company name
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              Build trust with creators
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              Stand out in messages and campaigns
-            </li>
-          </ul>
-        </div>
-
-        {/* Requirements Checklist */}
-        <div className="space-y-3">
-          <h4 className="font-medium text-sm">Requirements:</h4>
-          
-          <div className="flex items-center gap-3 p-3 border rounded-lg">
-            <Phone className={`h-5 w-5 ${brandProfile?.phone_verified ? "text-green-500" : "text-muted-foreground"}`} />
-            <div className="flex-1">
-              <p className="text-sm font-medium">Phone Number Verified</p>
-              <p className="text-xs text-muted-foreground">Your phone number must be verified</p>
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <div className="border rounded-lg overflow-hidden">
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center justify-between gap-4 p-3 hover:bg-muted/50 transition-colors text-left">
+            <div className="flex items-center gap-2">
+              <BadgeCheck className="h-4 w-4 text-blue-500" />
+              <span className="text-sm font-medium">Get Verified</span>
+              <span className="text-xs text-muted-foreground hidden sm:inline">
+                · Build trust with creators
+              </span>
             </div>
-            {brandProfile?.phone_verified ? (
-              <Badge variant="default" className="bg-green-500">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Verified
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                {brandProfile?.phone_verified ? "Ready" : "Setup needed"}
               </Badge>
-            ) : (
-              <Badge variant="secondary">Required</Badge>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 p-3 border rounded-lg">
-            <Building2 className="h-5 w-5 text-muted-foreground" />
-            <div className="flex-1">
-              <p className="text-sm font-medium">Company Name</p>
-              <p className="text-xs text-muted-foreground">{brandProfile?.company_name || "Not set"}</p>
-            </div>
-            <Badge variant="default" className="bg-green-500">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Set
-            </Badge>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-3 p-3 border rounded-lg">
-              <Globe className="h-5 w-5 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Business Website</p>
-                <p className="text-xs text-muted-foreground">Provide your official website URL</p>
-              </div>
-              {websiteUrl ? (
-                <Badge variant="default" className="bg-green-500">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Provided
-                </Badge>
+              {isExpanded ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
               ) : (
-                <Badge variant="secondary">Required</Badge>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
               )}
             </div>
-            <div className="pl-11">
-              <Label htmlFor="website" className="text-xs text-muted-foreground">
-                Website URL
+          </button>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <div className="p-4 pt-2 border-t bg-muted/20 space-y-4">
+            {/* Compact requirements row */}
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-1.5 text-xs">
+                <Phone className={`h-3.5 w-3.5 ${brandProfile?.phone_verified ? "text-green-500" : "text-muted-foreground"}`} />
+                <span className={brandProfile?.phone_verified ? "text-green-700 dark:text-green-400" : "text-muted-foreground"}>
+                  Phone {brandProfile?.phone_verified ? "verified" : "required"}
+                </span>
+                {brandProfile?.phone_verified && <CheckCircle className="h-3 w-3 text-green-500" />}
+              </div>
+              <div className="flex items-center gap-1.5 text-xs">
+                <Globe className={`h-3.5 w-3.5 ${websiteUrl ? "text-green-500" : "text-muted-foreground"}`} />
+                <span className={websiteUrl ? "text-green-700 dark:text-green-400" : "text-muted-foreground"}>
+                  Website {websiteUrl ? "provided" : "required"}
+                </span>
+                {websiteUrl && <CheckCircle className="h-3 w-3 text-green-500" />}
+              </div>
+            </div>
+
+            {/* Website input */}
+            <div className="space-y-1.5">
+              <Label htmlFor="website" className="text-xs">
+                Business Website URL
               </Label>
               <Input
                 id="website"
@@ -395,42 +299,23 @@ const BrandVerificationSection = ({ planType }: BrandVerificationSectionProps) =
                 placeholder="https://yourcompany.com"
                 value={websiteUrl}
                 onChange={(e) => setWebsiteUrl(e.target.value)}
+                className="h-9"
               />
             </div>
+
+            {/* Submit */}
+            <Button 
+              onClick={handleSubmitVerification} 
+              disabled={submitting || !brandProfile?.phone_verified || !websiteUrl.trim()}
+              size="sm"
+              className="w-full"
+            >
+              {submitting ? "Submitting..." : "Request Verification"}
+            </Button>
           </div>
-        </div>
-
-        {/* Optional Notes */}
-        <div className="space-y-2">
-          <Label htmlFor="notes" className="text-sm">
-            Additional Notes (Optional)
-          </Label>
-          <Textarea
-            id="notes"
-            placeholder="Any additional information about your business..."
-            value={additionalNotes}
-            onChange={(e) => setAdditionalNotes(e.target.value)}
-            rows={3}
-          />
-        </div>
-
-        {/* Submit Button */}
-        <Button 
-          onClick={handleSubmitVerification} 
-          disabled={submitting || !brandProfile?.phone_verified || !websiteUrl.trim()}
-          className="w-full"
-        >
-          {submitting ? (
-            "Submitting..."
-          ) : (
-            <>
-              Request Verification
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
   );
 };
 

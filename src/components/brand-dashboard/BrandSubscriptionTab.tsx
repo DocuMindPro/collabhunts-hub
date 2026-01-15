@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Check, Crown, Zap, Shield, Lock, MessageCircle, Filter, Megaphone, Database, BadgeCheck } from "lucide-react";
+import { Check, Crown, Zap, Shield, Lock, X, ExternalLink } from "lucide-react";
 import { SUBSCRIPTION_PLANS, PlanType, formatPrice, cancelSubscription } from "@/lib/stripe-mock";
 import { checkAndHandleExpiredSubscriptions } from "@/lib/subscription-utils";
 import BrandVerificationSection from "./BrandVerificationSection";
 import MockPaymentDialog from "@/components/MockPaymentDialog";
+import { Link } from "react-router-dom";
 
 interface Subscription {
   id: string;
@@ -35,7 +36,6 @@ const BrandSubscriptionTab = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get brand profile
       const { data: brandProfile } = await supabase
         .from('brand_profiles')
         .select('id')
@@ -45,18 +45,15 @@ const BrandSubscriptionTab = () => {
       if (!brandProfile) return;
       setBrandProfileId(brandProfile.id);
 
-      // Check for expired subscriptions and handle them
       await checkAndHandleExpiredSubscriptions(brandProfile.id);
 
-      // Get active subscription (prefer non-none if exists)
       const { data: subs } = await supabase
         .from('brand_subscriptions')
         .select('*')
         .eq('brand_profile_id', brandProfile.id)
         .eq('status', 'active')
-        .order('plan_type', { ascending: false }); // premium > pro > basic > none
+        .order('plan_type', { ascending: false });
 
-      // Return highest tier active subscription
       const sub = subs && subs.length > 0 ? subs[0] : null;
       setSubscription(sub as Subscription);
     } catch (error) {
@@ -76,7 +73,6 @@ const BrandSubscriptionTab = () => {
 
     setActionLoading(true);
     try {
-      // First, cancel any existing active subscriptions
       const { error: cancelError } = await supabase
         .from('brand_subscriptions')
         .update({ status: 'canceled' })
@@ -87,7 +83,6 @@ const BrandSubscriptionTab = () => {
         console.error('Error canceling existing subscriptions:', cancelError);
       }
 
-      // Create new subscription with 1 month period
       const periodEnd = new Date();
       periodEnd.setMonth(periodEnd.getMonth() + 1);
 
@@ -104,7 +99,7 @@ const BrandSubscriptionTab = () => {
 
       if (error) throw error;
 
-      toast.success(`Successfully subscribed to ${SUBSCRIPTION_PLANS[selectedPlanType].name} plan! Valid for 1 month.`);
+      toast.success(`Successfully subscribed to ${SUBSCRIPTION_PLANS[selectedPlanType].name}!`);
       setShowPaymentDialog(false);
       setSelectedPlanType(null);
       fetchSubscription();
@@ -146,113 +141,109 @@ const BrandSubscriptionTab = () => {
 
   const getPlanIcon = (plan: PlanType) => {
     switch (plan) {
-      case 'premium': return <Crown className="h-5 w-5" />;
-      case 'pro': return <Zap className="h-5 w-5" />;
-      case 'basic': return <Shield className="h-5 w-5" />;
-      default: return <Shield className="h-5 w-5 text-muted-foreground" />;
+      case 'premium': return <Crown className="h-4 w-4" />;
+      case 'pro': return <Zap className="h-4 w-4" />;
+      case 'basic': return <Shield className="h-4 w-4" />;
+      default: return <Shield className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
-  const getPlanHighlights = (plan: PlanType) => {
+  // Compact feature list per plan
+  const getCompactFeatures = (plan: PlanType) => {
     switch (plan) {
-      case 'none':
-        return [
-          { icon: <Lock className="h-4 w-4" />, text: "Cannot chat with creators", locked: true },
-          { icon: <Lock className="h-4 w-4" />, text: "Cannot post campaigns", locked: true },
-        ];
       case 'basic':
         return [
-          { icon: <MessageCircle className="h-4 w-4" />, text: "Chat with creators", locked: false },
-          { icon: <Database className="h-4 w-4" />, text: "10 GB Content Library", locked: false },
-          { icon: <Lock className="h-4 w-4" />, text: "No campaigns", locked: true },
+          { text: "Chat with creators", included: true },
+          { text: "10 GB content storage", included: true },
+          { text: "15% marketplace fee", included: true },
+          { text: "Campaigns", included: false },
+          { text: "CRM & filters", included: false },
         ];
       case 'pro':
         return [
-          { icon: <MessageCircle className="h-4 w-4" />, text: "Chat with creators", locked: false },
-          { icon: <Megaphone className="h-4 w-4" />, text: "1 campaign/month", locked: false },
-          { icon: <Filter className="h-4 w-4" />, text: "Advanced filters + CRM", locked: false },
+          { text: "Everything in Basic", included: true },
+          { text: "1 campaign/month", included: true },
+          { text: "CRM + advanced filters", included: true },
+          { text: "Verified badge eligible", included: true },
+          { text: "50 mass messages/day", included: true },
         ];
       case 'premium':
         return [
-          { icon: <MessageCircle className="h-4 w-4" />, text: "Chat with creators", locked: false },
-          { icon: <Megaphone className="h-4 w-4" />, text: "Unlimited campaigns", locked: false },
-          { icon: <Database className="h-4 w-4" />, text: "50 GB Content Library", locked: false },
+          { text: "Everything in Pro", included: true },
+          { text: "Unlimited campaigns", included: true },
+          { text: "50 GB content storage", included: true },
+          { text: "100 mass messages/day", included: true },
+          { text: "Priority support", included: true },
         ];
+      default:
+        return [];
     }
   };
 
-  // Only show paid plans for upgrade (excluding 'none')
   const paidPlans: PlanType[] = ['basic', 'pro', 'premium'];
 
   if (loading) {
-    return <div className="text-center py-8">Loading subscription details...</div>;
+    return <div className="text-center py-8 text-sm text-muted-foreground">Loading...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      {/* Verification Section - only show for pro/premium */}
+    <div className="space-y-4 max-w-5xl">
+      {/* Verification Section - compact collapsible */}
       {(currentPlan === 'pro' || currentPlan === 'premium') && (
         <BrandVerificationSection planType={currentPlan} />
       )}
 
+      {/* Current Subscription Banner - single row */}
       {subscription && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Current Subscription</CardTitle>
-            <CardDescription>
-              You are currently on the {SUBSCRIPTION_PLANS[currentPlan].name} {currentPlan === 'none' ? '(Free)' : 'plan'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Status</p>
-                <Badge variant={subscription.status === 'active' ? 'default' : 'secondary'}>
-                  {subscription.status}
-                </Badge>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Renewal Date</p>
-                <p className="font-medium">
-                  {new Date(subscription.current_period_end).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-            
+        <div className={`flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg border ${
+          subscription.cancel_at_period_end 
+            ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900' 
+            : 'bg-muted/30'
+        }`}>
+          <div className="flex items-center gap-2">
+            {getPlanIcon(currentPlan)}
+            <span className="font-medium text-sm">
+              {SUBSCRIPTION_PLANS[currentPlan].name}
+            </span>
+            <Badge variant={subscription.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+              {subscription.status}
+            </Badge>
             {subscription.cancel_at_period_end && (
-              <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm">
-                  Your subscription will be canceled on {new Date(subscription.current_period_end).toLocaleDateString()}
-                </p>
-              </div>
+              <Badge variant="outline" className="text-xs text-orange-600 border-orange-300">
+                Canceling
+              </Badge>
             )}
-
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-muted-foreground text-xs">
+              {subscription.cancel_at_period_end ? 'Ends' : 'Renews'}{' '}
+              {new Date(subscription.current_period_end).toLocaleDateString()}
+            </span>
             {!subscription.cancel_at_period_end && currentPlan !== 'none' && (
               <Button 
-                variant="outline" 
+                variant="ghost" 
+                size="sm"
                 onClick={handleCancel}
                 disabled={actionLoading}
+                className="h-7 text-xs text-muted-foreground hover:text-destructive"
               >
-                Cancel Subscription
+                Cancel
               </Button>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* No subscription state */}
       {!subscription && (
-        <Card className="border-dashed">
-          <CardHeader>
-            <CardTitle>No Active Subscription</CardTitle>
-            <CardDescription>
-              Subscribe to unlock more features and start collaborating with creators!
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <div className="flex items-center justify-between gap-4 p-3 bg-muted/30 border border-dashed rounded-lg">
+          <span className="text-sm text-muted-foreground">No active subscription</span>
+          <span className="text-xs text-muted-foreground">Choose a plan below</span>
+        </div>
       )}
 
-      <div className="grid md:grid-cols-3 gap-6">
+      {/* Compact Plan Cards */}
+      <div className="grid md:grid-cols-3 gap-4">
         {paidPlans.map((planKey) => {
           const plan = SUBSCRIPTION_PLANS[planKey];
           const isCurrent = currentPlan === planKey;
@@ -261,73 +252,77 @@ const BrandSubscriptionTab = () => {
             (currentPlan === 'basic' && (planKey === 'pro' || planKey === 'premium')) ||
             (currentPlan === 'pro' && planKey === 'premium')
           );
-          const highlights = getPlanHighlights(planKey);
+          const features = getCompactFeatures(planKey);
 
           return (
             <Card 
               key={planKey}
-              className={isCurrent ? 'border-primary' : ''}
+              className={`relative ${isCurrent ? 'border-primary ring-1 ring-primary/20' : ''}`}
             >
-              <CardHeader>
-                <div className="flex items-center gap-2 mb-2">
+              {planKey === 'pro' && !isCurrent && (
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
+                  <Badge className="bg-primary text-primary-foreground text-xs px-2">
+                    Popular
+                  </Badge>
+                </div>
+              )}
+              {isCurrent && (
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
+                  <Badge variant="outline" className="bg-background text-xs px-2">
+                    Current
+                  </Badge>
+                </div>
+              )}
+              
+              <CardContent className="p-4 pt-5">
+                {/* Header */}
+                <div className="flex items-center gap-2 mb-1">
                   {getPlanIcon(planKey)}
-                  <CardTitle>{plan.name}</CardTitle>
-                  {isCurrent && <Badge>Current</Badge>}
-                  {planKey === 'pro' && !isCurrent && (
-                    <Badge variant="secondary" className="bg-primary/10 text-primary">Popular</Badge>
-                  )}
+                  <span className="font-semibold">{plan.name}</span>
                 </div>
-                <CardDescription>
-                  <span className="text-3xl font-bold">
-                    {formatPrice(plan.price)}
-                  </span>
-                  <span className="text-muted-foreground">/month</span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  {highlights.map((highlight, idx) => (
-                    <div key={idx} className={`flex items-center gap-2 ${highlight.locked ? 'text-muted-foreground' : ''}`}>
-                      {highlight.icon}
-                      <span className="text-sm">{highlight.text}</span>
+                
+                {/* Price */}
+                <div className="mb-3">
+                  <span className="text-2xl font-bold">{formatPrice(plan.price)}</span>
+                  <span className="text-muted-foreground text-sm">/mo</span>
+                </div>
+
+                {/* Compact Features */}
+                <div className="space-y-1.5 mb-4">
+                  {features.map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs">
+                      {feature.included ? (
+                        <Check className="h-3.5 w-3.5 text-primary shrink-0" />
+                      ) : (
+                        <X className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+                      )}
+                      <span className={feature.included ? '' : 'text-muted-foreground/60'}>
+                        {feature.text}
+                      </span>
                     </div>
                   ))}
                 </div>
 
-                <div className="space-y-2 pt-2 border-t">
-                  {plan.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </div>
-                  ))}
-                  {plan.lockedFeatures.map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-2 text-muted-foreground">
-                      <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-
+                {/* Action Button */}
                 {isUpgrade && (
                   <Button 
-                    className="w-full" 
+                    className="w-full h-8 text-sm" 
                     onClick={() => handleUpgrade(planKey)}
                     disabled={actionLoading}
                   >
-                    {currentPlan === 'none' ? `Get ${plan.name}` : `Upgrade to ${plan.name}`}
+                    {currentPlan === 'none' ? 'Get Started' : 'Upgrade'}
                   </Button>
                 )}
                 
                 {isCurrent && (
-                  <Button className="w-full" disabled variant="outline">
+                  <Button className="w-full h-8 text-sm" disabled variant="outline">
                     Current Plan
                   </Button>
                 )}
 
                 {!isCurrent && !isUpgrade && (
-                  <Button className="w-full" disabled variant="ghost">
-                    Not Available
+                  <Button className="w-full h-8 text-sm" disabled variant="ghost">
+                    —
                   </Button>
                 )}
               </CardContent>
@@ -336,7 +331,18 @@ const BrandSubscriptionTab = () => {
         })}
       </div>
 
-      {/* Payment Dialog for Subscription */}
+      {/* Link to full pricing page */}
+      <div className="text-center pt-2">
+        <Link 
+          to="/pricing" 
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Compare all features
+          <ExternalLink className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+
+      {/* Payment Dialog */}
       {selectedPlanType && (
         <MockPaymentDialog
           isOpen={showPaymentDialog}
