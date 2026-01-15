@@ -9,7 +9,8 @@ import BrandYourCreatorsTab from "@/components/brand-dashboard/BrandYourCreators
 import BrandSubscriptionTab from "@/components/brand-dashboard/BrandSubscriptionTab";
 import BrandCampaignsTab from "@/components/brand-dashboard/BrandCampaignsTab";
 import BrandContentLibraryTab from "@/components/brand-dashboard/BrandContentLibraryTab";
-import { BarChart3, Calendar, MessageSquare, CreditCard, Megaphone, Heart, FolderOpen } from "lucide-react";
+import BrandAccountTab from "@/components/brand-dashboard/BrandAccountTab";
+import { BarChart3, Calendar, MessageSquare, CreditCard, Megaphone, Heart, FolderOpen, User } from "lucide-react";
 
 const BrandDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -60,6 +61,10 @@ const BrandDashboard = () => {
                 <FolderOpen className="h-4 w-4" />
                 <span className="hidden sm:inline">Content Library</span>
               </TabsTrigger>
+              <TabsTrigger value="account" className="gap-2 shrink-0">
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">Account</span>
+              </TabsTrigger>
               <TabsTrigger value="subscription" className="gap-2 shrink-0">
                 <CreditCard className="h-4 w-4" />
                 <span className="hidden sm:inline">Subscription</span>
@@ -88,6 +93,10 @@ const BrandDashboard = () => {
 
             <TabsContent value="content-library" className="space-y-6">
               <BrandContentLibraryTab />
+            </TabsContent>
+
+            <TabsContent value="account" className="space-y-6">
+              <BrandAccountTab />
             </TabsContent>
 
             <TabsContent value="subscription" className="space-y-6">
