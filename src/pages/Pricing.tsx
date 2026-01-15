@@ -2,11 +2,19 @@ import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Check, Lock, Crown } from "lucide-react";
+import { Check, Lock, Crown, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentPlanType, PlanType } from "@/lib/subscription-utils";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const Pricing = () => {
   const [currentPlan, setCurrentPlan] = useState<PlanType | null>(null);
@@ -303,6 +311,215 @@ const Pricing = () => {
                   </>
                 )}
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Feature Comparison Table */}
+        <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
+                Compare All Features
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                See exactly what's included in each plan
+              </p>
+            </div>
+
+            <div className="max-w-5xl mx-auto overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-[300px] font-heading font-bold text-foreground">Feature</TableHead>
+                    <TableHead className="text-center font-heading font-bold text-foreground">
+                      <div className="flex flex-col items-center gap-1">
+                        <span>Basic</span>
+                        <span className="text-primary font-normal text-sm">$39/mo</span>
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center font-heading font-bold text-foreground">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="flex items-center gap-1">
+                          Pro
+                          <Badge variant="secondary" className="text-xs">Popular</Badge>
+                        </span>
+                        <span className="text-primary font-normal text-sm">$99/mo</span>
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center font-heading font-bold text-foreground">
+                      <div className="flex flex-col items-center gap-1">
+                        <span>Premium</span>
+                        <span className="text-primary font-normal text-sm">$299/mo</span>
+                      </div>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {/* Marketplace Access */}
+                  <TableRow className="bg-muted/20">
+                    <TableCell colSpan={4} className="font-heading font-semibold text-primary">
+                      Marketplace Access
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Browse creator marketplace</TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>View creator pricing</TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Message creators directly</TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Advanced filters (age, gender, ethnicity, language)</TableCell>
+                    <TableCell className="text-center"><X className="h-5 w-5 text-muted-foreground mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Platform-specific follower filtering</TableCell>
+                    <TableCell className="text-center"><X className="h-5 w-5 text-muted-foreground mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                  </TableRow>
+
+                  {/* Campaigns */}
+                  <TableRow className="bg-muted/20">
+                    <TableCell colSpan={4} className="font-heading font-semibold text-primary">
+                      Campaigns
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Post campaigns</TableCell>
+                    <TableCell className="text-center"><X className="h-5 w-5 text-muted-foreground mx-auto" /></TableCell>
+                    <TableCell className="text-center"><span className="text-sm font-medium">1/month</span></TableCell>
+                    <TableCell className="text-center"><span className="text-sm font-medium text-primary">Unlimited</span></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Mass campaign invitations</TableCell>
+                    <TableCell className="text-center"><X className="h-5 w-5 text-muted-foreground mx-auto" /></TableCell>
+                    <TableCell className="text-center"><span className="text-sm font-medium">50/day</span></TableCell>
+                    <TableCell className="text-center"><span className="text-sm font-medium">100/day</span></TableCell>
+                  </TableRow>
+
+                  {/* CRM & Organization */}
+                  <TableRow className="bg-muted/20">
+                    <TableCell colSpan={4} className="font-heading font-semibold text-primary">
+                      CRM & Organization
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Save favorite creators</TableCell>
+                    <TableCell className="text-center"><X className="h-5 w-5 text-muted-foreground mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Add private notes on creators</TableCell>
+                    <TableCell className="text-center"><X className="h-5 w-5 text-muted-foreground mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Organize creators in folders</TableCell>
+                    <TableCell className="text-center"><X className="h-5 w-5 text-muted-foreground mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Track collaboration history</TableCell>
+                    <TableCell className="text-center"><X className="h-5 w-5 text-muted-foreground mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                  </TableRow>
+
+                  {/* Content Library */}
+                  <TableRow className="bg-muted/20">
+                    <TableCell colSpan={4} className="font-heading font-semibold text-primary">
+                      Content Library
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Cloud storage for content</TableCell>
+                    <TableCell className="text-center"><span className="text-sm font-medium">10 GB</span></TableCell>
+                    <TableCell className="text-center"><span className="text-sm font-medium">10 GB</span></TableCell>
+                    <TableCell className="text-center"><span className="text-sm font-medium text-primary">50 GB</span></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Purchase additional storage</TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                  </TableRow>
+
+                  {/* Trust & Verification */}
+                  <TableRow className="bg-muted/20">
+                    <TableCell colSpan={4} className="font-heading font-semibold text-primary">
+                      Trust & Verification
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Verified Business Badge eligibility</TableCell>
+                    <TableCell className="text-center"><X className="h-5 w-5 text-muted-foreground mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Marketplace fee</TableCell>
+                    <TableCell className="text-center"><span className="text-sm font-medium">15%</span></TableCell>
+                    <TableCell className="text-center"><span className="text-sm font-medium">15%</span></TableCell>
+                    <TableCell className="text-center"><span className="text-sm font-medium">15%</span></TableCell>
+                  </TableRow>
+
+                  {/* Support */}
+                  <TableRow className="bg-muted/20">
+                    <TableCell colSpan={4} className="font-heading font-semibold text-primary">
+                      Support
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Email support</TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Check className="h-5 w-5 text-primary mx-auto" /></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Priority support</TableCell>
+                    <TableCell className="text-center"><X className="h-5 w-5 text-muted-foreground mx-auto" /></TableCell>
+                    <TableCell className="text-center"><X className="h-5 w-5 text-muted-foreground mx-auto" /></TableCell>
+                    <TableCell className="text-center">
+                      <span className="text-xs text-muted-foreground">Coming Soon</span>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Dedicated account manager</TableCell>
+                    <TableCell className="text-center"><X className="h-5 w-5 text-muted-foreground mx-auto" /></TableCell>
+                    <TableCell className="text-center"><X className="h-5 w-5 text-muted-foreground mx-auto" /></TableCell>
+                    <TableCell className="text-center">
+                      <span className="text-xs text-muted-foreground">Coming Soon</span>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* CTA below table */}
+            <div className="text-center mt-10">
+              <Link to={isAuthenticated ? "/brand-dashboard?tab=subscription" : "/brand-signup"}>
+                <Button size="lg" className="gradient-hero hover:opacity-90">
+                  {isAuthenticated ? "Manage Subscription" : "Get Started Today"}
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
