@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -274,10 +275,23 @@ const BrandVerificationSection = ({ planType }: BrandVerificationSectionProps) =
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-1.5 text-xs">
                 <Phone className={`h-3.5 w-3.5 ${brandProfile?.phone_verified ? "text-green-500" : "text-muted-foreground"}`} />
-                <span className={brandProfile?.phone_verified ? "text-green-700 dark:text-green-400" : "text-muted-foreground"}>
-                  Phone {brandProfile?.phone_verified ? "verified" : "required"}
-                </span>
-                {brandProfile?.phone_verified && <CheckCircle className="h-3 w-3 text-green-500" />}
+                {brandProfile?.phone_verified ? (
+                  <>
+                    <span className="text-green-700 dark:text-green-400">Phone verified</span>
+                    <CheckCircle className="h-3 w-3 text-green-500" />
+                  </>
+                ) : (
+                  <>
+                    <span className="text-muted-foreground">Phone required</span>
+                    <span className="text-muted-foreground">—</span>
+                    <Link 
+                      to="/brand-dashboard?tab=account" 
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Add phone number
+                    </Link>
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-1.5 text-xs">
                 <Globe className={`h-3.5 w-3.5 ${websiteUrl ? "text-green-500" : "text-muted-foreground"}`} />
