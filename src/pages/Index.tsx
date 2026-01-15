@@ -90,18 +90,18 @@ const Index = () => {
   const steps = [
     {
       icon: Search,
-      title: "Search Influencers",
-      description: "Browse thousands of verified creators across all major platforms"
+      title: "Find Creators",
+      description: "Browse verified creators across Instagram, TikTok, YouTube and more"
     },
     {
       icon: MessageSquare,
-      title: "Connect & Collaborate",
-      description: "Message creators directly to discuss and negotiate your project"
+      title: "Request a Collaboration",
+      description: "Contact our team with your project needs—we handle the rest"
     },
     {
       icon: TrendingUp,
-      title: "Get Results",
-      description: "Receive high-quality content and track campaign performance"
+      title: "Get Quality Content",
+      description: "We coordinate with creators, manage payments, and deliver results"
     }
   ];
 

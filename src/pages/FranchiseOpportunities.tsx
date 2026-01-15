@@ -34,7 +34,7 @@ const FranchiseOpportunities = () => {
     {
       icon: BadgeDollarSign,
       title: "Revenue Share",
-      description: "Earn from every transaction that happens in your territory"
+      description: "Earn from subscriptions and managed collaborations in your territory"
     }
   ];
 

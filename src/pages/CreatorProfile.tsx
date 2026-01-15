@@ -806,10 +806,10 @@ const CreatorProfile = () => {
                         {!isOwnProfile && (
                           <Button 
                             className="w-full gradient-hero hover:opacity-90"
-                            onClick={() => handleContactCreator(service)}
+                            onClick={() => handleBookService(service)}
                           >
                             <MessageCircle className="h-4 w-4 mr-2" />
-                            Inquire About Package
+                            Book This Service
                           </Button>
                         )}
                       </div>
@@ -864,10 +864,14 @@ const CreatorProfile = () => {
             <Button 
               size="lg"
               className="flex-1 gradient-hero hover:opacity-90 shadow-lg"
-              onClick={() => handleContactCreator()}
+              onClick={() => {
+                const lowestService = creator?.services.reduce((min, s) => 
+                  s.price_cents < min.price_cents ? s : min, creator.services[0]);
+                if (lowestService) handleBookService(lowestService);
+              }}
             >
               <MessageCircle className="h-5 w-5 mr-2" />
-              Message Creator
+              Book Creator
             </Button>
             {hasBrandProfile && (
               <Button

@@ -55,25 +55,22 @@ const TermsOfService = () => {
 
             {/* Section 3 - Marketplace Role */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">3. Marketplace Role & Disclaimer</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">3. Managed Collaboration Platform</h2>
               <p className="text-muted-foreground mb-4">
-                <strong>CollabHunts acts SOLELY as an intermediary marketplace platform</strong> that connects Brands with Creators. 
-                We provide the technology infrastructure and tools to facilitate these connections, but we are NOT a party to any transaction or agreement between Buyers and Sellers.
+                <strong>CollabHunts facilitates and manages all collaborations between Brands and Creators.</strong> We act as the intermediary that coordinates projects, handles payments, and ensures smooth delivery.
               </p>
               <p className="text-muted-foreground mb-4">
-                <strong>We expressly disclaim any responsibility or liability for:</strong>
+                <strong>How it works:</strong>
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>The quality, safety, legality, or accuracy of any content created or delivered</li>
-                <li>The ability of Sellers to deliver services as described</li>
-                <li>The ability of Buyers to pay for services</li>
-                <li>Any disputes, disagreements, or failed collaborations between users</li>
-                <li>Any outcomes, results, or performance metrics of content created</li>
-                <li>User conduct, communications, or interactions on or off the Platform</li>
-                <li>Accuracy of user-provided information including follower counts, engagement metrics, or audience demographics</li>
+                <li>Brands browse and select Creators on our platform</li>
+                <li>Brands contact CollabHunts to request collaborations</li>
+                <li>Our team coordinates with Creators and finalizes project terms</li>
+                <li>Brands make payment securely to CollabHunts</li>
+                <li>CollabHunts manages the project and pays Creators upon delivery</li>
               </ul>
               <p className="text-muted-foreground mb-4">
-                Users deal directly with each other. CollabHunts facilitates connections but does not guarantee outcomes, quality, or satisfaction.
+                <strong>Important:</strong> While we manage the collaboration process, we do not guarantee specific outcomes, results, or performance metrics of content created. Final creative work is the Creator's responsibility.
               </p>
             </section>
 
@@ -133,15 +130,18 @@ const TermsOfService = () => {
               </p>
             </section>
 
-            {/* Section 6 - Booking System (Coming Soon) */}
+            {/* Section 6 - Collaboration Process */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">6. Direct Collaboration</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">6. Collaboration Process</h2>
               <p className="text-muted-foreground mb-4">
-                CollabHunts is a discovery and connection platform. We facilitate introductions between Brands and Creators.
+                All creator collaborations are managed through CollabHunts. Brands cannot book or pay creators directly through the platform.
               </p>
               <p className="text-muted-foreground mb-4">
-                Brands and creators communicate directly through our messaging system to discuss projects 
-                and arrange terms. CollabHunts is not responsible for any transactions or payments conducted between parties.
+                <strong>To book a creator:</strong> Contact our team at <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a> with your project requirements. 
+                We will coordinate with the creator, finalize terms, collect payment, and manage the project through to delivery.
+              </p>
+              <p className="text-muted-foreground mb-4">
+                <strong>Creator payments:</strong> Creators are paid by CollabHunts after successful delivery and brand approval of content.
               </p>
             </section>
 

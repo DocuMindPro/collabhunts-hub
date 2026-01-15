@@ -377,9 +377,9 @@ export const knowledgeBaseCategories: KBCategory[] = [
             <li><strong>Create your profile</strong> - Add your social accounts, bio, and portfolio</li>
             <li><strong>Set up service packages</strong> - Define what you offer and your pricing</li>
             <li><strong>Wait for approval</strong> - Our team reviews profiles within 1-2 business days</li>
-            <li><strong>Receive booking requests</strong> - Brands will find and book your services</li>
+            <li><strong>Receive collaboration requests</strong> - CollabHunts will contact you when brands want to work with you</li>
             <li><strong>Deliver content</strong> - Complete the work within the agreed timeframe</li>
-            <li><strong>Get paid!</strong> - Payment is released after brand approval or 72-hour auto-release</li>
+            <li><strong>Get paid!</strong> - CollabHunts pays you after successful delivery</li>
           </ol>
           
           <div class="alert alert-info">
@@ -704,18 +704,18 @@ export const knowledgeBaseCategories: KBCategory[] = [
         title: "Delivering Your Content",
         content: `
           <h2>The Delivery Process</h2>
-          <p>Once you've completed the content, upload your deliverables through the Bookings tab in your dashboard.</p>
+          <p>Once you've completed the content, submit your deliverables to the CollabHunts team as instructed during the project coordination.</p>
           
           <h3>What Happens After Delivery</h3>
           <ol>
-            <li>Brand receives notification of your delivery</li>
-            <li>72-hour review window begins</li>
-            <li>Brand can: Approve, Request Revisions, or Open Dispute</li>
-            <li>If no action within 72 hours, payment auto-releases to you</li>
+            <li>CollabHunts reviews your deliverables for quality</li>
+            <li>We share them with the brand for approval</li>
+            <li>Brand provides feedback through us</li>
+            <li>Once approved, you receive payment from CollabHunts</li>
           </ol>
           
           <div class="alert alert-warning">
-            <strong>Important:</strong> Make sure your deliverables match what was agreed upon. Clear communication prevents disputes.
+            <strong>Important:</strong> Make sure your deliverables match what was agreed upon. Clear communication prevents delays.
           </div>
         `,
         roles: ['creator'],
@@ -756,18 +756,19 @@ export const knowledgeBaseCategories: KBCategory[] = [
         slug: "how-payments-work",
         title: "How Payments Work",
         content: `
-          <h2>Escrow Payment System</h2>
-          <p>When a brand books you, their payment is held securely in escrow. This guarantees you'll be paid for your work.</p>
+          <h2>Managed Payment System</h2>
+          <p>CollabHunts handles all payments. Brands pay us, and we pay you after successful delivery.</p>
           
-          <h3>Payment Release Triggers</h3>
+          <h3>Payment Process</h3>
           <ul>
-            <li><strong>Brand Approval:</strong> Brand reviews and approves your deliverables</li>
-            <li><strong>Auto-Release:</strong> No action from brand within 72 hours of delivery</li>
-            <li><strong>Dispute Resolution:</strong> Admin decides in your favor</li>
+            <li><strong>Brand books you:</strong> Brand pays CollabHunts for the collaboration</li>
+            <li><strong>You deliver:</strong> Complete and submit your work</li>
+            <li><strong>Brand approves:</strong> Brand reviews and approves deliverables</li>
+            <li><strong>You get paid:</strong> CollabHunts releases payment to you</li>
           </ul>
           
           <h3>Your Earnings</h3>
-          <p>You receive the <strong>full price</strong> you set for your services. Platform fees are charged to brands, not creators.</p>
+          <p>You receive the <strong>full price</strong> you set for your services. All fees are handled separately.</p>
         `,
         roles: ['creator'],
         order: 1
@@ -801,28 +802,27 @@ export const knowledgeBaseCategories: KBCategory[] = [
     articles: [
       {
         slug: "dispute-process-creators",
-        title: "Understanding the Dispute Process",
+        title: "Issue Resolution",
         content: `
-          <h2>When Disputes Happen</h2>
-          <p>Sometimes brands may open a dispute if they're unsatisfied with deliverables. Here's how the process works:</p>
+          <h2>When Issues Happen</h2>
+          <p>Sometimes there may be disagreements about deliverables. CollabHunts acts as a mediator to resolve issues fairly.</p>
           
-          <h3>Dispute Timeline</h3>
+          <h3>Resolution Process</h3>
           <ol>
-            <li><strong>Dispute Opened:</strong> Brand explains their concern</li>
-            <li><strong>Your Response (3 days):</strong> Provide your side with evidence</li>
-            <li><strong>Negotiation Period:</strong> Try to resolve with the brand</li>
-            <li><strong>Admin Review:</strong> If unresolved, our team decides</li>
+            <li><strong>Issue Reported:</strong> Either party raises a concern with our team</li>
+            <li><strong>Review:</strong> CollabHunts reviews the situation with both parties</li>
+            <li><strong>Resolution:</strong> Our team makes a fair decision based on the agreement</li>
           </ol>
           
           <h3>Possible Outcomes</h3>
           <ul>
-            <li><strong>Full payment to you:</strong> Work meets requirements</li>
+            <li><strong>Full payment to you:</strong> Work meets agreed requirements</li>
             <li><strong>Full refund to brand:</strong> Significant issues with delivery</li>
-            <li><strong>Split payment:</strong> Partial compensation to each party</li>
+            <li><strong>Partial payment:</strong> Compromise when both parties share responsibility</li>
           </ul>
           
           <div class="alert alert-info">
-            <strong>Tip:</strong> Always keep records and communicate through the platform. This creates evidence if disputes arise.
+            <strong>Tip:</strong> Always keep records and communicate through CollabHunts. This helps us resolve issues quickly and fairly.
           </div>
         `,
         roles: ['creator'],
@@ -982,20 +982,27 @@ export const knowledgeBaseCategories: KBCategory[] = [
     articles: [
       {
         slug: "booking-process",
-        title: "The Booking Process",
+        title: "How to Book a Creator",
         content: `
-          <h2>How to Book a Creator</h2>
+          <h2>Managed Booking Process</h2>
+          <p>All creator collaborations are managed by CollabHunts. Here's how it works:</p>
+          
           <ol>
-            <li>Find a creator you like</li>
-            <li>Click on their profile to view services</li>
-            <li>Select the service package you want</li>
-            <li>Write a message explaining your requirements</li>
-            <li>Complete payment (held in escrow)</li>
-            <li>Wait for creator to accept</li>
+            <li>Find a creator you want to work with</li>
+            <li>Click "Book This Service" on their profile</li>
+            <li>Contact CollabHunts with your project details</li>
+            <li>We coordinate with the creator and finalize terms</li>
+            <li>Make payment securely to CollabHunts</li>
+            <li>Receive your content</li>
           </ol>
           
-          <h3>Escrow Protection</h3>
-          <p>Your payment is held securely until you approve the deliverables. This protects both you and the creator.</p>
+          <h3>Why Managed Bookings?</h3>
+          <ul>
+            <li><strong>Quality Assurance:</strong> We ensure deliverables meet expectations</li>
+            <li><strong>Payment Protection:</strong> Secure transactions through CollabHunts</li>
+            <li><strong>Dispute Resolution:</strong> We mediate if issues arise</li>
+            <li><strong>Hassle-Free:</strong> We handle all the coordination</li>
+          </ul>
         `,
         roles: ['brand'],
         order: 1
@@ -1004,18 +1011,18 @@ export const knowledgeBaseCategories: KBCategory[] = [
         slug: "reviewing-deliverables",
         title: "Reviewing Deliverables",
         content: `
-          <h2>The 72-Hour Review Window</h2>
-          <p>When a creator delivers their work, you have <strong>72 hours</strong> to review and take action.</p>
+          <h2>Content Review Process</h2>
+          <p>When a creator completes your project, CollabHunts will share the deliverables with you for review.</p>
           
           <h3>Your Options</h3>
           <ul>
-            <li><strong>Approve:</strong> Release payment to the creator</li>
-            <li><strong>Request Revisions:</strong> Ask for specific changes</li>
-            <li><strong>Open Dispute:</strong> Escalate significant issues</li>
+            <li><strong>Approve:</strong> Confirm the content meets your requirements</li>
+            <li><strong>Request Changes:</strong> Ask for specific revisions through our team</li>
+            <li><strong>Report Issues:</strong> Contact us if there are significant problems</li>
           </ul>
           
-          <div class="alert alert-danger">
-            <strong>Warning:</strong> If you don't take action within 72 hours, payment is <strong>automatically released</strong> to the creator. We send reminders at 48 hours and 24 hours before auto-release.
+          <div class="alert alert-info">
+            <strong>Note:</strong> CollabHunts manages the revision process to ensure smooth communication between you and the creator.
           </div>
         `,
         roles: ['brand'],
