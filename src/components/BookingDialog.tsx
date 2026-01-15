@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,7 +7,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, Clock, CheckCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Mail, Phone, Clock, CheckCircle, MessageSquare, Crown, Users } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { getCurrentPlanType } from "@/lib/subscription-utils";
+import { useNavigate } from "react-router-dom";
 
 interface BookingDialogProps {
   isOpen: boolean;
@@ -18,42 +23,94 @@ interface BookingDialogProps {
     delivery_days: number;
   } | null;
   creatorProfileId: string;
+  creatorName?: string;
 }
 
-const BookingDialog = ({ isOpen, onClose, service, creatorProfileId }: BookingDialogProps) => {
+const BookingDialog = ({ isOpen, onClose, service, creatorProfileId, creatorName }: BookingDialogProps) => {
+  const navigate = useNavigate();
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkSubscription = async () => {
+      setIsLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        setUserId(session.user.id);
+        const planType = await getCurrentPlanType(session.user.id);
+        // Basic, Pro, or Premium can message creators directly
+        setIsSubscribed(planType !== 'none');
+      } else {
+        setIsSubscribed(false);
+        setUserId(null);
+      }
+      setIsLoading(false);
+    };
+
+    if (isOpen) {
+      checkSubscription();
+    }
+  }, [isOpen]);
+
   if (!service) return null;
 
   const serviceName = service.service_type.replace(/_/g, " ");
   const price = (service.price_cents / 100).toFixed(2);
   
-  const emailSubject = encodeURIComponent(`Booking Request: ${serviceName}`);
+  const emailSubject = encodeURIComponent(`Managed Booking Request: ${serviceName}`);
   const emailBody = encodeURIComponent(
-    `Hi CollabHunts Team,\n\nI'd like to book the following service:\n\n` +
+    `Hi CollabHunts Team,\n\nI'd like CollabHunts to manage this collaboration for me:\n\n` +
+    `• Creator: ${creatorName || 'Creator'}\n` +
     `• Service: ${serviceName}\n` +
     `• Listed Price: $${price}\n` +
     `• Estimated Delivery: ${service.delivery_days} days\n` +
     `• Creator ID: ${creatorProfileId}\n\n` +
-    `Please contact me to discuss the details and next steps.\n\n` +
+    `Please contact me to discuss the service fee and next steps.\n\n` +
     `Thank you!`
   );
 
-  const handleEmailClick = () => {
+  const handleManagedBooking = () => {
     window.location.href = `mailto:care@collabhunts.com?subject=${emailSubject}&body=${emailBody}`;
     onClose();
   };
 
   const handleContactPage = () => {
-    window.location.href = `/contact?subject=${encodeURIComponent(`Booking Request: ${serviceName}`)}`;
+    window.location.href = `/contact?subject=${encodeURIComponent(`Managed Booking Request: ${serviceName}`)}`;
     onClose();
   };
 
+  const handleDirectMessage = () => {
+    // Navigate to brand dashboard messages with creator pre-selected
+    navigate(`/brand-dashboard?tab=messages&creator=${creatorProfileId}&package=${service.id}&price=${price}`);
+    onClose();
+  };
+
+  const handleUpgrade = () => {
+    navigate('/pricing');
+    onClose();
+  };
+
+  if (isLoading) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Book {serviceName}</DialogTitle>
           <DialogDescription>
-            Contact our team to arrange this collaboration
+            Choose how you'd like to proceed with this collaboration
           </DialogDescription>
         </DialogHeader>
 
@@ -74,39 +131,93 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId }: BookingDi
             </div>
           </div>
 
-          {/* How It Works */}
-          <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-            <h4 className="font-medium text-sm mb-3">How It Works</h4>
+          {/* Two Options */}
+          <div className="grid gap-4">
+            {/* Option 1: Direct Contact (Subscribers Only) */}
+            <Card className={`relative ${isSubscribed ? 'border-primary' : 'border-muted opacity-75'}`}>
+              {isSubscribed && (
+                <div className="absolute -top-2 left-4 px-2 py-0.5 bg-primary text-primary-foreground text-xs font-medium rounded">
+                  Your Plan Includes This
+                </div>
+              )}
+              <CardContent className="p-4 pt-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold mb-1">Message Creator Directly</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Contact the creator yourself, negotiate terms, and arrange payment directly.
+                    </p>
+                    {isSubscribed ? (
+                      <Button onClick={handleDirectMessage} className="w-full gradient-hero hover:opacity-90 gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Start Conversation
+                      </Button>
+                    ) : (
+                      <Button onClick={handleUpgrade} variant="outline" className="w-full gap-2">
+                        <Crown className="h-4 w-4" />
+                        Subscribe to Unlock
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Option 2: Managed Service (Available to All) */}
+            <Card className="border-accent/50">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                    <Users className="h-5 w-5 text-accent" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold mb-1">Let CollabHunts Handle It</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      We'll coordinate with the creator, manage the project, and handle all payments. Service fee applies.
+                    </p>
+                    <div className="space-y-2">
+                      <Button onClick={handleManagedBooking} variant="outline" className="w-full gap-2">
+                        <Mail className="h-4 w-4" />
+                        Email Us to Book
+                      </Button>
+                      <Button variant="ghost" onClick={handleContactPage} className="w-full gap-2 text-sm">
+                        <Phone className="h-4 w-4" />
+                        Use Contact Form
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* How Managed Service Works */}
+          <div className="p-4 bg-muted/50 rounded-lg border border-border/50">
+            <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-primary" />
+              How Managed Service Works
+            </h4>
             <div className="space-y-2 text-sm text-muted-foreground">
               <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span className="text-primary font-medium">1.</span>
                 <span>Contact us with your project requirements</span>
               </div>
               <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>We coordinate with the creator and finalize terms</span>
+                <span className="text-primary font-medium">2.</span>
+                <span>We'll provide a quote including our service fee</span>
               </div>
               <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>Make payment securely to CollabHunts</span>
+                <span className="text-primary font-medium">3.</span>
+                <span>We coordinate with the creator and manage the project</span>
               </div>
               <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span className="text-primary font-medium">4.</span>
                 <span>Receive your content—we handle everything</span>
               </div>
             </div>
-          </div>
-
-          {/* Contact Options */}
-          <div className="space-y-2">
-            <Button onClick={handleEmailClick} className="w-full gradient-hero hover:opacity-90 gap-2">
-              <Mail className="h-4 w-4" />
-              Email Us to Book
-            </Button>
-            <Button variant="outline" onClick={handleContactPage} className="w-full gap-2">
-              <Phone className="h-4 w-4" />
-              Use Contact Form
-            </Button>
           </div>
 
           <p className="text-xs text-center text-muted-foreground">

@@ -126,8 +126,8 @@ const Brand = () => {
   const marketplaceFeatures = [
     { icon: DollarSign, title: "No Upfront Cost", description: "Browse creators for free" },
     { icon: CheckCircle, title: "Vetted Creators", description: "All creators are verified" },
-    { icon: MessageSquare, title: "Managed Bookings", description: "We handle all coordination" },
-    { icon: Shield, title: "Safe & Secure", description: "Secure payments through us" },
+    { icon: MessageSquare, title: "Two Ways to Work", description: "DIY or fully managed" },
+    { icon: Shield, title: "Flexible Options", description: "Choose what works for you" },
   ];
 
   const campaignFeatures = [
@@ -230,7 +230,7 @@ const Brand = () => {
   const faqs = [
     {
       question: "How do I work with creators?",
-      answer: "Browse our marketplace to find creators that match your brand. Message them directly to discuss your project, negotiate terms, and arrange payment offline. We're working on an integrated booking system - coming soon!"
+      answer: "You have two options: 1) Subscribe to message creators directly and arrange collaborations yourself, or 2) Contact CollabHunts to have us manage the collaboration for you (service fee applies). Choose what works best for your needs."
     },
     {
       question: "How are creators vetted?",
@@ -238,15 +238,15 @@ const Brand = () => {
     },
     {
       question: "What can I do with a subscription?",
-      answer: "Subscriptions unlock features like messaging creators, posting campaigns, using the Creator CRM, and accessing the Content Library. Choose the plan that fits your needs."
+      answer: "Subscriptions unlock features like messaging creators directly, posting campaigns, using the Creator CRM, and accessing the Content Library. You can manage collaborations yourself without going through our team."
     },
     {
-      question: "How do campaigns work?",
-      answer: "Post a campaign with your requirements and budget. Qualified creators will apply to work with you. Review applications and choose the best fit for your brand."
+      question: "What is the managed service?",
+      answer: "For brands who prefer a hands-off approach, CollabHunts can manage the entire collaboration. We coordinate with creators, handle payments, and ensure delivery. Contact us for a quote—no subscription required."
     },
     {
       question: "Can I message creators for free?",
-      answer: "Basic subscribers can message creators. Upgrade to Pro for advanced features like CRM, campaigns, and verified badge eligibility."
+      answer: "Basic subscribers and above can message creators directly. If you don't have a subscription, you can still work with creators through our managed service option."
     },
     {
       question: "How does the Content Library work?",
@@ -338,15 +338,15 @@ const Brand = () => {
               <div className="inline-flex items-center justify-center w-14 h-14 rounded-full gradient-hero mx-auto step-icon">
                 <MessageSquare className="h-7 w-7 text-white" />
               </div>
-              <h3 className="text-xl font-heading font-semibold">Message & Book</h3>
-              <p className="text-muted-foreground">Chat directly with creators and securely purchase their services</p>
+              <h3 className="text-xl font-heading font-semibold">Choose Your Path</h3>
+              <p className="text-muted-foreground">Subscribe to message creators directly, or let us manage for you</p>
             </div>
             <div className="text-center space-y-4 p-6 rounded-xl bg-card border border-border step-card">
               <div className="inline-flex items-center justify-center w-14 h-14 rounded-full gradient-hero mx-auto step-icon">
                 <CheckCircle className="h-7 w-7 text-white" />
               </div>
               <h3 className="text-xl font-heading font-semibold">Get Content</h3>
-              <p className="text-muted-foreground">Receive high-quality content directly through the platform</p>
+              <p className="text-muted-foreground">Receive high-quality content your way—DIY or fully managed</p>
             </div>
           </div>
 
