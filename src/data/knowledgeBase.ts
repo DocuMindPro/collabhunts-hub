@@ -275,21 +275,32 @@ export const platformUpdates: PlatformUpdate[] = [
     icon: AlertTriangle
   },
   {
-    id: "direct-collaboration",
-    title: "Direct Creator Collaboration",
-    description: "Connect and work directly with creators",
+    id: "working-with-creators",
+    title: "Working with Creators: Two Options",
+    description: "Choose between self-service or managed collaborations",
     content: `
-      <h2>How Collaborations Work</h2>
-      <p>CollabHunts connects brands with creators. All project terms and payments are arranged directly between parties.</p>
+      <h2>How to Work with Creators</h2>
+      <p>CollabHunts offers two ways to collaborate with creators—choose what works best for your brand.</p>
       
-      <h3>Collaboration Process</h3>
+      <h3>Option 1: Self-Service (Subscription Required)</h3>
+      <p>With a Basic, Pro, or Premium subscription, you can:</p>
       <ul>
-        <li>Browse and discover verified creators</li>
-        <li>Message creators to discuss your project</li>
-        <li>Negotiate terms and deliverables directly</li>
-        <li>Arrange payment offline between parties</li>
-        <li>Receive high-quality content</li>
+        <li>Message creators directly through the platform</li>
+        <li>Negotiate terms and deliverables yourself</li>
+        <li>Arrange payment between you and the creator</li>
+        <li>Manage the relationship on your own terms</li>
       </ul>
+      <p>This option gives you full control and direct communication with creators.</p>
+      
+      <h3>Option 2: Managed Service (No Subscription Required)</h3>
+      <p>Prefer a hands-off approach? Let CollabHunts handle everything:</p>
+      <ul>
+        <li>Contact us with your project requirements</li>
+        <li>We coordinate with creators on your behalf</li>
+        <li>We handle all payments and project management</li>
+        <li>Receive your content—we manage the details</li>
+      </ul>
+      <p>A service fee applies for managed collaborations. Contact care@collabhunts.com for a quote.</p>
     `,
     publishedAt: new Date("2024-09-15"),
     roles: ['all'],

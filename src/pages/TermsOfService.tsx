@@ -134,14 +134,30 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">6. Collaboration Process</h2>
               <p className="text-muted-foreground mb-4">
-                All creator collaborations are managed through CollabHunts. Brands cannot book or pay creators directly through the platform.
+                CollabHunts offers two ways for Brands to work with Creators:
               </p>
+              
+              <h3 className="text-xl font-heading font-semibold mb-3">6.1 Self-Service (Subscription Required)</h3>
               <p className="text-muted-foreground mb-4">
-                <strong>To book a creator:</strong> Contact our team at <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a> with your project requirements. 
-                We will coordinate with the creator, finalize terms, collect payment, and manage the project through to delivery.
+                Brands with an active subscription (Basic, Pro, or Premium) can message Creators directly through the platform. 
+                In this model, Brands and Creators negotiate terms, arrange payments, and manage the collaboration independently. 
+                <strong> CollabHunts is not responsible for transactions arranged directly between parties.</strong>
               </p>
+              
+              <h3 className="text-xl font-heading font-semibold mb-3">6.2 Managed Service (Available to All)</h3>
               <p className="text-muted-foreground mb-4">
-                <strong>Creator payments:</strong> Creators are paid by CollabHunts after successful delivery and brand approval of content.
+                For an additional service fee, CollabHunts can manage the entire collaboration process. Contact our team at{" "}
+                <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a> with your project requirements. 
+                We will:
+              </p>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
+                <li>Coordinate with the Creator on your behalf</li>
+                <li>Finalize terms and project scope</li>
+                <li>Collect payment from you and pay the Creator</li>
+                <li>Manage the project through to delivery</li>
+              </ul>
+              <p className="text-muted-foreground mb-4">
+                <strong>Creator payments (Managed Service):</strong> Creators are paid by CollabHunts after successful delivery and Brand approval of content.
               </p>
             </section>
 

@@ -79,13 +79,23 @@ const RefundPolicy = () => {
             {/* Managed Collaborations */}
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">3. Creator Collaborations</h2>
+              
+              <h3 className="text-xl font-heading font-semibold mb-3">3.1 Self-Arranged Collaborations</h3>
               <p className="text-muted-foreground mb-4">
-                All creator collaborations are managed by CollabHunts. We handle payments, coordinate with creators, and ensure delivery.
+                For collaborations arranged directly between Brands and Creators (available to subscribed users), 
+                <strong> CollabHunts is not responsible for refunds or disputes.</strong> Transactions arranged directly between parties 
+                are the responsibility of both parties involved.
+              </p>
+              
+              <h3 className="text-xl font-heading font-semibold mb-3">3.2 Managed Collaborations</h3>
+              <p className="text-muted-foreground mb-4">
+                For collaborations managed by CollabHunts (where we coordinate and handle payments), we handle payments, 
+                coordinate with creators, and ensure delivery.
               </p>
               <p className="text-muted-foreground mb-4">
-                <strong>Collaboration Refunds:</strong> If you're unsatisfied with a collaboration, contact us at{" "}
+                <strong>Managed Collaboration Refunds:</strong> If you're unsatisfied with a managed collaboration, contact us at{" "}
                 <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a>. 
-                Refunds for creator services are evaluated on a case-by-case basis depending on the circumstances and project stage.
+                Refunds are evaluated on a case-by-case basis depending on the circumstances and project stage.
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li><strong>Before work starts:</strong> Full refund available if project is cancelled before creator begins work</li>
@@ -161,13 +171,23 @@ const RefundPolicy = () => {
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">8. Creator & Brand Transactions</h2>
               <p className="text-muted-foreground mb-4">
-                CollabHunts is a discovery and connection platform. All transactions, payments, and collaborations are handled directly between brands and creators outside of our platform.
+                CollabHunts offers two collaboration models with different responsibilities:
               </p>
+              
+              <h3 className="text-xl font-heading font-semibold mb-3">8.1 Self-Service Model (Subscribed Brands)</h3>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li>Brands and creators negotiate terms directly through messaging</li>
-                <li>All payments are arranged and processed offline between parties</li>
-                <li>CollabHunts is not responsible for any transactions conducted outside the platform</li>
+                <li>All payments are arranged and processed between parties</li>
+                <li>CollabHunts is not responsible for transactions conducted between parties</li>
                 <li>We recommend using secure payment methods and maintaining clear records</li>
+              </ul>
+              
+              <h3 className="text-xl font-heading font-semibold mb-3">8.2 Managed Service Model</h3>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
+                <li>CollabHunts collects payment from Brands and pays Creators</li>
+                <li>We coordinate all project details and manage delivery</li>
+                <li>Creators are paid after successful delivery and Brand approval</li>
+                <li>A service fee applies for managed collaborations</li>
               </ul>
             </section>
 

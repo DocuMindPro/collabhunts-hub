@@ -95,13 +95,13 @@ const Index = () => {
     },
     {
       icon: MessageSquare,
-      title: "Request a Collaboration",
-      description: "Contact our team with your project needs—we handle the rest"
+      title: "Choose Your Path",
+      description: "Subscribe to message creators directly, or let us manage the collaboration for you"
     },
     {
       icon: TrendingUp,
       title: "Get Quality Content",
-      description: "We coordinate with creators, manage payments, and deliver results"
+      description: "Connect with creators your way—DIY or fully managed by our team"
     }
   ];
 
