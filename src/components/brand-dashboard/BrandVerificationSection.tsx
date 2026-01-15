@@ -88,7 +88,7 @@ const BrandVerificationSection = ({ planType }: BrandVerificationSectionProps) =
       return;
     }
 
-    if (!brandProfile.phone_verified) {
+    if (brandProfile.phone_verified !== true) {
       toast({
         title: "Phone Verification Required",
         description: "Please verify your phone number before requesting business verification.",
@@ -258,7 +258,7 @@ const BrandVerificationSection = ({ planType }: BrandVerificationSectionProps) =
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs">
-                {brandProfile?.phone_verified ? "Ready" : "Setup needed"}
+                {brandProfile?.phone_verified === true ? "Ready" : "Setup needed"}
               </Badge>
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -274,8 +274,8 @@ const BrandVerificationSection = ({ planType }: BrandVerificationSectionProps) =
             {/* Compact requirements row */}
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-1.5 text-xs">
-                <Phone className={`h-3.5 w-3.5 ${brandProfile?.phone_verified ? "text-green-500" : "text-muted-foreground"}`} />
-                {brandProfile?.phone_verified ? (
+                <Phone className={`h-3.5 w-3.5 ${brandProfile?.phone_verified === true ? "text-green-500" : "text-muted-foreground"}`} />
+                {brandProfile?.phone_verified === true ? (
                   <>
                     <span className="text-green-700 dark:text-green-400">Phone verified</span>
                     <CheckCircle className="h-3 w-3 text-green-500" />
@@ -320,7 +320,7 @@ const BrandVerificationSection = ({ planType }: BrandVerificationSectionProps) =
             {/* Submit */}
             <Button 
               onClick={handleSubmitVerification} 
-              disabled={submitting || !brandProfile?.phone_verified || !websiteUrl.trim()}
+              disabled={submitting || brandProfile?.phone_verified !== true || !websiteUrl.trim()}
               size="sm"
               className="w-full"
             >
