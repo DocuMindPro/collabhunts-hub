@@ -1,10 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, Clock, MessageSquare } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Wallet, Mail, CheckCircle } from "lucide-react";
 
 const PayoutsTab = () => {
-  const navigate = useNavigate();
+
+  const handleContactUs = () => {
+    window.location.href = "mailto:care@collabhunts.com?subject=Creator%20Payout%20Inquiry";
+  };
 
   return (
     <div className="space-y-6">
@@ -18,27 +20,37 @@ const PayoutsTab = () => {
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
             <Wallet className="h-8 w-8 text-primary" />
           </div>
-          <h3 className="text-2xl font-heading font-bold mb-2">Payout System Coming Soon</h3>
+          <h3 className="text-2xl font-heading font-bold mb-2">Managed Payments</h3>
           <p className="text-muted-foreground max-w-md mb-6">
-            We're building a secure payment system with Stripe Connect integration. For now, arrange payments directly with brands through messaging.
+            CollabHunts handles all payments for collaborations. When a brand books your services through us, you'll receive payment after successful delivery.
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Button 
-              onClick={() => navigate('/creator-dashboard?tab=messages')}
+              onClick={handleContactUs}
               className="gap-2"
             >
-              <MessageSquare className="h-4 w-4" />
-              Go to Messages
+              <Mail className="h-4 w-4" />
+              Payment Questions?
             </Button>
           </div>
           <div className="mt-8 p-4 bg-muted/50 rounded-lg max-w-md">
-            <div className="flex items-start gap-3">
-              <Clock className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-              <div className="text-left">
-                <p className="text-sm font-medium">What's coming</p>
-                <p className="text-sm text-muted-foreground">
-                  Stripe Connect for instant payouts, earnings dashboard, and payout history tracking.
-                </p>
+            <p className="text-sm font-medium mb-3">How Payments Work</p>
+            <div className="space-y-2 text-left">
+              <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>Brands pay CollabHunts when booking your services</span>
+              </div>
+              <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>You deliver the content as agreed</span>
+              </div>
+              <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>Brand approves the deliverables</span>
+              </div>
+              <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>CollabHunts releases payment to you</span>
               </div>
             </div>
           </div>

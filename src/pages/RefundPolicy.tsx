@@ -76,18 +76,22 @@ const RefundPolicy = () => {
               </ul>
             </section>
 
-            {/* Direct Collaboration */}
+            {/* Managed Collaborations */}
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">3. Creator Collaborations</h2>
               <p className="text-muted-foreground mb-4">
-                CollabHunts is a discovery and connection platform. All transactions and payments between brands and creators 
-                are arranged directly between parties outside of our platform.
+                All creator collaborations are managed by CollabHunts. We handle payments, coordinate with creators, and ensure delivery.
               </p>
               <p className="text-muted-foreground mb-4">
-                <strong>Note:</strong> CollabHunts is not responsible for any transactions, payments, or disputes 
-                that occur between users. We recommend using secure payment methods and maintaining clear 
-                communication records when collaborating with creators.
+                <strong>Collaboration Refunds:</strong> If you're unsatisfied with a collaboration, contact us at{" "}
+                <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a>. 
+                Refunds for creator services are evaluated on a case-by-case basis depending on the circumstances and project stage.
               </p>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
+                <li><strong>Before work starts:</strong> Full refund available if project is cancelled before creator begins work</li>
+                <li><strong>Work in progress:</strong> Partial refund may be available depending on work completed</li>
+                <li><strong>After delivery:</strong> Refunds considered only if deliverables significantly differ from agreed specifications</li>
+              </ul>
             </section>
 
             {/* How to Request a Refund */}
@@ -105,15 +109,15 @@ const RefundPolicy = () => {
                 <li>We will respond within 2 business days</li>
               </ol>
 
-              <h3 className="text-xl font-heading font-semibold mb-3">5.2 Creator Collaboration Issues</h3>
+              <h3 className="text-xl font-heading font-semibold mb-3">5.2 Collaboration Issues</h3>
               <p className="text-muted-foreground mb-4">
-                Since all transactions between brands and creators occur directly between parties outside our platform, 
-                CollabHunts cannot process refunds for these transactions. If you encounter issues with a collaboration:
+                If you experience issues with a creator collaboration managed by CollabHunts:
               </p>
               <ol className="list-decimal pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Contact the other party directly through our messaging system</li>
-                <li>If the issue persists, email <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a> to report the user</li>
-                <li>We may investigate and take action on user accounts violating our terms</li>
+                <li>Email <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a> with subject line "Collaboration Issue"</li>
+                <li>Include the project details and description of the issue</li>
+                <li>Our team will review the situation and work with both parties to find a resolution</li>
+                <li>If a refund is warranted, we will process it accordingly</li>
               </ol>
             </section>
 

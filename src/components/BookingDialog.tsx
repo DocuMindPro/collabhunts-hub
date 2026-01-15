@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -8,11 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import { type PlanType, SUBSCRIPTION_PLANS } from "@/lib/stripe-mock";
-import UpgradePrompt from "./UpgradePrompt";
-import { Calendar, Clock, MessageSquare, ExternalLink } from "lucide-react";
+import { Mail, Phone, Clock, CheckCircle } from "lucide-react";
 
 interface BookingDialogProps {
   isOpen: boolean;
@@ -27,172 +21,99 @@ interface BookingDialogProps {
 }
 
 const BookingDialog = ({ isOpen, onClose, service, creatorProfileId }: BookingDialogProps) => {
-  const [checkingSubscription, setCheckingSubscription] = useState(true);
-  const [canContact, setCanContact] = useState(false);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isOpen) {
-      checkSubscription();
-    }
-  }, [isOpen]);
-
-  const checkSubscription = async () => {
-    setCheckingSubscription(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setCanContact(false);
-        setCheckingSubscription(false);
-        return;
-      }
-
-      // Check if admin
-      const { data: adminCheck } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'admin'
-      });
-      
-      if (adminCheck) {
-        setCanContact(true);
-        setCheckingSubscription(false);
-        return;
-      }
-
-      // Get brand profile and subscription
-      const { data: brandProfile } = await supabase
-        .from("brand_profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (!brandProfile) {
-        setCanContact(false);
-        setCheckingSubscription(false);
-        return;
-      }
-
-      const { data: subscription } = await supabase
-        .from("brand_subscriptions")
-        .select("plan_type")
-        .eq("brand_profile_id", brandProfile.id)
-        .eq("status", "active")
-        .maybeSingle();
-
-      const planType = (subscription?.plan_type || "none") as PlanType;
-      setCanContact(SUBSCRIPTION_PLANS[planType].canContactCreators);
-    } catch (error) {
-      console.error("Error checking subscription:", error);
-      setCanContact(false);
-    } finally {
-      setCheckingSubscription(false);
-    }
-  };
-
-  const handleGoToMessages = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("Please login to message creators");
-        navigate("/login");
-        return;
-      }
-
-      let { data: brandProfile } = await supabase
-        .from("brand_profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (!brandProfile) {
-        toast.error("Please create a brand profile first");
-        navigate("/brand-signup");
-        return;
-      }
-
-      // Create or get conversation
-      const { data: existingConv } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("creator_profile_id", creatorProfileId)
-        .eq("brand_profile_id", brandProfile.id)
-        .maybeSingle();
-
-      if (!existingConv) {
-        await supabase.from("conversations").insert({
-          creator_profile_id: creatorProfileId,
-          brand_profile_id: brandProfile.id,
-        });
-      }
-
-      toast.success("Conversation started! Discuss terms directly with the creator.");
-      onClose();
-      navigate("/brand-dashboard?tab=messages");
-    } catch (error) {
-      console.error("Error starting conversation:", error);
-      toast.error("Failed to start conversation");
-    }
-  };
-
   if (!service) return null;
+
+  const serviceName = service.service_type.replace(/_/g, " ");
+  const price = (service.price_cents / 100).toFixed(2);
+  
+  const emailSubject = encodeURIComponent(`Booking Request: ${serviceName}`);
+  const emailBody = encodeURIComponent(
+    `Hi CollabHunts Team,\n\nI'd like to book the following service:\n\n` +
+    `• Service: ${serviceName}\n` +
+    `• Listed Price: $${price}\n` +
+    `• Estimated Delivery: ${service.delivery_days} days\n` +
+    `• Creator ID: ${creatorProfileId}\n\n` +
+    `Please contact me to discuss the details and next steps.\n\n` +
+    `Thank you!`
+  );
+
+  const handleEmailClick = () => {
+    window.location.href = `mailto:care@collabhunts.com?subject=${emailSubject}&body=${emailBody}`;
+    onClose();
+  };
+
+  const handleContactPage = () => {
+    window.location.href = `/contact?subject=${encodeURIComponent(`Booking Request: ${serviceName}`)}`;
+    onClose();
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Interested in {service.service_type.replace(/_/g, " ")}?</DialogTitle>
+          <DialogTitle>Book {serviceName}</DialogTitle>
           <DialogDescription>
-            Connect with the creator to discuss this service
+            Contact our team to arrange this collaboration
           </DialogDescription>
         </DialogHeader>
 
-        {checkingSubscription ? (
-          <div className="py-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="text-sm text-muted-foreground mt-2">Checking subscription...</p>
-          </div>
-        ) : !canContact ? (
-          <UpgradePrompt feature="contact" />
-        ) : (
-          <div className="space-y-4">
-            <div className="bg-muted p-4 rounded-lg space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Service:</span>
-                <span className="font-medium capitalize">{service.service_type.replace(/_/g, " ")}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Starting at:</span>
-                <span className="font-medium">${(service.price_cents / 100).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Est. Delivery:</span>
-                <span className="font-medium">{service.delivery_days} days</span>
-              </div>
+        <div className="space-y-4">
+          {/* Service Details */}
+          <div className="bg-muted p-4 rounded-lg space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm text-muted-foreground">Service:</span>
+              <span className="font-medium capitalize">{serviceName}</span>
             </div>
-
-            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-              <div className="flex items-start gap-3">
-                <ExternalLink className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Booking handled offline</p>
-                  <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                    Message the creator to discuss project details, negotiate pricing, and arrange payment directly. All transactions are your responsibility.
-                  </p>
-                </div>
-              </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-muted-foreground">Starting at:</span>
+              <span className="font-medium">${price}</span>
             </div>
-
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={onClose} className="flex-1">
-                Cancel
-              </Button>
-              <Button onClick={handleGoToMessages} className="flex-1 gradient-hero hover:opacity-90 gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Message Creator
-              </Button>
+            <div className="flex justify-between">
+              <span className="text-sm text-muted-foreground">Est. Delivery:</span>
+              <span className="font-medium">{service.delivery_days} days</span>
             </div>
           </div>
-        )}
+
+          {/* How It Works */}
+          <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+            <h4 className="font-medium text-sm mb-3">How It Works</h4>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <div className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>Contact us with your project requirements</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>We coordinate with the creator and finalize terms</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>Make payment securely to CollabHunts</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>Receive your content—we handle everything</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Options */}
+          <div className="space-y-2">
+            <Button onClick={handleEmailClick} className="w-full gradient-hero hover:opacity-90 gap-2">
+              <Mail className="h-4 w-4" />
+              Email Us to Book
+            </Button>
+            <Button variant="outline" onClick={handleContactPage} className="w-full gap-2">
+              <Phone className="h-4 w-4" />
+              Use Contact Form
+            </Button>
+          </div>
+
+          <p className="text-xs text-center text-muted-foreground">
+            <Clock className="h-3 w-3 inline mr-1" />
+            We typically respond within 24 hours
+          </p>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -126,8 +126,8 @@ const Brand = () => {
   const marketplaceFeatures = [
     { icon: DollarSign, title: "No Upfront Cost", description: "Browse creators for free" },
     { icon: CheckCircle, title: "Vetted Creators", description: "All creators are verified" },
-    { icon: MessageSquare, title: "Instant Chat", description: "Message creators directly" },
-    { icon: Shield, title: "Safe & Secure", description: "Verified creators you can trust" },
+    { icon: MessageSquare, title: "Managed Bookings", description: "We handle all coordination" },
+    { icon: Shield, title: "Safe & Secure", description: "Secure payments through us" },
   ];
 
   const campaignFeatures = [
