@@ -1988,6 +1988,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_creator_auto_approval: {
+        Args: { creator_id: string }
+        Returns: boolean
+      }
       distribute_affiliate_earnings_for_user: {
         Args: {
           p_platform_fee_cents: number
@@ -1997,6 +2001,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      finalize_creator_signup: { Args: { creator_id: string }; Returns: string }
       get_affiliate_by_code: { Args: { _code: string }; Returns: string }
       has_role: {
         Args: {

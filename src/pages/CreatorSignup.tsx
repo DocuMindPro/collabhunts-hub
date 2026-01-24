@@ -680,10 +680,22 @@ const CreatorSignup = () => {
         }
       }
 
-      toast({
-        title: "Application Submitted!",
-        description: "Your profile is pending approval. We'll notify you once it's reviewed."
+      // Check if creator qualifies for auto-approval
+      const { data: approvalStatus } = await supabase.rpc('finalize_creator_signup', { 
+        creator_id: profileData.id 
       });
+
+      if (approvalStatus === 'approved') {
+        toast({
+          title: "Welcome to CollabHunts! 🎉",
+          description: "Your profile is now live and visible to brands!"
+        });
+      } else {
+        toast({
+          title: "Application Submitted!",
+          description: "Your profile is pending approval. We'll notify you once it's reviewed."
+        });
+      }
 
       // Navigate after a delay
       setTimeout(() => {
