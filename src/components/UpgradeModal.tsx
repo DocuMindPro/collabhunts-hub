@@ -17,7 +17,7 @@ const featureConfig = {
     description: "Start conversations, negotiate rates, and build relationships with creators.",
     icon: MessageCircle,
     plan: "Basic",
-    price: 39,
+    price: 10,
     benefits: [
       "Unlimited messaging with creators",
       "Negotiate rates before booking",
@@ -29,7 +29,7 @@ const featureConfig = {
     description: "Let creators come to you! Post campaigns and receive applications from interested creators.",
     icon: Users,
     plan: "Pro",
-    price: 99,
+    price: 49,
     benefits: [
       "Post 1 campaign per month",
       "Receive creator applications",
@@ -42,7 +42,7 @@ const featureConfig = {
     description: "Save favorite creators, add notes, and track your collaboration history.",
     icon: FolderOpen,
     plan: "Pro",
-    price: 99,
+    price: 49,
     benefits: [
       "Save unlimited creators",
       "Organize with folders",
@@ -55,7 +55,7 @@ const featureConfig = {
     description: "Find the perfect creators with powerful filtering options.",
     icon: Filter,
     plan: "Pro",
-    price: 99,
+    price: 49,
     benefits: [
       "Filter by age range",
       "Filter by ethnicity",
@@ -68,7 +68,7 @@ const featureConfig = {
     description: "Build trust with creators by becoming a verified business.",
     icon: BadgeCheck,
     plan: "Pro",
-    price: 99,
+    price: 49,
     benefits: [
       "Blue checkmark badge",
       "Increased creator trust",
@@ -81,7 +81,7 @@ const featureConfig = {
     description: "Save UGC content with usage rights tracking and easy re-downloads.",
     icon: FolderOpen,
     plan: "Basic",
-    price: 39,
+    price: 10,
     benefits: [
       "10 GB storage included",
       "Track usage rights",
@@ -94,7 +94,7 @@ const featureConfig = {
     description: "Want to work with this creator again? Save them to your network!",
     icon: Star,
     plan: "Pro",
-    price: 99,
+    price: 49,
     benefits: [
       "Save to your creator network",
       "Add private notes",
@@ -107,7 +107,7 @@ const featureConfig = {
     description: "Invite multiple creators to apply for your campaigns at once.",
     icon: Megaphone,
     plan: "Pro",
-    price: 99,
+    price: 49,
     benefits: [
       "Invite up to 50 creators/day",
       "Select from active campaigns",
@@ -120,7 +120,7 @@ const featureConfig = {
     description: "Remove campaign limits and post as many campaigns as you need.",
     icon: Users,
     plan: "Premium",
-    price: 299,
+    price: 99,
     benefits: [
       "Post unlimited campaigns",
       "50 GB content storage",
@@ -133,7 +133,7 @@ const featureConfig = {
     description: "Running low on space? Upgrade to Premium for 5x more storage.",
     icon: FolderOpen,
     plan: "Premium",
-    price: 299,
+    price: 99,
     benefits: [
       "50 GB content storage",
       "Unlimited campaigns",
@@ -146,7 +146,7 @@ const featureConfig = {
     description: "See exactly what creators charge before reaching out.",
     icon: Lock,
     plan: "Basic",
-    price: 39,
+    price: 10,
     benefits: [
       "View all creator pricing",
       "Unlimited messaging with creators",

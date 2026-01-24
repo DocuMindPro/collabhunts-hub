@@ -118,9 +118,9 @@ const TermsOfService = () => {
                 Prices are subject to change with 30 days notice.
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Basic ($39/month):</strong> Contact creators, view pricing, 10GB Content Library</li>
-                <li><strong>Pro ($99/month):</strong> All Basic features plus CRM, campaigns, advanced filters</li>
-                <li><strong>Premium ($299/month):</strong> All features, 50GB Content Library, unlimited campaigns</li>
+                <li><strong>Basic ($10/month):</strong> Contact creators, view pricing, 10GB Content Library</li>
+                <li><strong>Pro ($49/month):</strong> All Basic features plus CRM, campaigns, advanced filters</li>
+                <li><strong>Premium ($99/month):</strong> All features, 50GB Content Library, unlimited campaigns</li>
               </ul>
 
               <h3 className="text-xl font-heading font-semibold mb-3">5.3 Currency & Taxes</h3>

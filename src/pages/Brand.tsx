@@ -179,7 +179,7 @@ const Brand = () => {
   const subscriptionTiers = [
     {
       name: "Basic",
-      price: "$39",
+      price: "$10",
       period: "/month",
       description: "Perfect for getting started",
       features: ["Chat with creators", "10GB content storage", "Browse all creators"],
@@ -187,7 +187,7 @@ const Brand = () => {
     },
     {
       name: "Pro",
-      price: "$99",
+      price: "$49",
       period: "/month",
       description: "Most popular for growing brands",
       features: ["Everything in Basic", "1 campaign/month", "Creator CRM access", "Advanced filters", "Verified badge eligibility"],
@@ -195,7 +195,7 @@ const Brand = () => {
     },
     {
       name: "Premium",
-      price: "$299",
+      price: "$99",
       period: "/month",
       description: "For brands that need it all",
       features: ["Everything in Pro", "Unlimited campaigns", "50GB content storage", "Priority support", "Mass messaging"],

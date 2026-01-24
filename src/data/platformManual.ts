@@ -487,9 +487,9 @@ All secrets are stored securely and accessible only in edge functions.
         content: `## Subscription Validity
 
 ### Plan Durations:
-- **Basic (Free):** 1 year validity
-- **Pro ($99/mo):** 1 month validity
-- **Premium ($299/mo):** 1 month validity
+- **Basic ($10/mo):** 1 month validity
+- **Pro ($49/mo):** 1 month validity
+- **Premium ($99/mo):** 1 month validity
 
 ### On Expiration:
 1. Subscription status changes to "expired"
@@ -517,7 +517,7 @@ All secrets are stored securely and accessible only in edge functions.
         title: "Tier Comparison",
         content: `## Brand Subscription Tiers
 
-| Feature | No Package | Basic ($39/mo) | Pro ($99/mo) | Premium ($299/mo) |
+| Feature | No Package | Basic ($10/mo) | Pro ($49/mo) | Premium ($99/mo) |
 |---------|------------|----------------|--------------|-------------------|
 | Message Creators | ❌ | ✅ | ✅ | ✅ |
 | View Creator Pricing | ❌ | ✅ | ✅ | ✅ |

@@ -243,9 +243,9 @@ export const platformUpdates: PlatformUpdate[] = [
       
       <h3>Available Plans</h3>
       <ul>
-        <li><strong>Basic (Free):</strong> Browse creators, 20% marketplace fee</li>
-        <li><strong>Pro ($99/mo):</strong> Contact & book creators, CRM, 15% fee</li>
-        <li><strong>Premium ($299/mo):</strong> Unlimited campaigns, 50GB storage, 15% fee</li>
+        <li><strong>Basic ($10/mo):</strong> Contact creators, view pricing, 10GB storage</li>
+        <li><strong>Pro ($49/mo):</strong> Contact & book creators, CRM, advanced filters</li>
+        <li><strong>Premium ($99/mo):</strong> Unlimited campaigns, 50GB storage, mass messaging</li>
       </ul>
     `,
     publishedAt: new Date("2024-10-15"),

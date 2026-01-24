@@ -97,7 +97,7 @@ const Pricing = () => {
   const plans = [
     {
       name: "Basic",
-      price: "$39",
+      price: "$10",
       period: "/mo",
       description: "Start connecting with creators",
       features: [
@@ -115,7 +115,7 @@ const Pricing = () => {
     },
     {
       name: "Pro",
-      price: "$99",
+      price: "$49",
       period: "/mo",
       description: "For growing brands",
       features: [
@@ -130,7 +130,7 @@ const Pricing = () => {
     },
     {
       name: "Premium",
-      price: "$299",
+      price: "$99",
       period: "/mo",
       description: "For established businesses",
       features: [
@@ -335,7 +335,7 @@ const Pricing = () => {
                     <TableHead className="text-center font-heading font-bold text-foreground">
                       <div className="flex flex-col items-center gap-1">
                         <span>Basic</span>
-                        <span className="text-primary font-normal text-sm">$39/mo</span>
+                        <span className="text-primary font-normal text-sm">$10/mo</span>
                       </div>
                     </TableHead>
                     <TableHead className="text-center font-heading font-bold text-foreground">
@@ -344,13 +344,13 @@ const Pricing = () => {
                           Pro
                           <Badge variant="secondary" className="text-xs">Popular</Badge>
                         </span>
-                        <span className="text-primary font-normal text-sm">$99/mo</span>
+                        <span className="text-primary font-normal text-sm">$49/mo</span>
                       </div>
                     </TableHead>
                     <TableHead className="text-center font-heading font-bold text-foreground">
                       <div className="flex flex-col items-center gap-1">
                         <span>Premium</span>
-                        <span className="text-primary font-normal text-sm">$299/mo</span>
+                        <span className="text-primary font-normal text-sm">$99/mo</span>
                       </div>
                     </TableHead>
                   </TableRow>
