@@ -1,175 +1,326 @@
 
-# Plan: Update Subscription Pricing
+# Plan: Creator-Only Mobile App with Capacitor
 
-## Summary
-Update the pricing across the entire CollabHunts platform from the current pricing ($39 Basic, $99 Pro, $299 Premium) to the new competitive pricing ($10 Basic, $49 Pro, $99 Premium).
-
-## New Pricing Structure
-| Plan | Old Price | New Price | In Cents |
-|------|-----------|-----------|----------|
-| Basic | $39/mo | **$10/mo** | 1000 |
-| Pro | $99/mo | **$49/mo** | 4900 |
-| Premium | $299/mo | **$99/mo** | 9900 |
+## Overview
+Build a native mobile app for iOS and Android targeting creators only, enabling instant push notifications, quick message replies, and earnings tracking. The app wraps the existing responsive web interface using Capacitor while adding native push notification capabilities.
 
 ---
 
-## Files to Update
+## Phase 1: Project Setup and Configuration
 
-### 1. Core Configuration Files (Source of Truth)
+### 1.1 Install Capacitor Dependencies
+Add required packages to the project:
+- `@capacitor/core` - Core Capacitor framework
+- `@capacitor/cli` - CLI tools (dev dependency)
+- `@capacitor/ios` - iOS platform support
+- `@capacitor/android` - Android platform support
+- `@capacitor/push-notifications` - Native push notification support
+- `@capacitor/splash-screen` - App splash screen
+- `@capacitor/status-bar` - Status bar customization
+- `@capacitor/app` - App lifecycle events
+- `@capacitor/keyboard` - Keyboard handling for mobile
 
-**`src/config/plans.ts`** - Centralized plan configuration
-- Line 69: `price: 3900` → `price: 1000` (Basic)
-- Line 102: `price: 9900` → `price: 4900` (Pro)
-- Line 135: `price: 29900` → `price: 9900` (Premium)
+### 1.2 Create Capacitor Configuration
+Create `capacitor.config.ts` with:
+- **appId**: `app.lovable.f0d3858ae7f2489288d232504acaef78`
+- **appName**: `CollabHunts Creators`
+- **webDir**: `dist` (Vite build output)
+- **server.url**: Points to preview URL for hot-reload during development
+- **plugins**: Configure PushNotifications, SplashScreen, StatusBar
 
-**`src/lib/stripe-mock.ts`** - Mock Stripe integration
-- Line 36: `price: 3900` → `price: 1000` (Basic)
-- Line 65: `price: 9900` → `price: 4900` (Pro)
-- Line 94: `price: 29900` → `price: 9900` (Premium)
-
----
-
-### 2. UI Pages with Hardcoded Pricing
-
-**`src/pages/Pricing.tsx`** - Main pricing page
-- Line 100: `"$39"` → `"$10"` (Basic card)
-- Line 118: `"$99"` → `"$49"` (Pro card)
-- Line 133: `"$299"` → `"$99"` (Premium card)
-- Line 338: `"$39/mo"` → `"$10/mo"` (Feature comparison table - Basic)
-- Line 347: `"$99/mo"` → `"$49/mo"` (Feature comparison table - Pro)
-- Line 353: `"$299/mo"` → `"$99/mo"` (Feature comparison table - Premium)
-
-**`src/pages/Brand.tsx`** - Brand landing page
-- Line 182: `"$39"` → `"$10"` (Basic tier)
-- Line 190: `"$99"` → `"$49"` (Pro tier)
-- Line 198: `"$299"` → `"$99"` (Premium tier)
+### 1.3 Update index.html for Mobile
+Add mobile-specific meta tags:
+- `apple-mobile-web-app-capable`
+- `apple-mobile-web-app-status-bar-style`
+- `theme-color` matching brand colors
+- Disable user scaling for native feel
 
 ---
 
-### 3. Upgrade Components
+## Phase 2: Database Schema Updates
 
-**`src/components/UpgradeModal.tsx`** - Modal for feature upgrades
-- Line 20: `price: 39` → `price: 10` (Basic - chat)
-- Line 32: `price: 99` → `price: 49` (Pro - campaigns)
-- Line 45: `price: 99` → `price: 49` (Pro - crm)
-- Line 58: `price: 99` → `price: 49` (Pro - filters)
-- Line 71: `price: 99` → `price: 49` (Pro - badge)
-- Line 84: `price: 39` → `price: 10` (Basic - content_library)
-- Line 97: `price: 99` → `price: 49` (Pro - post_booking)
-- Line 110: `price: 99` → `price: 49` (Pro - mass_message)
-- Line 123: `price: 299` → `price: 99` (Premium - unlimited_campaigns)
-- Line 136: `price: 299` → `price: 99` (Premium - more_storage)
-- Line 149: `price: 39` → `price: 10` (Basic - pricing)
+### 2.1 Create Device Tokens Table
+New table `device_tokens` to store FCM/APNS tokens:
 
-**`src/components/UpgradeBanner.tsx`** - Banner for upgrades
-- Line 20: `"$39/mo"` → `"$10/mo"` (Basic - chat)
-- Line 27: `"$99/mo"` → `"$49/mo"` (Pro - campaigns)
-- Line 34: `"$99/mo"` → `"$49/mo"` (Pro - crm)
-- Line 41: `"$99/mo"` → `"$49/mo"` (Pro - filters)
-- Line 48: `"$99/mo"` → `"$49/mo"` (Pro - badge)
-- Line 55: `"$39/mo"` → `"$10/mo"` (Basic - content_library)
-- Line 62: `"$99/mo"` → `"$49/mo"` (Pro - mass_message)
-- Line 69: `"$299/mo"` → `"$99/mo"` (Premium - unlimited_campaigns)
-- Line 76: `"$299/mo"` → `"$99/mo"` (Premium - more_storage)
-- Line 111: `"$39/mo"` → `"$10/mo"` (inline default fallback)
-- Line 212: `"$39"` → `"$10"` (default banner "Starting at")
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| user_id | uuid | References auth.users |
+| token | text | FCM or APNS token |
+| platform | text | 'ios' or 'android' |
+| created_at | timestamp | Token registration time |
+| updated_at | timestamp | Last token update |
+| is_active | boolean | Token validity status |
 
-**`src/components/UpgradePrompt.tsx`** - Inline upgrade prompts
-- Line 17: `"($39/mo)"` → `"($10/mo)"` & `"$39/mo"` → `"$10/mo"` (Basic - contact)
-- Line 18: `"$39/mo"` → `"$10/mo"` (Basic CTA)
-- Line 24: `"($99/mo)"` → `"($49/mo)"` (Pro - campaigns description)
-- Line 25: `"$99/mo"` → `"$49/mo"` (Pro CTA)
-- Line 31: `"($99/mo)"` → `"($49/mo)"` (Pro - filters description)
-- Line 32: `"$99/mo"` → `"$49/mo"` (Pro CTA)
-- Line 38: `"($99/mo)"` → `"($49/mo)"` (Pro - crm description)
-- Line 39: `"$99/mo"` → `"$49/mo"` (Pro CTA)
-- Line 46: `"$39/mo"` → `"$10/mo"` (Basic - content_library CTA)
-- Line 52: `"($99/mo)"` → `"($49/mo)"` (Pro - badge description)
-- Line 53: `"$99/mo"` → `"$49/mo"` (Pro CTA)
-- Line 59: `"($199/mo)"` → `"($99/mo)"` (Premium - unlimited_campaigns)
-- Line 60: `"$199/mo"` → `"$99/mo"` (Premium CTA)
-- Line 66: `"($199/mo)"` → `"($99/mo)"` (Premium - more_storage)
-- Line 67: `"$199/mo"` → `"$99/mo"` (Premium CTA)
-- Line 74: `"$99/mo"` → `"$49/mo"` (Pro - mass_message CTA)
-- Line 88: `"$199/mo"` → `"$99/mo"` (targetTier override for premium)
-- Line 90: `"$99/mo"` → `"$49/mo"` (targetTier override for pro)
-- Line 92: `"$39/mo"` → `"$10/mo"` (targetTier override for basic)
+RLS Policies:
+- Users can insert/update their own tokens
+- Users can delete their own tokens
+- No public read access (tokens are sensitive)
+
+### 2.2 Enable Realtime for device_tokens
+Add table to Supabase realtime publication for token management.
 
 ---
 
-### 4. Legal & Documentation
+## Phase 3: Push Notification Infrastructure
 
-**`src/pages/TermsOfService.tsx`** - Legal terms
-- Line 121: `"Basic ($39/month)"` → `"Basic ($10/month)"`
-- Line 122: `"Pro ($99/month)"` → `"Pro ($49/month)"`
-- Line 123: `"Premium ($299/month)"` → `"Premium ($99/month)"`
+### 3.1 Create Edge Function: `send-push-notification`
+New backend function that:
+- Accepts notification type, user_id, title, body, data payload
+- Looks up active device tokens for the user
+- Sends push via Firebase Cloud Messaging (FCM) HTTP v1 API
+- Handles both iOS and Android platforms
+- Logs delivery status
 
-**`src/data/platformManual.ts`** - Admin manual
-- Line 490: `"Basic (Free)"` - Update to clarify it's `$10/mo`
-- Line 491: `"($99/mo)"` → `"($49/mo)"` (Pro)
-- Line 492: `"($299/mo)"` → `"($99/mo)"` (Premium)
-- Line 520: Update table header prices
+Required secrets:
+- `FIREBASE_PROJECT_ID` - Firebase project identifier
+- `FIREBASE_PRIVATE_KEY` - Service account private key
+- `FIREBASE_CLIENT_EMAIL` - Service account email
 
-**`src/data/knowledgeBase.ts`** - Help articles
-- Line 247: `"($99/mo)"` → `"($49/mo)"` (Pro)
-- Line 248: `"($299/mo)"` → `"($99/mo)"` (Premium)
-- Add Basic $10/mo to the list
+### 3.2 Create Database Trigger for Push Notifications
+Trigger on `notifications` table INSERT that:
+- Calls `send-push-notification` edge function
+- Passes notification data (title, message, link)
+- Only triggers for users with active device tokens
 
----
-
-### 5. Database Trigger (Revenue Distribution)
-
-**Database Migration Required**
-Create a new migration to update the `distribute_subscription_revenue` trigger function with new pricing:
-
-```sql
--- Update the distribute_subscription_revenue function
-CREATE OR REPLACE FUNCTION distribute_subscription_revenue()
-RETURNS TRIGGER AS $$
-...
-    subscription_amount := CASE NEW.plan_type
-      WHEN 'basic' THEN 1000   -- $10
-      WHEN 'pro' THEN 4900     -- $49
-      WHEN 'premium' THEN 9900 -- $99
-      ELSE 0
-    END;
-...
-$$;
-```
+### 3.3 Notification Types to Support
+Creator-specific push notifications:
+- `creator_new_booking` - New booking request received
+- `creator_booking_accepted` - Booking confirmed
+- `creator_revision_requested` - Brand requested changes
+- `creator_delivery_confirmed` - Deliverable approved
+- `creator_dispute_opened` - Dispute notification
+- `creator_application_accepted` - Campaign application approved
+- `creator_profile_approved` - Profile went live
+- `new_message` - New chat message received
 
 ---
 
-## Technical Details
+## Phase 4: Frontend Push Integration
 
-### Implementation Order
-1. **Database migration first** - Update the trigger function for revenue distribution
-2. **Core configuration files** - `src/config/plans.ts` and `src/lib/stripe-mock.ts`
-3. **UI pages** - `Pricing.tsx` and `Brand.tsx`
-4. **Upgrade components** - `UpgradeModal.tsx`, `UpgradeBanner.tsx`, `UpgradePrompt.tsx`
-5. **Documentation** - `TermsOfService.tsx`, `platformManual.ts`, `knowledgeBase.ts`
+### 4.1 Create Push Notification Hook
+New hook `src/hooks/usePushNotifications.ts`:
+- Initialize Capacitor PushNotifications plugin
+- Request notification permissions on app start
+- Register device token with backend
+- Handle foreground/background notifications
+- Navigate to relevant screen on notification tap
+- Handle token refresh events
 
-### Testing Checklist
-- Verify pricing displays correctly on `/pricing` page
-- Verify pricing displays correctly on `/brand` landing page
-- Verify subscription tab shows correct prices in brand dashboard
-- Verify upgrade modals show correct pricing
-- Verify upgrade banners show correct pricing
-- Test mock payment flow with new amounts
-- Verify Terms of Service reflects new pricing
+### 4.2 Create Push Service Utility
+New file `src/lib/push-service.ts`:
+- `registerPushToken(userId, token, platform)` - Save token to database
+- `unregisterPushToken(token)` - Mark token as inactive on logout
+- `updatePushToken(oldToken, newToken)` - Handle token refresh
 
-### No Changes Required
-- `BrandSubscriptionTab.tsx` - Uses `formatPrice()` from stripe-mock, will auto-update
-- Authentication or database schema - No structural changes needed
-- RLS policies - No changes needed
+### 4.3 Update App.tsx for Mobile
+- Import and initialize push notifications on app mount
+- Add listener for notification received events
+- Handle deep linking from notification taps
+- Detect if running in native context vs web
 
 ---
 
-## Summary of Price Changes
+## Phase 5: Mobile-Optimized UI Enhancements
 
-| Location | Basic | Pro | Premium |
-|----------|-------|-----|---------|
-| Cents (config) | 1000 | 4900 | 9900 |
-| Display | $10 | $49 | $99 |
-| Per month text | $10/mo | $49/mo | $99/mo |
+### 5.1 Create Mobile App Shell
+New component `src/components/mobile/MobileAppShell.tsx`:
+- Bottom navigation bar (native mobile pattern)
+- Tab icons: Home, Messages, Campaigns, Earnings, Profile
+- Badge indicators for unread counts
+- Haptic feedback on tab changes
 
-Total files to modify: **10 files + 1 database migration**
+### 5.2 Update Creator Dashboard for Mobile
+Modify `src/pages/CreatorDashboard.tsx`:
+- Detect native app context using Capacitor
+- Show bottom navigation instead of top tabs when in app
+- Use native-style transitions between tabs
+- Add pull-to-refresh functionality
+
+### 5.3 Optimize Messages Tab for Mobile
+Enhance `src/components/creator-dashboard/MessagesTab.tsx`:
+- Full-screen chat view on mobile
+- Native keyboard avoiding behavior
+- Quick action buttons (quote, accept)
+- Message input stays visible above keyboard
+
+### 5.4 Create App-Specific Login Flow
+- Skip "Join as Brand" option in mobile app
+- Auto-redirect to Creator Dashboard after login
+- Show "Continue as Creator" for existing accounts
+- Native biometric authentication (future enhancement)
+
+---
+
+## Phase 6: App Assets and Branding
+
+### 6.1 App Icons
+Create icon set for both platforms:
+- iOS: 1024x1024 master icon (generates all sizes)
+- Android: Adaptive icon with foreground/background layers
+- Use CollabHunts brand colors (orange gradient)
+
+### 6.2 Splash Screen
+- Full-screen splash with CollabHunts logo
+- Match brand gradient background
+- Smooth transition to app content
+
+### 6.3 App Store Assets
+Prepare marketing materials:
+- App screenshots (iPhone 14 Pro, Pixel 7)
+- Feature graphics
+- Short/long descriptions
+- Keywords for ASO
+
+---
+
+## Phase 7: App Store Requirements
+
+### 7.1 iOS App Store (Apple)
+Requirements:
+- Apple Developer Account ($99/year)
+- App Store Connect setup
+- Privacy Policy URL (already exists at `/privacy`)
+- App Review Guidelines compliance
+- TestFlight for beta testing
+
+Info.plist additions:
+- `NSCameraUsageDescription` - For profile photo upload
+- `NSPhotoLibraryUsageDescription` - For portfolio media
+- Push notification entitlements
+
+### 7.2 Google Play Store (Android)
+Requirements:
+- Google Play Developer Account ($25 one-time)
+- Google Play Console setup
+- Privacy Policy URL
+- Content rating questionnaire
+- Internal testing track for QA
+
+AndroidManifest.xml additions:
+- Camera and storage permissions
+- Internet permission (already default)
+- Push notification permissions
+
+### 7.3 Firebase Project Setup
+Create Firebase project for FCM:
+- Enable Cloud Messaging API
+- Generate service account credentials
+- Configure iOS APNs authentication key
+- Add Android app with package name
+
+---
+
+## Phase 8: Files to Create/Modify
+
+### New Files
+
+| File | Purpose |
+|------|---------|
+| `capacitor.config.ts` | Capacitor configuration |
+| `src/hooks/usePushNotifications.ts` | Push notification management hook |
+| `src/lib/push-service.ts` | Token registration utilities |
+| `src/components/mobile/MobileAppShell.tsx` | Bottom navigation shell |
+| `src/components/mobile/MobileNavBar.tsx` | Bottom tab bar component |
+| `supabase/functions/send-push-notification/index.ts` | Push delivery edge function |
+
+### Modified Files
+
+| File | Changes |
+|------|---------|
+| `package.json` | Add Capacitor dependencies |
+| `index.html` | Add mobile meta tags |
+| `src/App.tsx` | Initialize push notifications, detect native context |
+| `src/pages/CreatorDashboard.tsx` | Add mobile app shell wrapper |
+| `src/components/creator-dashboard/MessagesTab.tsx` | Mobile keyboard handling |
+| `src/pages/Login.tsx` | Simplify for creator-only flow in app |
+
+### Database Migration
+- Create `device_tokens` table
+- Add RLS policies
+- Create notification trigger
+
+---
+
+## Phase 9: Development Workflow
+
+### Local Development
+1. Run `npm run dev` for web preview
+2. Use Capacitor live reload pointing to dev server
+3. Test on iOS Simulator / Android Emulator
+
+### Building for Testing
+1. Export to GitHub repository
+2. Clone locally and run `npm install`
+3. Run `npx cap add ios` and `npx cap add android`
+4. Run `npm run build` then `npx cap sync`
+5. Open in Xcode/Android Studio for testing
+
+### Release Process
+1. Increment version in `capacitor.config.ts`
+2. Build production web assets
+3. Sync to native platforms
+4. Build and archive in Xcode for iOS
+5. Build signed APK/AAB for Android
+6. Submit to respective app stores
+
+---
+
+## Phase 10: Testing Checklist
+
+### Functionality Tests
+- [ ] Push notification registration works
+- [ ] Notifications received when app backgrounded
+- [ ] Notifications received when app foregrounded
+- [ ] Tapping notification navigates correctly
+- [ ] Login/logout flow works
+- [ ] Messages send and receive in real-time
+- [ ] Profile editing works with image upload
+- [ ] Campaigns tab shows and allows applications
+- [ ] Earnings/payouts display correctly
+
+### Device Tests
+- [ ] iPhone (iOS 15+)
+- [ ] iPad compatibility mode
+- [ ] Android phone (API 24+)
+- [ ] Android tablet
+- [ ] Different screen sizes
+- [ ] Dark mode support
+
+### Edge Cases
+- [ ] No internet connection handling
+- [ ] Push token refresh
+- [ ] Multiple device registration
+- [ ] App update handling
+- [ ] Deep link handling
+
+---
+
+## Timeline Estimate
+
+| Phase | Duration | Dependencies |
+|-------|----------|--------------|
+| Phase 1: Setup | 2-3 hours | None |
+| Phase 2: Database | 1 hour | Phase 1 |
+| Phase 3: Push Backend | 3-4 hours | Phase 2 + Firebase setup |
+| Phase 4: Push Frontend | 2-3 hours | Phase 3 |
+| Phase 5: Mobile UI | 4-5 hours | Phase 1 |
+| Phase 6: Assets | 2-3 hours | Can run parallel |
+| Phase 7: Store Setup | 2-3 hours | Needs dev accounts |
+| Phase 8-10: Build/Test | 4-5 hours | All previous phases |
+
+**Total Estimated Time: 4-6 weeks** (including app store review times)
+
+---
+
+## Next Steps After Approval
+
+1. Install Capacitor dependencies and create configuration
+2. Set up Firebase project for push notifications
+3. Create database migration for device tokens
+4. Build the push notification edge function
+5. Create the mobile push hook and service
+6. Build the mobile app shell with bottom navigation
+7. Test on simulators/emulators
+8. Prepare app store assets
+9. Submit for app store review
