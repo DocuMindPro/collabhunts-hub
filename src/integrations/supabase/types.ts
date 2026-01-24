@@ -1988,6 +1988,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_campaign_auto_approval: {
+        Args: { campaign_id: string }
+        Returns: boolean
+      }
       check_creator_auto_approval: {
         Args: { creator_id: string }
         Returns: boolean
