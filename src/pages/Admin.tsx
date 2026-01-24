@@ -32,6 +32,7 @@ import AdminAdsTab from "@/components/admin/AdminAdsTab";
 import AdminFranchisesTab from "@/components/admin/AdminFranchisesTab";
 import AdminAffiliatesTab from "@/components/admin/AdminAffiliatesTab";
 import AdminBrandingSeoTab from "@/components/admin/AdminBrandingSeoTab";
+import AdminQuickActions from "@/components/admin/AdminQuickActions";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface Profile {
@@ -778,6 +779,9 @@ const Admin = () => {
               </CardHeader>
             </Card>
           </div>
+
+          {/* Quick Actions Widget */}
+          <AdminQuickActions onNavigate={handleTabChange} />
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 md:space-y-6">

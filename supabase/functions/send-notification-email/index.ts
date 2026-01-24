@@ -68,6 +68,10 @@ type EmailType =
   | 'brand_verification_submitted'
   | 'brand_verification_approved'
   | 'brand_verification_rejected'
+  | 'brand_subscription_expiring_7days'
+  | 'brand_subscription_expiring_3days'
+  | 'brand_subscription_expired'
+  | 'brand_subscription_winback'
   // Admin emails
   | 'admin_new_creator_pending'
   | 'admin_new_campaign_pending'
@@ -934,6 +938,97 @@ function getEmailContent(type: EmailType, data: Record<string, any>, toName?: st
           <p style="color: #666; line-height: 1.6;">
             If you have any questions, please contact our support team.
           </p>
+        `)
+      };
+
+    // ============ SUBSCRIPTION RENEWAL EMAILS ============
+    case 'brand_subscription_expiring_7days':
+      return {
+        subject: `⏰ Your ${data.plan_type} Subscription Expires in 7 Days`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">${greeting}</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            Your <strong>${data.plan_type}</strong> subscription is expiring soon.
+          </p>
+          <div style="background: #FEF3CD; border-left: 4px solid #F59E0B; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0 0 10px 0; color: #2F2F2F;"><strong>📅 Expires:</strong> ${data.expiry_date}</p>
+            <p style="margin: 0; color: #2F2F2F;"><strong>📦 Plan:</strong> ${data.plan_type.charAt(0).toUpperCase() + data.plan_type.slice(1)}</p>
+          </div>
+          <p style="color: #666; line-height: 1.6;">
+            Renew now to keep accessing all your features without interruption.
+          </p>
+          <div style="text-align: center;">
+            ${getCtaButton('Renew Subscription', `${baseUrl}/brand-dashboard?tab=subscription`)}
+          </div>
+        `)
+      };
+
+    case 'brand_subscription_expiring_3days':
+      return {
+        subject: `🚨 Only 3 Days Left - Renew Your ${data.plan_type} Plan`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">${greeting}</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            Your <strong>${data.plan_type}</strong> subscription expires in just <strong>3 days</strong>!
+          </p>
+          <div style="background: #FEE2E2; border-left: 4px solid #EF4444; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0 0 10px 0; color: #2F2F2F;"><strong>⏳ Expires:</strong> ${data.expiry_date}</p>
+            <p style="margin: 0; color: #2F2F2F;">Don't lose access to your campaigns, messaging, and CRM features!</p>
+          </div>
+          <div style="text-align: center;">
+            ${getCtaButton('Renew Now', `${baseUrl}/brand-dashboard?tab=subscription`)}
+          </div>
+        `)
+      };
+
+    case 'brand_subscription_expired':
+      return {
+        subject: `❌ Your ${data.plan_type} Subscription Has Expired`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">${greeting}</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            Your <strong>${data.plan_type}</strong> subscription has expired and your account has been downgraded.
+          </p>
+          <div style="background: #FEE2E2; border-left: 4px solid #EF4444; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0; color: #2F2F2F;"><strong>What you've lost:</strong></p>
+            <ul style="color: #666; margin: 10px 0 0 0; padding-left: 20px;">
+              <li>Ability to message creators</li>
+              <li>Campaign posting</li>
+              <li>CRM and saved creators</li>
+              <li>Advanced filters</li>
+            </ul>
+          </div>
+          <p style="color: #666; line-height: 1.6;">
+            Resubscribe today to restore your access instantly.
+          </p>
+          <div style="text-align: center;">
+            ${getCtaButton('Resubscribe Now', `${baseUrl}/brand-dashboard?tab=subscription`)}
+          </div>
+        `)
+      };
+
+    case 'brand_subscription_winback':
+      return {
+        subject: `🎁 We Miss You! Special Offer Inside`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">${greeting}</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            We noticed you haven't renewed your subscription. We miss having you as a subscriber!
+          </p>
+          <div style="background: linear-gradient(135deg, #FF7A00 0%, #FFC300 100%); padding: 25px; margin: 25px 0; border-radius: 12px; text-align: center;">
+            <p style="margin: 0; color: #FFFFFF; font-size: 20px; font-weight: bold;">
+              🎁 Come Back & Save
+            </p>
+            <p style="margin: 10px 0 0 0; color: #FFFFFF; font-size: 14px;">
+              Resubscribe to continue working with amazing creators
+            </p>
+          </div>
+          <p style="color: #666; line-height: 1.6;">
+            Your saved creators, CRM notes, and content library are waiting for you.
+          </p>
+          <div style="text-align: center;">
+            ${getCtaButton('View Plans', `${baseUrl}/pricing`)}
+          </div>
         `)
       };
 
