@@ -33,7 +33,7 @@ export const SUBSCRIPTION_PLANS = {
   },
   basic: {
     name: 'Basic',
-    price: 3900,
+    price: 1000,
     priceId: 'price_basic_monthly',
     campaignLimit: 0,
     canContactCreators: true,
@@ -62,7 +62,7 @@ export const SUBSCRIPTION_PLANS = {
   },
   pro: {
     name: 'Pro',
-    price: 9900,
+    price: 4900,
     priceId: 'price_pro_monthly',
     campaignLimit: 1,
     canContactCreators: true,
@@ -91,7 +91,7 @@ export const SUBSCRIPTION_PLANS = {
   },
   premium: {
     name: 'Premium',
-    price: 29900,
+    price: 9900,
     priceId: 'price_premium_monthly',
     campaignLimit: Infinity,
     canContactCreators: true,

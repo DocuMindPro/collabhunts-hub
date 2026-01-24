@@ -66,7 +66,7 @@ export const PLANS: Record<PlanType, Plan> = {
   },
   basic: {
     name: 'Basic',
-    price: 3900,
+    price: 1000,
     priceId: 'price_basic_monthly',
     features: {
       canContactCreators: true,
@@ -99,7 +99,7 @@ export const PLANS: Record<PlanType, Plan> = {
   },
   pro: {
     name: 'Pro',
-    price: 9900,
+    price: 4900,
     priceId: 'price_pro_monthly',
     features: {
       canContactCreators: true,
@@ -132,7 +132,7 @@ export const PLANS: Record<PlanType, Plan> = {
   },
   premium: {
     name: 'Premium',
-    price: 29900,
+    price: 9900,
     priceId: 'price_premium_monthly',
     features: {
       canContactCreators: true,

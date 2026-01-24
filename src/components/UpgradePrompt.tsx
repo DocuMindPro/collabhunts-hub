@@ -14,64 +14,64 @@ interface UpgradePromptProps {
 const featureMessages = {
   contact: {
     title: "Upgrade to Message Creators",
-    description: "Chat and negotiate with creators before hiring. Subscribe to Basic ($39/mo) to unlock messaging.",
-    cta: "Upgrade to Basic - $39/mo",
+    description: "Chat and negotiate with creators before hiring. Subscribe to Basic ($10/mo) to unlock messaging.",
+    cta: "Upgrade to Basic - $10/mo",
     icon: MessageCircle,
     gradient: "from-blue-500/20 to-purple-500/20"
   },
   campaigns: {
     title: "Upgrade to Post Campaigns",
-    description: "Post campaigns to attract creators. Subscribe to Pro ($99/mo) for campaigns or Premium for unlimited.",
-    cta: "Upgrade to Pro - $99/mo",
+    description: "Post campaigns to attract creators. Subscribe to Pro ($49/mo) for campaigns or Premium for unlimited.",
+    cta: "Upgrade to Pro - $49/mo",
     icon: Users,
     gradient: "from-orange-500/20 to-red-500/20"
   },
   filters: {
     title: "Unlock Advanced Filters",
-    description: "Filter creators by age, ethnicity, language and more. Subscribe to Pro ($99/mo) to access advanced filters.",
-    cta: "Upgrade to Pro - $99/mo",
+    description: "Filter creators by age, ethnicity, language and more. Subscribe to Pro ($49/mo) to access advanced filters.",
+    cta: "Upgrade to Pro - $49/mo",
     icon: Filter,
     gradient: "from-green-500/20 to-teal-500/20"
   },
   crm: {
     title: "Upgrade for Creator CRM",
-    description: "Save your favorite creators, organize them in folders, and add private notes. Subscribe to Pro ($99/mo) to unlock.",
-    cta: "Upgrade to Pro - $99/mo",
+    description: "Save your favorite creators, organize them in folders, and add private notes. Subscribe to Pro ($49/mo) to unlock.",
+    cta: "Upgrade to Pro - $49/mo",
     icon: FolderOpen,
     gradient: "from-purple-500/20 to-pink-500/20"
   },
   content_library: {
     title: "Upgrade for Content Library",
     description: "Store your UGC content, track usage rights, and re-download files anytime. Basic includes 10 GB, Premium includes 50 GB.",
-    cta: "Upgrade to Basic - $39/mo",
+    cta: "Upgrade to Basic - $10/mo",
     icon: FolderOpen,
     gradient: "from-cyan-500/20 to-blue-500/20"
   },
   badge: {
     title: "Upgrade for Verified Badge",
-    description: "Get a verified business badge to build trust with creators. Subscribe to Pro ($99/mo) or Premium to apply for verification.",
-    cta: "Upgrade to Pro - $99/mo",
+    description: "Get a verified business badge to build trust with creators. Subscribe to Pro ($49/mo) or Premium to apply for verification.",
+    cta: "Upgrade to Pro - $49/mo",
     icon: BadgeCheck,
     gradient: "from-amber-500/20 to-orange-500/20"
   },
   unlimited_campaigns: {
     title: "Unlock Unlimited Campaigns",
-    description: "You've hit your monthly campaign limit! Upgrade to Premium ($199/mo) for unlimited campaigns and more.",
-    cta: "Upgrade to Premium - $199/mo",
+    description: "You've hit your monthly campaign limit! Upgrade to Premium ($99/mo) for unlimited campaigns and more.",
+    cta: "Upgrade to Premium - $99/mo",
     icon: Crown,
     gradient: "from-amber-500/20 to-yellow-500/20"
   },
   more_storage: {
     title: "Need More Storage?",
-    description: "You're running low on storage! Upgrade to Premium ($199/mo) for 50 GB storage (vs 10 GB on Pro).",
-    cta: "Upgrade to Premium - $199/mo",
+    description: "You're running low on storage! Upgrade to Premium ($99/mo) for 50 GB storage (vs 10 GB on Pro).",
+    cta: "Upgrade to Premium - $99/mo",
     icon: HardDrive,
     gradient: "from-purple-500/20 to-indigo-500/20"
   },
   mass_message: {
     title: "Unlock Campaign Invitations",
     description: "Invite multiple creators to your campaigns at once. Pro includes 50/day, Premium includes 100/day.",
-    cta: "Upgrade to Pro - $99/mo",
+    cta: "Upgrade to Pro - $49/mo",
     icon: Megaphone,
     gradient: "from-teal-500/20 to-cyan-500/20"
   }
@@ -85,11 +85,11 @@ const UpgradePrompt = ({ feature, className = "", inline = false, targetTier }: 
   // Override CTA text based on target tier
   let ctaText = message.cta;
   if (targetTier === "premium") {
-    ctaText = "Upgrade to Premium - $199/mo";
+    ctaText = "Upgrade to Premium - $99/mo";
   } else if (targetTier === "pro") {
-    ctaText = "Upgrade to Pro - $99/mo";
+    ctaText = "Upgrade to Pro - $49/mo";
   } else if (targetTier === "basic") {
-    ctaText = "Upgrade to Basic - $39/mo";
+    ctaText = "Upgrade to Basic - $10/mo";
   }
 
   if (inline) {

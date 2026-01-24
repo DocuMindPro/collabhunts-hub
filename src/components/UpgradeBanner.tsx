@@ -17,63 +17,63 @@ const featureHighlights = {
     description: "Upgrade to Basic to message and negotiate with creators directly",
     icon: MessageCircle,
     plan: "Basic",
-    price: "$39/mo"
+    price: "$10/mo"
   },
   campaigns: {
     title: "Post campaigns to attract creators",
     description: "Let creators come to you! Post campaigns and receive applications",
     icon: Users,
     plan: "Pro",
-    price: "$99/mo"
+    price: "$49/mo"
   },
   crm: {
     title: "Save your favorite creators",
     description: "Build your creator network with folders, notes, and collaboration history",
     icon: FolderOpen,
     plan: "Pro",
-    price: "$99/mo"
+    price: "$49/mo"
   },
   filters: {
     title: "Unlock advanced filters",
     description: "Filter by age, ethnicity, language and more to find perfect matches",
     icon: Filter,
     plan: "Pro",
-    price: "$99/mo"
+    price: "$49/mo"
   },
   badge: {
     title: "Get verified badge",
     description: "Build trust with creators by becoming a verified business",
     icon: BadgeCheck,
     plan: "Pro",
-    price: "$99/mo"
+    price: "$49/mo"
   },
   content_library: {
     title: "Store your content",
     description: "Save UGC content with usage rights tracking and easy re-downloads",
     icon: FolderOpen,
     plan: "Basic",
-    price: "$39/mo"
+    price: "$10/mo"
   },
   mass_message: {
     title: "Send mass messages",
     description: "Reach multiple creators at once to find perfect matches faster",
     icon: Send,
     plan: "Pro",
-    price: "$99/mo"
+    price: "$49/mo"
   },
   unlimited_campaigns: {
     title: "Unlimited campaigns",
     description: "Remove the 1 campaign/month limit and post as many as you need",
     icon: Users,
     plan: "Premium",
-    price: "$299/mo"
+    price: "$99/mo"
   },
   more_storage: {
     title: "50 GB storage",
     description: "Get 5x more storage space for your content library",
     icon: FolderOpen,
     plan: "Premium",
-    price: "$299/mo"
+    price: "$99/mo"
   }
 };
 
@@ -108,7 +108,7 @@ const UpgradeBanner = ({
               {feature ? feature.title : "Unlock premium features"}
             </p>
             <p className="text-xs text-muted-foreground">
-              {feature ? `${feature.plan} plan - ${feature.price}` : "Start at $39/mo"}
+              {feature ? `${feature.plan} plan - ${feature.price}` : "Start at $10/mo"}
             </p>
           </div>
           
@@ -209,7 +209,7 @@ const UpgradeBanner = ({
           <div className="flex flex-col items-start md:items-end gap-3">
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Starting at</p>
-              <p className="text-3xl font-bold text-primary">$39<span className="text-lg font-normal">/mo</span></p>
+              <p className="text-3xl font-bold text-primary">$10<span className="text-lg font-normal">/mo</span></p>
             </div>
             
             <Button 
