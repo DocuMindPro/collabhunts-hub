@@ -1,100 +1,128 @@
 
-## Fix Android App Crash - Local Build Configuration
 
-The app is crashing because the Android WebView still has cached configuration or there's a runtime error. Here's the fix:
+## Disable Push Notifications Temporarily
 
----
-
-### Root Cause Analysis
-
-1. The app installed successfully (as shown in screenshot)
-2. It opened for 1 second, then crashed
-3. The Android WebView then shows an external URL (lovable.dev/login)
-
-This happens because:
-- The `android` folder was created BEFORE we removed the server URL
-- The old `capacitor.config.ts` with the server URL was synced to the Android project
-- The Android project still has the old configuration cached
+This plan will add a graceful fallback to prevent the Android app from crashing when Firebase isn't configured. The app will safely skip push notification initialization and continue running normally.
 
 ---
 
-### Solution: Clean Rebuild of Android Project
+### Changes Overview
 
-You need to delete and recreate the Android folder to pick up the new configuration.
+**1. Update `src/hooks/usePushNotifications.ts`**
 
-**Step 1: Delete the Android folder**
-In your Command Prompt:
-```bash
-cd Desktop\collabhunts-hub
-rmdir /s /q android
-```
+Add a try-catch wrapper around all push notification initialization to gracefully handle missing Firebase configuration:
 
-**Step 2: Pull the latest changes**
-```bash
-git pull
-```
+- Wrap the `PushNotifications.register()` call in a try-catch block
+- Add error handling for the registration listener that catches Firebase errors
+- Log warnings instead of crashing when push notifications aren't available
+- Set a flag to indicate push notifications are unavailable
 
-**Step 3: Rebuild the project**
-```bash
-npm run build
-```
+**2. Update `src/components/PushNotificationProvider.tsx`**
 
-**Step 4: Re-add the Android platform**
-```bash
-npx cap add android
-```
+Add additional safety checks:
 
-**Step 5: Sync the project**
-```bash
-npx cap sync android
-```
-
-**Step 6: Re-open in Android Studio**
-```bash
-npx cap open android
-```
-
-**Step 7: Run the app**
-Wait for Gradle sync to finish, then click the green play button.
+- Wrap the initialization logic in a try-catch block
+- Only attempt registration if the native platform is properly configured
+- Add a console warning when push notifications are skipped
 
 ---
 
-### Complete Command Sequence (copy/paste friendly)
+### Technical Details
 
-```bash
-cd Desktop\collabhunts-hub
-rmdir /s /q android
-git pull
-npm run build
-npx cap add android
-npx cap sync android
-npx cap open android
+**File: `src/hooks/usePushNotifications.ts`**
+
+Changes to `registerDevice` function:
+```typescript
+const registerDevice = useCallback(async () => {
+  if (!Capacitor.isNativePlatform()) {
+    return;
+  }
+
+  try {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) {
+      console.log('Push notification permission denied');
+      return;
+    }
+
+    await PushNotifications.register();
+  } catch (error) {
+    console.warn('Push notifications not available:', error);
+    // Gracefully handle missing Firebase configuration
+  }
+}, [requestPermissions]);
+```
+
+Changes to the `useEffect` registration listener:
+```typescript
+const registrationListener = PushNotifications.addListener(
+  'registration',
+  async (token: Token) => {
+    try {
+      // ... existing registration logic
+    } catch (error) {
+      console.warn('Failed to register push token:', error);
+    }
+  }
+);
+```
+
+Add overall try-catch in the useEffect:
+```typescript
+useEffect(() => {
+  if (!Capacitor.isNativePlatform()) {
+    return;
+  }
+
+  let cleanup: (() => void) | undefined;
+
+  const initializePushNotifications = async () => {
+    try {
+      // ... all listener setup code
+    } catch (error) {
+      console.warn('Push notification initialization failed:', error);
+    }
+  };
+
+  initializePushNotifications();
+
+  return () => cleanup?.();
+}, [/* dependencies */]);
+```
+
+**File: `src/components/PushNotificationProvider.tsx`**
+
+Add try-catch wrapper:
+```typescript
+useEffect(() => {
+  if (Capacitor.isNativePlatform() && !isRegistered) {
+    try {
+      console.log('Initializing push notifications...');
+      registerDevice();
+    } catch (error) {
+      console.warn('Push notifications unavailable:', error);
+    }
+  }
+}, [isRegistered, registerDevice]);
 ```
 
 ---
 
-### What This Fixes
+### Expected Outcome
 
-- Removes the old Android configuration that had the server URL
-- Creates a fresh Android project from the updated `capacitor.config.ts`
-- Ensures the app loads from local `dist` files instead of a remote URL
-
----
-
-### Expected Result
-
-After running these commands:
-1. Android Studio will open with the fresh project
-2. Wait for Gradle sync (may take a few minutes)
-3. Click the green play button
-4. The app should now show your **CollabHunts login page** instead of the Lovable platform login
+After these changes:
+- The Android app will start without crashing
+- A console warning will appear: "Push notifications not available" or "Push notification initialization failed"
+- All other app functionality will work normally
+- When you add Firebase later, push notifications will automatically start working
 
 ---
 
-### Troubleshooting
+### Re-enabling Push Notifications Later
 
-If it still crashes, run Android Studio with **Logcat** open to see the error:
-1. In Android Studio, click **View → Tool Windows → Logcat**
-2. Run the app
-3. Look for red error messages when it crashes
-4. Share those error messages with me so I can help debug further
+When you're ready to enable push notifications:
+1. Create a Firebase project at console.firebase.google.com
+2. Add an Android app with package name: `app.lovable.f0d3858ae7f2489288d232504acaef78`
+3. Download `google-services.json` and place it in `android/app/`
+4. Run `npx cap sync android` and rebuild
+
