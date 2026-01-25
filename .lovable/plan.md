@@ -1,326 +1,191 @@
 
-# Plan: Creator-Only Mobile App with Capacitor
 
-## Overview
-Build a native mobile app for iOS and Android targeting creators only, enabling instant push notifications, quick message replies, and earnings tracking. The app wraps the existing responsive web interface using Capacitor while adding native push notification capabilities.
+# Mobile App Finalization Plan
 
----
-
-## Phase 1: Project Setup and Configuration
-
-### 1.1 Install Capacitor Dependencies
-Add required packages to the project:
-- `@capacitor/core` - Core Capacitor framework
-- `@capacitor/cli` - CLI tools (dev dependency)
-- `@capacitor/ios` - iOS platform support
-- `@capacitor/android` - Android platform support
-- `@capacitor/push-notifications` - Native push notification support
-- `@capacitor/splash-screen` - App splash screen
-- `@capacitor/status-bar` - Status bar customization
-- `@capacitor/app` - App lifecycle events
-- `@capacitor/keyboard` - Keyboard handling for mobile
-
-### 1.2 Create Capacitor Configuration
-Create `capacitor.config.ts` with:
-- **appId**: `app.lovable.f0d3858ae7f2489288d232504acaef78`
-- **appName**: `CollabHunts Creators`
-- **webDir**: `dist` (Vite build output)
-- **server.url**: Points to preview URL for hot-reload during development
-- **plugins**: Configure PushNotifications, SplashScreen, StatusBar
-
-### 1.3 Update index.html for Mobile
-Add mobile-specific meta tags:
-- `apple-mobile-web-app-capable`
-- `apple-mobile-web-app-status-bar-style`
-- `theme-color` matching brand colors
-- Disable user scaling for native feel
+This plan covers all remaining tasks to bring the CollabHunts creator mobile app to production-ready status.
 
 ---
 
-## Phase 2: Database Schema Updates
+## Current Status (Completed)
 
-### 2.1 Create Device Tokens Table
-New table `device_tokens` to store FCM/APNS tokens:
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| user_id | uuid | References auth.users |
-| token | text | FCM or APNS token |
-| platform | text | 'ios' or 'android' |
-| created_at | timestamp | Token registration time |
-| updated_at | timestamp | Last token update |
-| is_active | boolean | Token validity status |
-
-RLS Policies:
-- Users can insert/update their own tokens
-- Users can delete their own tokens
-- No public read access (tokens are sensitive)
-
-### 2.2 Enable Realtime for device_tokens
-Add table to Supabase realtime publication for token management.
+| Component | Status |
+|-----------|--------|
+| Capacitor Configuration | Done |
+| Device Tokens Table | Done |
+| Push Notification Edge Function | Done |
+| Database Trigger for Auto-Push | Done |
+| Frontend Push Hook Integration | Done |
+| Firebase Secrets | Configured |
 
 ---
 
-## Phase 3: Push Notification Infrastructure
+## Remaining Tasks
 
-### 3.1 Create Edge Function: `send-push-notification`
-New backend function that:
-- Accepts notification type, user_id, title, body, data payload
-- Looks up active device tokens for the user
-- Sends push via Firebase Cloud Messaging (FCM) HTTP v1 API
-- Handles both iOS and Android platforms
-- Logs delivery status
+### 1. Mobile Bottom Navigation Bar
 
-Required secrets:
-- `FIREBASE_PROJECT_ID` - Firebase project identifier
-- `FIREBASE_PRIVATE_KEY` - Service account private key
-- `FIREBASE_CLIENT_EMAIL` - Service account email
+Replace the horizontal scrolling tab bar on mobile devices with a native-style fixed bottom navigation bar. This provides a more familiar mobile app experience.
 
-### 3.2 Create Database Trigger for Push Notifications
-Trigger on `notifications` table INSERT that:
-- Calls `send-push-notification` edge function
-- Passes notification data (title, message, link)
-- Only triggers for users with active device tokens
+**What will be created:**
+- New `MobileBottomNav` component with icons for Overview, Campaigns, Bookings, Messages, and Profile
+- Badge indicators for unread messages and pending bookings
+- Smooth transitions when switching tabs
+- Auto-hide behavior when scrolling (optional)
 
-### 3.3 Notification Types to Support
-Creator-specific push notifications:
-- `creator_new_booking` - New booking request received
-- `creator_booking_accepted` - Booking confirmed
-- `creator_revision_requested` - Brand requested changes
-- `creator_delivery_confirmed` - Deliverable approved
-- `creator_dispute_opened` - Dispute notification
-- `creator_application_accepted` - Campaign application approved
-- `creator_profile_approved` - Profile went live
-- `new_message` - New chat message received
+**Files to create/modify:**
+- Create `src/components/mobile/MobileBottomNav.tsx`
+- Modify `src/pages/CreatorDashboard.tsx` to conditionally render bottom nav on native platforms
 
 ---
 
-## Phase 4: Frontend Push Integration
+### 2. Mobile-Optimized Chat Experience
 
-### 4.1 Create Push Notification Hook
-New hook `src/hooks/usePushNotifications.ts`:
-- Initialize Capacitor PushNotifications plugin
-- Request notification permissions on app start
-- Register device token with backend
-- Handle foreground/background notifications
-- Navigate to relevant screen on notification tap
-- Handle token refresh events
+Enhance the MessagesTab for a better mobile experience with proper keyboard handling and full-screen chat views.
 
-### 4.2 Create Push Service Utility
-New file `src/lib/push-service.ts`:
-- `registerPushToken(userId, token, platform)` - Save token to database
-- `unregisterPushToken(token)` - Mark token as inactive on logout
-- `updatePushToken(oldToken, newToken)` - Handle token refresh
+**Improvements:**
+- Full-screen chat mode on mobile (hide header when keyboard is active)
+- Keyboard-aware input positioning using Capacitor Keyboard plugin events
+- Smooth scroll to bottom when new messages arrive
+- Safe area padding for devices with notches
 
-### 4.3 Update App.tsx for Mobile
-- Import and initialize push notifications on app mount
-- Add listener for notification received events
-- Handle deep linking from notification taps
-- Detect if running in native context vs web
+**Files to modify:**
+- `src/components/creator-dashboard/MessagesTab.tsx`
+- Create `src/hooks/useKeyboardHeight.ts` for keyboard-aware layouts
 
 ---
 
-## Phase 5: Mobile-Optimized UI Enhancements
+### 3. Mobile Login Flow Optimization
 
-### 5.1 Create Mobile App Shell
-New component `src/components/mobile/MobileAppShell.tsx`:
-- Bottom navigation bar (native mobile pattern)
-- Tab icons: Home, Messages, Campaigns, Earnings, Profile
-- Badge indicators for unread counts
-- Haptic feedback on tab changes
+Create a streamlined login experience optimized for the mobile app context.
 
-### 5.2 Update Creator Dashboard for Mobile
-Modify `src/pages/CreatorDashboard.tsx`:
-- Detect native app context using Capacitor
-- Show bottom navigation instead of top tabs when in app
-- Use native-style transitions between tabs
-- Add pull-to-refresh functionality
+**Enhancements:**
+- Hide Navbar on mobile native platforms for cleaner login UI
+- Add "Remember me" option with secure token storage
+- Biometric authentication option (Face ID / Fingerprint)
+- Auto-redirect to creator dashboard after successful login
 
-### 5.3 Optimize Messages Tab for Mobile
-Enhance `src/components/creator-dashboard/MessagesTab.tsx`:
-- Full-screen chat view on mobile
-- Native keyboard avoiding behavior
-- Quick action buttons (quote, accept)
-- Message input stays visible above keyboard
-
-### 5.4 Create App-Specific Login Flow
-- Skip "Join as Brand" option in mobile app
-- Auto-redirect to Creator Dashboard after login
-- Show "Continue as Creator" for existing accounts
-- Native biometric authentication (future enhancement)
+**Files to modify:**
+- `src/pages/Login.tsx`
 
 ---
 
-## Phase 6: App Assets and Branding
+### 4. App Asset Generation
 
-### 6.1 App Icons
-Create icon set for both platforms:
-- iOS: 1024x1024 master icon (generates all sizes)
-- Android: Adaptive icon with foreground/background layers
-- Use CollabHunts brand colors (orange gradient)
+Prepare required assets for app store submissions.
 
-### 6.2 Splash Screen
-- Full-screen splash with CollabHunts logo
-- Match brand gradient background
-- Smooth transition to app content
+**Assets needed:**
+- App icon (1024x1024 for iOS, adaptive icon for Android)
+- Splash screen images (multiple sizes)
+- Store screenshots (iPhone 6.5", 5.5", iPad, Android phone/tablet)
 
-### 6.3 App Store Assets
-Prepare marketing materials:
-- App screenshots (iPhone 14 Pro, Pixel 7)
-- Feature graphics
-- Short/long descriptions
-- Keywords for ASO
+**Files to create:**
+- `public/assets/app-icon.png`
+- `public/assets/splash.png`
+- Documentation for asset requirements
 
 ---
 
-## Phase 7: App Store Requirements
+### 5. Native Platform Configuration
 
-### 7.1 iOS App Store (Apple)
-Requirements:
-- Apple Developer Account ($99/year)
-- App Store Connect setup
-- Privacy Policy URL (already exists at `/privacy`)
-- App Review Guidelines compliance
-- TestFlight for beta testing
+Finalize platform-specific settings for production builds.
 
-Info.plist additions:
-- `NSCameraUsageDescription` - For profile photo upload
-- `NSPhotoLibraryUsageDescription` - For portfolio media
+**iOS Configuration:**
+- Info.plist settings (camera, push notification permissions)
+- App Transport Security settings
 - Push notification entitlements
 
-### 7.2 Google Play Store (Android)
-Requirements:
-- Google Play Developer Account ($25 one-time)
-- Google Play Console setup
-- Privacy Policy URL
-- Content rating questionnaire
-- Internal testing track for QA
-
-AndroidManifest.xml additions:
-- Camera and storage permissions
-- Internet permission (already default)
-- Push notification permissions
-
-### 7.3 Firebase Project Setup
-Create Firebase project for FCM:
-- Enable Cloud Messaging API
-- Generate service account credentials
-- Configure iOS APNs authentication key
-- Add Android app with package name
+**Android Configuration:**
+- google-services.json placement
+- AndroidManifest.xml permissions
+- ProGuard rules for production builds
 
 ---
 
-## Phase 8: Files to Create/Modify
+## Implementation Order
 
-### New Files
-
-| File | Purpose |
-|------|---------|
-| `capacitor.config.ts` | Capacitor configuration |
-| `src/hooks/usePushNotifications.ts` | Push notification management hook |
-| `src/lib/push-service.ts` | Token registration utilities |
-| `src/components/mobile/MobileAppShell.tsx` | Bottom navigation shell |
-| `src/components/mobile/MobileNavBar.tsx` | Bottom tab bar component |
-| `supabase/functions/send-push-notification/index.ts` | Push delivery edge function |
-
-### Modified Files
-
-| File | Changes |
-|------|---------|
-| `package.json` | Add Capacitor dependencies |
-| `index.html` | Add mobile meta tags |
-| `src/App.tsx` | Initialize push notifications, detect native context |
-| `src/pages/CreatorDashboard.tsx` | Add mobile app shell wrapper |
-| `src/components/creator-dashboard/MessagesTab.tsx` | Mobile keyboard handling |
-| `src/pages/Login.tsx` | Simplify for creator-only flow in app |
-
-### Database Migration
-- Create `device_tokens` table
-- Add RLS policies
-- Create notification trigger
+```text
+Step 1: Mobile Bottom Navigation
+   |
+   v
+Step 2: Chat Optimization
+   |
+   v
+Step 3: Login Flow
+   |
+   v
+Step 4: App Assets
+   |
+   v
+Step 5: Native Config Documentation
+```
 
 ---
 
-## Phase 9: Development Workflow
+## Technical Details
 
-### Local Development
-1. Run `npm run dev` for web preview
-2. Use Capacitor live reload pointing to dev server
-3. Test on iOS Simulator / Android Emulator
+### Bottom Navigation Component Structure
 
-### Building for Testing
-1. Export to GitHub repository
-2. Clone locally and run `npm install`
-3. Run `npx cap add ios` and `npx cap add android`
-4. Run `npm run build` then `npx cap sync`
-5. Open in Xcode/Android Studio for testing
+```text
+src/components/mobile/
+├── MobileBottomNav.tsx      # Main navigation component
+├── MobileTabButton.tsx      # Individual tab button with badge
+└── useMobileNavigation.ts   # Hook for navigation state
+```
 
-### Release Process
-1. Increment version in `capacitor.config.ts`
-2. Build production web assets
-3. Sync to native platforms
-4. Build and archive in Xcode for iOS
-5. Build signed APK/AAB for Android
-6. Submit to respective app stores
+### Keyboard Handling Approach
 
----
+The Capacitor Keyboard plugin will be used to:
+1. Listen for `keyboardWillShow` and `keyboardWillHide` events
+2. Dynamically adjust input container padding
+3. Ensure message input stays visible above keyboard
 
-## Phase 10: Testing Checklist
+### Conditional Rendering Strategy
 
-### Functionality Tests
-- [ ] Push notification registration works
-- [ ] Notifications received when app backgrounded
-- [ ] Notifications received when app foregrounded
-- [ ] Tapping notification navigates correctly
-- [ ] Login/logout flow works
-- [ ] Messages send and receive in real-time
-- [ ] Profile editing works with image upload
-- [ ] Campaigns tab shows and allows applications
-- [ ] Earnings/payouts display correctly
+Native vs web detection will use:
+```typescript
+import { Capacitor } from '@capacitor/core';
 
-### Device Tests
-- [ ] iPhone (iOS 15+)
-- [ ] iPad compatibility mode
-- [ ] Android phone (API 24+)
-- [ ] Android tablet
-- [ ] Different screen sizes
-- [ ] Dark mode support
+const isNative = Capacitor.isNativePlatform();
+```
 
-### Edge Cases
-- [ ] No internet connection handling
-- [ ] Push token refresh
-- [ ] Multiple device registration
-- [ ] App update handling
-- [ ] Deep link handling
+This allows showing:
+- Bottom nav bar only on native mobile apps
+- Top tab bar on web browsers
 
 ---
 
-## Timeline Estimate
+## Testing Checklist
 
-| Phase | Duration | Dependencies |
-|-------|----------|--------------|
-| Phase 1: Setup | 2-3 hours | None |
-| Phase 2: Database | 1 hour | Phase 1 |
-| Phase 3: Push Backend | 3-4 hours | Phase 2 + Firebase setup |
-| Phase 4: Push Frontend | 2-3 hours | Phase 3 |
-| Phase 5: Mobile UI | 4-5 hours | Phase 1 |
-| Phase 6: Assets | 2-3 hours | Can run parallel |
-| Phase 7: Store Setup | 2-3 hours | Needs dev accounts |
-| Phase 8-10: Build/Test | 4-5 hours | All previous phases |
+After implementation, verify:
 
-**Total Estimated Time: 4-6 weeks** (including app store review times)
+- [ ] Bottom navigation appears on native builds
+- [ ] Tab switching works correctly with URL sync
+- [ ] Unread message badge updates in real-time
+- [ ] Keyboard pushes chat input up (not covers it)
+- [ ] Messages scroll to bottom on new arrival
+- [ ] Push notification taps navigate to correct tab
+- [ ] Login works on mobile with proper redirects
+- [ ] App icons display correctly on home screen
+
+---
+
+## Estimated Effort
+
+| Task | Complexity | Time |
+|------|------------|------|
+| Bottom Navigation | Medium | 30-45 min |
+| Chat Optimization | Medium | 30-45 min |
+| Login Flow | Low | 15-20 min |
+| App Assets | Low | Documentation only |
+| Native Config | Low | Documentation only |
+
+**Total: ~2 hours of implementation**
 
 ---
 
 ## Next Steps After Approval
 
-1. Install Capacitor dependencies and create configuration
-2. Set up Firebase project for push notifications
-3. Create database migration for device tokens
-4. Build the push notification edge function
-5. Create the mobile push hook and service
-6. Build the mobile app shell with bottom navigation
-7. Test on simulators/emulators
-8. Prepare app store assets
-9. Submit for app store review
+1. Create the mobile bottom navigation component
+2. Integrate it into the Creator Dashboard
+3. Optimize the chat/messages experience for mobile
+4. Provide documentation for local testing and app store submission
+
