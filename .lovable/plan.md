@@ -1,23 +1,37 @@
 
 
-# Fix Android Build Configuration
+# Fix NPM Dependency Conflict
 
-## Summary
-Since the `android/` folder is generated locally and not stored in GitHub, I'll add **custom Capacitor configuration files** that will be used when you regenerate the Android project. This ensures the correct Gradle settings are applied from the start.
+## The Problem
+Your build is failing because of a **version conflict** between two packages:
 
-## What I'll Do
+| Package | Current Version | Required Version |
+|---------|-----------------|------------------|
+| `date-fns` | 4.1.0 | 2.28.0 - 3.x |
+| `react-day-picker` | 8.10.1 | Needs date-fns 2.x or 3.x |
 
-### 1. Update `capacitor.config.ts` with Android-specific settings
-Add Android configuration to handle the ProGuard file correctly.
+The `date-fns` version 4.x is too new and isn't compatible with `react-day-picker` 8.10.1.
 
-### 2. Add a `.gitignore` update (if needed)
-Ensure the android folder is properly ignored to avoid future conflicts.
+## The Solution
+Downgrade `date-fns` from version 4.1.0 to version 3.6.0 (the latest 3.x version that's compatible).
 
-## After My Changes - Your Steps
+## What I'll Change
 
-Once I push the changes to GitHub:
+### 1. Update `package.json`
+Change line 56 from:
+```json
+"date-fns": "^4.1.0",
+```
+To:
+```json
+"date-fns": "^3.6.0",
+```
 
-### Step 1: Delete your local project folder
+## After My Change - Your Steps
+
+Once I make this fix:
+
+### Step 1: Delete your local project folder again
 ```cmd
 cd C:\Users\elias\Desktop
 rd /s /q collabhunts-hub
@@ -25,57 +39,19 @@ rd /s /q collabhunts-hub
 
 ### Step 2: Clone fresh from GitHub
 ```cmd
-git clone https://github.com/YOUR-USERNAME/collabhunts-hub.git
+git clone https://github.com/eliasnau/collabhunts-hub.git
 cd collabhunts-hub
 ```
 
-### Step 3: Install dependencies
+### Step 3: Run the build script
 ```cmd
-npm install
+scripts\build-android.bat
 ```
 
-### Step 4: Build the web app
-```cmd
-npm run build
-```
+This time npm install should succeed because the dependency conflict will be resolved!
 
-### Step 5: Add Android platform (this regenerates the android folder)
-```cmd
-npx cap add android
-```
+## Technical Details
 
-### Step 6: Apply a manual fix BEFORE building
-Open `android/app/build.gradle` and use Find & Replace:
-- Find: `proguard-android.txt`
-- Replace with: `proguard-android-optimize.txt`
-- Replace ALL occurrences
-
-### Step 7: Downgrade Gradle version
-Open `android/gradle/wrapper/gradle-wrapper.properties` and change:
-```properties
-distributionUrl=https\://services.gradle.org/distributions/gradle-8.10-bin.zip
-```
-
-### Step 8: Build the APK
-```cmd
-cd android
-.\gradlew assembleDebug --no-daemon
-```
-
-### Step 9: Find your APK
-```cmd
-dir app\build\outputs\apk\debug\
-```
-Your APK will be at: `app-debug.apk`
-
----
-
-## Technical Notes
-
-- **Why Gradle 8.10?**: Gradle 9.1.0 deprecated `proguard-android.txt` which causes the build error
-- **Why regenerate android/?**: Ensures a clean slate without corrupted cache files
-- **The android folder is local-only**: This is standard practice - it's regenerated per developer
-
-## Alternative: Create a Build Script
-I can also create a helper script (`build-android.bat`) that automates Steps 5-8 for you, making future builds easier.
+- **Why version 3.6.0?**: It's the latest version in the 3.x series that's compatible with react-day-picker 8.x
+- **Any code changes needed?**: No - the date-fns API between 3.x and 4.x is mostly the same, so your existing code will continue to work
 
