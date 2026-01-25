@@ -10,6 +10,7 @@ export function usePushNotifications() {
   const navigate = useNavigate();
   const [isRegistered, setIsRegistered] = useState(false);
   const [currentToken, setCurrentToken] = useState<string | null>(null);
+  const [isAvailable, setIsAvailable] = useState(true);
 
   const getPlatform = (): Platform => {
     const platform = Capacitor.getPlatform();
@@ -32,7 +33,8 @@ export function usePushNotifications() {
       
       return permStatus.receive === 'granted';
     } catch (error) {
-      console.error('Error requesting push permissions:', error);
+      console.warn('Error requesting push permissions:', error);
+      setIsAvailable(false);
       return false;
     }
   }, []);
@@ -42,24 +44,30 @@ export function usePushNotifications() {
       return;
     }
 
-    const hasPermission = await requestPermissions();
-    if (!hasPermission) {
-      console.log('Push notification permission denied');
-      return;
-    }
-
     try {
+      const hasPermission = await requestPermissions();
+      if (!hasPermission) {
+        console.log('Push notification permission denied or unavailable');
+        return;
+      }
+
       await PushNotifications.register();
     } catch (error) {
-      console.error('Error registering for push notifications:', error);
+      console.warn('Push notifications not available (Firebase may not be configured):', error);
+      setIsAvailable(false);
+      // Gracefully handle missing Firebase configuration - app continues normally
     }
   }, [requestPermissions]);
 
   const unregisterDevice = useCallback(async () => {
     if (currentToken) {
-      await unregisterPushToken(currentToken);
-      setCurrentToken(null);
-      setIsRegistered(false);
+      try {
+        await unregisterPushToken(currentToken);
+        setCurrentToken(null);
+        setIsRegistered(false);
+      } catch (error) {
+        console.warn('Failed to unregister push token:', error);
+      }
     }
   }, [currentToken]);
 
@@ -102,91 +110,123 @@ export function usePushNotifications() {
       return;
     }
 
-    // Listen for successful registration
-    const registrationListener = PushNotifications.addListener(
-      'registration',
-      async (token: Token) => {
-        console.log('Push registration success:', token.value);
-        
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const platform = getPlatform();
-          const success = await registerPushToken(user.id, token.value, platform);
-          
-          if (success) {
-            setCurrentToken(token.value);
-            setIsRegistered(true);
-            console.log('Device token registered successfully');
+    let registrationCleanup: (() => void) | undefined;
+    let errorCleanup: (() => void) | undefined;
+    let foregroundCleanup: (() => void) | undefined;
+    let actionCleanup: (() => void) | undefined;
+    let authSubscription: { unsubscribe: () => void } | undefined;
+
+    const initializePushNotifications = async () => {
+      try {
+        // Listen for successful registration
+        const registrationListener = await PushNotifications.addListener(
+          'registration',
+          async (token: Token) => {
+            try {
+              console.log('Push registration success:', token.value);
+              
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                const platform = getPlatform();
+                const success = await registerPushToken(user.id, token.value, platform);
+                
+                if (success) {
+                  setCurrentToken(token.value);
+                  setIsRegistered(true);
+                  console.log('Device token registered successfully');
+                }
+              }
+            } catch (error) {
+              console.warn('Failed to register push token:', error);
+            }
           }
-        }
-      }
-    );
+        );
+        registrationCleanup = () => registrationListener.remove();
 
-    // Listen for registration errors
-    const errorListener = PushNotifications.addListener(
-      'registrationError',
-      (error) => {
-        console.error('Push registration error:', error);
-        toast.error('Failed to enable push notifications');
-      }
-    );
+        // Listen for registration errors
+        const errorListener = await PushNotifications.addListener(
+          'registrationError',
+          (error) => {
+            console.warn('Push registration error (Firebase may not be configured):', error);
+            setIsAvailable(false);
+            // Don't show toast - just log and continue
+          }
+        );
+        errorCleanup = () => errorListener.remove();
 
-    // Listen for push notifications received while app is in foreground
-    const foregroundListener = PushNotifications.addListener(
-      'pushNotificationReceived',
-      (notification: PushNotificationSchema) => {
-        console.log('Push notification received:', notification);
-        
-        // Show in-app notification
-        toast(notification.title || 'New Notification', {
-          description: notification.body,
-          action: {
-            label: 'View',
-            onClick: () => handleNotificationTap(notification),
-          },
+        // Listen for push notifications received while app is in foreground
+        const foregroundListener = await PushNotifications.addListener(
+          'pushNotificationReceived',
+          (notification: PushNotificationSchema) => {
+            console.log('Push notification received:', notification);
+            
+            // Show in-app notification
+            toast(notification.title || 'New Notification', {
+              description: notification.body,
+              action: {
+                label: 'View',
+                onClick: () => handleNotificationTap(notification),
+              },
+            });
+          }
+        );
+        foregroundCleanup = () => foregroundListener.remove();
+
+        // Listen for notification tap actions
+        const actionListener = await PushNotifications.addListener(
+          'pushNotificationActionPerformed',
+          (action: ActionPerformed) => {
+            console.log('Push notification action performed:', action);
+            handleNotificationTap(action.notification);
+          }
+        );
+        actionCleanup = () => actionListener.remove();
+
+        // Auto-register when user is authenticated
+        const checkAndRegister = async () => {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              registerDevice();
+            }
+          } catch (error) {
+            console.warn('Failed to check user for push registration:', error);
+          }
+        };
+
+        checkAndRegister();
+
+        // Listen for auth state changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_IN' && session?.user) {
+            registerDevice();
+          } else if (event === 'SIGNED_OUT') {
+            unregisterDevice();
+          }
         });
-      }
-    );
+        authSubscription = subscription;
 
-    // Listen for notification tap actions
-    const actionListener = PushNotifications.addListener(
-      'pushNotificationActionPerformed',
-      (action: ActionPerformed) => {
-        console.log('Push notification action performed:', action);
-        handleNotificationTap(action.notification);
-      }
-    );
-
-    // Auto-register when user is authenticated
-    const checkAndRegister = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        registerDevice();
+      } catch (error) {
+        console.warn('Push notification initialization failed (Firebase may not be configured):', error);
+        setIsAvailable(false);
+        // App continues normally without push notifications
       }
     };
 
-    checkAndRegister();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        registerDevice();
-      } else if (event === 'SIGNED_OUT') {
-        unregisterDevice();
-      }
-    });
+    initializePushNotifications();
 
     return () => {
-      registrationListener.then(l => l.remove());
-      errorListener.then(l => l.remove());
-      foregroundListener.then(l => l.remove());
-      actionListener.then(l => l.remove());
-      subscription.unsubscribe();
+      registrationCleanup?.();
+      errorCleanup?.();
+      foregroundCleanup?.();
+      actionCleanup?.();
+      authSubscription?.unsubscribe();
     };
   }, [registerDevice, unregisterDevice, handleNotificationTap]);
 
   return {
     isRegistered,
+    isAvailable,
     currentToken,
     requestPermissions,
     registerDevice,
