@@ -1,108 +1,100 @@
 
+## Fix Android App Crash - Local Build Configuration
 
-## Option A: Local Build Configuration
-
-This plan removes the server URL so your Android app runs from locally built files, while you continue developing through Lovable.
-
----
-
-### What I'll Change
-
-**File: `capacitor.config.ts`**
-- Remove the `server` block (lines 7-10) that points to the private preview URL
-- Keep all plugin configurations intact
+The app is crashing because the Android WebView still has cached configuration or there's a runtime error. Here's the fix:
 
 ---
 
-### Your Ongoing Development Workflow
+### Root Cause Analysis
 
-Here's how you'll continue developing with Lovable while testing on Android:
+1. The app installed successfully (as shown in screenshot)
+2. It opened for 1 second, then crashed
+3. The Android WebView then shows an external URL (lovable.dev/login)
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    YOUR DEVELOPMENT CYCLE                        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  1. MAKE CHANGES IN LOVABLE (web browser)                       │
-│     └── Edit code, add features, fix bugs                       │
-│                                                                  │
-│  2. PULL CHANGES LOCALLY (Command Prompt)                       │
-│     └── cd Desktop\collabhunts-hub                              │
-│     └── git pull                                                │
-│                                                                  │
-│  3. REBUILD & SYNC (Command Prompt)                             │
-│     └── npm run build                                           │
-│     └── npx cap sync                                            │
-│                                                                  │
-│  4. TEST ON ANDROID (Android Studio)                            │
-│     └── Click green play button                                 │
-│                                                                  │
-│  5. REPEAT from Step 1                                          │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+This happens because:
+- The `android` folder was created BEFORE we removed the server URL
+- The old `capacitor.config.ts` with the server URL was synced to the Android project
+- The Android project still has the old configuration cached
+
+---
+
+### Solution: Clean Rebuild of Android Project
+
+You need to delete and recreate the Android folder to pick up the new configuration.
+
+**Step 1: Delete the Android folder**
+In your Command Prompt:
+```bash
+cd Desktop\collabhunts-hub
+rmdir /s /q android
 ```
 
+**Step 2: Pull the latest changes**
+```bash
+git pull
+```
+
+**Step 3: Rebuild the project**
+```bash
+npm run build
+```
+
+**Step 4: Re-add the Android platform**
+```bash
+npx cap add android
+```
+
+**Step 5: Sync the project**
+```bash
+npx cap sync android
+```
+
+**Step 6: Re-open in Android Studio**
+```bash
+npx cap open android
+```
+
+**Step 7: Run the app**
+Wait for Gradle sync to finish, then click the green play button.
+
 ---
 
-### Commands Summary
-
-After I make the config change, you'll run these commands **once**:
+### Complete Command Sequence (copy/paste friendly)
 
 ```bash
 cd Desktop\collabhunts-hub
+rmdir /s /q android
 git pull
 npm run build
-npx cap sync
-```
-
-Then click the **green play button** in Android Studio.
-
-**For future changes made in Lovable**, just repeat steps 2-4:
-```bash
-git pull
-npm run build
-npx cap sync
-# Then click play in Android Studio
+npx cap add android
+npx cap sync android
+npx cap open android
 ```
 
 ---
 
-### Technical Details
+### What This Fixes
 
-The updated `capacitor.config.ts` will look like:
+- Removes the old Android configuration that had the server URL
+- Creates a fresh Android project from the updated `capacitor.config.ts`
+- Ensures the app loads from local `dist` files instead of a remote URL
 
-```typescript
-import type { CapacitorConfig } from '@capacitor/cli';
+---
 
-const config: CapacitorConfig = {
-  appId: 'app.lovable.f0d3858ae7f2489288d232504acaef78',
-  appName: 'CollabHunts Creators',
-  webDir: 'dist',
-  plugins: {
-    PushNotifications: {
-      presentationOptions: ['badge', 'sound', 'alert'],
-    },
-    SplashScreen: {
-      launchShowDuration: 2000,
-      launchAutoHide: true,
-      backgroundColor: '#F97316',
-      androidSplashResourceName: 'splash',
-      androidScaleType: 'CENTER_CROP',
-      showSpinner: false,
-      splashFullScreen: true,
-      splashImmersive: true,
-    },
-    StatusBar: {
-      backgroundColor: '#F97316',
-      style: 'LIGHT',
-    },
-    Keyboard: {
-      resize: 'body',
-      resizeOnFullScreen: true,
-    },
-  },
-};
+### Expected Result
 
-export default config;
-```
+After running these commands:
+1. Android Studio will open with the fresh project
+2. Wait for Gradle sync (may take a few minutes)
+3. Click the green play button
+4. The app should now show your **CollabHunts login page** instead of the Lovable platform login
 
+---
+
+### Troubleshooting
+
+If it still crashes, run Android Studio with **Logcat** open to see the error:
+1. In Android Studio, click **View → Tool Windows → Logcat**
+2. Run the app
+3. Look for red error messages when it crashes
+4. Share those error messages with me so I can help debug further
