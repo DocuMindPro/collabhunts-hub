@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,7 @@ import { toast } from "sonner";
 import { Send, MessageSquare, ArrowLeft, Circle } from "lucide-react";
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useTypingIndicator } from "@/hooks/useTypingIndicator";
-import TypingIndicator from "@/components/chat/TypingIndicator";
+import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 import MessageReadReceipt from "@/components/chat/MessageReadReceipt";
 import PackageInquiryMessage, { isPackageInquiry } from "@/components/chat/PackageInquiryMessage";
 
@@ -51,8 +51,8 @@ const MessagesTab = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
-  // Typing indicator temporarily disabled to fix input focus issues
-  // const { isOtherUserTyping, setTyping } = useTypingIndicator(selectedConversation, userId);
+  const isNative = Capacitor.isNativePlatform();
+  const { keyboardHeight } = useKeyboardHeight();
 
   const handlePackageReply = (type: "quote" | "accept") => {
     if (type === "quote") {
@@ -496,6 +496,18 @@ const MessagesTab = () => {
       </div>
     );
   };
+
+  // Full-screen chat for native mobile platforms
+  if (isNative) {
+    return (
+      <div 
+        className="fixed inset-0 bg-background flex flex-col"
+        style={{ paddingBottom: keyboardHeight > 0 ? keyboardHeight : 80 }}
+      >
+        {selectedConversation ? <ChatView /> : <ConversationList />}
+      </div>
+    );
+  }
 
   if (isMobile) {
     return (

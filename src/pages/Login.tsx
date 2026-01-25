@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff, Phone, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import PhoneInput from "@/components/PhoneInput";
 import {
   InputOTP,
@@ -55,6 +56,7 @@ const Login = () => {
   
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -63,7 +65,12 @@ const Login = () => {
       if (event === 'SIGNED_IN' && session && !isPhoneMode) {
         // Use a slight delay to ensure state is propagated
         setTimeout(() => {
-          navigate("/");
+          // Redirect creators to dashboard on native, home on web
+          if (isNative) {
+            navigate("/creator-dashboard");
+          } else {
+            navigate("/");
+          }
         }, 100);
       }
     });
@@ -71,12 +78,16 @@ const Login = () => {
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/");
+        if (isNative) {
+          navigate("/creator-dashboard");
+        } else {
+          navigate("/");
+        }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, isPhoneMode]);
+  }, [navigate, isPhoneMode, isNative]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -487,15 +498,19 @@ const Login = () => {
 
   // Main login view
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
+    <div className={`min-h-screen flex flex-col bg-background ${isNative ? 'safe-area-top' : ''}`}>
+      {/* Hide navbar on native for cleaner mobile experience */}
+      {!isNative && <Navbar />}
 
-      <main className="flex-1 flex items-center justify-center py-12 px-4">
+      <main className={`flex-1 flex items-center justify-center py-12 px-4 ${isNative ? 'pt-8' : ''}`}>
         <div className="w-full max-w-md">
           <div className="text-center mb-10">
-            <h1 className="text-4xl md:text-5xl font-heading font-bold italic mb-2">
-              Welcome Back
+            <h1 className={`font-heading font-bold italic mb-2 ${isNative ? 'text-3xl' : 'text-4xl md:text-5xl'}`}>
+              {isNative ? 'CollabHunts' : 'Welcome Back'}
             </h1>
+            {isNative && (
+              <p className="text-muted-foreground text-sm">Sign in to your creator account</p>
+            )}
           </div>
 
           {/* Social Login Buttons */}
