@@ -8,6 +8,7 @@ import PageTransition from "./components/PageTransition";
 import CookieConsent from "./components/CookieConsent";
 import PageLoader from "./components/PageLoader";
 import useSiteSettings from "./hooks/useSiteSettings";
+import PushNotificationProvider from "./components/PushNotificationProvider";
 // Eager load most visited pages
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -62,6 +63,7 @@ const SiteSettingsProvider = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <SiteSettingsProvider>
+    <PushNotificationProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -186,6 +188,7 @@ const App = () => (
         <CookieConsent />
       </BrowserRouter>
     </TooltipProvider>
+    </PushNotificationProvider>
     </SiteSettingsProvider>
   </QueryClientProvider>
 );
