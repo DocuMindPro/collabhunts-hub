@@ -63,132 +63,132 @@ const SiteSettingsProvider = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <SiteSettingsProvider>
-    <PushNotificationProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <PageTransition>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/influencers" element={<Influencers />} />
-              <Route path="/campaigns" element={<Campaigns />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/about" element={<AboutUs />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/refund" element={<RefundPolicy />} />
-              <Route path="/brand" element={<Brand />} />
-              <Route path="/creator" element={<Creator />} />
-              <Route path="/brand-signup" element={<BrandSignup />} />
-              <Route path="/brand-onboarding" element={<BrandOnboarding />} />
-              <Route path="/brand-welcome" element={<BrandWelcome />} />
-              <Route path="/creator-signup" element={<CreatorSignup />} />
-              <Route path="/creator/:id" element={<CreatorProfile />} />
-              <Route 
-                path="/creator-dashboard" 
-                element={
-                  <CreatorProtectedRoute>
-                    <CreatorDashboard />
-                  </CreatorProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/brand-dashboard" 
-                element={
-                  <BrandProtectedRoute>
-                    <BrandDashboard />
-                  </BrandProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin" 
-                element={
-                  <ProtectedRoute requireAdmin>
-                    <Admin />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/franchise-dashboard" 
-                element={
-                  <FranchiseProtectedRoute>
-                    <FranchiseDashboard />
-                  </FranchiseProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/affiliate-dashboard" 
-                element={
-                  <AffiliateProtectedRoute>
-                    <AffiliateDashboard />
-                  </AffiliateProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/backup-history" 
-                element={
-                  <ProtectedRoute requireAdmin>
-                    <BackupHistory />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/knowledge-base" 
-                element={
-                  <ProtectedRoute>
-                    <KnowledgeBase />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/knowledge-base/:categorySlug" 
-                element={
-                  <ProtectedRoute>
-                    <KnowledgeBaseCategory />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/knowledge-base/:categorySlug/:articleSlug" 
-                element={
-                  <ProtectedRoute>
-                    <KnowledgeBaseArticle />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/whats-new" element={<WhatsNew />} />
-              <Route 
-                path="/knowledge-base/whats-new" 
-                element={
-                  <ProtectedRoute>
-                    <WhatsNew />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/knowledge-base/changelog" 
-                element={
-                  <ProtectedRoute>
-                    <Changelog />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/advertising" element={<Advertising />} />
-              <Route path="/become-affiliate" element={<BecomeAffiliate />} />
-              <Route path="/franchise" element={<FranchiseOpportunities />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </PageTransition>
-        <CookieConsent />
+        <PushNotificationProvider>
+          <PageTransition>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/influencers" element={<Influencers />} />
+                <Route path="/campaigns" element={<Campaigns />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/about" element={<AboutUs />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/refund" element={<RefundPolicy />} />
+                <Route path="/brand" element={<Brand />} />
+                <Route path="/creator" element={<Creator />} />
+                <Route path="/brand-signup" element={<BrandSignup />} />
+                <Route path="/brand-onboarding" element={<BrandOnboarding />} />
+                <Route path="/brand-welcome" element={<BrandWelcome />} />
+                <Route path="/creator-signup" element={<CreatorSignup />} />
+                <Route path="/creator/:id" element={<CreatorProfile />} />
+                <Route 
+                  path="/creator-dashboard" 
+                  element={
+                    <CreatorProtectedRoute>
+                      <CreatorDashboard />
+                    </CreatorProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/brand-dashboard" 
+                  element={
+                    <BrandProtectedRoute>
+                      <BrandDashboard />
+                    </BrandProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin" 
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <Admin />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/franchise-dashboard" 
+                  element={
+                    <FranchiseProtectedRoute>
+                      <FranchiseDashboard />
+                    </FranchiseProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/affiliate-dashboard" 
+                  element={
+                    <AffiliateProtectedRoute>
+                      <AffiliateDashboard />
+                    </AffiliateProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/backup-history" 
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <BackupHistory />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/knowledge-base" 
+                  element={
+                    <ProtectedRoute>
+                      <KnowledgeBase />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/knowledge-base/:categorySlug" 
+                  element={
+                    <ProtectedRoute>
+                      <KnowledgeBaseCategory />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/knowledge-base/:categorySlug/:articleSlug" 
+                  element={
+                    <ProtectedRoute>
+                      <KnowledgeBaseArticle />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/whats-new" element={<WhatsNew />} />
+                <Route 
+                  path="/knowledge-base/whats-new" 
+                  element={
+                    <ProtectedRoute>
+                      <WhatsNew />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/knowledge-base/changelog" 
+                  element={
+                    <ProtectedRoute>
+                      <Changelog />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/advertising" element={<Advertising />} />
+                <Route path="/become-affiliate" element={<BecomeAffiliate />} />
+                <Route path="/franchise" element={<FranchiseOpportunities />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </PageTransition>
+          <CookieConsent />
+        </PushNotificationProvider>
       </BrowserRouter>
     </TooltipProvider>
-    </PushNotificationProvider>
     </SiteSettingsProvider>
   </QueryClientProvider>
 );
