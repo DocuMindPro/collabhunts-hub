@@ -52,9 +52,8 @@ echo ProGuard configuration fixed.
 
 echo.
 echo Step 5.5: Fixing Java version to 17...
-:: Fix Java version from 21 to 17 in build.gradle
-powershell -Command "(Get-Content 'android/app/build.gradle') -replace 'VERSION_21', 'VERSION_17' | Set-Content 'android/app/build.gradle'"
-powershell -Command "(Get-Content 'android/app/build.gradle') -replace 'jvmTarget = \"21\"', 'jvmTarget = \"17\"' | Set-Content 'android/app/build.gradle'"
+:: Fix Java version from 21 to 17 in build.gradle (all in one command)
+powershell -NoProfile -Command "$file = 'android/app/build.gradle'; $content = Get-Content $file -Raw; $content = $content -replace 'VERSION_21', 'VERSION_17'; $content = $content -replace 'jvmTarget\s*=\s*[''\""]21[''\""]', 'jvmTarget = \"17\"'; Set-Content -Path $file -Value $content -NoNewline"
 echo Java version set to 17.
 
 echo.
