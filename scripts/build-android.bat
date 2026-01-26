@@ -51,7 +51,13 @@ powershell -Command "(Get-Content 'android/app/build.gradle') -replace 'proguard
 echo ProGuard configuration fixed.
 
 echo.
-echo Step 5.5: Fixing Java version to 17...
+echo Step 5.5: Fixing Java version GLOBALLY for all modules...
+:: Add global Java 17 override to root build.gradle for ALL subprojects (including capacitor plugins)
+powershell -NoProfile -Command "$rootGradle = 'android/build.gradle'; $content = Get-Content $rootGradle -Raw; $javaFix = @'`n`nsubprojects {`n    afterEvaluate { project ->`n        if (project.hasProperty('android')) {`n            android {`n                compileOptions {`n                    sourceCompatibility JavaVersion.VERSION_17`n                    targetCompatibility JavaVersion.VERSION_17`n                }`n            }`n        }`n        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {`n            kotlinOptions {`n                jvmTarget = '17'`n            }`n        }`n    }`n}`n'@; if ($content -notmatch 'VERSION_17') { Add-Content -Path $rootGradle -Value $javaFix }; Write-Host 'Global Java 17 override added to root build.gradle'"
+echo Global Java 17 configuration applied to all subprojects.
+
+echo.
+echo Step 5.6: Fixing Java version in app build.gradle...
 :: Fix Java version from 21 to 17 in build.gradle (all in one command)
 powershell -NoProfile -Command "$file = 'android/app/build.gradle'; $content = Get-Content $file -Raw; $content = $content -replace 'VERSION_21', 'VERSION_17'; $content = $content -replace 'jvmTarget\s*=\s*[''\""]21[''\""]', 'jvmTarget = \"17\"'; Set-Content -Path $file -Value $content -NoNewline"
 echo Java version set to 17.
