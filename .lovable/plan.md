@@ -1,111 +1,98 @@
 
+# Fix Android Build: ProGuard + Lovable Login Issues
 
-# Switch Android App to Local Build Mode
+## Problems Identified
 
-## What This Fix Does
-Removes the `server` block from `capacitor.config.ts` so the Android app loads from local files (`dist` folder) instead of the Lovable preview URL. This eliminates the login requirement and makes the app work offline.
+1. **ProGuard Error**: The current build script only fixes `android/app/build.gradle`, but the Capacitor library at `node_modules/@capacitor/android/capacitor/build.gradle` also contains the deprecated `proguard-android.txt` reference
+2. **Lovable Login Still Showing**: The `android` folder has old cached configuration from before we removed the `server` block
 
-## Technical Change
+## Solution
 
-**File**: `capacitor.config.ts`
+Update the build script to:
+1. Fix ProGuard in **both** locations (app AND capacitor library)
+2. Force a complete fresh rebuild every time
+3. Ensure proper sync after all fixes are applied
 
-Remove lines 7-10 (the entire `server` block):
+## Technical Changes
 
-```typescript
-import type { CapacitorConfig } from '@capacitor/cli';
+### File: `scripts/build-android.bat`
 
-const config: CapacitorConfig = {
-  appId: 'app.lovable.f0d3858ae7f2489288d232504acaef78',
-  appName: 'CollabHunts Creators',
-  webDir: 'dist',
-  plugins: {
-    PushNotifications: {
-      presentationOptions: ['badge', 'sound', 'alert'],
-    },
-    SplashScreen: {
-      launchShowDuration: 0,
-      launchAutoHide: true,
-    },
-    StatusBar: {
-      backgroundColor: '#F97316',
-      style: 'LIGHT',
-    },
-    Keyboard: {
-      resize: 'body',
-      resizeOnFullScreen: true,
-    },
-  },
-};
+Add a new step after "npm install" to fix ProGuard in the Capacitor library:
 
-export default config;
+```batch
+echo Step 1.5: Fixing ProGuard in Capacitor library...
+powershell -Command "(Get-Content 'node_modules/@capacitor/android/capacitor/build.gradle') -replace 'proguard-android\.txt', 'proguard-android-optimize.txt' | Set-Content 'node_modules/@capacitor/android/capacitor/build.gradle'"
+echo Capacitor library ProGuard fixed.
 ```
+
+This ensures the fix is applied to `node_modules/@capacitor/android/capacitor/build.gradle` every time you run the build script (since npm install can overwrite it).
 
 ---
 
 ## Complete Step-by-Step After This Change
 
 ### Step 1: Wait for GitHub Sync
-After I make this change, wait about 1 minute for the code to sync to GitHub.
+Wait about 1 minute for the updated build script to sync to GitHub.
 
-### Step 2: Delete Your Current Local Folder
-Delete the entire `collabhunts-hub` folder on your computer.
+### Step 2: Delete Everything and Start Fresh
+```
+cd C:\Users\elias
+rd /s /q collabhunts-hub
+```
 
 ### Step 3: Fresh Clone
-Open Command Prompt and run:
 ```
 git clone https://github.com/eliasnau/collabhunts-hub.git
 cd collabhunts-hub
 ```
 
-### Step 4: Build the APK
-Run the build script:
+### Step 4: Run the Updated Build Script
 ```
 scripts\build-android.bat
 ```
 
-### Step 5: Install the APK
-Your APK will be at:
-```
-android\app\build\outputs\apk\debug\app-debug.apk
-```
+The script will now:
+- Install dependencies
+- Fix ProGuard in the Capacitor library (NEW!)
+- Build the web app
+- Delete old android folder
+- Add fresh Android platform
+- Fix ProGuard in app build.gradle
+- Apply Java 17 configuration
+- Downgrade Gradle to 8.10
+- Sync Capacitor
+- Build the APK
 
-Transfer to phone and install, OR run:
-```
-adb install android\app\build\outputs\apk\debug\app-debug.apk
-```
-
-### Step 6: Open in Android Studio (Optional)
-If you want to run directly on device:
+### Step 5: Test in Android Studio
+After the script completes successfully:
 1. Open Android Studio
-2. File → Open → Select the `android` folder
+2. File → Open → Select `collabhunts-hub\android`
 3. Wait for sync
-4. Click the green Run button
+4. Create/Select an emulator
+5. Click the green Run button
+
+The app should now:
+- Build without ProGuard errors
+- Open directly to your app (NOT the Lovable login)
 
 ---
 
-## Future Development Workflow
+## Why This Works
 
-When you make changes in Lovable and want to update the app:
+| Issue | Root Cause | Fix |
+|-------|-----------|-----|
+| ProGuard error | `node_modules/@capacitor/android/capacitor/build.gradle` uses deprecated file | Script fixes it after npm install |
+| Lovable login showing | Old cached android folder | Script deletes android folder and rebuilds fresh |
+| Java 21 errors | Capacitor generates Java 21 config | Script applies Java 17 override globally |
 
-```text
-1. Make changes in Lovable (as you normally do)
-2. Open Command Prompt
-3. cd collabhunts-hub
-4. git pull
-5. npm run build
-6. npx cap sync android
-7. Either: run scripts\build-android.bat for new APK
-   Or: Press Run in Android Studio
+---
+
+## Future Workflow
+
+Whenever you make changes in Lovable:
+```
+git pull
+scripts\build-android.bat
 ```
 
----
-
-## Summary
-
-| Before | After |
-|--------|-------|
-| App loads Lovable preview URL | App loads from local `dist` files |
-| Requires Lovable login | Works without login |
-| Needs internet | Works offline |
-| Changes appear instantly | Need to rebuild after changes |
-
+That's it! The script handles all the fixes automatically.
