@@ -20,6 +20,11 @@ if errorlevel 1 (
 )
 
 echo.
+echo Step 1.5: Fixing ProGuard in Capacitor library...
+powershell -Command "(Get-Content 'node_modules/@capacitor/android/capacitor/build.gradle') -replace 'proguard-android\.txt', 'proguard-android-optimize.txt' | Set-Content 'node_modules/@capacitor/android/capacitor/build.gradle'"
+echo Capacitor library ProGuard fixed.
+
+echo.
 echo Step 2: Building web app...
 call npm run build
 if errorlevel 1 (
