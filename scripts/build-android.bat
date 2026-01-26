@@ -46,9 +46,17 @@ if errorlevel 1 (
 
 echo.
 echo Step 4.5: Fixing ProGuard in Capacitor library (node_modules)...
-powershell -NoProfile -Command "$file = 'node_modules/@capacitor/android/capacitor/build.gradle'; $content = [IO.File]::ReadAllText($file); $content = $content -replace 'proguard-android\.txt', 'proguard-android-optimize.txt'; $utf8NoBom = New-Object System.Text.UTF8Encoding $false; [IO.File]::WriteAllText($file, $content, $utf8NoBom); Write-Host 'ProGuard replacement applied'"
+set "CAPACITOR_GRADLE=node_modules\@capacitor\android\capacitor\build.gradle"
+echo Target file: %CAPACITOR_GRADLE%
+if not exist "%CAPACITOR_GRADLE%" (
+    echo ERROR: Capacitor build.gradle not found at %CAPACITOR_GRADLE%
+    pause
+    exit /b 1
+)
+echo File exists, applying fix...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$file = '%CAPACITOR_GRADLE%'; Write-Host 'Reading file...'; $content = [System.IO.File]::ReadAllText($file); Write-Host 'Original contains proguard-android.txt:' ($content -match 'proguard-android\.txt'); $content = $content -replace 'proguard-android\.txt', 'proguard-android-optimize.txt'; $utf8NoBom = New-Object System.Text.UTF8Encoding $false; [System.IO.File]::WriteAllText($file, $content, $utf8NoBom); Write-Host 'File written successfully'"
 echo Verifying fix was applied...
-powershell -NoProfile -Command "$content = [IO.File]::ReadAllText('node_modules/@capacitor/android/capacitor/build.gradle'); if ($content -match 'proguard-android-optimize\.txt') { Write-Host 'SUCCESS: ProGuard fix verified!' } else { Write-Host 'ERROR: Fix did not apply!'; exit 1 }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$file = '%CAPACITOR_GRADLE%'; $content = [System.IO.File]::ReadAllText($file); $hasOptimize = $content -match 'proguard-android-optimize\.txt'; $hasOld = $content -match 'proguard-android\.txt' -and -not ($content -match 'proguard-android-optimize\.txt'); Write-Host 'Has optimize version:' $hasOptimize; Write-Host 'Still has old version:' $hasOld; if (-not $hasOptimize) { Write-Host 'ERROR: Fix did not apply!'; exit 1 } else { Write-Host 'SUCCESS: ProGuard fix verified!' }"
 if errorlevel 1 (
     echo ERROR: ProGuard fix verification failed
     pause
