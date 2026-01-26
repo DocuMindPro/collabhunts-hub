@@ -46,9 +46,14 @@ if errorlevel 1 (
 
 echo.
 echo Step 4.5: Fixing ProGuard in Capacitor library (node_modules)...
-powershell -Command "(Get-Content 'node_modules/@capacitor/android/capacitor/build.gradle') -replace 'proguard-android\.txt', 'proguard-android-optimize.txt' | Set-Content 'node_modules/@capacitor/android/capacitor/build.gradle'"
+powershell -NoProfile -Command "$file = 'node_modules/@capacitor/android/capacitor/build.gradle'; $content = [IO.File]::ReadAllText($file); $content = $content -replace 'proguard-android\.txt', 'proguard-android-optimize.txt'; $utf8NoBom = New-Object System.Text.UTF8Encoding $false; [IO.File]::WriteAllText($file, $content, $utf8NoBom); Write-Host 'ProGuard replacement applied'"
 echo Verifying fix was applied...
-powershell -Command "if ((Get-Content 'node_modules/@capacitor/android/capacitor/build.gradle') -match 'proguard-android-optimize.txt') { Write-Host 'SUCCESS: ProGuard fix verified!' } else { Write-Host 'WARNING: Fix may not have applied correctly' }"
+powershell -NoProfile -Command "$content = [IO.File]::ReadAllText('node_modules/@capacitor/android/capacitor/build.gradle'); if ($content -match 'proguard-android-optimize\.txt') { Write-Host 'SUCCESS: ProGuard fix verified!' } else { Write-Host 'ERROR: Fix did not apply!'; exit 1 }"
+if errorlevel 1 (
+    echo ERROR: ProGuard fix verification failed
+    pause
+    exit /b 1
+)
 echo Capacitor library ProGuard fixed.
 
 echo.
