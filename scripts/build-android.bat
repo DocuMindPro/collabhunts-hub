@@ -51,6 +51,13 @@ powershell -Command "(Get-Content 'android/app/build.gradle') -replace 'proguard
 echo ProGuard configuration fixed.
 
 echo.
+echo Step 5.5: Fixing Java version to 17...
+:: Fix Java version from 21 to 17 in build.gradle
+powershell -Command "(Get-Content 'android/app/build.gradle') -replace 'VERSION_21', 'VERSION_17' | Set-Content 'android/app/build.gradle'"
+powershell -Command "(Get-Content 'android/app/build.gradle') -replace 'jvmTarget = ''21''', 'jvmTarget = ''17''' | Set-Content 'android/app/build.gradle'"
+echo Java version set to 17.
+
+echo.
 echo Step 6: Downgrading Gradle to 8.10...
 :: Fix the Gradle version
 powershell -Command "(Get-Content 'android/gradle/wrapper/gradle-wrapper.properties') -replace 'gradle-.*-bin\.zip', 'gradle-8.10-bin.zip' | Set-Content 'android/gradle/wrapper/gradle-wrapper.properties'"
