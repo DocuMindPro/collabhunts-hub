@@ -19,4 +19,17 @@ subprojects {
             }
         }
     }
+    
+    // Fix ProGuard for ALL Android library subprojects
+    project.plugins.whenPluginAdded { plugin ->
+        if (plugin.class.name.equals("com.android.build.gradle.LibraryPlugin")) {
+            android {
+                buildTypes {
+                    release {
+                        proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                    }
+                }
+            }
+        }
+    }
 }
