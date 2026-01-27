@@ -1,41 +1,43 @@
 
+# Fix GitHub Release Permissions
 
-# Fix YAML Syntax Error in GitHub Actions Workflow
-
-The GitHub Actions build is failing because of a YAML syntax error on line 49. The issue is with quote handling in the shell command.
+The APK build completed successfully, but the release step failed because the workflow doesn't have permission to create releases.
 
 ## The Problem
 
-Line 49 currently reads:
-```yaml
-run: echo "apply from: 'java17-override.gradle'" >> android/build.gradle
-```
-
-YAML is having trouble parsing the mixed single and double quotes within the command.
+The `softprops/action-gh-release` action needs explicit `contents: write` permission to create GitHub releases. Without it, you get a 403 (Forbidden) error.
 
 ## The Fix
 
-Use YAML's pipe (`|`) syntax for multi-line strings, which avoids quote parsing issues:
+Add a `permissions` block to the job that grants write access to repository contents.
 
-```yaml
-- name: Apply Java 17 override
-  run: |
-    echo "apply from: 'java17-override.gradle'" >> android/build.gradle
-```
-
-The pipe (`|`) tells YAML to treat everything that follows as a literal string, preventing any quote interpretation issues.
-
-## Files to Modify
+## Changes Required
 
 | File | Change |
 |------|--------|
-| `.github/workflows/build-android.yml` | Change line 48-49 to use pipe syntax for the `run` command |
+| `.github/workflows/build-android.yml` | Add `permissions: contents: write` after line 10 |
 
-## What Happens After the Fix
+## Updated Workflow Section
 
-1. Push the fix to GitHub
-2. GitHub Actions will automatically retry the build
-3. The build should now proceed past the YAML parsing step
-4. After ~5-10 minutes, your APK will be available in GitHub Releases
-5. The `/download` page will show the QR code for downloading
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      ...
+```
 
+## What Happens After This Fix
+
+1. Push the updated workflow to GitHub
+2. GitHub Actions will automatically start a new build
+3. This time, the release step will have permission to create the release
+4. Your APK will appear in the Releases section
+5. The `/download` page will show the working QR code
+
+## Technical Note
+
+The `GITHUB_TOKEN` is already being passed correctly. The issue is that GitHub Actions now requires explicit permission declarations for write operations. Adding `permissions: contents: write` grants the token the ability to create tags and releases.
