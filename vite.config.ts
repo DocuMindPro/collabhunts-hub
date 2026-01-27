@@ -38,23 +38,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          supabase: ['@supabase/supabase-js'],
-          ui: [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-select',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-tooltip',
-          ],
-          charts: ['recharts'],
-        },
-      },
-    },
-    chunkSizeWarningLimit: 1000,
+    // Removed manualChunks for native app compatibility
+    // Code splitting with dynamic imports doesn't work reliably with Capacitor's file:// protocol
+    chunkSizeWarningLimit: 2000,
   },
 }));
