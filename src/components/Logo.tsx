@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { isNativePlatform, safeNativeAsync } from "@/lib/supabase-native";
 
 interface LogoProps {
   className?: string;
@@ -11,6 +12,7 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const isNative = isNativePlatform();
 
   const sizes = {
     sm: { icon: 28, logoHeight: 32, text: "text-lg" },
@@ -18,14 +20,20 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
     lg: { icon: 44, logoHeight: 48, text: "text-2xl" },
   };
 
-  const { icon, logoHeight, text } = sizes[size];
+  const { logoHeight, text } = sizes[size];
 
   useEffect(() => {
     const fetchLogos = async () => {
-      const { data } = await supabase
-        .from("site_settings")
-        .select("key, value")
-        .in("key", ["logo_primary_url", "logo_icon_url"]);
+      const data = await safeNativeAsync(
+        async () => {
+          const result = await supabase
+            .from("site_settings")
+            .select("key, value")
+            .in("key", ["logo_primary_url", "logo_icon_url"]);
+          return result.data;
+        },
+        null
+      );
 
       if (data) {
         const primary = data.find((d) => d.key === "logo_primary_url");
@@ -55,8 +63,9 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
     );
   }
 
-  // Show text fallback only after we've checked and found no logo in database
-  if (isLoaded) {
+  // On native or after loading check: show text fallback immediately
+  // This ensures the UI never appears blank
+  if (isLoaded || isNative) {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text} whitespace-nowrap`}>
@@ -66,10 +75,12 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
     );
   }
 
-  // Show nothing while loading to prevent any flash
+  // Show text fallback while loading on web (prevents flash)
   return (
-    <div className={`flex items-center gap-2 ${className}`} style={{ height: logoHeight, minWidth: 100 }}>
-      {/* Empty placeholder while loading */}
+    <div className={`flex items-center gap-2 ${className}`}>
+      <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text} whitespace-nowrap`}>
+        CollabHunts
+      </span>
     </div>
   );
 };
