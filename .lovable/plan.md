@@ -1,117 +1,85 @@
 
-# Fix Android White Screen - Disable Code Splitting for Native Builds
+# Fix PWA Build Error for Large Bundle
 
-## Root Cause
+## Problem
+The `maximumFileSizeToCacheInBytes` setting at 5MB is present in the config, but the build is still failing. This can happen because:
 
-The app is **stuck on "Loading..."** because React's lazy loading (code splitting) doesn't work properly with Capacitor's `file://` protocol on Android.
+1. The vite-plugin-pwa has strict validation that may not respect this setting in certain build modes
+2. There may be a caching issue with the node_modules or build artifacts
 
-| What's Happening | Why It Fails |
-|------------------|--------------|
-| `React.lazy(() => import('./pages/Influencers'))` | Creates dynamic chunk files like `Influencers-abc123.js` |
-| Vite builds chunks to `dist/assets/` | Creates files like `vendor.js`, `ui.js`, etc. |
-| Android loads from `file:///android_asset/` | Path resolution for dynamic imports breaks silently |
-| Suspense shows `<PageLoader />` | Lazy component never resolves → stuck on "Loading..." |
+## Solution Options
 
-The `Index` page is eagerly loaded (not lazy), but `PageTransition` component causes the Suspense boundary to show the loader while other lazy components initialize.
+### Option A: Increase Limit Further + Suppress Warning (Quick Fix)
+Update the Vite config to suppress the chunk size warning and ensure the PWA plugin respects the larger limit:
+
+| File | Change |
+|------|--------|
+| `vite.config.ts` | Increase `maximumFileSizeToCacheInBytes` to 10MB and add `chunkSizeWarningLimit: 3000` |
+
+### Option B: Disable PWA for Production Build (Recommended for Native)
+Since you're primarily building for Android APK, the PWA service worker isn't needed. Disable the PWA plugin conditionally:
+
+| File | Change |
+|------|--------|
+| `vite.config.ts` | Only enable VitePWA in development mode, skip it for production builds |
 
 ---
 
-## Solution
+## Recommended Implementation (Option B)
 
-Remove lazy loading and code splitting for a reliable native Android build. This increases initial bundle size but ensures the app loads correctly.
+For Android APK builds, PWA caching is unnecessary because:
+- Native apps don't use service workers
+- The APK bundles everything locally
+- Removing PWA eliminates the size limit issue entirely
 
----
-
-## Implementation Plan
-
-### Step 1: Remove Lazy Loading from App.tsx
-
-Convert all `lazy()` imports back to regular imports so everything loads together:
-
-| Current (Broken) | Fixed |
-|------------------|-------|
-| `const Influencers = lazy(() => import("./pages/Influencers"))` | `import Influencers from "./pages/Influencers"` |
-| `<Suspense fallback={<PageLoader />}>` | Remove Suspense wrapper |
-
-**Files affected:**
-- `src/App.tsx`
-
-### Step 2: Disable Manual Chunks in Vite Config
-
-Remove the `manualChunks` configuration to bundle everything into fewer files:
-
-| Current | Fixed |
-|---------|-------|
-| `manualChunks: { vendor: [...], ui: [...] }` | Remove or comment out for native builds |
-
-**Files affected:**
-- `vite.config.ts`
-
-### Step 3: Keep PageTransition but Remove Suspense
-
-The page transition animation can still work, but we remove the Suspense boundary that causes the loading state:
+### Changes to vite.config.ts
 
 ```text
 Before:
-  <PageTransition>
-    <Suspense fallback={<PageLoader />}>
-      <Routes>...</Routes>
-    </Suspense>
-  </PageTransition>
+  VitePWA({
+    registerType: 'autoUpdate',
+    ...
+  })
 
 After:
-  <PageTransition>
-    <Routes>...</Routes>
-  </PageTransition>
+  mode !== "production" && VitePWA({
+    registerType: 'autoUpdate',
+    ...
+  })
 ```
 
+This ensures:
+- **Development**: PWA enabled for web testing
+- **Production builds (APK)**: PWA disabled, no service worker generated, no size limits
+
 ---
 
-## Technical Summary
+## Files to Modify
 
-| File | Change | Purpose |
+| File | Action | Purpose |
 |------|--------|---------|
-| `src/App.tsx` | Remove all `lazy()` imports and Suspense | Eager load all pages |
-| `vite.config.ts` | Remove/simplify `manualChunks` config | Single bundle file |
+| `vite.config.ts` | Modify | Conditionally disable VitePWA for production builds |
 
 ---
 
-## Trade-offs
+## Alternative: Keep PWA for Web
 
-| Aspect | Before (Lazy) | After (Eager) |
-|--------|---------------|---------------|
-| Initial Load Size | ~200KB (split into chunks) | ~800KB-1MB (single bundle) |
-| Android Compatibility | Broken | Works |
-| Web Performance | Better (loads on demand) | Slightly slower initial load |
-| Reliability | Dynamic imports can fail | Always works |
-
-**For a native app, reliability is more important than code splitting.** The entire bundle loads from local storage anyway, not over the network.
-
----
-
-## Alternative: Conditional Lazy Loading (Advanced)
-
-If web performance is critical, we could implement platform-aware loading:
+If you want to keep PWA functionality for the website but disable for APK builds, we can use an environment variable:
 
 ```typescript
-// Only lazy load on web, eager load on native
-const Influencers = Capacitor.isNativePlatform() 
-  ? require("./pages/Influencers").default 
-  : lazy(() => import("./pages/Influencers"));
+const enablePWA = mode !== "production" || process.env.ENABLE_PWA === "true";
 ```
 
-However, this adds complexity. The simpler approach is to disable lazy loading entirely since:
-1. Native apps load from local files (fast)
-2. Bundle size doesn't significantly impact native app startup
-3. Simpler code is more maintainable
+This way:
+- GitHub Actions APK build: No PWA (faster, no errors)
+- Manual web deploy with `ENABLE_PWA=true`: PWA enabled
 
 ---
 
-## After Implementation
+## Expected Result
 
-1. Push changes to GitHub
-2. Wait for new APK build (~5-10 minutes)
-3. Download and install new APK
-4. The app should now load the home page correctly
-
-This fix ensures all code is bundled together and loads synchronously, eliminating the dynamic import failures that cause the white screen.
+After this fix:
+1. Build completes without errors
+2. GitHub Actions generates APK successfully
+3. Native Android app loads correctly (no service worker interference)
+4. Web version can still work without PWA (or with it if you enable the flag)
