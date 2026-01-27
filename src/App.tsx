@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 import { lazy, Suspense } from "react";
 import PageTransition from "./components/PageTransition";
 import CookieConsent from "./components/CookieConsent";
@@ -55,6 +56,9 @@ const AffiliateProtectedRoute = lazy(() => import("./components/AffiliateProtect
 
 const queryClient = new QueryClient();
 
+// Use HashRouter for native apps (file:// protocol), BrowserRouter for web
+const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter;
+
 // Component to initialize site settings (favicon, meta tags)
 const SiteSettingsProvider = ({ children }: { children: React.ReactNode }) => {
   useSiteSettings();
@@ -67,7 +71,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <Router>
         <PushNotificationProvider>
           <PageTransition>
             <Suspense fallback={<PageLoader />}>
@@ -189,7 +193,7 @@ const App = () => (
           </PageTransition>
           <CookieConsent />
         </PushNotificationProvider>
-      </BrowserRouter>
+      </Router>
     </TooltipProvider>
     </SiteSettingsProvider>
   </QueryClientProvider>
