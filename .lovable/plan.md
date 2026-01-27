@@ -1,28 +1,41 @@
 
 
-# Update GitHub Repository Path
+# Fix YAML Syntax Error in GitHub Actions Workflow
 
-A simple one-line code change to connect your download page to your actual GitHub repository.
+The GitHub Actions build is failing because of a YAML syntax error on line 49. The issue is with quote handling in the shell command.
 
-## What Needs to Change
+## The Problem
 
-Update line 10 in `src/pages/Download.tsx`:
+Line 49 currently reads:
+```yaml
+run: echo "apply from: 'java17-override.gradle'" >> android/build.gradle
+```
 
-| Current Value | New Value |
-|---------------|-----------|
-| `"your-username/collabhunts-hub"` | `"DocuMindPro/collabhunts-hub"` |
+YAML is having trouble parsing the mixed single and double quotes within the command.
 
-## What Happens After This Change
+## The Fix
 
-1. **Push to GitHub** - When you push this change to your `main` branch, GitHub Actions will automatically start building the APK
-2. **Build Time** - Wait about 5-10 minutes for the build to complete
-3. **Check Progress** - Go to https://github.com/DocuMindPro/collabhunts-hub/actions to see the build status
-4. **APK Ready** - Once complete, a new Release will appear at https://github.com/DocuMindPro/collabhunts-hub/releases
-5. **Download Page Works** - Your `/download` page will automatically show the QR code linking to the APK
+Use YAML's pipe (`|`) syntax for multi-line strings, which avoids quote parsing issues:
+
+```yaml
+- name: Apply Java 17 override
+  run: |
+    echo "apply from: 'java17-override.gradle'" >> android/build.gradle
+```
+
+The pipe (`|`) tells YAML to treat everything that follows as a literal string, preventing any quote interpretation issues.
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/pages/Download.tsx` | Update line 10: change `"your-username/collabhunts-hub"` to `"DocuMindPro/collabhunts-hub"` |
+| `.github/workflows/build-android.yml` | Change line 48-49 to use pipe syntax for the `run` command |
+
+## What Happens After the Fix
+
+1. Push the fix to GitHub
+2. GitHub Actions will automatically retry the build
+3. The build should now proceed past the YAML parsing step
+4. After ~5-10 minutes, your APK will be available in GitHub Releases
+5. The `/download` page will show the QR code for downloading
 
