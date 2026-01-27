@@ -1,90 +1,97 @@
 
-# Fix Android APK Crash - Missing Environment Variables
+# Fix Android White Screen - Router Compatibility Issue
 
-## Root Cause Analysis
+## Root Cause
 
-Your APK crashes on startup because **environment variables are missing during the GitHub Actions build**. Here's what's happening:
+Your APK shows a white screen because **`BrowserRouter` doesn't work in Capacitor apps**. Here's why:
 
-| What the app needs | What the APK has |
-|--------------------|------------------|
-| `VITE_SUPABASE_URL` = `https://olcygpkghmaqkezmunyu.supabase.co` | `undefined` |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` = `eyJhbG...` | `undefined` |
+| Environment | URL Format | Router Needed |
+|-------------|------------|---------------|
+| Web browser | `https://yoursite.com/page` | BrowserRouter ✓ |
+| Native app (Capacitor) | `file:///android_asset/index.html` | HashRouter ✓ |
 
-When the Supabase client initializes with `undefined` values, the app crashes immediately (white screen, then closes).
+When Capacitor loads your app, it uses `file://` protocol. `BrowserRouter` expects a web server to handle routes, but there isn't one in the native app - so routing fails silently and shows a white screen.
+
+---
 
 ## Solution
 
-Add the environment variables to GitHub Secrets and inject them during the build process.
+Switch from `BrowserRouter` to `HashRouter` for Capacitor apps, OR use a hybrid approach that detects the platform.
 
 ---
 
-## Implementation Steps
+## Implementation Plan
 
-### Step 1: Add GitHub Secrets
+### Option 1: Use HashRouter (Simple Fix)
 
-Go to your GitHub repository and add these secrets:
+Replace `BrowserRouter` with `HashRouter`. URLs will look like `/#/page` instead of `/page`.
 
-1. Navigate to: **Settings → Secrets and variables → Actions → New repository secret**
-2. Add these secrets:
+| File | Change |
+|------|--------|
+| `src/App.tsx` | Import `HashRouter` instead of `BrowserRouter` |
 
-| Secret Name | Value |
-|-------------|-------|
-| `VITE_SUPABASE_URL` | `https://olcygpkghmaqkezmunyu.supabase.co` |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9sY3lncGtnaG1hcWtlem11bnl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzNTMxNjgsImV4cCI6MjA3OTkyOTE2OH0.dbMWOlUbPArcarzcaL_qr_PIlFKJfOogcAeUgBGkclw` |
+**Pros**: Simple, works everywhere
+**Cons**: URLs have `#` in them (less clean for web)
 
-### Step 2: Update GitHub Actions Workflow
+### Option 2: Platform-Aware Router (Recommended)
 
-Modify `.github/workflows/build-android.yml` to create the `.env` file before building:
+Detect if running in Capacitor and use the appropriate router:
+- **Web**: Use `BrowserRouter` (clean URLs)
+- **Native App**: Use `HashRouter` (compatible with file://)
 
-**Changes to make:**
+| File | Change |
+|------|--------|
+| `src/App.tsx` | Add platform detection and conditional router |
 
-Add a new step after "Install dependencies" and before "Build web app" to create the `.env` file:
+---
 
-```yaml
-- name: Create .env file
-  run: |
-    echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" >> .env
-    echo "VITE_SUPABASE_PUBLISHABLE_KEY=${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}" >> .env
+## Recommended Implementation (Option 2)
+
+### Changes to `src/App.tsx`
+
+1. Import both routers and Capacitor's `Capacitor` module
+2. Detect if running in native app using `Capacitor.isNativePlatform()`
+3. Conditionally render the appropriate router
+
+```text
+Before:
+  import { BrowserRouter } from "react-router-dom"
+  ...
+  <BrowserRouter>
+    ...
+  </BrowserRouter>
+
+After:
+  import { BrowserRouter, HashRouter } from "react-router-dom"
+  import { Capacitor } from "@capacitor/core"
+  
+  const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter
+  ...
+  <Router>
+    ...
+  </Router>
 ```
 
 ---
 
-## Technical Details
-
-### File Changes Summary
+## Technical Summary
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `.github/workflows/build-android.yml` | Modify | Add step to create `.env` from GitHub Secrets |
+| `src/App.tsx` | Modify | Add platform detection and use HashRouter for native apps |
 
-### Updated Workflow (Relevant Section)
+### After This Fix
 
-```text
-Steps Flow:
-1. Checkout code
-2. Setup JDK 17
-3. Setup Node.js
-4. Install dependencies
-5. [NEW] Create .env file from secrets  ← ADD THIS
-6. Build web app
-7. Add Android platform
-... (rest unchanged)
-```
-
-### Why This Works
-
-- Vite reads environment variables from `.env` at **build time**
-- The values get "baked into" the JavaScript bundle
-- When the APK runs, it has the actual URLs embedded in the code
-- Supabase client initializes successfully, app works!
+1. Push changes to GitHub
+2. Wait for new APK build (~5-10 minutes)
+3. Download and install new APK
+4. App will properly route and show the home page instead of white screen
 
 ---
 
-## After Implementation
+## Why This Works
 
-1. Add the GitHub Secrets (manual step in GitHub UI)
-2. I'll update the workflow file
-3. Push changes to trigger a new build
-4. Download the new APK and test
-
-The new APK will have the backend URLs properly embedded and should work correctly on your Android phone.
+- `HashRouter` uses the URL hash (`#`) for routing
+- Hash changes don't require server-side handling
+- Works with `file://` protocol used by Capacitor
+- Web users still get clean URLs with `BrowserRouter`
