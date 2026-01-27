@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { isNativePlatform, safeNativeAsync } from "@/lib/supabase-native";
 
 interface SiteSettings {
   logo_primary_url: string | null;
@@ -21,18 +22,24 @@ export const useSiteSettings = () => {
 
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data } = await supabase
-        .from("site_settings")
-        .select("key, value")
-        .in("key", [
-          "logo_primary_url",
-          "logo_icon_url",
-          "favicon_url",
-          "apple_touch_icon_url",
-          "og_image_url",
-        ]);
+      const result = await safeNativeAsync(
+        async () => {
+          const { data } = await supabase
+            .from("site_settings")
+            .select("key, value")
+            .in("key", [
+              "logo_primary_url",
+              "logo_icon_url",
+              "favicon_url",
+              "apple_touch_icon_url",
+              "og_image_url",
+            ]);
+          return data;
+        },
+        null
+      );
 
-      if (data) {
+      if (result) {
         const newSettings: SiteSettings = {
           logo_primary_url: null,
           logo_icon_url: null,
@@ -41,7 +48,7 @@ export const useSiteSettings = () => {
           og_image_url: null,
         };
 
-        data.forEach((item) => {
+        result.forEach((item) => {
           if (item.key in newSettings) {
             newSettings[item.key as keyof SiteSettings] = item.value;
           }
@@ -68,7 +75,13 @@ export const useSiteSettings = () => {
       setLoading(false);
     };
 
-    fetchSettings();
+    // On native, defer the fetch slightly to let UI render first
+    if (isNativePlatform()) {
+      const timeout = setTimeout(fetchSettings, 100);
+      return () => clearTimeout(timeout);
+    } else {
+      fetchSettings();
+    }
   }, []);
 
   return { settings, loading };

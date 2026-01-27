@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { isNativePlatform } from "@/lib/supabase-native";
 
 interface AnimatedSectionProps {
   children: React.ReactNode;
@@ -15,10 +16,18 @@ const AnimatedSection = ({
   delay = 0,
   stagger = 0
 }: AnimatedSectionProps) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const isNative = isNativePlatform();
+  // On native platforms, start visible immediately to prevent white screen
+  const [isVisible, setIsVisible] = useState(isNative);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Skip IntersectionObserver on native - content is immediately visible
+    if (isNative) {
+      setIsVisible(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -33,7 +42,7 @@ const AnimatedSection = ({
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [isNative]);
 
   const getAnimationClasses = () => {
     const baseClasses = "transition-all duration-700 ease-out";

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Menu, Shield, LogOut, LayoutDashboard, ChevronDown, ChevronUp, BookOpen, Sparkles,
-  BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Megaphone, Wallet, Users, CreditCard, Crown, Zap, Globe, Link as LinkIcon
+  BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Megaphone, Wallet, Users, CreditCard, Crown, Globe, Link as LinkIcon
 } from "lucide-react";
 import Notifications from "@/components/Notifications";
 import NavbarUpgradeBadge from "@/components/NavbarUpgradeBadge";
@@ -19,11 +19,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Logo from "@/components/Logo";
+import { isNativePlatform, safeNativeAsync } from "@/lib/supabase-native";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -83,20 +83,77 @@ const Navbar = () => {
 
   const navLinks = getNavLinks();
 
+  const checkAdminRole = async (userId: string) => {
+    const data = await safeNativeAsync(
+      async () => {
+        const { data } = await supabase.from('user_roles').select('role').eq('user_id', userId).eq('role', 'admin').maybeSingle();
+        return data;
+      },
+      null
+    );
+    setIsAdmin(!!data);
+  };
+
+  const checkCreatorStatus = async (userId: string) => {
+    const data = await safeNativeAsync(
+      async () => {
+        const { data } = await supabase.from('creator_profiles').select('id').eq('user_id', userId).maybeSingle();
+        return data;
+      },
+      null
+    );
+    setHasCreatorProfile(!!data);
+  };
+
+  const checkBrandProfile = async (userId: string) => {
+    const data = await safeNativeAsync(
+      async () => {
+        const { data } = await supabase.from('brand_profiles').select('id').eq('user_id', userId).maybeSingle();
+        return data;
+      },
+      null
+    );
+    setHasBrandProfile(!!data);
+  };
+
+  const checkFranchiseProfile = async (userId: string) => {
+    const data = await safeNativeAsync(
+      async () => {
+        const { data } = await supabase.from('franchise_owners').select('id, status').eq('user_id', userId).eq('status', 'active').maybeSingle();
+        return data;
+      },
+      null
+    );
+    setHasFranchiseProfile(!!data);
+  };
+
+  const checkAffiliateProfile = async (userId: string) => {
+    const data = await safeNativeAsync(
+      async () => {
+        const { data } = await supabase.from('affiliates').select('id, status').eq('user_id', userId).eq('status', 'active').maybeSingle();
+        return data;
+      },
+      null
+    );
+    setHasAffiliateProfile(!!data);
+  };
+
   useEffect(() => {
+    const isNative = isNativePlatform();
+    
     // Set up auth state listener FIRST (critical for proper sync)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Navbar: Auth state changed:', event, session?.user?.email);
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Defer data fetching to avoid deadlock
+        // Defer data fetching - longer delay on native to let UI render
         setTimeout(() => {
           checkAdminRole(session.user.id);
           checkCreatorStatus(session.user.id);
           checkBrandProfile(session.user.id);
           checkFranchiseProfile(session.user.id);
           checkAffiliateProfile(session.user.id);
-        }, 0);
+        }, isNative ? 500 : 0);
       } else {
         setIsAdmin(false);
         setHasCreatorProfile(false);
@@ -106,95 +163,74 @@ const Navbar = () => {
       }
     });
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // THEN check for existing session - with timeout on native
+    const checkSession = async () => {
+      const session = await safeNativeAsync(
+        async () => {
+          const { data } = await supabase.auth.getSession();
+          return data.session;
+        },
+        null
+      );
+      
       console.log('Navbar: Initial session check:', session?.user?.email);
       setUser(session?.user ?? null);
       if (session?.user) {
-        checkAdminRole(session.user.id);
-        checkCreatorStatus(session.user.id);
-        checkBrandProfile(session.user.id);
-        checkFranchiseProfile(session.user.id);
-        checkAffiliateProfile(session.user.id);
+        // Defer profile checks on native
+        setTimeout(() => {
+          checkAdminRole(session.user.id);
+          checkCreatorStatus(session.user.id);
+          checkBrandProfile(session.user.id);
+          checkFranchiseProfile(session.user.id);
+          checkAffiliateProfile(session.user.id);
+        }, isNative ? 300 : 0);
       }
-    });
+    };
+
+    // On native, defer initial session check to let UI render first
+    if (isNative) {
+      setTimeout(checkSession, 100);
+    } else {
+      checkSession();
+    }
 
     return () => subscription.unsubscribe();
   }, []);
 
   // Check for new changelog updates
   useEffect(() => {
+    const isNative = isNativePlatform();
+    
     const checkNewUpdates = async () => {
-      try {
-        const { data } = await supabase
-          .from("platform_changelog")
-          .select("published_at")
-          .eq("is_published", true)
-          .order("published_at", { ascending: false })
-          .limit(1)
-          .single();
+      const data = await safeNativeAsync(
+        async () => {
+          const { data } = await supabase
+            .from("platform_changelog")
+            .select("published_at")
+            .eq("is_published", true)
+            .order("published_at", { ascending: false })
+            .limit(1)
+            .single();
+          return data;
+        },
+        null
+      );
 
-        if (data?.published_at) {
-          const lastVisited = localStorage.getItem("whats_new_last_visited");
-          if (!lastVisited || new Date(data.published_at) > new Date(lastVisited)) {
-            setHasNewUpdates(true);
-          }
+      if (data?.published_at) {
+        const lastVisited = localStorage.getItem("whats_new_last_visited");
+        if (!lastVisited || new Date(data.published_at) > new Date(lastVisited)) {
+          setHasNewUpdates(true);
         }
-      } catch (error) {
-        // No published entries or error, don't show badge
       }
     };
 
-    checkNewUpdates();
+    // Defer on native to let UI render first
+    if (isNative) {
+      setTimeout(checkNewUpdates, 1000);
+    } else {
+      checkNewUpdates();
+    }
   }, []);
-
-  const checkAdminRole = async (userId: string) => {
-    const { data } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
-    setIsAdmin(!!data);
-  };
-
-  const checkCreatorStatus = async (userId: string) => {
-    const { data } = await supabase
-      .from('creator_profiles')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
-    setHasCreatorProfile(!!data);
-  };
-
-  const checkBrandProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from('brand_profiles')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
-    setHasBrandProfile(!!data);
-  };
-
-  const checkFranchiseProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from('franchise_owners')
-      .select('id, status')
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .maybeSingle();
-    setHasFranchiseProfile(!!data);
-  };
-
-  const checkAffiliateProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from('affiliates')
-      .select('id, status')
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .maybeSingle();
-    setHasAffiliateProfile(!!data);
-  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -447,23 +483,20 @@ const Navbar = () => {
                           </Button>
                         </Link>
                       )}
-                      <div className="pt-4 border-t">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
-                          {isAdmin && (
-                            <Badge variant="default" className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs px-1.5 py-0">
-                              <Crown className="h-3 w-3 mr-0.5" />
-                              Super Admin
-                            </Badge>
-                          )}
+
+                      <div className="pt-4 border-t border-border">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback>
+                              {user.email?.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm truncate">{user.email}</span>
                         </div>
                         <Button 
                           variant="outline" 
-                          className="w-full gap-2" 
-                          onClick={() => {
-                            handleLogout();
-                            setIsOpen(false);
-                          }}
+                          className="w-full gap-2"
+                          onClick={handleLogout}
                         >
                           <LogOut className="h-4 w-4" />
                           Logout
@@ -487,22 +520,6 @@ const Navbar = () => {
                           Join as Creator
                         </Button>
                       </Link>
-                      <div className="pt-4 border-t border-border space-y-2">
-                        <Link 
-                          to="/become-affiliate" 
-                          onClick={() => setIsOpen(false)}
-                          className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-                        >
-                          Become an Affiliate
-                        </Link>
-                        <Link 
-                          to="/franchise" 
-                          onClick={() => setIsOpen(false)}
-                          className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-                        >
-                          Franchise Opportunities
-                        </Link>
-                      </div>
                     </>
                   )}
                 </div>

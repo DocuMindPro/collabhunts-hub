@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import AdPlacement from "@/components/AdPlacement";
+import { isNativePlatform, safeNativeAsync } from "@/lib/supabase-native";
 
 const Footer = () => {
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
@@ -12,10 +13,18 @@ const Footer = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [recentUpdatesCount, setRecentUpdatesCount] = useState(0);
   const { toast } = useToast();
+  const isNative = isNativePlatform();
 
   useEffect(() => {
     const checkUserProfiles = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await safeNativeAsync(
+        async () => {
+          const { data } = await supabase.auth.getSession();
+          return data.session;
+        },
+        null
+      );
+      
       if (!session?.user) {
         setHasBrandProfile(false);
         setHasCreatorProfile(false);
@@ -25,27 +34,54 @@ const Footer = () => {
 
       setIsLoggedIn(true);
 
-      const [brandResult, creatorResult] = await Promise.all([
-        supabase.from("brand_profiles").select("id").eq("user_id", session.user.id).maybeSingle(),
-        supabase.from("creator_profiles").select("id").eq("user_id", session.user.id).maybeSingle()
+      const [brandData, creatorData] = await Promise.all([
+        safeNativeAsync(
+          async () => {
+            const { data } = await supabase.from("brand_profiles").select("id").eq("user_id", session.user.id).maybeSingle();
+            return data;
+          },
+          null
+        ),
+        safeNativeAsync(
+          async () => {
+            const { data } = await supabase.from("creator_profiles").select("id").eq("user_id", session.user.id).maybeSingle();
+            return data;
+          },
+          null
+        )
       ]);
 
-      setHasBrandProfile(!!brandResult.data);
-      setHasCreatorProfile(!!creatorResult.data);
+      setHasBrandProfile(!!brandData);
+      setHasCreatorProfile(!!creatorData);
     };
 
     const fetchRecentUpdatesCount = async () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      const { count } = await supabase
-        .from("platform_changelog")
-        .select("id", { count: "exact", head: true })
-        .eq("is_published", true)
-        .gte("published_at", thirtyDaysAgo.toISOString());
+      const count = await safeNativeAsync(
+        async () => {
+          const { count } = await supabase
+            .from("platform_changelog")
+            .select("id", { count: "exact", head: true })
+            .eq("is_published", true)
+            .gte("published_at", thirtyDaysAgo.toISOString());
+          return count;
+        },
+        0
+      );
       
       setRecentUpdatesCount(count || 0);
     };
+
+    // On native, defer these calls to let UI render first
+    if (isNative) {
+      const timeout = setTimeout(() => {
+        checkUserProfiles();
+        fetchRecentUpdatesCount();
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
 
     checkUserProfiles();
     fetchRecentUpdatesCount();
@@ -55,7 +91,7 @@ const Footer = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isNative]);
 
   const handleSocialClick = (platform: string) => {
     toast({
