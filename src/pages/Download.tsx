@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const GITHUB_REPO = "your-username/collabhunts-hub"; // Update this after connecting to GitHub
+const GITHUB_REPO = "DocuMindPro/collabhunts-hub";
 const APP_URL = "https://collabhunts-hub.lovable.app";
 
 interface GitHubRelease {
