@@ -35,7 +35,7 @@ const PageTransition = ({ children }: PageTransitionProps) => {
 
   // On native, render without transition classes for maximum performance
   if (isNative) {
-    return <div className="page-transition page-enter">{displayChildren}</div>;
+    return <div className="page-transition page-enter-native">{displayChildren}</div>;
   }
 
   return (
