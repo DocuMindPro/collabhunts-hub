@@ -2,7 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Fonts loaded via index.html with preconnect for better performance */
+/* System font fallback for Android WebView when custom fonts are loading */
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Fonts loaded via index.html with non-blocking preload for Android */
 
 /* Page Transition Animations */
 .page-transition {

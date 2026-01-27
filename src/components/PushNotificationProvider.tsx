@@ -18,10 +18,12 @@ export function PushNotificationProvider({ children }: { children: React.ReactNo
   const { isRegistered, isAvailable, registerDevice } = usePushNotifications();
 
   // Defer initialization until component is mounted
+  // Use longer delay on native to allow UI to render first
   useEffect(() => {
+    const delay = Capacitor.isNativePlatform() ? 500 : 50;
     const timer = setTimeout(() => {
       setIsMounted(true);
-    }, 50);
+    }, delay);
     return () => clearTimeout(timer);
   }, []);
 

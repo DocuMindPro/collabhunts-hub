@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { ExternalLink } from "lucide-react";
+import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 
 interface AdPlacementData {
   id: string;
@@ -28,34 +29,49 @@ const AdPlacement = ({ placementId, className = "", fallback, showAdvertiseHere 
 
   useEffect(() => {
     const fetchAd = async () => {
-      try {
-        const now = new Date().toISOString();
-        const { data, error } = await supabase
-          .from("ad_placements")
-          .select("*")
-          .eq("placement_id", placementId)
-          .eq("is_active", true)
-          .or(`start_date.is.null,start_date.lte.${now}`)
-          .or(`end_date.is.null,end_date.gte.${now}`)
-          .maybeSingle();
+      // Use timeout-protected fetch for native platforms
+      const data = await safeNativeAsync(
+        async () => {
+          const now = new Date().toISOString();
+          const { data, error } = await supabase
+            .from("ad_placements")
+            .select("*")
+            .eq("placement_id", placementId)
+            .eq("is_active", true)
+            .or(`start_date.is.null,start_date.lte.${now}`)
+            .or(`end_date.is.null,end_date.gte.${now}`)
+            .maybeSingle();
 
-        if (error) {
-          console.error("Error fetching ad:", error);
-          return;
-        }
+          if (error) {
+            console.error("Error fetching ad:", error);
+            return null;
+          }
+          return data;
+        },
+        null,
+        3000 // 3 second timeout for ads
+      );
 
-        setAd(data);
-      } catch (error) {
-        console.error("Error fetching ad:", error);
-      } finally {
-        setLoading(false);
-      }
+      setAd(data);
+      setLoading(false);
     };
 
     fetchAd();
   }, [placementId]);
 
+  // On native, show placeholder immediately to prevent blank areas
+  // On web, return null during loading for cleaner experience
   if (loading) {
+    if (isNativePlatform() && showAdvertiseHere) {
+      return (
+        <div className={`block ${className}`}>
+          <div className="h-full bg-muted/50 border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center text-center animate-pulse">
+            <div className="h-6 w-6 mb-2 bg-muted-foreground/20 rounded" />
+            <div className="h-4 w-24 bg-muted-foreground/20 rounded" />
+          </div>
+        </div>
+      );
+    }
     return null;
   }
 

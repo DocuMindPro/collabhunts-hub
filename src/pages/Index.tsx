@@ -8,11 +8,11 @@ import Footer from "@/components/Footer";
 import heroImage from "@/assets/hero-creators-brand.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import RotatingText from "@/components/RotatingText";
-
 import AnimatedSection from "@/components/AnimatedSection";
 import BrandMarquee from "@/components/BrandMarquee";
 import FloatingShapes from "@/components/FloatingShapes";
 import AdPlacement from "@/components/AdPlacement";
+import { isNativePlatform, safeNativeAsync } from "@/lib/supabase-native";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,17 +31,32 @@ const Index = () => {
 
   useEffect(() => {
     const checkUserProfiles = async (userId: string) => {
-      const { data: brandProfile } = await supabase
-        .from('brand_profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
+      // Wrap with timeout protection for native platforms
+      const brandProfile = await safeNativeAsync(
+        async () => {
+          const { data } = await supabase
+            .from('brand_profiles')
+            .select('id')
+            .eq('user_id', userId)
+            .maybeSingle();
+          return data;
+        },
+        null,
+        3000
+      );
       
-      const { data: creatorProfile } = await supabase
-        .from('creator_profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
+      const creatorProfile = await safeNativeAsync(
+        async () => {
+          const { data } = await supabase
+            .from('creator_profiles')
+            .select('id')
+            .eq('user_id', userId)
+            .maybeSingle();
+          return data;
+        },
+        null,
+        3000
+      );
       
       setHasBrandProfile(!!brandProfile);
       setHasCreatorProfile(!!creatorProfile);
@@ -63,13 +78,29 @@ const Index = () => {
       }
     });
 
-    // THEN check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        checkUserProfiles(session.user.id);
-      }
-    });
+    // Defer initial session check on native to allow UI to render first
+    const checkSession = () => {
+      safeNativeAsync(
+        async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          return session;
+        },
+        null,
+        3000
+      ).then((session) => {
+        if (session?.user) {
+          setUser(session.user);
+          checkUserProfiles(session.user.id);
+        }
+      });
+    };
+
+    if (isNativePlatform()) {
+      // Delay session check on native to allow UI to render first
+      setTimeout(checkSession, 200);
+    } else {
+      checkSession();
+    }
 
     return () => subscription.unsubscribe();
   }, []);
