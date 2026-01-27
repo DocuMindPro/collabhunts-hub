@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
@@ -9,13 +9,25 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
  * 
  * Note: Push notifications require Firebase configuration. If Firebase is not
  * configured, the app will continue running normally without push notifications.
+ * 
+ * IMPORTANT: This component defers initialization to avoid crashes on native
+ * platforms when the Router context isn't fully ready yet.
  */
 export function PushNotificationProvider({ children }: { children: React.ReactNode }) {
+  const [isMounted, setIsMounted] = useState(false);
   const { isRegistered, isAvailable, registerDevice } = usePushNotifications();
 
+  // Defer initialization until component is mounted
   useEffect(() => {
-    // Only initialize on native platforms
-    if (!Capacitor.isNativePlatform()) {
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    // Only initialize on native platforms after mounting
+    if (!isMounted || !Capacitor.isNativePlatform()) {
       return;
     }
 
@@ -28,7 +40,7 @@ export function PushNotificationProvider({ children }: { children: React.ReactNo
         // App continues normally without push notifications
       }
     }
-  }, [isRegistered, isAvailable, registerDevice]);
+  }, [isMounted, isRegistered, isAvailable, registerDevice]);
 
   return <>{children}</>;
 }

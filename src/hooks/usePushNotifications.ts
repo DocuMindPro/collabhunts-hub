@@ -1,20 +1,40 @@
 import { useEffect, useCallback, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications, Token, PushNotificationSchema, ActionPerformed } from '@capacitor/push-notifications';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { registerPushToken, unregisterPushToken, updatePushToken, Platform } from '@/lib/push-service';
+import { registerPushToken, unregisterPushToken, Platform } from '@/lib/push-service';
 import { toast } from 'sonner';
 
+/**
+ * Native-safe navigation function that uses hash-based routing
+ * This avoids React Router context issues on native platforms
+ */
+const navigateNative = (path: string) => {
+  try {
+    // Use hash-based navigation for native platforms
+    if (Capacitor.isNativePlatform()) {
+      window.location.hash = path;
+    } else {
+      window.location.href = path;
+    }
+  } catch (error) {
+    console.warn('Navigation failed:', error);
+  }
+};
+
 export function usePushNotifications() {
-  const navigate = useNavigate();
   const [isRegistered, setIsRegistered] = useState(false);
   const [currentToken, setCurrentToken] = useState<string | null>(null);
   const [isAvailable, setIsAvailable] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const getPlatform = (): Platform => {
-    const platform = Capacitor.getPlatform();
-    return platform === 'ios' ? 'ios' : 'android';
+    try {
+      const platform = Capacitor.getPlatform();
+      return platform === 'ios' ? 'ios' : 'android';
+    } catch {
+      return 'android';
+    }
   };
 
   const requestPermissions = useCallback(async () => {
@@ -72,41 +92,61 @@ export function usePushNotifications() {
   }, [currentToken]);
 
   const handleNotificationTap = useCallback((notification: PushNotificationSchema) => {
-    const data = notification.data;
-    
-    // Navigate based on notification type
-    if (data?.notification_type) {
-      switch (data.notification_type) {
-        case 'new_message':
-          navigate('/creator-dashboard?tab=messages');
-          break;
-        case 'creator_new_booking':
-        case 'creator_booking_accepted':
-        case 'creator_revision_requested':
-        case 'creator_delivery_confirmed':
-          navigate('/creator-dashboard?tab=bookings');
-          break;
-        case 'creator_application_accepted':
-          navigate('/creator-dashboard?tab=campaigns');
-          break;
-        case 'creator_dispute_opened':
-          navigate('/creator-dashboard?tab=bookings');
-          break;
-        case 'creator_profile_approved':
-          navigate('/creator-dashboard?tab=profile');
-          break;
-        default:
-          navigate('/creator-dashboard');
+    try {
+      const data = notification.data;
+      
+      // Navigate based on notification type using native-safe navigation
+      if (data?.notification_type) {
+        switch (data.notification_type) {
+          case 'new_message':
+            navigateNative('/creator-dashboard?tab=messages');
+            break;
+          case 'creator_new_booking':
+          case 'creator_booking_accepted':
+          case 'creator_revision_requested':
+          case 'creator_delivery_confirmed':
+            navigateNative('/creator-dashboard?tab=bookings');
+            break;
+          case 'creator_application_accepted':
+            navigateNative('/creator-dashboard?tab=campaigns');
+            break;
+          case 'creator_dispute_opened':
+            navigateNative('/creator-dashboard?tab=bookings');
+            break;
+          case 'creator_profile_approved':
+            navigateNative('/creator-dashboard?tab=profile');
+            break;
+          default:
+            navigateNative('/creator-dashboard');
+        }
+      } else if (data?.link) {
+        navigateNative(data.link);
+      } else {
+        navigateNative('/creator-dashboard');
       }
-    } else if (data?.link) {
-      navigate(data.link);
-    } else {
-      navigate('/creator-dashboard');
+    } catch (error) {
+      console.warn('Error handling notification tap:', error);
     }
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
+    // Skip initialization on non-native platforms
     if (!Capacitor.isNativePlatform()) {
+      setIsInitialized(true);
+      return;
+    }
+
+    // Defer initialization to avoid early crashes
+    const initTimeout = setTimeout(() => {
+      setIsInitialized(true);
+    }, 100);
+
+    return () => clearTimeout(initTimeout);
+  }, []);
+
+  useEffect(() => {
+    // Don't run until initialized
+    if (!isInitialized || !Capacitor.isNativePlatform()) {
       return;
     }
 
@@ -222,7 +262,7 @@ export function usePushNotifications() {
       actionCleanup?.();
       authSubscription?.unsubscribe();
     };
-  }, [registerDevice, unregisterDevice, handleNotificationTap]);
+  }, [isInitialized, registerDevice, unregisterDevice, handleNotificationTap]);
 
   return {
     isRegistered,

@@ -10,6 +10,7 @@ import CookieConsent from "./components/CookieConsent";
 import PageLoader from "./components/PageLoader";
 import useSiteSettings from "./hooks/useSiteSettings";
 import PushNotificationProvider from "./components/PushNotificationProvider";
+import NativeErrorBoundary from "./components/NativeErrorBoundary";
 // Eager load most visited pages
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -66,10 +67,11 @@ const SiteSettingsProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <SiteSettingsProvider>
-    <TooltipProvider>
-      <Toaster />
+  <NativeErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <SiteSettingsProvider>
+        <TooltipProvider>
+          <Toaster />
       <Sonner />
       <Router>
         <PushNotificationProvider>
@@ -192,11 +194,12 @@ const App = () => (
             </Suspense>
           </PageTransition>
           <CookieConsent />
-        </PushNotificationProvider>
-      </Router>
-    </TooltipProvider>
-    </SiteSettingsProvider>
-  </QueryClientProvider>
+          </PushNotificationProvider>
+        </Router>
+      </TooltipProvider>
+      </SiteSettingsProvider>
+    </QueryClientProvider>
+  </NativeErrorBoundary>
 );
 
 export default App;
