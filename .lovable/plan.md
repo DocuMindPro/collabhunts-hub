@@ -1,198 +1,186 @@
 
-# Fix Android App White Screen - Complete Solution
+# Fix Android App White Screen - Complete Root Cause Fix
 
-## Root Cause
+## Problem Summary
 
-The Android app freezes after showing the logo because multiple Supabase network requests are made during initialization, and on Android WebView:
-1. Network requests may be throttled or fail silently
-2. There's no timeout/error handling to proceed when requests hang
-3. UI components remain invisible (opacity: 0) waiting for data that never arrives
-
-The logo shows because it's one of the first successful fetches, but subsequent requests pile up and block the UI from rendering.
+The Android app shows the logo then freezes because:
+1. **Index.tsx** page makes direct Supabase calls without timeout protection
+2. **AdPlacement** component blocks rendering waiting for data
+3. **Google Fonts** load synchronously, blocking first paint
+4. Several auth state listeners make synchronous network requests
 
 ## Solution Overview
 
-We need to make the app more resilient to network issues on Android by:
-1. Adding network timeout handling for Supabase calls
-2. Making the initial render independent of network requests
-3. Ensuring content is visible even when data is still loading
-4. Removing external font dependencies for native builds
+Apply timeout protection to ALL remaining Supabase calls and make fonts non-blocking.
 
 ---
 
-## Implementation Plan
+## Step 1: Fix Index.tsx - Wrap All Supabase Calls
 
-### Step 1: Create a Native-Safe Supabase Client Wrapper
+The home page (Index.tsx) is the first page users see. All its Supabase calls need protection.
 
-Create a wrapper that adds timeout handling for all Supabase calls on native platforms.
+| Current | Fixed |
+|---------|-------|
+| Direct `supabase.from()` calls | Wrap with `safeNativeAsync()` |
+| Direct `supabase.auth.getSession()` | Wrap with timeout |
+| `checkUserProfiles()` blocks render | Defer execution on native |
 
-**New File**: `src/lib/supabase-native.ts`
-
-This wrapper will:
-- Detect native platform
-- Add configurable timeouts to Supabase calls
-- Return fallback/empty data on timeout instead of hanging
-- Log issues for debugging
-
-### Step 2: Update PageTransition for Immediate Visibility
-
-The current PageTransition starts with `opacity: 0` for 50ms, which can compound with other delays.
-
-**File to modify**: `src/components/PageTransition.tsx`
-
-Changes:
-- On native platforms, skip the transition animation entirely
-- Render content immediately with full opacity
-- Keep transitions for web only
-
-### Step 3: Update AnimatedSection for Native
-
-AnimatedSection uses IntersectionObserver which works but starts with invisible content.
-
-**File to modify**: `src/components/AnimatedSection.tsx`
-
-Changes:
-- On native platforms, immediately set `isVisible = true`
-- Skip IntersectionObserver on native for faster first paint
-- Content renders visible immediately
-
-### Step 4: Add Loading States to Critical Components
-
-Components should show content immediately, not wait for data.
-
-**Files to modify**:
-- `src/components/Navbar.tsx`: Show navbar immediately, defer profile checks
-- `src/components/Logo.tsx`: Show text fallback immediately while loading
-- `src/components/Footer.tsx`: Show footer immediately, defer async checks
-
-### Step 5: Handle Google Fonts for Native
-
-External font loading can block or slow rendering on native.
-
-**File to modify**: `index.html`
-
-Changes:
-- Add `font-display: swap` to prevent blocking
-- Consider bundling fonts or using system fonts as fallback
-
-### Step 6: Add Global Error Boundary Improvements
-
-Enhance the error boundary to catch network-related hangs.
-
-**File to modify**: `src/components/NativeErrorBoundary.tsx`
-
-Changes:
-- Add a loading timeout that shows content after X seconds regardless
-- Detect if app is "stuck" and offer recovery options
-
----
-
-## Detailed Changes
-
-### Step 1: supabase-native.ts (New File)
-
+**Changes:**
 ```typescript
-// Utility to wrap Supabase calls with timeout for native platforms
-import { Capacitor } from '@capacitor/core';
+import { isNativePlatform, safeNativeAsync } from "@/lib/supabase-native";
 
-const NATIVE_TIMEOUT_MS = 5000; // 5 second timeout on native
+// In checkUserProfiles - wrap with safeNativeAsync
+const brandProfile = await safeNativeAsync(
+  async () => {
+    const { data } = await supabase.from('brand_profiles')...
+    return data;
+  },
+  null
+);
 
-export async function withNativeTimeout<T>(
-  promise: Promise<T>,
-  fallback: T,
-  timeoutMs: number = NATIVE_TIMEOUT_MS
-): Promise<T> {
-  if (!Capacitor.isNativePlatform()) {
-    return promise; // No timeout on web
-  }
-
-  return Promise.race([
-    promise,
-    new Promise<T>((resolve) => {
-      setTimeout(() => {
-        console.warn('[Native] Supabase request timed out, using fallback');
-        resolve(fallback);
-      }, timeoutMs);
-    }),
-  ]);
+// Initial session check - wrap with timeout
+if (isNativePlatform()) {
+  setTimeout(() => {
+    supabase.auth.getSession().then(...)
+  }, 200);
+} else {
+  supabase.auth.getSession().then(...)
 }
 ```
 
-### Step 2: PageTransition.tsx Updates
+---
+
+## Step 2: Fix AdPlacement.tsx - Add Timeout + Fallback
+
+AdPlacement returns `null` while loading, making content invisible.
 
 | Current | Fixed |
 |---------|-------|
-| Always uses 50ms delay + opacity animation | Skip animation on native platforms |
-| Starts with `page-exit` class (opacity: 0) | Start with `page-enter` on native |
+| `if (loading) return null` | Return fallback immediately |
+| Direct Supabase call | Wrap with `safeNativeAsync()` |
+| No timeout | 3-second timeout for ads |
 
-### Step 3: AnimatedSection.tsx Updates
+**Changes:**
+```typescript
+import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
+
+// Show fallback immediately on native instead of null
+if (loading) {
+  if (isNativePlatform()) {
+    // Show placeholder on native to prevent blank areas
+    return showAdvertiseHere ? <AdvertisePlaceholder /> : null;
+  }
+  return null;
+}
+
+// Wrap fetch with timeout
+const fetchAd = async () => {
+  const data = await safeNativeAsync(
+    async () => {
+      const result = await supabase.from("ad_placements")...
+      return result.data;
+    },
+    null,
+    3000 // 3 second timeout for ads
+  );
+  setAd(data);
+  setLoading(false);
+};
+```
+
+---
+
+## Step 3: Make Google Fonts Non-Blocking
+
+Currently fonts load synchronously and can block render on slow networks.
 
 | Current | Fixed |
 |---------|-------|
-| Uses IntersectionObserver, starts invisible | On native: immediately visible |
-| Waits for intersection to show content | No waiting on native |
+| `<link href="fonts...">` | Add `media="print" onload="..."` pattern |
+| Blocking load | Non-blocking with fallback |
 
-### Step 4: Navbar.tsx Updates
+**Changes to index.html:**
+```html
+<!-- Non-blocking font loading with fallback -->
+<link rel="preload" href="https://fonts.googleapis.com/css2..." as="style" onload="this.onload=null;this.rel='stylesheet'" />
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2..."></noscript>
+```
+
+Also add CSS fallback in `index.css`:
+```css
+/* System font fallback for native */
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+```
+
+---
+
+## Step 4: Defer PushNotificationProvider Initialization
+
+The push notification hook does network calls early. Make it safer.
 
 | Current | Fixed |
 |---------|-------|
-| Calls `getSession()` synchronously in useEffect | Wrap with timeout |
-| Blocks on profile checks | Profile checks are deferred, UI shows first |
+| Starts after 50ms | Delay to 500ms on native |
+| Auth calls in listeners | Wrap with try-catch + timeout |
 
-### Step 5: Logo.tsx Updates
+**Changes:**
+```typescript
+// Longer delay on native platforms
+useEffect(() => {
+  const delay = Capacitor.isNativePlatform() ? 500 : 50;
+  const timer = setTimeout(() => setIsMounted(true), delay);
+  return () => clearTimeout(timer);
+}, []);
+```
 
-| Current | Fixed |
-|---------|-------|
-| Shows empty placeholder while loading | Show text fallback immediately |
-| Waits for Supabase before showing anything | Always show something |
+---
+
+## Files to Modify
+
+| File | Change | Priority |
+|------|--------|----------|
+| `src/pages/Index.tsx` | Wrap Supabase calls with timeout | HIGH |
+| `src/components/AdPlacement.tsx` | Add timeout + show fallback during load | HIGH |
+| `index.html` | Make Google Fonts non-blocking | HIGH |
+| `src/components/PushNotificationProvider.tsx` | Increase native delay | MEDIUM |
+| `src/index.css` | Add system font fallback | LOW |
+
+---
+
+## Expected Result After Fix
+
+| Before | After |
+|--------|-------|
+| App shows logo then freezes | App shows complete home page immediately |
+| Waits for network requests | Renders with fallback data |
+| Fonts block render | Fonts load asynchronously |
+| Ad placements invisible | Placeholder shown while loading |
+
+---
+
+## Testing Steps
+
+1. Push changes to GitHub
+2. Wait for GitHub Actions Build #21 to complete
+3. Download new APK from Releases
+4. Uninstall old APK from BlueStacks/device
+5. Install new APK
+6. App should now:
+   - Show navbar immediately
+   - Show hero section with text
+   - Show footer
+   - Load dynamic data (ads, user profiles) in background
 
 ---
 
 ## Technical Summary
 
-| File | Change | Purpose |
-|------|--------|---------|
-| `src/lib/supabase-native.ts` | NEW | Timeout wrapper for Supabase calls |
-| `src/components/PageTransition.tsx` | MODIFY | Skip animation on native |
-| `src/components/AnimatedSection.tsx` | MODIFY | Immediately visible on native |
-| `src/components/Navbar.tsx` | MODIFY | Defer Supabase calls, show UI first |
-| `src/components/Logo.tsx` | MODIFY | Show fallback immediately |
-| `src/components/Footer.tsx` | MODIFY | Defer async calls |
-| `src/hooks/useSiteSettings.tsx` | MODIFY | Add timeout handling |
+The core issue is that while Navbar, Logo, Footer, and AnimatedSection were fixed to use `safeNativeAsync()`, the **Index page itself** was never updated. The home page makes multiple Supabase calls that can hang on Android WebView, and the `AdPlacement` component returns `null` during loading which creates invisible areas.
 
----
-
-## Alternative Quick Fix
-
-If the full solution is too extensive, a quick fix is to:
-
-1. **Disable ALL Supabase calls on native platform during initial render**
-2. **Only enable them after a 2-second delay**
-3. **Show the app immediately with default/cached data**
-
-This ensures the UI renders and is interactive, with data loading in the background.
-
----
-
-## After Implementation
-
-1. Push changes to GitHub
-2. Wait for Build #20 to complete
-3. Install new APK
-4. The app should now:
-   - Show the full home page immediately
-   - Load data in the background
-   - Not freeze even if network is slow/unavailable
-
----
-
-## Why Previous Fixes Didn't Work
-
-| Previous Fix | Why It Wasn't Enough |
-|--------------|---------------------|
-| Remove lazy loading | ✅ Fixed code splitting issues, but not network issues |
-| Remove Suspense | ✅ Removed loading boundaries, but data fetching still blocks |
-| Disable PWA | ✅ Fixed build errors, but not runtime issues |
-| HashRouter | ✅ Correct for file:// protocol, already in place |
-
-The missing piece was **network resilience** - the app was loading all its code correctly, but then hanging on Supabase network requests that work differently in Android WebView vs browser.
+The fix ensures:
+1. All Supabase calls have 5-second timeouts on native
+2. UI renders immediately with fallback/placeholder content
+3. Fonts don't block rendering
+4. Data loads asynchronously in the background
