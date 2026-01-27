@@ -1,85 +1,198 @@
 
-# Fix PWA Build Error for Large Bundle
+# Fix Android App White Screen - Complete Solution
 
-## Problem
-The `maximumFileSizeToCacheInBytes` setting at 5MB is present in the config, but the build is still failing. This can happen because:
+## Root Cause
 
-1. The vite-plugin-pwa has strict validation that may not respect this setting in certain build modes
-2. There may be a caching issue with the node_modules or build artifacts
+The Android app freezes after showing the logo because multiple Supabase network requests are made during initialization, and on Android WebView:
+1. Network requests may be throttled or fail silently
+2. There's no timeout/error handling to proceed when requests hang
+3. UI components remain invisible (opacity: 0) waiting for data that never arrives
 
-## Solution Options
+The logo shows because it's one of the first successful fetches, but subsequent requests pile up and block the UI from rendering.
 
-### Option A: Increase Limit Further + Suppress Warning (Quick Fix)
-Update the Vite config to suppress the chunk size warning and ensure the PWA plugin respects the larger limit:
+## Solution Overview
 
-| File | Change |
-|------|--------|
-| `vite.config.ts` | Increase `maximumFileSizeToCacheInBytes` to 10MB and add `chunkSizeWarningLimit: 3000` |
-
-### Option B: Disable PWA for Production Build (Recommended for Native)
-Since you're primarily building for Android APK, the PWA service worker isn't needed. Disable the PWA plugin conditionally:
-
-| File | Change |
-|------|--------|
-| `vite.config.ts` | Only enable VitePWA in development mode, skip it for production builds |
+We need to make the app more resilient to network issues on Android by:
+1. Adding network timeout handling for Supabase calls
+2. Making the initial render independent of network requests
+3. Ensuring content is visible even when data is still loading
+4. Removing external font dependencies for native builds
 
 ---
 
-## Recommended Implementation (Option B)
+## Implementation Plan
 
-For Android APK builds, PWA caching is unnecessary because:
-- Native apps don't use service workers
-- The APK bundles everything locally
-- Removing PWA eliminates the size limit issue entirely
+### Step 1: Create a Native-Safe Supabase Client Wrapper
 
-### Changes to vite.config.ts
+Create a wrapper that adds timeout handling for all Supabase calls on native platforms.
 
-```text
-Before:
-  VitePWA({
-    registerType: 'autoUpdate',
-    ...
-  })
+**New File**: `src/lib/supabase-native.ts`
 
-After:
-  mode !== "production" && VitePWA({
-    registerType: 'autoUpdate',
-    ...
-  })
-```
+This wrapper will:
+- Detect native platform
+- Add configurable timeouts to Supabase calls
+- Return fallback/empty data on timeout instead of hanging
+- Log issues for debugging
 
-This ensures:
-- **Development**: PWA enabled for web testing
-- **Production builds (APK)**: PWA disabled, no service worker generated, no size limits
+### Step 2: Update PageTransition for Immediate Visibility
+
+The current PageTransition starts with `opacity: 0` for 50ms, which can compound with other delays.
+
+**File to modify**: `src/components/PageTransition.tsx`
+
+Changes:
+- On native platforms, skip the transition animation entirely
+- Render content immediately with full opacity
+- Keep transitions for web only
+
+### Step 3: Update AnimatedSection for Native
+
+AnimatedSection uses IntersectionObserver which works but starts with invisible content.
+
+**File to modify**: `src/components/AnimatedSection.tsx`
+
+Changes:
+- On native platforms, immediately set `isVisible = true`
+- Skip IntersectionObserver on native for faster first paint
+- Content renders visible immediately
+
+### Step 4: Add Loading States to Critical Components
+
+Components should show content immediately, not wait for data.
+
+**Files to modify**:
+- `src/components/Navbar.tsx`: Show navbar immediately, defer profile checks
+- `src/components/Logo.tsx`: Show text fallback immediately while loading
+- `src/components/Footer.tsx`: Show footer immediately, defer async checks
+
+### Step 5: Handle Google Fonts for Native
+
+External font loading can block or slow rendering on native.
+
+**File to modify**: `index.html`
+
+Changes:
+- Add `font-display: swap` to prevent blocking
+- Consider bundling fonts or using system fonts as fallback
+
+### Step 6: Add Global Error Boundary Improvements
+
+Enhance the error boundary to catch network-related hangs.
+
+**File to modify**: `src/components/NativeErrorBoundary.tsx`
+
+Changes:
+- Add a loading timeout that shows content after X seconds regardless
+- Detect if app is "stuck" and offer recovery options
 
 ---
 
-## Files to Modify
+## Detailed Changes
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `vite.config.ts` | Modify | Conditionally disable VitePWA for production builds |
-
----
-
-## Alternative: Keep PWA for Web
-
-If you want to keep PWA functionality for the website but disable for APK builds, we can use an environment variable:
+### Step 1: supabase-native.ts (New File)
 
 ```typescript
-const enablePWA = mode !== "production" || process.env.ENABLE_PWA === "true";
+// Utility to wrap Supabase calls with timeout for native platforms
+import { Capacitor } from '@capacitor/core';
+
+const NATIVE_TIMEOUT_MS = 5000; // 5 second timeout on native
+
+export async function withNativeTimeout<T>(
+  promise: Promise<T>,
+  fallback: T,
+  timeoutMs: number = NATIVE_TIMEOUT_MS
+): Promise<T> {
+  if (!Capacitor.isNativePlatform()) {
+    return promise; // No timeout on web
+  }
+
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => {
+      setTimeout(() => {
+        console.warn('[Native] Supabase request timed out, using fallback');
+        resolve(fallback);
+      }, timeoutMs);
+    }),
+  ]);
+}
 ```
 
-This way:
-- GitHub Actions APK build: No PWA (faster, no errors)
-- Manual web deploy with `ENABLE_PWA=true`: PWA enabled
+### Step 2: PageTransition.tsx Updates
+
+| Current | Fixed |
+|---------|-------|
+| Always uses 50ms delay + opacity animation | Skip animation on native platforms |
+| Starts with `page-exit` class (opacity: 0) | Start with `page-enter` on native |
+
+### Step 3: AnimatedSection.tsx Updates
+
+| Current | Fixed |
+|---------|-------|
+| Uses IntersectionObserver, starts invisible | On native: immediately visible |
+| Waits for intersection to show content | No waiting on native |
+
+### Step 4: Navbar.tsx Updates
+
+| Current | Fixed |
+|---------|-------|
+| Calls `getSession()` synchronously in useEffect | Wrap with timeout |
+| Blocks on profile checks | Profile checks are deferred, UI shows first |
+
+### Step 5: Logo.tsx Updates
+
+| Current | Fixed |
+|---------|-------|
+| Shows empty placeholder while loading | Show text fallback immediately |
+| Waits for Supabase before showing anything | Always show something |
 
 ---
 
-## Expected Result
+## Technical Summary
 
-After this fix:
-1. Build completes without errors
-2. GitHub Actions generates APK successfully
-3. Native Android app loads correctly (no service worker interference)
-4. Web version can still work without PWA (or with it if you enable the flag)
+| File | Change | Purpose |
+|------|--------|---------|
+| `src/lib/supabase-native.ts` | NEW | Timeout wrapper for Supabase calls |
+| `src/components/PageTransition.tsx` | MODIFY | Skip animation on native |
+| `src/components/AnimatedSection.tsx` | MODIFY | Immediately visible on native |
+| `src/components/Navbar.tsx` | MODIFY | Defer Supabase calls, show UI first |
+| `src/components/Logo.tsx` | MODIFY | Show fallback immediately |
+| `src/components/Footer.tsx` | MODIFY | Defer async calls |
+| `src/hooks/useSiteSettings.tsx` | MODIFY | Add timeout handling |
+
+---
+
+## Alternative Quick Fix
+
+If the full solution is too extensive, a quick fix is to:
+
+1. **Disable ALL Supabase calls on native platform during initial render**
+2. **Only enable them after a 2-second delay**
+3. **Show the app immediately with default/cached data**
+
+This ensures the UI renders and is interactive, with data loading in the background.
+
+---
+
+## After Implementation
+
+1. Push changes to GitHub
+2. Wait for Build #20 to complete
+3. Install new APK
+4. The app should now:
+   - Show the full home page immediately
+   - Load data in the background
+   - Not freeze even if network is slow/unavailable
+
+---
+
+## Why Previous Fixes Didn't Work
+
+| Previous Fix | Why It Wasn't Enough |
+|--------------|---------------------|
+| Remove lazy loading | ✅ Fixed code splitting issues, but not network issues |
+| Remove Suspense | ✅ Removed loading boundaries, but data fetching still blocks |
+| Disable PWA | ✅ Fixed build errors, but not runtime issues |
+| HashRouter | ✅ Correct for file:// protocol, already in place |
+
+The missing piece was **network resilience** - the app was loading all its code correctly, but then hanging on Supabase network requests that work differently in Android WebView vs browser.
