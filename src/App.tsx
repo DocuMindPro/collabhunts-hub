@@ -43,6 +43,7 @@ const Changelog = lazy(() => import("./pages/Changelog"));
 const Advertising = lazy(() => import("./pages/Advertising"));
 const BecomeAffiliate = lazy(() => import("./pages/BecomeAffiliate"));
 const FranchiseOpportunities = lazy(() => import("./pages/FranchiseOpportunities"));
+const Download = lazy(() => import("./pages/Download"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Lazy load protected route components
@@ -180,6 +181,7 @@ const App = () => (
                 <Route path="/advertising" element={<Advertising />} />
                 <Route path="/become-affiliate" element={<BecomeAffiliate />} />
                 <Route path="/franchise" element={<FranchiseOpportunities />} />
+                <Route path="/download" element={<Download />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
