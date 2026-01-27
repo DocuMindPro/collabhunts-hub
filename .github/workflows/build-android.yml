@@ -46,7 +46,8 @@ jobs:
         run: cp scripts/java17-override.gradle android/java17-override.gradle
 
       - name: Apply Java 17 override
-        run: echo "apply from: 'java17-override.gradle'" >> android/build.gradle
+        run: |
+          echo "apply from: 'java17-override.gradle'" >> android/build.gradle
 
       - name: Fix Java version in app build.gradle
         run: |
