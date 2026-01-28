@@ -1,226 +1,338 @@
 
+# Major Platform Transformation: Online Influencer Marketing → In-Person Creator Events
 
-# Native Mobile App UX Improvements & In-App Creator Onboarding
+## Executive Summary
 
-## Summary
+This is a **complete business pivot** from a SaaS subscription marketplace for online influencer marketing to a **booking platform for in-person creator experiences at physical venues**. This transformation requires changes to:
 
-This plan addresses two main areas:
-1. **UI/UX Issues** - Fixing overlapping text, optimizing layout for small screens, and removing unnecessary elements
-2. **In-App Creator Onboarding** - Allowing new users to create their creator profile directly in the app instead of being redirected to the website
-
----
-
-## Part 1: UI/UX Improvements for Native App
-
-### Current Issues Identified
-
-Based on code analysis:
-- **Dashboard header** shows long text "Creator Dashboard" that can overlap on smaller screens
-- **Stats cards** use 4-column grid that doesn't work well on mobile (causes cramped layout)
-- **ProfileTab** has complex media upload UI designed for desktop
-- **MessagesTab** has realtime subscriptions that could cause issues on Android WebView
-- **BookingsTab** has placeholder text that may be too large for mobile
-- **OverviewTab** card descriptions may overflow on small screens
-
-### Recommended Changes
-
-#### File: `src/pages/CreatorDashboard.tsx`
-- Already has `isNative` check, but needs tighter spacing adjustments
-- Remove subtitle text on native for cleaner look
-- The header is already condensed for native - good!
-
-#### File: `src/components/creator-dashboard/OverviewTab.tsx`
-- Change the 4-column grid to 2-column on mobile: `grid-cols-2` instead of `lg:grid-cols-4`
-- Reduce text size for card descriptions
-- Hide or shorten "Total views on your profile" type descriptions on native
-- Add safe spacing for bottom navigation overlap
-
-#### File: `src/components/mobile/MobileBottomNav.tsx`
-- Current implementation looks good with 5 tabs
-- May need to add safe-area padding for phones with home indicators
-
-#### File: `src/components/creator-dashboard/ProfileTab.tsx`
-- Simplify the cover images grid from 3 columns to 1-2 on mobile
-- Make the profile image section more compact for native
-- Consider hiding some optional fields (demographics) on native or collapsing them
-
-#### File: `src/components/creator-dashboard/MessagesTab.tsx`
-- Already has native check for keyboard height
-- Need to add timeout protection for Supabase calls like other components
-- Skip realtime subscriptions on native (similar to MobileBottomNav fix)
+- **30+ pages** (rewrite, remove, or create new)
+- **Database schema** (significant restructuring)
+- **Business logic** (subscription-based → event-based fees)
+- **User flows** (add Fans as third user type)
+- **All dashboards** (Creator, Brand, Admin)
+- **Legal pages** (Terms, Privacy, Refund policies)
+- **Mobile app** (native creator experience)
 
 ---
 
-## Part 2: In-App Creator Onboarding
+## Scope Assessment
 
-### Current Flow (Problem)
+### Pages to REMOVE Completely
+| Page | Current Purpose | Reason for Removal |
+|------|-----------------|-------------------|
+| `/pricing` | Subscription plans (Basic/Pro/Premium) | Replaced with event-based packages |
+| `/campaigns` | Online campaign posting | No longer applicable |
+| `/advertising` | Banner ad sales | Removed revenue stream |
+| `/become-affiliate` | Affiliate program | Removed revenue stream |
+| `/franchise` | Franchise opportunities | Removed revenue stream |
 
-1. User opens app → sees login screen
-2. User clicks "Create Account" → account created in Supabase Auth
-3. User logged in but has no creator profile
-4. `NativeAppGate` shows: "Please create one on our website" → Dead end!
+### Pages to SIGNIFICANTLY REWRITE
+| Page | Current State | New Purpose |
+|------|--------------|-------------|
+| `/` (Index) | "Influencer Marketing Made Easy" | "Where Creators Meet Fans in Real Life" |
+| `/influencers` | Creator search for online collabs | Creator search with event availability, location |
+| `/brand` | Brand onboarding for subscriptions | Venue onboarding for event hosting |
+| `/creator` | Creator signup for content creation | Creator signup for live events |
+| `/creator-signup` | Basic creator registration | Add event experience, availability calendar |
+| `/brand-signup` | Subscription-focused signup | Event-focused venue registration |
+| `/creator-dashboard` | Online booking management | Event calendar, availability, fan engagement |
+| `/brand-dashboard` | Campaign & subscription management | Event management, venue listing, booking requests |
+| `/terms` | Online marketplace terms | In-person event terms, liability, escrow |
+| `/privacy` | Data collection for online | Location data, event attendance tracking |
+| `/refund` | Subscription refunds | Event cancellation, escrow release |
 
-### New Flow (Solution)
-
-1. User opens app → sees login screen
-2. User clicks "Create Account" → account created in Supabase Auth
-3. User logged in but has no creator profile
-4. **NEW:** `NativeAppGate` shows `NativeCreatorOnboarding` component
-5. User completes simplified 4-step onboarding inside the app
-6. Creator profile created → User goes to dashboard
-
-### New Component: `src/pages/NativeCreatorOnboarding.tsx`
-
-A mobile-optimized, simplified version of the 7-step web signup:
-
-**Step 1: Basic Info**
-- Display name (required)
-- Bio (required, 50+ characters)
-- Profile photo (required)
-
-**Step 2: Social Accounts**
-- Add at least 1 social account with follower count
-
-**Step 3: Services**
-- Add at least 1 service with pricing
-
-**Step 4: Terms & Submit**
-- Accept terms checkbox
-- Submit button
-
-**Key Design Principles:**
-- Full-screen card UI (like native app onboarding)
-- Large touch targets
-- Progress indicator at top
-- "Back" navigation between steps
-- All Supabase calls wrapped in `safeNativeAsync` with timeouts
-- Skip optional fields (demographics, secondary languages, etc.)
-- No phone verification (can be done later in Profile tab)
-
-### Update: `src/components/NativeAppGate.tsx`
-
-Replace the "go to website" message with the new onboarding component:
-
-```typescript
-// Before:
-if (!creatorProfile) {
-  return (
-    <div>Please create profile on website...</div>
-  );
-}
-
-// After:
-if (!creatorProfile) {
-  return <NativeCreatorOnboarding user={user} onComplete={() => refetchProfile()} />;
-}
-```
-
----
-
-## Files to Create
-
-| File | Purpose |
+### NEW Pages to CREATE
+| Page | Purpose |
 |------|---------|
-| `src/pages/NativeCreatorOnboarding.tsx` | 4-step mobile onboarding flow |
+| `/events` | Public calendar of upcoming creator appearances |
+| `/venues` | Browse venues available for events |
+| `/book/:creatorId` | Event booking flow for brands |
+| `/event/:eventId` | Public event detail page (for fans) |
+| `/register/:eventId` | Fan registration for events |
+| `/success-stories` | Past event galleries & case studies |
 
-## Files to Modify
+### Dashboards to TRANSFORM
 
-| File | Changes |
-|------|---------|
-| `src/components/NativeAppGate.tsx` | Import and render NativeCreatorOnboarding when no profile exists |
-| `src/components/creator-dashboard/OverviewTab.tsx` | Mobile-optimized grid layout, compact card text |
-| `src/components/creator-dashboard/MessagesTab.tsx` | Add timeout protection, skip realtime on native |
-| `src/components/creator-dashboard/ProfileTab.tsx` | Compact layout for native (optional - lower priority) |
+**Creator Dashboard - Current Tabs:**
+- Overview, Campaigns, Profile, Services, Bookings, Payouts, Messages
 
----
+**Creator Dashboard - New Tabs:**
+- Overview (event stats, upcoming appearances)
+- Availability (calendar management)
+- Events (past & upcoming)
+- Fan Engagement (attendees, followers)
+- Earnings (event-based)
+- Messages
 
-## Technical Implementation Details
+**Brand Dashboard - Current Tabs:**
+- Overview, Campaigns, Bookings, Your Creators, Content Library, Account, Subscription, Messages
 
-### NativeCreatorOnboarding Component Structure
-
-```typescript
-// Key states
-const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-const [isLoading, setIsLoading] = useState(false);
-
-// Form data
-const [displayName, setDisplayName] = useState("");
-const [bio, setBio] = useState("");
-const [profileImage, setProfileImage] = useState<File | null>(null);
-const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
-const [services, setServices] = useState<Service[]>([]);
-const [termsAccepted, setTermsAccepted] = useState(false);
-```
-
-### Image Upload for Native
-- Use HTML file input with `capture="user"` for camera access
-- Validate file size (max 5MB)
-- Preview image before upload
-- Upload to storage bucket on final submit (not per-step)
-
-### Supabase Timeout Protection
-All database/storage operations wrapped:
-```typescript
-const result = await safeNativeAsync(
-  async () => {
-    // Upload image, create profile, etc.
-  },
-  null, // fallback
-  10000 // 10 second timeout for uploads
-);
-```
+**Brand Dashboard - New Tabs:**
+- Overview (venue stats)
+- Venue Profile (location, capacity, amenities)
+- Event Requests (incoming booking requests)
+- My Events (past & scheduled)
+- Content Received (post-event media)
+- Messages
 
 ---
 
-## UI/UX Design for Native Onboarding
+## Database Schema Changes
 
-### Screen Layout
+### Tables to REMOVE
 ```text
-┌─────────────────────────────────────┐
-│  ← Back            Step 1 of 4      │ (header)
-├─────────────────────────────────────┤
-│                                     │
-│         [Progress Bar ████░░░░]     │
-│                                     │
-│     Step Title                      │
-│     Step description                │
-│                                     │
-│     ┌───────────────────────────┐   │
-│     │                           │   │
-│     │     Form Fields           │   │
-│     │                           │   │
-│     └───────────────────────────┘   │
-│                                     │
-│                                     │
-│                                     │
-│     ┌───────────────────────────┐   │
-│     │       Continue            │   │ (sticky bottom button)
-│     └───────────────────────────┘   │
-└─────────────────────────────────────┘
+- brand_subscriptions (no more subscriptions)
+- campaigns (no online campaigns)
+- campaign_applications
+- brand_storage_usage (no content library storage)
+- content_library (replaced with event gallery)
+- content_folders
+- mass_message_templates (no mass messaging)
+- creator_notes (CRM feature removed)
+- ad_placements (no banner ads)
+- affiliate_* tables (affiliate program removed)
+- franchise_* tables (franchise program removed)
 ```
 
-### Color/Styling
-- Uses existing Tailwind theme
-- Primary color for buttons and progress
-- Large 48px+ touch targets
-- Clear visual hierarchy
+### Tables to MODIFY
+```text
+- bookings → event_bookings
+  ADD: event_date, event_time_start, event_time_end
+  ADD: venue_id, event_type, package_type
+  ADD: escrow_status (pending_deposit, deposit_paid, completed, refunded)
+  ADD: deposit_amount_cents, final_amount_cents
+  ADD: attendance_count, max_capacity
+  REMOVE: service_id, delivery_deadline, delivery_status
+
+- brand_profiles → venue_profiles
+  ADD: venue_name, venue_address, venue_city, venue_capacity
+  ADD: venue_type (cafe, restaurant, mall, gym, etc.)
+  ADD: amenities, parking_available, accessibility_info
+  REMOVE: monthly_budget_range, marketing_intent
+
+- creator_profiles
+  ADD: event_experience_description
+  ADD: availability_calendar (JSONB)
+  ADD: event_portfolio_urls
+  ADD: min_event_price_cents, max_event_price_cents
+  ADD: travel_radius_km
+  REMOVE: (most fields stay, repurpose for events)
+
+- creator_services → event_packages
+  MODIFY: service_type → package_type (meet_greet, workshop, competition, custom)
+  ADD: duration_hours, includes_description
+  ADD: min_attendees, max_attendees
+```
+
+### Tables to CREATE
+```text
+- events
+  id, creator_profile_id, venue_id, event_booking_id
+  title, description, event_type, package_type
+  event_date, start_time, end_time
+  is_public (fans can see), ticket_price_cents (0 = free)
+  max_attendees, current_attendees
+  status (scheduled, completed, cancelled)
+  created_at, updated_at
+
+- event_registrations (for fans)
+  id, event_id, fan_email, fan_name, fan_phone
+  status (registered, attended, no_show)
+  registered_at, checked_in_at
+
+- event_gallery (post-event content)
+  id, event_id, media_url, media_type
+  uploaded_by (creator or venue)
+  created_at
+
+- event_reviews
+  id, event_id, reviewer_type (brand, creator, fan)
+  reviewer_id, rating (1-5), review_text
+  created_at
+
+- escrow_transactions
+  id, event_booking_id
+  amount_cents, transaction_type (deposit, release, refund)
+  status, processed_at
+```
 
 ---
 
-## Expected Outcomes
+## Configuration Changes
 
-After implementation:
-1. **New users can fully onboard in-app** - No need to visit website
-2. **Dashboard UI works on small screens** - No overlapping text
-3. **Messages tab won't hang** - Timeout protection added
-4. **Professional native feel** - Cleaner, more focused experience
+### Remove: `src/config/plans.ts`
+The entire subscription plan system is deprecated.
+
+### Create: `src/config/packages.ts`
+```typescript
+export const EVENT_PACKAGES = {
+  meet_greet: {
+    name: 'Meet & Greet',
+    priceRange: { min: 30000, max: 80000 }, // $300-$800
+    defaultDuration: 3, // hours
+    includes: [
+      '3 hours at venue',
+      'Live social coverage',
+      '5 content pieces',
+    ],
+  },
+  workshop: {
+    name: 'Workshop',
+    priceRange: { min: 50000, max: 120000 },
+    defaultDuration: 2,
+    includes: [
+      '2-hour workshop',
+      'Ticket sales management',
+      'Professional content',
+    ],
+  },
+  competition: {
+    name: 'Competition Event',
+    priceRange: { min: 80000, max: 200000 },
+    defaultDuration: 4,
+    includes: [
+      '2 creators',
+      '4 hours',
+      'PK challenge',
+      'Highlight reel',
+    ],
+  },
+  custom: {
+    name: 'Custom Experience',
+    priceRange: null, // Variable
+    defaultDuration: null,
+    includes: ['Tailored to needs'],
+  },
+};
+
+export const PLATFORM_FEE_PERCENT = 15;
+export const DEPOSIT_PERCENT = 50;
+```
 
 ---
 
-## Priority Order
+## Implementation Phases
 
-1. **High**: NativeCreatorOnboarding (enables new users to use app)
-2. **High**: OverviewTab mobile layout fixes (visible UI issues)
-3. **Medium**: MessagesTab timeout protection (prevents hangs)
-4. **Low**: ProfileTab compact layout (optimization)
+### Phase 1: Foundation (This Implementation)
+**Priority: Critical - Must complete first**
 
+1. **Database migration** - Create new schema
+2. **Remove deprecated features** - Clean up subscription logic
+3. **Update core pages** - Index, Creator, Brand landing pages
+4. **Transform dashboards** - Basic event management
+5. **Update legal pages** - New terms for events
+6. **Update navigation** - Remove pricing, campaigns, add events
+
+### Phase 2: Event System (Follow-up)
+1. Event booking flow with calendar
+2. Escrow payment system
+3. Public events page
+4. Fan registration system
+
+### Phase 3: Lebanese Market (Follow-up)
+1. Arabic language support
+2. Local payment methods (COD, OMT)
+3. City filters (Beirut, Jounieh, Tripoli)
+4. WhatsApp integration
+
+---
+
+## Key Component Changes
+
+### Homepage Transformation
+```text
+OLD:
+- Tagline: "Influencer Marketing Made Easy"
+- Hero: Search by category/niche/platform
+- CTA: "Join as Brand" / "Join as Creator"
+
+NEW:
+- Tagline: "Where Creators Meet Fans in Real Life"
+- Hero: "Book Creators for Live Experiences"
+- Search: Location, event type, date
+- CTA: "List Your Venue" / "Host Events"
+- NEW: Upcoming events carousel
+```
+
+### Navbar Changes
+```text
+REMOVE:
+- Pricing link
+- Campaigns link
+
+ADD:
+- Events link
+- Venues link
+
+RENAME:
+- "Join as Brand" → "List Your Venue"
+```
+
+### Footer Changes
+```text
+REMOVE:
+- "For Brands" → "Pricing"
+- Partners section (Affiliate, Franchise, Advertise)
+
+ADD:
+- "For Venues" section
+- "For Fans" section
+```
+
+---
+
+## Files to Modify/Create Summary
+
+| Category | Files | Action |
+|----------|-------|--------|
+| Pages | 15+ files | Major rewrite |
+| Components | 30+ files | Modify terminology, remove features |
+| Config | 2 files | Replace plans.ts with packages.ts |
+| Database | 1 migration | Major schema changes |
+| Legal | 3 files | Rewrite terms, privacy, refund |
+| Types | 1 file | Auto-generated after migration |
+
+---
+
+## Risk Assessment
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Data loss | High | Backup all existing data before migration |
+| Breaking existing users | High | Clear communication, sunset period |
+| Scope creep | High | Strict phase-based approach |
+| Mobile app compatibility | Medium | Apply same changes to native flows |
+
+---
+
+## Technical Notes
+
+### Lebanese Market Specifics (Phase 3)
+- COD option requires manual verification flow
+- Arabic RTL support needs layout adjustments
+- OMT integration requires custom payment gateway
+- WhatsApp Business API for notifications
+
+### Escrow System Design
+- 50% deposit on booking confirmation
+- Held in platform account
+- Released to creator after event completion
+- 72-hour auto-release if venue doesn't dispute
+
+---
+
+## Recommendation
+
+This transformation is **substantial** and should be approached in phases. I recommend:
+
+1. **Start with Phase 1** - Foundation changes that establish the new identity
+2. **Soft launch** with 10 pilot creators and 5 venues
+3. **Iterate based on feedback** before full feature buildout
+
+Would you like me to proceed with Phase 1 implementation? This will include:
+- Homepage redesign
+- Core terminology changes across all pages
+- Database schema migration for events
+- Dashboard restructuring
+- Updated legal pages
+- Removal of deprecated features (subscriptions, campaigns, ads, affiliate, franchise)
