@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, DollarSign, Calendar, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { safeNativeAsync } from "@/lib/supabase-native";
+import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 
 const OverviewTab = () => {
   const [stats, setStats] = useState({
@@ -106,12 +106,14 @@ const OverviewTab = () => {
     }
   };
 
+  const isNative = isNativePlatform();
+
   return (
-    <div className="space-y-6">
+    <div className={`space-y-4 ${isNative ? 'pb-24' : 'space-y-6'}`}>
       <Card>
-        <CardHeader>
-          <CardTitle>Profile Status</CardTitle>
-          <CardDescription>Your current profile approval status</CardDescription>
+        <CardHeader className={isNative ? 'pb-2' : ''}>
+          <CardTitle className={isNative ? 'text-base' : ''}>Profile Status</CardTitle>
+          {!isNative && <CardDescription>Your current profile approval status</CardDescription>}
         </CardHeader>
         <CardContent>
           <Badge className={`${getStatusColor(stats.profileStatus)} text-white capitalize`}>
@@ -120,48 +122,48 @@ const OverviewTab = () => {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid gap-3 ${isNative ? 'grid-cols-2' : 'gap-6 md:grid-cols-2 lg:grid-cols-4'}`}>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Profile Views</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isNative ? 'pb-1 pt-3 px-3' : 'pb-2'}`}>
+            <CardTitle className={`font-medium ${isNative ? 'text-xs' : 'text-sm'}`}>Profile Views</CardTitle>
+            <Eye className={`text-muted-foreground ${isNative ? 'h-3 w-3' : 'h-4 w-4'}`} />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.profileViews}</div>
-            <p className="text-xs text-muted-foreground">Total views on your profile</p>
+          <CardContent className={isNative ? 'px-3 pb-3' : ''}>
+            <div className={`font-bold ${isNative ? 'text-xl' : 'text-2xl'}`}>{stats.profileViews}</div>
+            {!isNative && <p className="text-xs text-muted-foreground">Total views on your profile</p>}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isNative ? 'pb-1 pt-3 px-3' : 'pb-2'}`}>
+            <CardTitle className={`font-medium ${isNative ? 'text-xs' : 'text-sm'}`}>Earnings</CardTitle>
+            <DollarSign className={`text-muted-foreground ${isNative ? 'h-3 w-3' : 'h-4 w-4'}`} />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${stats.totalEarnings.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">From completed bookings</p>
+          <CardContent className={isNative ? 'px-3 pb-3' : ''}>
+            <div className={`font-bold ${isNative ? 'text-xl' : 'text-2xl'}`}>${stats.totalEarnings.toFixed(2)}</div>
+            {!isNative && <p className="text-xs text-muted-foreground">From completed bookings</p>}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Bookings</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isNative ? 'pb-1 pt-3 px-3' : 'pb-2'}`}>
+            <CardTitle className={`font-medium ${isNative ? 'text-xs' : 'text-sm'}`}>Pending</CardTitle>
+            <Calendar className={`text-muted-foreground ${isNative ? 'h-3 w-3' : 'h-4 w-4'}`} />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingBookings}</div>
-            <p className="text-xs text-muted-foreground">Awaiting your response</p>
+          <CardContent className={isNative ? 'px-3 pb-3' : ''}>
+            <div className={`font-bold ${isNative ? 'text-xl' : 'text-2xl'}`}>{stats.pendingBookings}</div>
+            {!isNative && <p className="text-xs text-muted-foreground">Awaiting your response</p>}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unread Messages</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isNative ? 'pb-1 pt-3 px-3' : 'pb-2'}`}>
+            <CardTitle className={`font-medium ${isNative ? 'text-xs' : 'text-sm'}`}>Messages</CardTitle>
+            <MessageSquare className={`text-muted-foreground ${isNative ? 'h-3 w-3' : 'h-4 w-4'}`} />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.unreadMessages}</div>
-            <p className="text-xs text-muted-foreground">New messages from brands</p>
+          <CardContent className={isNative ? 'px-3 pb-3' : ''}>
+            <div className={`font-bold ${isNative ? 'text-xl' : 'text-2xl'}`}>{stats.unreadMessages}</div>
+            {!isNative && <p className="text-xs text-muted-foreground">New messages from brands</p>}
           </CardContent>
         </Card>
       </div>

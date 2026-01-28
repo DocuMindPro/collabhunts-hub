@@ -13,6 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 import MessageReadReceipt from "@/components/chat/MessageReadReceipt";
 import PackageInquiryMessage, { isPackageInquiry } from "@/components/chat/PackageInquiryMessage";
+import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 
 interface Conversation {
   id: string;
@@ -77,6 +78,12 @@ const MessagesTab = () => {
   useEffect(() => {
     fetchConversations();
     
+    // Skip realtime subscriptions on native platforms - they can cause hangs
+    if (isNativePlatform()) {
+      console.log('[MessagesTab] Skipping realtime on native platform');
+      return;
+    }
+    
     const channel = supabase
       .channel("creator-messages-realtime")
       .on(
@@ -113,75 +120,66 @@ const MessagesTab = () => {
 
 
   const fetchConversations = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
+    const result = await safeNativeAsync(
+      async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { conversations: [], userId: null };
+        
+        const { data: profile } = await supabase
+          .from("creator_profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
 
-      const { data: profile } = await supabase
-        .from("creator_profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
+        if (!profile) return { conversations: [], userId: user.id };
 
-      if (!profile) return;
+        const { data, error } = await supabase
+          .from("conversations")
+          .select(`
+            *,
+            brand_profiles!inner(company_name, logo_url, user_id)
+          `)
+          .eq("creator_profile_id", profile.id)
+          .order("last_message_at", { ascending: false });
 
-      const { data, error } = await supabase
-        .from("conversations")
-        .select(`
-          *,
-          brand_profiles!inner(company_name, logo_url, user_id)
-        `)
-        .eq("creator_profile_id", profile.id)
-        .order("last_message_at", { ascending: false });
+        if (error) throw error;
 
-      if (error) throw error;
+        const conversationsWithDetails = await Promise.all(
+          (data || []).map(async (conv) => {
+            const { data: lastMsg } = await supabase
+              .from("messages")
+              .select("content")
+              .eq("conversation_id", conv.id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .single();
 
-      const conversationsWithDetails = await Promise.all(
-        (data || []).map(async (conv) => {
-          const { data: lastMsg } = await supabase
-            .from("messages")
-            .select("content")
-            .eq("conversation_id", conv.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .single();
+            const { count } = await supabase
+              .from("messages")
+              .select("*", { count: "exact", head: true })
+              .eq("conversation_id", conv.id)
+              .eq("is_read", false)
+              .neq("sender_id", user.id);
 
-          const { count } = await supabase
-            .from("messages")
-            .select("*", { count: "exact", head: true })
-            .eq("conversation_id", conv.id)
-            .eq("is_read", false)
-            .neq("sender_id", user.id);
+            return {
+              ...conv,
+              last_message: lastMsg?.content || "",
+              unread_count: count || 0
+            };
+          })
+        );
 
-          const { data: profileData } = await supabase
-            .from("profiles")
-            .select("last_seen")
-            .eq("id", conv.brand_profiles.user_id)
-            .single();
+        return { conversations: conversationsWithDetails, userId: user.id };
+      },
+      { conversations: [], userId: null },
+      8000 // 8 second timeout
+    );
 
-          if (profileData?.last_seen) {
-            setOnlineStatus(prev => ({
-              ...prev,
-              [conv.brand_profiles.user_id]: new Date(profileData.last_seen)
-            }));
-          }
-
-          return {
-            ...conv,
-            last_message: lastMsg?.content || "",
-            unread_count: count || 0
-          };
-        })
-      );
-
-      setConversations(conversationsWithDetails);
-    } catch (error) {
-      console.error("Error fetching conversations:", error);
-      toast.error("Failed to load conversations");
-    } finally {
-      setLoading(false);
+    if (result.userId) {
+      setUserId(result.userId);
     }
+    setConversations(result.conversations);
+    setLoading(false);
   };
 
   const fetchMessages = async (conversationId: string) => {

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { safeNativeAsync } from '@/lib/supabase-native';
 import NativeLoadingScreen from './NativeLoadingScreen';
 import NativeLogin from '@/pages/NativeLogin';
+import NativeCreatorOnboarding from '@/pages/NativeCreatorOnboarding';
 
 interface CreatorProfile {
   id: string;
@@ -27,6 +28,29 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null);
+  const [profileCheckKey, setProfileCheckKey] = useState(0);
+
+  // Refetch profile after onboarding completes
+  const refetchProfile = useCallback(async () => {
+    if (!user) return;
+    
+    const profile = await safeNativeAsync(
+      async () => {
+        const { data } = await supabase
+          .from('creator_profiles')
+          .select('id, display_name, status')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        return data;
+      },
+      null,
+      5000
+    );
+
+    if (profile) {
+      setCreatorProfile(profile);
+    }
+  }, [user]);
 
   // Failsafe: If still loading after 10 seconds, force show login screen
   useEffect(() => {
@@ -151,29 +175,9 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
     return <NativeLogin />;
   }
 
-  // Logged in but no creator profile - show signup prompt
+  // Logged in but no creator profile - show in-app onboarding
   if (!creatorProfile) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
-        <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mb-6">
-          <span className="text-3xl font-bold text-primary-foreground">CH</span>
-        </div>
-        <h1 className="text-xl font-bold text-foreground mb-2">
-          Create Your Creator Profile
-        </h1>
-        <p className="text-muted-foreground text-center mb-6">
-          You need a creator profile to use this app. Please create one on our website.
-        </p>
-        <button
-          onClick={async () => {
-            await supabase.auth.signOut();
-          }}
-          className="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium"
-        >
-          Sign Out
-        </button>
-      </div>
-    );
+    return <NativeCreatorOnboarding user={user} onComplete={refetchProfile} />;
   }
 
   // User has creator profile - render routes (Routes in App.tsx handle /creator-dashboard)
