@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, Clock, Users, MapPin, Loader2, CheckCircle } from "lucide-react";
+import { CalendarIcon, Clock, Users, MapPin, Loader2, CheckCircle, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +36,9 @@ import {
   PLATFORM_FEE_PERCENT,
   DEPOSIT_PERCENT,
 } from "@/config/packages";
+import PaymentMethodSelector from "@/components/PaymentMethodSelector";
+import WhatsAppButton from "@/components/WhatsAppButton";
+import { type PaymentMethod, WHATSAPP_CONFIG, formatDualCurrency } from "@/config/lebanese-market";
 
 interface EventBookingDialogProps {
   isOpen: boolean;
@@ -77,6 +80,7 @@ const EventBookingDialog = ({
   const [eventMessage, setEventMessage] = useState("");
   const [customPrice, setCustomPrice] = useState("");
   const [expectedAttendees, setExpectedAttendees] = useState("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -124,10 +128,10 @@ const EventBookingDialog = ({
   };
 
   const handleSubmitBooking = async () => {
-    if (!selectedPackage || !selectedDate || !startTime || !venueProfile) {
+    if (!selectedPackage || !selectedDate || !startTime || !venueProfile || !selectedPaymentMethod) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields including payment method",
         variant: "destructive",
       });
       return;
@@ -192,6 +196,7 @@ const EventBookingDialog = ({
     setEventMessage("");
     setCustomPrice("");
     setExpectedAttendees("");
+    setSelectedPaymentMethod(null);
     onClose();
   };
 
@@ -368,13 +373,24 @@ const EventBookingDialog = ({
               />
             </div>
 
+            {/* Payment Method Selection */}
+            <PaymentMethodSelector
+              selectedMethod={selectedPaymentMethod}
+              onMethodChange={setSelectedPaymentMethod}
+            />
+
             {/* Price Summary */}
             {estimatedPrice > 0 && (
               <div className="bg-muted/50 rounded-lg p-4 space-y-2">
                 <h4 className="font-semibold">Estimated Cost</h4>
                 <div className="flex justify-between text-sm">
                   <span>Package Price</span>
-                  <span>${(estimatedPrice / 100).toFixed(2)}</span>
+                  <div className="text-right">
+                    <span>${(estimatedPrice / 100).toFixed(0)}</span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      (~{formatDualCurrency(estimatedPrice).lbp})
+                    </span>
+                  </div>
                 </div>
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Platform Fee ({PLATFORM_FEE_PERCENT}%)</span>
@@ -382,7 +398,12 @@ const EventBookingDialog = ({
                 </div>
                 <div className="border-t pt-2 flex justify-between font-semibold">
                   <span>Deposit ({DEPOSIT_PERCENT}%)</span>
-                  <span>${(depositAmount / 100).toFixed(2)}</span>
+                  <div className="text-right">
+                    <span>${(depositAmount / 100).toFixed(0)}</span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      (~{formatDualCurrency(depositAmount).lbp})
+                    </span>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   Deposit held in escrow until event completion
@@ -410,7 +431,7 @@ const EventBookingDialog = ({
               </Button>
               <Button
                 onClick={handleSubmitBooking}
-                disabled={!selectedDate || !startTime || isSubmitting}
+                disabled={!selectedDate || !startTime || !selectedPaymentMethod || isSubmitting}
                 className="flex-1"
               >
                 {isSubmitting ? (
