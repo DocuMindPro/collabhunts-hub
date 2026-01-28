@@ -9,6 +9,7 @@ import CookieConsent from "./components/CookieConsent";
 import useSiteSettings from "./hooks/useSiteSettings";
 import PushNotificationProvider from "./components/PushNotificationProvider";
 import NativeErrorBoundary from "./components/NativeErrorBoundary";
+import NativeDebugButton from "./components/NativeDebugButton";
 
 // Eager load all pages for native compatibility
 import Index from "./pages/Index";
@@ -72,6 +73,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <Router>
+            <NativeDebugButton />
             <PushNotificationProvider>
               <PageTransition>
                 <Routes>
