@@ -30,6 +30,8 @@ import {
 import { format, isSameDay, isAfter } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPES, VENUE_TYPES, type EventType } from "@/config/packages";
+import { LEBANESE_CITIES } from "@/config/lebanese-market";
+import LebaneseCitySelect from "@/components/LebaneseCitySelect";
 
 interface EventWithDetails {
   id: string;
@@ -220,20 +222,14 @@ const Events = () => {
                 </div>
               </div>
 
-              {/* City Filter */}
-              <Select value={selectedCity} onValueChange={setSelectedCity}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Cities" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Cities</SelectItem>
-                  {cities.map((city) => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* City Filter - Lebanese Cities */}
+              <LebaneseCitySelect
+                value={selectedCity}
+                onValueChange={setSelectedCity}
+                includeAllOption={true}
+                allOptionLabel="All Cities"
+                placeholder="Filter by city"
+              />
 
               {/* Event Type Filter */}
               <Select value={selectedType} onValueChange={setSelectedType}>

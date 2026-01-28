@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { Search, Star, Instagram, Youtube, Play, Filter, X, ChevronDown, ChevronUp, Zap, Sparkles } from "lucide-react";
+import { Search, Star, Instagram, Youtube, Play, Filter, X, ChevronDown, ChevronUp, MapPin, Calendar } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -27,6 +27,7 @@ import AdPlacement from "@/components/AdPlacement";
 import DimmedPrice from "@/components/DimmedPrice";
 import UpgradeModal from "@/components/UpgradeModal";
 import { canViewCreatorPricing, type PlanType } from "@/lib/stripe-mock";
+import LebaneseCitySelect from "@/components/LebaneseCitySelect";
 
 interface CreatorWithDetails {
   id: string;
@@ -49,6 +50,7 @@ interface CreatorWithDetails {
     service_type: string;
     price_cents: number;
   }>;
+  location_city: string | null;
 }
 
 const GENDERS = ["Male", "Female", "Non-binary"];
@@ -191,6 +193,7 @@ const Influencers = () => {
           profile_image_url,
           categories,
           location_country,
+          location_city,
           birth_date,
           gender,
           ethnicity,
@@ -211,6 +214,7 @@ const Influencers = () => {
         profile_image_url: creator.profile_image_url,
         categories: creator.categories,
         location_country: creator.location_country,
+        location_city: creator.location_city,
         birth_date: creator.birth_date,
         gender: creator.gender,
         ethnicity: creator.ethnicity,
@@ -343,10 +347,10 @@ const Influencers = () => {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4">
-              Find Your Perfect Influencer
+              Book Creators for Events
             </h1>
             <p className="text-xl text-muted-foreground">
-              Browse verified creators across all platforms
+              Find verified creators available for live fan experiences at your venue
             </p>
           </div>
 
@@ -574,25 +578,25 @@ const Influencers = () => {
                 <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                      <Sparkles className="h-5 w-5 text-primary" />
+                      <Star className="h-5 w-5 text-primary" />
                     </div>
                     <div>
                       <p className="font-semibold">
-                        {currentPlan === "none" ? "Upgrade to chat with creators" : "Upgrade to Pro for advanced filters"}
+                        {currentPlan === "none" ? "List your venue to book creators" : "Upgrade for more features"}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {currentPlan === "none" 
-                          ? "Start at $39/mo - Plus get 10GB content library storage" 
-                          : "Filter by age, ethnicity, language + save favorites & post campaigns"}
+                          ? "Free to list - Only pay 15% platform fee when you book events" 
+                          : "Filter by age, ethnicity, language + save favorites"}
                       </p>
                     </div>
                   </div>
                   <Button 
-                    onClick={() => navigate('/brand-dashboard?tab=subscription')}
+                    onClick={() => navigate('/brand-signup')}
                     className="gap-2 bg-primary hover:bg-primary/90 whitespace-nowrap"
                   >
-                    <Zap className="h-4 w-4" />
-                    {currentPlan === "none" ? "Get Basic - $39/mo" : "Get Pro - $99/mo"}
+                    <Calendar className="h-4 w-4" />
+                    {currentPlan === "none" ? "List Your Venue" : "See Plans"}
                   </Button>
                 </div>
               </div>

@@ -30,10 +30,13 @@ import {
   Instagram,
   Youtube,
   ExternalLink,
+  MessageCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { EVENT_TYPES, type EventType } from "@/config/packages";
+import WhatsAppButton from "@/components/WhatsAppButton";
+import { WHATSAPP_CONFIG, formatDualCurrency } from "@/config/lebanese-market";
 
 interface EventDetails {
   id: string;
@@ -445,7 +448,9 @@ const EventDetail = () => {
                         {isFree ? "Free Event" : `$${(event.ticket_price_cents! / 100).toFixed(0)}`}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {isFree ? "No ticket required" : "Per person"}
+                        {isFree ? "No ticket required" : (
+                          <>Per person <span className="text-xs">(~{formatDualCurrency(event.ticket_price_cents!).lbp})</span></>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -502,6 +507,20 @@ const EventDetail = () => {
                     <Share2 className="mr-2 h-4 w-4" />
                     Share Event
                   </Button>
+
+                  {/* WhatsApp Share */}
+                  <WhatsAppButton
+                    phoneNumber={WHATSAPP_CONFIG.platformNumber}
+                    message={WHATSAPP_CONFIG.templates.eventReminder(
+                      event.title,
+                      format(eventDate, "MMMM d, yyyy"),
+                      formatEventTime(event.start_time, event.end_time)
+                    )}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Share on WhatsApp
+                  </WhatsAppButton>
                 </CardContent>
               </Card>
             </div>
