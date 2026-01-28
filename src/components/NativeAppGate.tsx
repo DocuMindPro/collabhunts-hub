@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { safeNativeAsync } from '@/lib/supabase-native';
@@ -28,7 +27,6 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null);
-  const [shouldRedirectToDashboard, setShouldRedirectToDashboard] = useState(false);
 
   // Failsafe: If still loading after 10 seconds, force show login screen
   useEffect(() => {
@@ -86,9 +84,8 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
         if (!mounted) return;
 
         if (profile) {
-          console.log('NativeAppGate: Creator profile found, redirecting to dashboard');
+          console.log('NativeAppGate: Creator profile found');
           setCreatorProfile(profile);
-          setShouldRedirectToDashboard(true);
         } else {
           console.log('NativeAppGate: No creator profile found');
         }
@@ -112,7 +109,6 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
         if (event === 'SIGNED_OUT') {
           setUser(null);
           setCreatorProfile(null);
-          setShouldRedirectToDashboard(false);
         } else if (event === 'SIGNED_IN' && session?.user) {
           setUser(session.user);
           
@@ -132,7 +128,6 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
 
           if (mounted && profile) {
             setCreatorProfile(profile);
-            setShouldRedirectToDashboard(true);
           }
         }
       }
@@ -156,7 +151,7 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
     return <NativeLogin />;
   }
 
-  // Logged in but no creator profile - redirect to signup
+  // Logged in but no creator profile - show signup prompt
   if (!creatorProfile) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
@@ -181,12 +176,7 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // User has creator profile - redirect to dashboard
-  if (shouldRedirectToDashboard) {
-    return <Navigate to="/creator-dashboard" replace />;
-  }
-
-  // Render children (the routes)
+  // User has creator profile - render routes (Routes in App.tsx handle /creator-dashboard)
   return <>{children}</>;
 }
 
