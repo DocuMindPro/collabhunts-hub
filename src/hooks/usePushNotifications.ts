@@ -22,11 +22,18 @@ const navigateNative = (path: string) => {
   }
 };
 
+/**
+ * IMPORTANT: Push notifications require Firebase to be configured on Android.
+ * Without Firebase, calling PushNotifications methods will crash the app at the native level.
+ * This hook is designed to fail gracefully when Firebase is not available.
+ */
 export function usePushNotifications() {
   const [isRegistered, setIsRegistered] = useState(false);
   const [currentToken, setCurrentToken] = useState<string | null>(null);
-  const [isAvailable, setIsAvailable] = useState(true);
+  // Default to FALSE - only set true after we verify push is actually available
+  const [isAvailable, setIsAvailable] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [safetyCheckComplete, setSafetyCheckComplete] = useState(false);
 
   const getPlatform = (): Platform => {
     try {
@@ -37,9 +44,53 @@ export function usePushNotifications() {
     }
   };
 
-  const requestPermissions = useCallback(async () => {
+  /**
+   * Safely check if push notifications are available without crashing
+   * Uses Promise.race with timeout to prevent hangs
+   */
+  const checkPushAvailability = useCallback(async (): Promise<boolean> => {
     if (!Capacitor.isNativePlatform()) {
-      console.log('Push notifications only work on native platforms');
+      console.log('Push notifications: Not a native platform, skipping');
+      return false;
+    }
+
+    try {
+      console.log('Push notifications: Checking availability...');
+      
+      // Create a timeout promise that resolves to null after 2 seconds
+      const timeoutPromise = new Promise<null>((resolve) => 
+        setTimeout(() => {
+          console.log('Push notifications: Availability check timed out');
+          resolve(null);
+        }, 2000)
+      );
+      
+      // Race the actual check against the timeout
+      const checkPromise = PushNotifications.checkPermissions();
+      const result = await Promise.race([checkPromise, timeoutPromise]);
+      
+      if (result === null) {
+        // Timeout occurred - plugin likely not configured
+        console.log('Push notifications: Not available (timeout)');
+        return false;
+      }
+      
+      console.log('Push notifications: Available, permission status:', result.receive);
+      return true;
+    } catch (error) {
+      console.warn('Push notifications: Not available (error):', error);
+      return false;
+    }
+  }, []);
+
+  const requestPermissions = useCallback(async () => {
+    // Don't attempt if not marked as available
+    if (!isAvailable) {
+      console.log('Push notifications: Skipping permission request - not available');
+      return false;
+    }
+
+    if (!Capacitor.isNativePlatform()) {
       return false;
     }
 
@@ -57,9 +108,15 @@ export function usePushNotifications() {
       setIsAvailable(false);
       return false;
     }
-  }, []);
+  }, [isAvailable]);
 
   const registerDevice = useCallback(async () => {
+    // Don't attempt if not marked as available
+    if (!isAvailable) {
+      console.log('Push notifications: Skipping registration - not available');
+      return;
+    }
+
     if (!Capacitor.isNativePlatform()) {
       return;
     }
@@ -75,9 +132,8 @@ export function usePushNotifications() {
     } catch (error) {
       console.warn('Push notifications not available (Firebase may not be configured):', error);
       setIsAvailable(false);
-      // Gracefully handle missing Firebase configuration - app continues normally
     }
-  }, [requestPermissions]);
+  }, [isAvailable, requestPermissions]);
 
   const unregisterDevice = useCallback(async () => {
     if (currentToken) {
@@ -129,24 +185,61 @@ export function usePushNotifications() {
     }
   }, []);
 
+  // Step 1: Safety check - verify push notifications are available before doing anything
   useEffect(() => {
-    // Skip initialization on non-native platforms
+    // Skip on non-native platforms
     if (!Capacitor.isNativePlatform()) {
+      console.log('Push notifications: Web platform, disabling');
+      setSafetyCheckComplete(true);
       setIsInitialized(true);
       return;
     }
 
-    // Defer initialization to avoid early crashes
-    const initTimeout = setTimeout(() => {
-      setIsInitialized(true);
-    }, 100);
+    let mounted = true;
 
-    return () => clearTimeout(initTimeout);
-  }, []);
+    const performSafetyCheck = async () => {
+      try {
+        const available = await checkPushAvailability();
+        if (mounted) {
+          setIsAvailable(available);
+          setSafetyCheckComplete(true);
+          console.log('Push notifications: Safety check complete, available:', available);
+        }
+      } catch (error) {
+        console.warn('Push notifications: Safety check failed:', error);
+        if (mounted) {
+          setIsAvailable(false);
+          setSafetyCheckComplete(true);
+        }
+      }
+    };
 
+    // Delay the safety check significantly to let the app stabilize
+    // This prevents crashes during initial app load
+    const timer = setTimeout(performSafetyCheck, 3000);
+
+    return () => {
+      mounted = false;
+      clearTimeout(timer);
+    };
+  }, [checkPushAvailability]);
+
+  // Step 2: Initialize listeners only after safety check passes and push is available
   useEffect(() => {
-    // Don't run until initialized
-    if (!isInitialized || !Capacitor.isNativePlatform()) {
+    // Wait for safety check to complete
+    if (!safetyCheckComplete) {
+      return;
+    }
+
+    // If push isn't available, mark as initialized and exit
+    if (!isAvailable) {
+      console.log('Push notifications: Not available, skipping listener setup');
+      setIsInitialized(true);
+      return;
+    }
+
+    if (!Capacitor.isNativePlatform()) {
+      setIsInitialized(true);
       return;
     }
 
@@ -158,6 +251,8 @@ export function usePushNotifications() {
 
     const initializePushNotifications = async () => {
       try {
+        console.log('Push notifications: Setting up listeners...');
+
         // Listen for successful registration
         const registrationListener = await PushNotifications.addListener(
           'registration',
@@ -189,7 +284,6 @@ export function usePushNotifications() {
           (error) => {
             console.warn('Push registration error (Firebase may not be configured):', error);
             setIsAvailable(false);
-            // Don't show toast - just log and continue
           }
         );
         errorCleanup = () => errorListener.remove();
@@ -200,7 +294,6 @@ export function usePushNotifications() {
           (notification: PushNotificationSchema) => {
             console.log('Push notification received:', notification);
             
-            // Show in-app notification
             toast(notification.title || 'New Notification', {
               description: notification.body,
               action: {
@@ -246,10 +339,13 @@ export function usePushNotifications() {
         });
         authSubscription = subscription;
 
+        setIsInitialized(true);
+        console.log('Push notifications: Initialization complete');
+
       } catch (error) {
         console.warn('Push notification initialization failed (Firebase may not be configured):', error);
         setIsAvailable(false);
-        // App continues normally without push notifications
+        setIsInitialized(true);
       }
     };
 
@@ -262,7 +358,7 @@ export function usePushNotifications() {
       actionCleanup?.();
       authSubscription?.unsubscribe();
     };
-  }, [isInitialized, registerDevice, unregisterDevice, handleNotificationTap]);
+  }, [safetyCheckComplete, isAvailable, registerDevice, unregisterDevice, handleNotificationTap]);
 
   return {
     isRegistered,
