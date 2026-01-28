@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
+import { safeNativeAsync } from '@/lib/supabase-native';
 import NativeLoadingScreen from './NativeLoadingScreen';
 import NativeLogin from '@/pages/NativeLogin';
 
@@ -19,6 +20,9 @@ interface CreatorProfile {
  * 2. If not logged in: Shows the native login screen
  * 3. If logged in but no creator profile: Shows onboarding prompt
  * 4. If logged in with creator profile: Renders children (dashboard routes)
+ * 
+ * All Supabase calls use safeNativeAsync with 5-second timeouts to prevent
+ * hanging on Android WebView where network requests can fail silently.
  */
 export function NativeAppGate({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -26,17 +30,36 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null);
   const [shouldRedirectToDashboard, setShouldRedirectToDashboard] = useState(false);
 
+  // Failsafe: If still loading after 10 seconds, force show login screen
+  useEffect(() => {
+    const failsafe = setTimeout(() => {
+      if (isLoading) {
+        console.warn('NativeAppGate: Failsafe timeout reached, showing login screen');
+        setIsLoading(false);
+      }
+    }, 10000);
+    return () => clearTimeout(failsafe);
+  }, [isLoading]);
+
   useEffect(() => {
     let mounted = true;
 
     const checkAuthAndProfile = async () => {
       try {
-        // Get current session
-        const { data: { session } } = await supabase.auth.getSession();
+        // Get current session with timeout protection
+        const session = await safeNativeAsync(
+          async () => {
+            const { data } = await supabase.auth.getSession();
+            return data.session;
+          },
+          null, // fallback: no session
+          5000  // 5 second timeout
+        );
         
         if (!mounted) return;
 
         if (!session?.user) {
+          console.log('NativeAppGate: No session found, showing login');
           setUser(null);
           setCreatorProfile(null);
           setIsLoading(false);
@@ -44,19 +67,30 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
         }
 
         setUser(session.user);
+        console.log('NativeAppGate: User found, checking creator profile');
 
-        // Check for creator profile
-        const { data: profile } = await supabase
-          .from('creator_profiles')
-          .select('id, display_name, status')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
+        // Check for creator profile with timeout protection
+        const profile = await safeNativeAsync(
+          async () => {
+            const { data } = await supabase
+              .from('creator_profiles')
+              .select('id, display_name, status')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+            return data;
+          },
+          null, // fallback: no profile
+          5000  // 5 second timeout
+        );
 
         if (!mounted) return;
 
         if (profile) {
+          console.log('NativeAppGate: Creator profile found, redirecting to dashboard');
           setCreatorProfile(profile);
           setShouldRedirectToDashboard(true);
+        } else {
+          console.log('NativeAppGate: No creator profile found');
         }
 
         setIsLoading(false);
@@ -73,6 +107,8 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
       async (event, session) => {
         if (!mounted) return;
 
+        console.log('NativeAppGate: Auth state changed:', event);
+
         if (event === 'SIGNED_OUT') {
           setUser(null);
           setCreatorProfile(null);
@@ -80,12 +116,19 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
         } else if (event === 'SIGNED_IN' && session?.user) {
           setUser(session.user);
           
-          // Check for creator profile after sign in
-          const { data: profile } = await supabase
-            .from('creator_profiles')
-            .select('id, display_name, status')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
+          // Check for creator profile after sign in with timeout
+          const profile = await safeNativeAsync(
+            async () => {
+              const { data } = await supabase
+                .from('creator_profiles')
+                .select('id, display_name, status')
+                .eq('user_id', session.user.id)
+                .maybeSingle();
+              return data;
+            },
+            null,
+            5000
+          );
 
           if (mounted && profile) {
             setCreatorProfile(profile);
