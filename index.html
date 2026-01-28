@@ -39,7 +39,120 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Pre-React Loader - Visible BEFORE JavaScript loads -->
+      <div id="pre-react-loader" style="
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #1a1a2e;
+        color: white;
+        font-family: system-ui, -apple-system, sans-serif;
+        padding: 20px;
+        text-align: center;
+      ">
+        <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
+        <div style="font-size: 18px; font-weight: 600;">Loading CollabHunts...</div>
+        <div id="js-status" style="margin-top: 20px; color: #888; font-size: 12px;">
+          JavaScript not loaded yet
+        </div>
+        <div id="debug-output" style="
+          margin-top: 20px;
+          padding: 16px;
+          background: #2d2d44;
+          border-radius: 8px;
+          font-size: 11px;
+          text-align: left;
+          white-space: pre-wrap;
+          word-break: break-all;
+          max-width: 100%;
+          display: none;
+        "></div>
+        <button id="debug-btn" onclick="showDebugInfo()" style="
+          margin-top: 20px;
+          padding: 12px 24px;
+          background: #f97316;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+        ">
+          Show Debug Info
+        </button>
+      </div>
+    </div>
+
+    <!-- Pre-React diagnostic script - runs BEFORE React bundle -->
+    <script>
+      // Log immediately to confirm JS is executing
+      console.log('[PRE-REACT] HTML loaded, inline script executing');
+      
+      // Update status to show JS is running
+      var statusEl = document.getElementById('js-status');
+      if (statusEl) {
+        statusEl.textContent = 'JavaScript starting...';
+        statusEl.style.color = '#4ade80';
+      }
+      
+      // Track if React ever mounts
+      window.REACT_MOUNTED = false;
+      window.PRE_REACT_LOGS = ['[' + new Date().toISOString() + '] Pre-React script loaded'];
+      
+      // Log function for debugging
+      window.preReactLog = function(msg) {
+        var entry = '[' + new Date().toISOString() + '] ' + msg;
+        console.log('[PRE-REACT] ' + msg);
+        window.PRE_REACT_LOGS.push(entry);
+      };
+      
+      // Show debug info function
+      window.showDebugInfo = function() {
+        var output = document.getElementById('debug-output');
+        var info = [
+          '=== DEVICE INFO ===',
+          'User Agent: ' + navigator.userAgent,
+          'Protocol: ' + location.protocol,
+          'URL: ' + location.href,
+          'Screen: ' + screen.width + 'x' + screen.height,
+          'Viewport: ' + window.innerWidth + 'x' + window.innerHeight,
+          'Online: ' + navigator.onLine,
+          'Timestamp: ' + new Date().toISOString(),
+          '',
+          '=== APP STATUS ===',
+          'React Mounted: ' + window.REACT_MOUNTED,
+          '',
+          '=== LOGS ===',
+          window.PRE_REACT_LOGS.join('\n')
+        ].join('\n');
+        
+        if (output) {
+          output.textContent = info;
+          output.style.display = 'block';
+        }
+        
+        // Also log to console
+        console.log('[PRE-REACT] Debug Info:\n' + info);
+      };
+      
+      // Check if React mounts within 10 seconds
+      setTimeout(function() {
+        if (!window.REACT_MOUNTED) {
+          window.preReactLog('ERROR: React failed to mount after 10s');
+          var statusEl = document.getElementById('js-status');
+          if (statusEl) {
+            statusEl.innerHTML = '<span style="color: #ff6b6b; font-weight: bold;">React failed to mount after 10s</span>' +
+              '<br/><button onclick="location.reload()" style="margin-top:10px;padding:8px 16px;background:#4dabf7;color:white;border:none;border-radius:4px;cursor:pointer;">Reload App</button>';
+          }
+        }
+      }, 10000);
+      
+      window.preReactLog('Waiting for React bundle to load...');
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
