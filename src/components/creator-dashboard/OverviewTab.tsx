@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, DollarSign, Calendar, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { safeNativeAsync } from "@/lib/supabase-native";
 
 const OverviewTab = () => {
   const [stats, setStats] = useState({
@@ -20,61 +21,72 @@ const OverviewTab = () => {
   }, []);
 
   const fetchDashboardStats = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    const defaultStats = {
+      profileViews: 0,
+      totalEarnings: 0,
+      pendingBookings: 0,
+      unreadMessages: 0,
+      profileStatus: "pending" as string,
+    };
 
-      const { data: profile } = await supabase
-        .from("creator_profiles")
-        .select("id, status")
-        .eq("user_id", user.id)
-        .single();
+    const result = await safeNativeAsync(
+      async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return defaultStats;
 
-      if (!profile) return;
-      setCreatorProfileId(profile.id);
+        const { data: profile } = await supabase
+          .from("creator_profiles")
+          .select("id, status")
+          .eq("user_id", user.id)
+          .single();
 
-      // Get conversations first
-      const { data: conversationsData } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("creator_profile_id", profile.id);
+        if (!profile) return defaultStats;
+        setCreatorProfileId(profile.id);
 
-      const conversationIds = conversationsData?.map(c => c.id) || [];
+        // Get conversations first
+        const { data: conversationsData } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("creator_profile_id", profile.id);
 
-      const [viewsData, bookingsData, messagesData] = await Promise.all([
-        supabase
-          .from("profile_views")
-          .select("*", { count: "exact", head: true })
-          .eq("creator_profile_id", profile.id),
-        supabase
-          .from("bookings")
-          .select("status, total_price_cents")
-          .eq("creator_profile_id", profile.id),
-        conversationIds.length > 0
-          ? supabase
-              .from("messages")
-              .select("id, is_read")
-              .eq("is_read", false)
-              .in("conversation_id", conversationIds)
-          : { data: [] },
-      ]);
+        const conversationIds = conversationsData?.map(c => c.id) || [];
 
-      const completedBookings = bookingsData.data?.filter(b => b.status === "completed") || [];
-      const totalEarnings = completedBookings.reduce((sum, b) => sum + b.total_price_cents, 0);
-      const pendingBookings = bookingsData.data?.filter(b => b.status === "pending").length || 0;
+        const [viewsData, bookingsData, messagesData] = await Promise.all([
+          supabase
+            .from("profile_views")
+            .select("*", { count: "exact", head: true })
+            .eq("creator_profile_id", profile.id),
+          supabase
+            .from("bookings")
+            .select("status, total_price_cents")
+            .eq("creator_profile_id", profile.id),
+          conversationIds.length > 0
+            ? supabase
+                .from("messages")
+                .select("id, is_read")
+                .eq("is_read", false)
+                .in("conversation_id", conversationIds)
+            : { data: [] },
+        ]);
 
-      setStats({
-        profileViews: viewsData.count || 0,
-        totalEarnings: totalEarnings / 100,
-        pendingBookings,
-        unreadMessages: messagesData.data?.length || 0,
-        profileStatus: profile.status,
-      });
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    } finally {
-      setLoading(false);
-    }
+        const completedBookings = bookingsData.data?.filter(b => b.status === "completed") || [];
+        const totalEarnings = completedBookings.reduce((sum, b) => sum + b.total_price_cents, 0);
+        const pendingBookings = bookingsData.data?.filter(b => b.status === "pending").length || 0;
+
+        return {
+          profileViews: viewsData.count || 0,
+          totalEarnings: totalEarnings / 100,
+          pendingBookings,
+          unreadMessages: messagesData.data?.length || 0,
+          profileStatus: profile.status,
+        };
+      },
+      defaultStats, // fallback on timeout
+      8000 // 8 second timeout for dashboard stats
+    );
+
+    setStats(result);
+    setLoading(false);
   };
 
   if (loading) {
