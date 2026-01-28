@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, MessageSquare, Package, ArrowRight, Sparkles } from "lucide-react";
+import { Search, Calendar, Users, ArrowRight, Sparkles, MapPin } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 interface Creator {
@@ -14,7 +14,7 @@ interface Creator {
   display_name: string;
   profile_image_url: string | null;
   categories: string[] | null;
-  location_country: string | null;
+  location_city: string | null;
 }
 
 const BrandWelcome = () => {
@@ -22,7 +22,7 @@ const BrandWelcome = () => {
   const [searchParams] = useSearchParams();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [loading, setLoading] = useState(true);
-  const [companyName, setCompanyName] = useState("");
+  const [venueName, setVenueName] = useState("");
 
   const categories = searchParams.get("categories")?.split(",") || [];
 
@@ -34,25 +34,22 @@ const BrandWelcome = () => {
         return;
       }
 
-      // Get company name
       const { data: brandProfile } = await supabase
         .from("brand_profiles")
-        .select("company_name")
+        .select("company_name, venue_name")
         .eq("user_id", user.id)
         .single();
 
       if (brandProfile) {
-        setCompanyName(brandProfile.company_name);
+        setVenueName(brandProfile.venue_name || brandProfile.company_name);
       }
 
-      // Fetch personalized creators
       let query = supabase
         .from("creator_profiles")
-        .select("id, display_name, profile_image_url, categories, location_country")
+        .select("id, display_name, profile_image_url, categories, location_city")
         .eq("status", "approved")
         .limit(6);
 
-      // Filter by preferred categories if available
       if (categories.length > 0) {
         query = query.overlaps("categories", categories);
       }
@@ -68,18 +65,18 @@ const BrandWelcome = () => {
   const steps = [
     {
       icon: Search,
-      title: "Search & Discover",
-      description: "Browse creators by category, platform, or budget",
+      title: "Browse Creators",
+      description: "Find creators who match your venue's vibe and audience",
     },
     {
-      icon: MessageSquare,
-      title: "Connect & Collaborate",
-      description: "Message creators to discuss and arrange terms directly",
+      icon: Calendar,
+      title: "Book an Event",
+      description: "Select a package: Meet & Greet, Workshop, or Competition",
     },
     {
-      icon: Package,
-      title: "Receive Content",
-      description: "Get high-quality content delivered to you",
+      icon: Users,
+      title: "Host & Earn",
+      description: "Attract new customers and create memorable experiences",
     },
   ];
 
@@ -92,15 +89,15 @@ const BrandWelcome = () => {
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
             <Sparkles className="h-4 w-4" />
-            <span className="text-sm font-medium">Setup Complete!</span>
+            <span className="text-sm font-medium">Venue Registered!</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-4">
-            Welcome to CollabHunts, {companyName}!
+            Welcome to CollabHunts, {venueName}!
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             {categories.length > 0 
-              ? `We found creators in ${categories.slice(0, 2).join(", ")} just for you`
-              : "Discover amazing creators ready to collaborate with your brand"
+              ? `Discover ${categories.slice(0, 2).join(" & ")} creators ready to host events at your venue`
+              : "Connect with talented creators and host unforgettable events"
             }
           </p>
         </div>
@@ -119,12 +116,12 @@ const BrandWelcome = () => {
           ))}
         </div>
 
-        {/* Personalized Creators */}
+        {/* Available Creators */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">
               {categories.length > 0 
-                ? `${categories[0]} Creators for You`
+                ? `${categories[0]} Creators Available`
                 : "Featured Creators"
               }
             </h2>
@@ -158,6 +155,12 @@ const BrandWelcome = () => {
                     </AvatarFallback>
                   </Avatar>
                   <p className="font-medium truncate">{creator.display_name}</p>
+                  {creator.location_city && (
+                    <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-1">
+                      <MapPin className="h-3 w-3" />
+                      {creator.location_city}
+                    </div>
+                  )}
                   {creator.categories && creator.categories[0] && (
                     <Badge variant="secondary" className="mt-2 text-xs">
                       {creator.categories[0]}
@@ -176,8 +179,12 @@ const BrandWelcome = () => {
           )}
         </div>
 
-        {/* CTA */}
-        <div className="text-center">
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button size="lg" onClick={() => navigate("/influencers")} variant="outline" className="gap-2">
+            <Search className="h-4 w-4" />
+            Browse Creators
+          </Button>
           <Button size="lg" onClick={() => navigate("/brand-dashboard")} className="gap-2">
             Go to Dashboard <ArrowRight className="h-4 w-4" />
           </Button>

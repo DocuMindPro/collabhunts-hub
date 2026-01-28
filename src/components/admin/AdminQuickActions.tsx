@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { 
   AlertCircle, 
   Users, 
-  Megaphone, 
   Scale, 
   BadgeCheck, 
   DollarSign,
@@ -18,7 +17,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface QuickActionStats {
   pendingCreators: number;
-  pendingCampaigns: number;
   openDisputes: number;
   verificationRequests: number;
   pendingPayouts: number;
@@ -32,7 +30,6 @@ interface Props {
 export default function AdminQuickActions({ onNavigate }: Props) {
   const [stats, setStats] = useState<QuickActionStats>({
     pendingCreators: 0,
-    pendingCampaigns: 0,
     openDisputes: 0,
     verificationRequests: 0,
     pendingPayouts: 0,
@@ -49,7 +46,6 @@ export default function AdminQuickActions({ onNavigate }: Props) {
       // Fetch all counts in parallel
       const [
         { count: pendingCreators },
-        { count: pendingCampaigns },
         { count: openDisputes },
         { count: verificationRequests },
         { count: franchisePayouts },
@@ -57,7 +53,6 @@ export default function AdminQuickActions({ onNavigate }: Props) {
         { count: staleCreators },
       ] = await Promise.all([
         supabase.from("creator_profiles").select("*", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("campaigns").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("booking_disputes").select("*", { count: "exact", head: true }).in("status", ["open", "awaiting_response"]),
         supabase.from("brand_profiles").select("*", { count: "exact", head: true }).eq("verification_status", "pending"),
         supabase.from("franchise_payout_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
@@ -67,7 +62,6 @@ export default function AdminQuickActions({ onNavigate }: Props) {
 
       setStats({
         pendingCreators: pendingCreators || 0,
-        pendingCampaigns: pendingCampaigns || 0,
         openDisputes: openDisputes || 0,
         verificationRequests: verificationRequests || 0,
         pendingPayouts: (franchisePayouts || 0) + (affiliatePayouts || 0),
@@ -90,7 +84,6 @@ export default function AdminQuickActions({ onNavigate }: Props) {
 
   const totalRequiresAttention = 
     stats.pendingCreators + 
-    stats.pendingCampaigns + 
     stats.openDisputes + 
     stats.verificationRequests + 
     stats.pendingPayouts;
@@ -103,14 +96,6 @@ export default function AdminQuickActions({ onNavigate }: Props) {
       tab: "approvals",
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
-    },
-    {
-      label: "Pending Campaigns",
-      count: stats.pendingCampaigns,
-      icon: Megaphone,
-      tab: "campaigns",
-      color: "text-purple-500",
-      bgColor: "bg-purple-500/10",
     },
     {
       label: "Open Disputes",
@@ -132,7 +117,7 @@ export default function AdminQuickActions({ onNavigate }: Props) {
       label: "Payout Requests",
       count: stats.pendingPayouts,
       icon: DollarSign,
-      tab: "franchises",
+      tab: "revenue",
       color: "text-amber-500",
       bgColor: "bg-amber-500/10",
     },
@@ -145,8 +130,8 @@ export default function AdminQuickActions({ onNavigate }: Props) {
           <Skeleton className="h-6 w-48" />
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {[...Array(5)].map((_, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[...Array(4)].map((_, i) => (
               <Skeleton key={i} className="h-20" />
             ))}
           </div>
@@ -207,7 +192,7 @@ export default function AdminQuickActions({ onNavigate }: Props) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {actions.map((action) => (
             <button
               key={action.tab}
