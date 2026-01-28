@@ -43,6 +43,7 @@ import Advertising from "./pages/Advertising";
 import BecomeAffiliate from "./pages/BecomeAffiliate";
 import FranchiseOpportunities from "./pages/FranchiseOpportunities";
 import Download from "./pages/Download";
+import Debug from "./pages/Debug";
 import NotFound from "./pages/NotFound";
 
 // Protected route components
@@ -184,6 +185,7 @@ const App = () => (
                   <Route path="/become-affiliate" element={<BecomeAffiliate />} />
                   <Route path="/franchise" element={<FranchiseOpportunities />} />
                   <Route path="/download" element={<Download />} />
+                  <Route path="/debug" element={<Debug />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
