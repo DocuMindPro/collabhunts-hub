@@ -2,6 +2,7 @@ import { BarChart3, Calendar, MessageSquare, User, Megaphone } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 
 interface MobileBottomNavProps {
   activeTab: string;
@@ -29,7 +30,12 @@ const MobileBottomNav = ({ activeTab, onTabChange }: MobileBottomNavProps) => {
   useEffect(() => {
     fetchBadgeCounts();
 
-    // Subscribe to realtime updates for messages
+    // Skip realtime subscriptions on native - they cause hangs/crashes
+    if (isNativePlatform()) {
+      return;
+    }
+
+    // Web only: Subscribe to realtime updates for messages
     const messagesChannel = supabase
       .channel("mobile-nav-messages")
       .on(
@@ -68,48 +74,58 @@ const MobileBottomNav = ({ activeTab, onTabChange }: MobileBottomNavProps) => {
   }, []);
 
   const fetchBadgeCounts = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    const result = await safeNativeAsync(
+      async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { unread: 0, pending: 0 };
 
-      // Get creator profile
-      const { data: profile } = await supabase
-        .from("creator_profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
+        // Get creator profile
+        const { data: profile } = await supabase
+          .from("creator_profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
 
-      if (!profile) return;
+        if (!profile) return { unread: 0, pending: 0 };
 
-      // Get unread messages count
-      const { data: conversations } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("creator_profile_id", profile.id);
+        let unread = 0;
+        let pending = 0;
 
-      if (conversations && conversations.length > 0) {
-        const conversationIds = conversations.map(c => c.id);
-        const { count } = await supabase
-          .from("messages")
+        // Get unread messages count
+        const { data: conversations } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("creator_profile_id", profile.id);
+
+        if (conversations && conversations.length > 0) {
+          const conversationIds = conversations.map(c => c.id);
+          const { count } = await supabase
+            .from("messages")
+            .select("*", { count: "exact", head: true })
+            .in("conversation_id", conversationIds)
+            .eq("is_read", false)
+            .neq("sender_id", user.id);
+
+          unread = count || 0;
+        }
+
+        // Get pending bookings count
+        const { count: pendingCount } = await supabase
+          .from("bookings")
           .select("*", { count: "exact", head: true })
-          .in("conversation_id", conversationIds)
-          .eq("is_read", false)
-          .neq("sender_id", user.id);
+          .eq("creator_profile_id", profile.id)
+          .eq("status", "pending");
 
-        setUnreadMessages(count || 0);
-      }
+        pending = pendingCount || 0;
 
-      // Get pending bookings count
-      const { count: pendingCount } = await supabase
-        .from("bookings")
-        .select("*", { count: "exact", head: true })
-        .eq("creator_profile_id", profile.id)
-        .eq("status", "pending");
+        return { unread, pending };
+      },
+      { unread: 0, pending: 0 }, // fallback on timeout
+      5000 // 5 second timeout
+    );
 
-      setPendingBookings(pendingCount || 0);
-    } catch (error) {
-      console.error("Error fetching badge counts:", error);
-    }
+    setUnreadMessages(result.unread);
+    setPendingBookings(result.pending);
   };
 
   const getBadgeCount = (tabId: string): number => {
