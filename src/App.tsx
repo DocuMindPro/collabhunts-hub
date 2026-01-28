@@ -40,6 +40,8 @@ import Changelog from "./pages/Changelog";
 import Download from "./pages/Download";
 import Debug from "./pages/Debug";
 import NotFound from "./pages/NotFound";
+import Events from "./pages/Events";
+import EventDetail from "./pages/EventDetail";
 
 // Protected route components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -95,6 +97,8 @@ const WebAppRoutes = () => (
     <Route path="/refund" element={<RefundPolicy />} />
     <Route path="/brand" element={<Brand />} />
     <Route path="/creator" element={<Creator />} />
+    <Route path="/events" element={<Events />} />
+    <Route path="/event/:id" element={<EventDetail />} />
     <Route path="/brand-signup" element={<BrandSignup />} />
     <Route path="/brand-onboarding" element={<BrandOnboarding />} />
     <Route path="/brand-welcome" element={<BrandWelcome />} />
