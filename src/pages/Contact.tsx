@@ -8,13 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Mail, MessageSquare, Clock, MapPin } from "lucide-react";
 import { toast } from "sonner";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 const Contact = () => {
   const [searchParams] = useSearchParams();
   const prefilledSubject = searchParams.get("subject") || "";
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
@@ -23,7 +23,6 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     toast.success("Message sent! We'll get back to you within 24-48 hours.");
@@ -42,7 +41,7 @@ const Contact = () => {
             Get in <span className="bg-gradient-accent bg-clip-text text-transparent">Touch</span>
           </h1>
           <p className="text-lg text-muted-foreground">
-            Have a question, feedback, or just want to say hello? We'd love to hear from you.
+            Have a question about hosting an event, becoming a creator, or registering your venue? We're here to help.
           </p>
         </div>
 
@@ -83,7 +82,7 @@ const Contact = () => {
                 <Label htmlFor="message">Message</Label>
                 <Textarea 
                   id="message" 
-                  placeholder="Tell us more about your inquiry..." 
+                  placeholder="Tell us about your event idea, venue, or any questions..." 
                   rows={5}
                   required 
                 />
@@ -100,7 +99,7 @@ const Contact = () => {
             <div>
               <h2 className="text-2xl font-heading font-bold mb-6">Contact Information</h2>
               <p className="text-muted-foreground mb-8">
-                Choose your preferred way to reach us. Our team is here to help you succeed.
+                Reach out via email or WhatsApp. Our team is here to help you plan amazing events.
               </p>
             </div>
 
@@ -119,15 +118,18 @@ const Contact = () => {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                  <MessageSquare className="h-5 w-5 text-primary" />
+                <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center shrink-0">
+                  <MessageSquare className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="font-heading font-semibold mb-1">Live Chat</h3>
-                  <p className="text-muted-foreground text-sm mb-1">Available for logged-in users</p>
-                  <p className="text-sm text-muted-foreground">
-                    Access via your dashboard
-                  </p>
+                  <h3 className="font-heading font-semibold mb-1">WhatsApp</h3>
+                  <p className="text-muted-foreground text-sm mb-2">Quick responses during business hours</p>
+                  <WhatsAppButton 
+                    phoneNumber="+96170123456" 
+                    message="Hi! I have a question about CollabHunts events."
+                    variant="outline"
+                    size="sm"
+                  />
                 </div>
               </div>
 
@@ -150,7 +152,7 @@ const Contact = () => {
                 <div>
                   <h3 className="font-heading font-semibold mb-1">Location</h3>
                   <p className="text-muted-foreground text-sm">
-                    We're a remote-first company serving creators and brands worldwide.
+                    Based in Lebanon, serving creators and venues across the country.
                   </p>
                 </div>
               </div>
@@ -158,12 +160,12 @@ const Contact = () => {
 
             {/* FAQ CTA */}
             <div className="bg-muted/50 rounded-xl p-6 border border-border">
-              <h3 className="font-heading font-semibold mb-2">Looking for quick answers?</h3>
+              <h3 className="font-heading font-semibold mb-2">Planning an event?</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Check out our Help Center for frequently asked questions and guides.
+                Browse our events page to see what's happening, or check out our creator and venue guides.
               </p>
-              <Button variant="outline" size="sm">
-                Visit Help Center
+              <Button variant="outline" size="sm" asChild>
+                <a href="/events">Browse Events</a>
               </Button>
             </div>
           </div>

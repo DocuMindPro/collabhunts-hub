@@ -315,14 +315,14 @@ const BrandSignup = () => {
       <main className="flex-1 py-12 px-4 gradient-subtle">
         <div className="max-w-2xl mx-auto">
           <div className="mb-8 text-center">
-            <h1 className="text-4xl font-heading font-bold mb-2">Join as a Brand</h1>
-            <p className="text-muted-foreground">Start collaborating with top creators today</p>
+            <h1 className="text-4xl font-heading font-bold mb-2">Register Your Venue</h1>
+            <p className="text-muted-foreground">Host creator events and drive foot traffic to your location</p>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>Create Your Brand Account</CardTitle>
-              <CardDescription>Fill in your company details to get started</CardDescription>
+              <CardTitle>Create Your Venue Account</CardTitle>
+              <CardDescription>Fill in your venue details to start hosting events</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -433,13 +433,14 @@ const BrandSignup = () => {
                 </div>
 
                 <div className="border-t pt-4">
-                  <h3 className="font-semibold mb-3">Company Information</h3>
+                  <h3 className="font-semibold mb-3">Venue Information</h3>
                   
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="companyName">Company Name</Label>
+                      <Label htmlFor="companyName">Venue / Business Name</Label>
                       <Input
                         id="companyName"
+                        placeholder="e.g., The Coffee House, Sunset Lounge"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         required

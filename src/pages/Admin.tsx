@@ -18,19 +18,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, CreditCard, Megaphone, Database, FlaskConical, Phone, X, Gavel, BookOpen, BadgeCheck, ImageIcon, Globe, Link as LinkIcon } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, Database, FlaskConical, Phone, X, Gavel, BookOpen, BadgeCheck, ImageIcon, MapPin, CalendarDays } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
-import AdminBrandSubscriptionsTab from "@/components/brand-dashboard/AdminBrandSubscriptionsTab";
-import AdminCampaignsTab from "@/components/admin/AdminCampaignsTab";
 import AdminTestingTab from "@/components/admin/AdminTestingTab";
 import AdminCreatorsTab from "@/components/admin/AdminCreatorsTab";
 import AdminBrandsTab from "@/components/admin/AdminBrandsTab";
 import AdminDisputesTab from "@/components/admin/AdminDisputesTab";
 import AdminPlatformManualTab from "@/components/admin/AdminPlatformManualTab";
 import AdminVerificationsTab from "@/components/admin/AdminVerificationsTab";
-import AdminAdsTab from "@/components/admin/AdminAdsTab";
-import AdminFranchisesTab from "@/components/admin/AdminFranchisesTab";
-import AdminAffiliatesTab from "@/components/admin/AdminAffiliatesTab";
 import AdminBrandingSeoTab from "@/components/admin/AdminBrandingSeoTab";
 import AdminQuickActions from "@/components/admin/AdminQuickActions";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -751,8 +746,8 @@ const Admin = () => {
             <Card>
               <CardHeader className="p-3 md:p-6 pb-3">
                 <CardDescription className="flex items-center gap-2 text-xs md:text-sm">
-                  <Building2 className="h-4 w-4" />
-                  Brands
+                  <MapPin className="h-4 w-4" />
+                  Venues
                 </CardDescription>
                 <CardTitle className="text-2xl md:text-3xl">{stats.brands}</CardTitle>
               </CardHeader>
@@ -794,9 +789,9 @@ const Admin = () => {
                 <Palette className="h-4 w-4" />
                 <span className="hidden sm:inline">Creators</span>
               </TabsTrigger>
-              <TabsTrigger value="brands" className="gap-2 shrink-0">
-                <Building2 className="h-4 w-4" />
-                <span className="hidden sm:inline">Brands</span>
+              <TabsTrigger value="venues" className="gap-2 shrink-0">
+                <MapPin className="h-4 w-4" />
+                <span className="hidden sm:inline">Venues</span>
               </TabsTrigger>
               <TabsTrigger value="approvals" className="gap-2 shrink-0">
                 <CheckCircle className="h-4 w-4" />
@@ -807,13 +802,9 @@ const Admin = () => {
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="campaigns" className="gap-2 shrink-0">
-                <Megaphone className="h-4 w-4" />
-                <span className="hidden sm:inline">Campaigns</span>
-              </TabsTrigger>
-              <TabsTrigger value="subscriptions" className="gap-2 shrink-0">
-                <CreditCard className="h-4 w-4" />
-                <span className="hidden sm:inline">Subscriptions</span>
+              <TabsTrigger value="events" className="gap-2 shrink-0">
+                <CalendarDays className="h-4 w-4" />
+                <span className="hidden sm:inline">Events</span>
               </TabsTrigger>
               <TabsTrigger value="revenue" className="gap-2 shrink-0">
                 <TrendingUp className="h-4 w-4" />
@@ -834,18 +825,6 @@ const Admin = () => {
               <TabsTrigger value="verifications" className="gap-2 shrink-0">
                 <BadgeCheck className="h-4 w-4" />
                 <span className="hidden sm:inline">Verifications</span>
-              </TabsTrigger>
-              <TabsTrigger value="ads" className="gap-2 shrink-0">
-                <ImageIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Ads</span>
-              </TabsTrigger>
-              <TabsTrigger value="franchises" className="gap-2 shrink-0">
-                <Globe className="h-4 w-4" />
-                <span className="hidden sm:inline">Franchises</span>
-              </TabsTrigger>
-              <TabsTrigger value="affiliates" className="gap-2 shrink-0">
-                <LinkIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Affiliates</span>
               </TabsTrigger>
               <TabsTrigger value="branding" className="gap-2 shrink-0">
                 <ImageIcon className="h-4 w-4" />
@@ -1009,8 +988,8 @@ const Admin = () => {
               <AdminCreatorsTab />
             </TabsContent>
 
-            {/* Brands Tab */}
-            <TabsContent value="brands">
+            {/* Venues Tab */}
+            <TabsContent value="venues">
               <AdminBrandsTab />
             </TabsContent>
 
@@ -1151,14 +1130,19 @@ const Admin = () => {
               </Card>
             </TabsContent>
 
-            {/* Campaigns Tab */}
-            <TabsContent value="campaigns">
-              <AdminCampaignsTab />
-            </TabsContent>
-
-            {/* Brand Subscriptions Tab */}
-            <TabsContent value="subscriptions">
-              <AdminBrandSubscriptionsTab />
+            {/* Events Tab */}
+            <TabsContent value="events">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Event Management</CardTitle>
+                  <CardDescription>View and manage all platform events</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-center py-8">
+                    Event management coming soon. View events from the Events page.
+                  </p>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Revenue & Analytics Tab */}
@@ -1377,19 +1361,9 @@ const Admin = () => {
               <AdminVerificationsTab />
             </TabsContent>
 
-            {/* Ads Manager Tab */}
-            <TabsContent value="ads">
-              <AdminAdsTab />
-            </TabsContent>
-
-            {/* Franchises Tab */}
-            <TabsContent value="franchises">
-              <AdminFranchisesTab />
-            </TabsContent>
-
-            {/* Affiliates Tab */}
-            <TabsContent value="affiliates">
-              <AdminAffiliatesTab />
+            {/* Branding Tab */}
+            <TabsContent value="branding">
+              <AdminBrandingSeoTab />
             </TabsContent>
 
             {/* Branding Tab */}
