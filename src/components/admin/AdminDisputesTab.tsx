@@ -81,7 +81,7 @@ const AdminDisputesTab = () => {
             status,
             message,
             creator_profiles!inner(display_name, user_id),
-            brand_profiles!inner(company_name, user_id),
+            brand_profiles!bookings_brand_profile_id_fkey!inner(company_name, user_id),
             creator_services(service_type)
           )
         `)

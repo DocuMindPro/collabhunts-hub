@@ -430,6 +430,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          attendance_count: number | null
           booking_date: string | null
           brand_profile_id: string
           confirmed_at: string | null
@@ -438,8 +439,17 @@ export type Database = {
           delivered_at: string | null
           delivery_deadline: string | null
           delivery_status: string | null
+          deposit_amount_cents: number | null
+          escrow_status: string | null
+          event_date: string | null
+          event_time_end: string | null
+          event_time_start: string | null
+          event_type: string | null
+          final_amount_cents: number | null
           id: string
+          max_capacity: number | null
           message: string | null
+          package_type: string | null
           payment_status: string
           platform_fee_cents: number | null
           revision_count: number | null
@@ -448,8 +458,10 @@ export type Database = {
           status: string | null
           total_price_cents: number
           updated_at: string | null
+          venue_id: string | null
         }
         Insert: {
+          attendance_count?: number | null
           booking_date?: string | null
           brand_profile_id: string
           confirmed_at?: string | null
@@ -458,8 +470,17 @@ export type Database = {
           delivered_at?: string | null
           delivery_deadline?: string | null
           delivery_status?: string | null
+          deposit_amount_cents?: number | null
+          escrow_status?: string | null
+          event_date?: string | null
+          event_time_end?: string | null
+          event_time_start?: string | null
+          event_type?: string | null
+          final_amount_cents?: number | null
           id?: string
+          max_capacity?: number | null
           message?: string | null
+          package_type?: string | null
           payment_status?: string
           platform_fee_cents?: number | null
           revision_count?: number | null
@@ -468,8 +489,10 @@ export type Database = {
           status?: string | null
           total_price_cents: number
           updated_at?: string | null
+          venue_id?: string | null
         }
         Update: {
+          attendance_count?: number | null
           booking_date?: string | null
           brand_profile_id?: string
           confirmed_at?: string | null
@@ -478,8 +501,17 @@ export type Database = {
           delivered_at?: string | null
           delivery_deadline?: string | null
           delivery_status?: string | null
+          deposit_amount_cents?: number | null
+          escrow_status?: string | null
+          event_date?: string | null
+          event_time_end?: string | null
+          event_time_start?: string | null
+          event_type?: string | null
+          final_amount_cents?: number | null
           id?: string
+          max_capacity?: number | null
           message?: string | null
+          package_type?: string | null
           payment_status?: string
           platform_fee_cents?: number | null
           revision_count?: number | null
@@ -488,6 +520,7 @@ export type Database = {
           status?: string | null
           total_price_cents?: number
           updated_at?: string | null
+          venue_id?: string | null
         }
         Relationships: [
           {
@@ -511,10 +544,19 @@ export type Database = {
             referencedRelation: "creator_services"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bookings_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       brand_profiles: {
         Row: {
+          accessibility_info: string | null
+          amenities: string[] | null
           company_name: string
           company_size: string | null
           created_at: string | null
@@ -526,6 +568,7 @@ export type Database = {
           marketing_intent: string | null
           monthly_budget_range: string | null
           onboarding_completed: boolean | null
+          parking_available: boolean | null
           phone_number: string | null
           phone_verified: boolean | null
           preferred_categories: string[] | null
@@ -534,6 +577,11 @@ export type Database = {
           terms_version: string | null
           updated_at: string | null
           user_id: string
+          venue_address: string | null
+          venue_capacity: number | null
+          venue_city: string | null
+          venue_name: string | null
+          venue_type: string | null
           verification_completed_at: string | null
           verification_notes: string | null
           verification_rejection_reason: string | null
@@ -543,6 +591,8 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          accessibility_info?: string | null
+          amenities?: string[] | null
           company_name: string
           company_size?: string | null
           created_at?: string | null
@@ -554,6 +604,7 @@ export type Database = {
           marketing_intent?: string | null
           monthly_budget_range?: string | null
           onboarding_completed?: boolean | null
+          parking_available?: boolean | null
           phone_number?: string | null
           phone_verified?: boolean | null
           preferred_categories?: string[] | null
@@ -562,6 +613,11 @@ export type Database = {
           terms_version?: string | null
           updated_at?: string | null
           user_id: string
+          venue_address?: string | null
+          venue_capacity?: number | null
+          venue_city?: string | null
+          venue_name?: string | null
+          venue_type?: string | null
           verification_completed_at?: string | null
           verification_notes?: string | null
           verification_rejection_reason?: string | null
@@ -571,6 +627,8 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          accessibility_info?: string | null
+          amenities?: string[] | null
           company_name?: string
           company_size?: string | null
           created_at?: string | null
@@ -582,6 +640,7 @@ export type Database = {
           marketing_intent?: string | null
           monthly_budget_range?: string | null
           onboarding_completed?: boolean | null
+          parking_available?: boolean | null
           phone_number?: string | null
           phone_verified?: boolean | null
           preferred_categories?: string[] | null
@@ -590,6 +649,11 @@ export type Database = {
           terms_version?: string | null
           updated_at?: string | null
           user_id?: string
+          venue_address?: string | null
+          venue_capacity?: number | null
+          venue_city?: string | null
+          venue_name?: string | null
+          venue_type?: string | null
           verification_completed_at?: string | null
           verification_notes?: string | null
           verification_rejection_reason?: string | null
@@ -1098,6 +1162,7 @@ export type Database = {
       creator_profiles: {
         Row: {
           allow_mass_messages: boolean | null
+          availability_calendar: Json | null
           bio: string | null
           birth_date: string | null
           categories: string[] | null
@@ -1107,11 +1172,15 @@ export type Database = {
           created_at: string | null
           display_name: string
           ethnicity: string | null
+          event_experience_description: string | null
+          event_portfolio_urls: string[] | null
           gender: string | null
           id: string
           location_city: string | null
           location_country: string | null
           location_state: string | null
+          max_event_price_cents: number | null
+          min_event_price_cents: number | null
           phone_number: string | null
           phone_verified: boolean | null
           primary_language: string | null
@@ -1122,11 +1191,13 @@ export type Database = {
           status: string | null
           terms_accepted_at: string | null
           terms_version: string | null
+          travel_radius_km: number | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           allow_mass_messages?: boolean | null
+          availability_calendar?: Json | null
           bio?: string | null
           birth_date?: string | null
           categories?: string[] | null
@@ -1136,11 +1207,15 @@ export type Database = {
           created_at?: string | null
           display_name: string
           ethnicity?: string | null
+          event_experience_description?: string | null
+          event_portfolio_urls?: string[] | null
           gender?: string | null
           id?: string
           location_city?: string | null
           location_country?: string | null
           location_state?: string | null
+          max_event_price_cents?: number | null
+          min_event_price_cents?: number | null
           phone_number?: string | null
           phone_verified?: boolean | null
           primary_language?: string | null
@@ -1151,11 +1226,13 @@ export type Database = {
           status?: string | null
           terms_accepted_at?: string | null
           terms_version?: string | null
+          travel_radius_km?: number | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           allow_mass_messages?: boolean | null
+          availability_calendar?: Json | null
           bio?: string | null
           birth_date?: string | null
           categories?: string[] | null
@@ -1165,11 +1242,15 @@ export type Database = {
           created_at?: string | null
           display_name?: string
           ethnicity?: string | null
+          event_experience_description?: string | null
+          event_portfolio_urls?: string[] | null
           gender?: string | null
           id?: string
           location_city?: string | null
           location_country?: string | null
           location_state?: string | null
+          max_event_price_cents?: number | null
+          min_event_price_cents?: number | null
           phone_number?: string | null
           phone_verified?: boolean | null
           primary_language?: string | null
@@ -1180,6 +1261,7 @@ export type Database = {
           status?: string | null
           terms_accepted_at?: string | null
           terms_version?: string | null
+          travel_radius_km?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -1191,8 +1273,12 @@ export type Database = {
           creator_profile_id: string
           delivery_days: number | null
           description: string | null
+          duration_hours: number | null
           id: string
+          includes_description: string | null
           is_active: boolean | null
+          max_attendees: number | null
+          min_attendees: number | null
           price_cents: number
           service_type: string
         }
@@ -1201,8 +1287,12 @@ export type Database = {
           creator_profile_id: string
           delivery_days?: number | null
           description?: string | null
+          duration_hours?: number | null
           id?: string
+          includes_description?: string | null
           is_active?: boolean | null
+          max_attendees?: number | null
+          min_attendees?: number | null
           price_cents: number
           service_type: string
         }
@@ -1211,8 +1301,12 @@ export type Database = {
           creator_profile_id?: string
           delivery_days?: number | null
           description?: string | null
+          duration_hours?: number | null
           id?: string
+          includes_description?: string | null
           is_active?: boolean | null
+          max_attendees?: number | null
+          min_attendees?: number | null
           price_cents?: number
           service_type?: string
         }
@@ -1293,6 +1387,252 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      escrow_transactions: {
+        Row: {
+          amount_cents: number
+          created_at: string | null
+          event_booking_id: string
+          id: string
+          processed_at: string | null
+          status: string | null
+          transaction_type: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string | null
+          event_booking_id: string
+          id?: string
+          processed_at?: string | null
+          status?: string | null
+          transaction_type: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string | null
+          event_booking_id?: string
+          id?: string
+          processed_at?: string | null
+          status?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrow_transactions_event_booking_id_fkey"
+            columns: ["event_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_gallery: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          id: string
+          media_type: string
+          media_url: string
+          uploaded_by_creator: boolean | null
+          uploaded_by_venue: boolean | null
+          uploader_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          id?: string
+          media_type: string
+          media_url: string
+          uploaded_by_creator?: boolean | null
+          uploaded_by_venue?: boolean | null
+          uploader_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          media_type?: string
+          media_url?: string
+          uploaded_by_creator?: boolean | null
+          uploaded_by_venue?: boolean | null
+          uploader_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_gallery_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_registrations: {
+        Row: {
+          checked_in_at: string | null
+          event_id: string
+          fan_email: string
+          fan_name: string
+          fan_phone: string | null
+          id: string
+          registered_at: string | null
+          status: string | null
+        }
+        Insert: {
+          checked_in_at?: string | null
+          event_id: string
+          fan_email: string
+          fan_name: string
+          fan_phone?: string | null
+          id?: string
+          registered_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          checked_in_at?: string | null
+          event_id?: string
+          fan_email?: string
+          fan_name?: string
+          fan_phone?: string | null
+          id?: string
+          registered_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_reviews: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          id: string
+          rating: number
+          review_text: string | null
+          reviewer_email: string | null
+          reviewer_id: string | null
+          reviewer_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          id?: string
+          rating: number
+          review_text?: string | null
+          reviewer_email?: string | null
+          reviewer_id?: string | null
+          reviewer_type: string
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          rating?: number
+          review_text?: string | null
+          reviewer_email?: string | null
+          reviewer_id?: string | null
+          reviewer_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_reviews_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string | null
+          creator_profile_id: string
+          current_attendees: number | null
+          description: string | null
+          end_time: string
+          event_booking_id: string | null
+          event_date: string
+          event_type: string
+          id: string
+          is_public: boolean | null
+          max_attendees: number | null
+          package_type: string | null
+          start_time: string
+          status: string | null
+          ticket_price_cents: number | null
+          title: string
+          updated_at: string | null
+          venue_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_profile_id: string
+          current_attendees?: number | null
+          description?: string | null
+          end_time: string
+          event_booking_id?: string | null
+          event_date: string
+          event_type: string
+          id?: string
+          is_public?: boolean | null
+          max_attendees?: number | null
+          package_type?: string | null
+          start_time: string
+          status?: string | null
+          ticket_price_cents?: number | null
+          title: string
+          updated_at?: string | null
+          venue_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_profile_id?: string
+          current_attendees?: number | null
+          description?: string | null
+          end_time?: string
+          event_booking_id?: string | null
+          event_date?: string
+          event_type?: string
+          id?: string
+          is_public?: boolean | null
+          max_attendees?: number | null
+          package_type?: string | null
+          start_time?: string
+          status?: string | null
+          ticket_price_cents?: number | null
+          title?: string
+          updated_at?: string | null
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_event_booking_id_fkey"
+            columns: ["event_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       franchise_countries: {
         Row: {

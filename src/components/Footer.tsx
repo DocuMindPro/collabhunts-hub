@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
-import AdPlacement from "@/components/AdPlacement";
 import { isNativePlatform, safeNativeAsync } from "@/lib/supabase-native";
 
 const Footer = () => {
@@ -74,7 +73,6 @@ const Footer = () => {
       setRecentUpdatesCount(count || 0);
     };
 
-    // On native, defer these calls to let UI render first
     if (isNative) {
       const timeout = setTimeout(() => {
         checkUserProfiles();
@@ -103,14 +101,14 @@ const Footer = () => {
   return (
     <footer className="border-t border-border bg-muted/30">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center">
               <Logo size="md" />
             </Link>
             <p className="text-sm text-muted-foreground">
-              Connecting brands with creators to create amazing content.
+              Book creators for live fan experiences at your venue.
             </p>
             <div className="flex space-x-4">
               <button onClick={() => handleSocialClick("Instagram")} className="text-muted-foreground hover:text-primary transition-colors">
@@ -128,28 +126,28 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* For Brands */}
+          {/* For Venues */}
           <div>
-            <h3 className="font-heading font-semibold mb-4">For Brands</h3>
+            <h3 className="font-heading font-semibold mb-4">For Venues</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/influencers" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Find Influencers
+                  Find Creators
                 </Link>
               </li>
               <li>
-                <Link to="/pricing" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Pricing
+                <Link to="/brand" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  How It Works
                 </Link>
               </li>
               <li>
                 {hasBrandProfile ? (
                   <Link to="/brand-dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Brand Dashboard
+                    Venue Dashboard
                   </Link>
                 ) : (
                   <Link to="/brand" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Join as Brand
+                    List Your Venue
                   </Link>
                 )}
               </li>
@@ -167,7 +165,7 @@ const Footer = () => {
                   </Link>
                 ) : (
                   <Link to="/creator" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Join as Creator
+                    Host Events
                   </Link>
                 )}
               </li>
@@ -229,33 +227,6 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-
-          {/* Partners */}
-          <div>
-            <h3 className="font-heading font-semibold mb-4">Partners</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/become-affiliate" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Become an Affiliate
-                </Link>
-              </li>
-              <li>
-                <Link to="/franchise" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Franchise Opportunities
-                </Link>
-              </li>
-              <li>
-                <Link to="/advertising" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Advertise With Us
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Footer Sponsors Section */}
-        <div className="mt-8 pt-8 border-t border-border">
-          <AdPlacement placementId="footer_sponsors" className="max-w-2xl mx-auto h-20" showAdvertiseHere={false} />
         </div>
 
         <div className="mt-8 pt-8 border-t border-border">

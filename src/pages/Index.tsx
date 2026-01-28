@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Users, MessageSquare, TrendingUp, Instagram, Youtube, Video } from "lucide-react";
+import { Search, Users, MapPin, Calendar, Star, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -9,9 +9,7 @@ import heroImage from "@/assets/hero-creators-brand.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import RotatingText from "@/components/RotatingText";
 import AnimatedSection from "@/components/AnimatedSection";
-import BrandMarquee from "@/components/BrandMarquee";
 import FloatingShapes from "@/components/FloatingShapes";
-import AdPlacement from "@/components/AdPlacement";
 import { isNativePlatform, safeNativeAsync } from "@/lib/supabase-native";
 
 const Index = () => {
@@ -20,18 +18,8 @@ const Index = () => {
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
 
-  // Capture referral code from URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const refCode = urlParams.get('ref');
-    if (refCode) {
-      localStorage.setItem('affiliate_referral_code', refCode);
-    }
-  }, []);
-
   useEffect(() => {
     const checkUserProfiles = async (userId: string) => {
-      // Wrap with timeout protection for native platforms
       const brandProfile = await safeNativeAsync(
         async () => {
           const { data } = await supabase
@@ -62,12 +50,9 @@ const Index = () => {
       setHasCreatorProfile(!!creatorProfile);
     };
 
-    // Set up auth listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Index: Auth state changed:', event, session?.user?.email);
       if (session?.user) {
         setUser(session.user);
-        // Defer async calls to avoid deadlock
         setTimeout(() => {
           checkUserProfiles(session.user.id);
         }, 0);
@@ -78,7 +63,6 @@ const Index = () => {
       }
     });
 
-    // Defer initial session check on native to allow UI to render first
     const checkSession = () => {
       safeNativeAsync(
         async () => {
@@ -96,7 +80,6 @@ const Index = () => {
     };
 
     if (isNativePlatform()) {
-      // Delay session check on native to allow UI to render first
       setTimeout(checkSession, 200);
     } else {
       checkSession();
@@ -105,35 +88,35 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const platforms = [
-    { name: "Instagram", icon: Instagram, color: "text-pink-500" },
-    { name: "TikTok", icon: Video, color: "text-foreground" },
-    { name: "YouTube", icon: Youtube, color: "text-red-500" },
+  const eventTypes = [
+    "Meet & Greet", "Workshop", "Competition", "Brand Activation", "Private Event"
   ];
 
-  const categories = [
-    "Fashion", "Beauty", "Lifestyle", "Travel", "Health & Fitness", 
-    "Food", "Tech", "Gaming"
-  ];
-
-  const rotatingWords = ["Made Easy", "Simplified", "Made Fun", "Supercharged"];
+  const rotatingWords = ["Made Easy", "In Real Life", "At Your Venue", "That Drive Traffic"];
 
   const steps = [
     {
       icon: Search,
       title: "Find Creators",
-      description: "Browse verified creators across Instagram, TikTok, YouTube and more"
+      description: "Browse creators available for live events in your area"
     },
     {
-      icon: MessageSquare,
-      title: "Choose Your Path",
-      description: "Subscribe to message creators directly, or let us manage the collaboration for you"
+      icon: Calendar,
+      title: "Book an Event",
+      description: "Select a date, choose a package, and secure with 50% deposit"
     },
     {
-      icon: TrendingUp,
-      title: "Get Quality Content",
-      description: "Connect with creators your way—DIY or fully managed by our team"
+      icon: MapPin,
+      title: "Host & Grow",
+      description: "Creators bring their fans to your venue, you get foot traffic and content"
     }
+  ];
+
+  const benefits = [
+    { icon: Users, title: "Drive Foot Traffic", description: "Creators bring their followers directly to your venue" },
+    { icon: Star, title: "Verified Creators", description: "All creators are vetted for professionalism and reliability" },
+    { icon: MapPin, title: "Local Focus", description: "Find creators in your city ready for in-person events" },
+    { icon: Sparkles, title: "Payment Protection", description: "50% escrow system protects both parties" },
   ];
 
   return (
@@ -142,7 +125,6 @@ const Index = () => {
       
       {/* Hero Section */}
       <section className="relative overflow-hidden gradient-subtle animated-gradient-bg">
-        {/* Floating background shapes */}
         <FloatingShapes />
         
         <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
@@ -150,7 +132,7 @@ const Index = () => {
             <div className="space-y-6">
               <AnimatedSection animation="fade-up">
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight">
-                  Influencer Marketing{" "}
+                  Creator Events{" "}
                   <span className="bg-gradient-accent bg-clip-text text-transparent">
                     <RotatingText words={rotatingWords} />
                   </span>
@@ -159,7 +141,8 @@ const Index = () => {
               
               <AnimatedSection animation="fade-up" delay={100}>
                 <p className="text-xl text-muted-foreground">
-                  Find and hire top Instagram, TikTok, YouTube, and UGC influencers to create unique content for your brand
+                  Book creators for live fan experiences at your venue. 
+                  Drive foot traffic, create buzz, and get professional content.
                 </p>
               </AnimatedSection>
               
@@ -168,7 +151,7 @@ const Index = () => {
                 <div className="flex gap-2 max-w-xl">
                   <Input
                     type="text"
-                    placeholder="Search by category, niche, or platform..."
+                    placeholder="Search by city, event type, or creator..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1"
@@ -182,37 +165,36 @@ const Index = () => {
                 </div>
               </AnimatedSection>
 
-              {/* Quick Categories */}
+              {/* Quick Event Types */}
               <AnimatedSection animation="fade-up" delay={300}>
                 <div className="flex flex-wrap gap-2">
-                  {categories.slice(0, 6).map((category, index) => (
+                  {eventTypes.map((eventType, index) => (
                     <Link
-                      key={category}
-                      to={`/influencers?category=${category}`}
+                      key={eventType}
+                      to={`/influencers?event_type=${eventType}`}
                       className="category-badge text-sm px-3 py-1 rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground"
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      {category}
+                      {eventType}
                     </Link>
                   ))}
                 </div>
               </AnimatedSection>
 
-              {/* Platform Icons */}
+              {/* Stats */}
               <AnimatedSection animation="fade-up" delay={400}>
-                <div className="flex items-center gap-4 pt-4">
-                  <span className="text-sm text-muted-foreground">Available on:</span>
-                  <div className="flex gap-3">
-                    {platforms.map((platform, index) => (
-                      <div 
-                        key={platform.name} 
-                        className={`platform-icon ${platform.color} cursor-pointer`}
-                        style={{ animationDelay: `${index * 100}ms` }}
-                        title={platform.name}
-                      >
-                        <platform.icon className="h-6 w-6" />
-                      </div>
-                    ))}
+                <div className="flex items-center gap-6 pt-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-primary">100%</p>
+                    <p className="text-xs text-muted-foreground">Verified Creators</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-primary">15%</p>
+                    <p className="text-xs text-muted-foreground">Platform Fee Only</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-primary">50%</p>
+                    <p className="text-xs text-muted-foreground">Escrow Protection</p>
                   </div>
                 </div>
               </AnimatedSection>
@@ -222,16 +204,16 @@ const Index = () => {
               <div className="relative">
                 <img
                   src={heroImage}
-                  alt="Content creators collaboration"
+                  alt="Creators hosting live events"
                   className="rounded-2xl shadow-hover w-full"
                   fetchPriority="high"
                 />
                 <div className="absolute -bottom-6 -right-6 bg-card p-6 rounded-xl shadow-card border border-border animate-float">
                   <div className="flex items-center gap-4">
-                    <Users className="h-8 w-8 text-primary" />
+                    <MapPin className="h-8 w-8 text-primary" />
                     <div>
-                      <p className="text-2xl font-bold font-heading">100%</p>
-                      <p className="text-sm text-muted-foreground">Verified Creators</p>
+                      <p className="text-2xl font-bold font-heading">Live</p>
+                      <p className="text-sm text-muted-foreground">In-Person Events</p>
                     </div>
                   </div>
                 </div>
@@ -241,16 +223,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Hero Banner Ad Placement */}
-      <section className="py-8 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <AdPlacement placementId="home_hero_banner" className="max-w-4xl mx-auto h-32 md:h-40" />
-        </div>
-      </section>
-
-      {/* Brand Marquee Section */}
-      <BrandMarquee />
-
       {/* How It Works Section */}
       <section id="how-it-works" className="py-20 md:py-32 bg-background">
         <div className="container mx-auto px-4">
@@ -259,7 +231,7 @@ const Index = () => {
               How It Works
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Get started in three simple steps
+              Book creators for in-person events in three simple steps
             </p>
           </AnimatedSection>
 
@@ -284,22 +256,48 @@ const Index = () => {
           <AnimatedSection animation="fade-up" delay={500} className="text-center mt-12">
             <Link to="/influencers">
               <Button size="lg" className="gradient-hero btn-animated">
-                Browse Influencers
+                Browse Creators for Events
               </Button>
             </Link>
           </AnimatedSection>
         </div>
       </section>
 
+      {/* Benefits Section */}
+      <section className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <AnimatedSection animation="fade-up" className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
+              Why Book Creator Events?
+            </h2>
+          </AnimatedSection>
+          
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            {benefits.map((benefit, index) => (
+              <AnimatedSection key={index} animation="fade-up" delay={index * 100}>
+                <div className="p-6 rounded-xl bg-card border border-border/50 text-center">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-4">
+                    <benefit.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-heading font-semibold mb-2">{benefit.title}</h3>
+                  <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Sections */}
       <section className="py-20 gradient-accent animate-gradient-shift">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <AnimatedSection animation="slide-left" className="h-full">
               <div className="h-full bg-card/95 backdrop-blur p-8 rounded-2xl shadow-card hover:shadow-hover transition-shadow duration-300 flex flex-col">
-                <h3 className="text-3xl font-heading font-bold mb-4">For Brands</h3>
+                <h3 className="text-3xl font-heading font-bold mb-4">For Venues</h3>
                 <p className="text-muted-foreground mb-6 flex-1">
-                  Search influencers, post campaigns, track analytics, and get unique content for your brand
+                  List your space and book creators to host live fan events. 
+                  Drive foot traffic and create buzz for your business.
                 </p>
                 {hasBrandProfile ? (
                   <Link to="/brand-dashboard">
@@ -310,7 +308,7 @@ const Index = () => {
                 ) : user && hasCreatorProfile ? (
                   <div className="space-y-3">
                     <p className="text-sm text-muted-foreground">
-                      Want to join as a brand? Create a new account with a different email.
+                      Want to list your venue? Create a new account with a different email.
                     </p>
                     <Link to="/brand">
                       <Button size="lg" variant="outline" className="btn-animated">
@@ -321,7 +319,7 @@ const Index = () => {
                 ) : (
                   <Link to="/brand">
                     <Button size="lg" variant="default" className="btn-animated">
-                      Join as Brand
+                      List Your Venue
                     </Button>
                   </Link>
                 )}
@@ -332,7 +330,8 @@ const Index = () => {
               <div className="h-full bg-card/95 backdrop-blur p-8 rounded-2xl shadow-card hover:shadow-hover transition-shadow duration-300 flex flex-col">
                 <h3 className="text-3xl font-heading font-bold mb-4">For Creators</h3>
                 <p className="text-muted-foreground mb-6 flex-1">
-                  Get paid to work with brands you love and showcase your talent to thousands of companies
+                  Get booked for live events at venues. Meet your fans in person, 
+                  get paid fairly, and create amazing content.
                 </p>
                 {hasCreatorProfile ? (
                   <Link to="/creator-dashboard">
@@ -354,16 +353,11 @@ const Index = () => {
                 ) : (
                   <Link to="/creator">
                     <Button size="lg" className="bg-accent hover:bg-accent-hover btn-animated">
-                      Join as Creator
+                      Host Events
                     </Button>
                   </Link>
                 )}
               </div>
-            </AnimatedSection>
-
-            {/* CTA Ad Card */}
-            <AnimatedSection animation="fade-up" delay={200}>
-              <AdPlacement placementId="home_cta_card" className="h-full min-h-[200px]" />
             </AnimatedSection>
           </div>
         </div>

@@ -3,10 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Menu, Shield, LogOut, LayoutDashboard, ChevronDown, ChevronUp, BookOpen, Sparkles,
-  BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Megaphone, Wallet, Users, CreditCard, Crown, Globe, Link as LinkIcon
+  BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Wallet, Crown, MapPin
 } from "lucide-react";
 import Notifications from "@/components/Notifications";
-import NavbarUpgradeBadge from "@/components/NavbarUpgradeBadge";
 import { useState, useEffect } from "react";
 import {
   Sheet,
@@ -31,49 +30,37 @@ const Navbar = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
-  const [hasFranchiseProfile, setHasFranchiseProfile] = useState(false);
-  const [hasAffiliateProfile, setHasAffiliateProfile] = useState(false);
   const [creatorMenuOpen, setCreatorMenuOpen] = useState(false);
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   const [hasNewUpdates, setHasNewUpdates] = useState(false);
 
   const creatorTabs = [
     { value: "overview", label: "Overview", icon: BarChart3 },
-    { value: "campaigns", label: "Campaigns", icon: Megaphone },
+    { value: "availability", label: "Availability", icon: Calendar },
     { value: "profile", label: "Profile", icon: UserIcon },
-    { value: "services", label: "Services", icon: Package },
-    { value: "bookings", label: "Bookings", icon: Calendar },
-    { value: "payouts", label: "Payouts", icon: Wallet },
+    { value: "services", label: "Event Packages", icon: Package },
+    { value: "bookings", label: "Events", icon: MapPin },
+    { value: "payouts", label: "Earnings", icon: Wallet },
     { value: "messages", label: "Messages", icon: MessageSquare },
   ];
 
   const brandTabs = [
     { value: "overview", label: "Overview", icon: BarChart3 },
-    { value: "campaigns", label: "Campaigns", icon: Megaphone },
-    { value: "bookings", label: "Bookings", icon: Calendar },
-    { value: "creators", label: "Creators", icon: Users },
-    { value: "subscription", label: "Subscription", icon: CreditCard },
+    { value: "venue", label: "Venue Profile", icon: MapPin },
+    { value: "bookings", label: "Events", icon: Calendar },
     { value: "messages", label: "Messages", icon: MessageSquare },
   ];
 
   type NavLink = { to: string; label: string; icon?: typeof Sparkles };
   
   const baseNavLinks: NavLink[] = [
-    { to: "/influencers", label: "Search" },
-    { to: "/brand", label: "How It Works" },
-    { to: "/pricing", label: "Pricing" },
+    { to: "/influencers", label: "Find Creators" },
+    { to: "/brand", label: "For Venues" },
   ];
 
-  // Campaigns link only visible to logged-in creators
   const getNavLinks = (): NavLink[] => {
     const links = [...baseNavLinks];
     
-    // Add Campaigns link only for logged-in creators
-    if (user && hasCreatorProfile) {
-      links.splice(1, 0, { to: "/campaigns", label: "Campaigns" });
-    }
-    
-    // Add What's New for logged-in users
     if (user) {
       links.push({ to: "/whats-new", label: "What's New", icon: Sparkles });
     }
@@ -116,54 +103,24 @@ const Navbar = () => {
     setHasBrandProfile(!!data);
   };
 
-  const checkFranchiseProfile = async (userId: string) => {
-    const data = await safeNativeAsync(
-      async () => {
-        const { data } = await supabase.from('franchise_owners').select('id, status').eq('user_id', userId).eq('status', 'active').maybeSingle();
-        return data;
-      },
-      null
-    );
-    setHasFranchiseProfile(!!data);
-  };
-
-  const checkAffiliateProfile = async (userId: string) => {
-    const data = await safeNativeAsync(
-      async () => {
-        const { data } = await supabase.from('affiliates').select('id, status').eq('user_id', userId).eq('status', 'active').maybeSingle();
-        return data;
-      },
-      null
-    );
-    setHasAffiliateProfile(!!data);
-  };
-
   useEffect(() => {
     const isNative = isNativePlatform();
     
-    // Set up auth state listener FIRST (critical for proper sync)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Navbar: Auth state changed:', event, session?.user?.email);
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Defer data fetching - longer delay on native to let UI render
         setTimeout(() => {
           checkAdminRole(session.user.id);
           checkCreatorStatus(session.user.id);
           checkBrandProfile(session.user.id);
-          checkFranchiseProfile(session.user.id);
-          checkAffiliateProfile(session.user.id);
         }, isNative ? 500 : 0);
       } else {
         setIsAdmin(false);
         setHasCreatorProfile(false);
         setHasBrandProfile(false);
-        setHasFranchiseProfile(false);
-        setHasAffiliateProfile(false);
       }
     });
 
-    // THEN check for existing session - with timeout on native
     const checkSession = async () => {
       const session = await safeNativeAsync(
         async () => {
@@ -173,21 +130,16 @@ const Navbar = () => {
         null
       );
       
-      console.log('Navbar: Initial session check:', session?.user?.email);
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Defer profile checks on native
         setTimeout(() => {
           checkAdminRole(session.user.id);
           checkCreatorStatus(session.user.id);
           checkBrandProfile(session.user.id);
-          checkFranchiseProfile(session.user.id);
-          checkAffiliateProfile(session.user.id);
         }, isNative ? 300 : 0);
       }
     };
 
-    // On native, defer initial session check to let UI render first
     if (isNative) {
       setTimeout(checkSession, 100);
     } else {
@@ -197,7 +149,6 @@ const Navbar = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Check for new changelog updates
   useEffect(() => {
     const isNative = isNativePlatform();
     
@@ -224,7 +175,6 @@ const Navbar = () => {
       }
     };
 
-    // Defer on native to let UI render first
     if (isNative) {
       setTimeout(checkNewUpdates, 1000);
     } else {
@@ -268,7 +218,7 @@ const Navbar = () => {
               </Link>
             ))}
             
-              {user ? (
+            {user ? (
               <>
                 <Link 
                   to="/knowledge-base" 
@@ -278,13 +228,11 @@ const Navbar = () => {
                   <BookOpen className="h-4 w-4" />
                 </Link>
                 <Notifications />
-                {/* Upgrade badge for brands on free tier */}
-                {hasBrandProfile && <NavbarUpgradeBadge />}
                 {isAdmin && (
                   <Link to="/admin">
                     <Button variant="outline" size="sm" className="gap-2">
                       <Shield className="h-4 w-4" />
-                      Admin Dashboard
+                      Admin
                     </Button>
                   </Link>
                 )}
@@ -299,24 +247,8 @@ const Navbar = () => {
                 {hasBrandProfile && (
                   <Link to="/brand-dashboard">
                     <Button variant="outline" size="sm" className="gap-2">
-                      <LayoutDashboard className="h-4 w-4" />
-                      Brand Dashboard
-                    </Button>
-                  </Link>
-                )}
-                {hasFranchiseProfile && (
-                  <Link to="/franchise-dashboard">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Globe className="h-4 w-4" />
-                      Franchise
-                    </Button>
-                  </Link>
-                )}
-                {hasAffiliateProfile && (
-                  <Link to="/affiliate-dashboard">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <LinkIcon className="h-4 w-4" />
-                      Affiliate
+                      <MapPin className="h-4 w-4" />
+                      Venue Dashboard
                     </Button>
                   </Link>
                 )}
@@ -332,7 +264,7 @@ const Navbar = () => {
                       {isAdmin && (
                         <Badge variant="default" className="ml-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs px-1.5 py-0">
                           <Crown className="h-3 w-3 mr-0.5" />
-                          Super Admin
+                          Admin
                         </Badge>
                       )}
                     </Button>
@@ -354,12 +286,12 @@ const Navbar = () => {
                 </Link>
                 <Link to="/brand">
                   <Button variant="outline" size="sm">
-                    Join as Brand
+                    List Your Venue
                   </Button>
                 </Link>
                 <Link to="/creator">
                   <Button size="sm" className="bg-accent hover:bg-accent-hover">
-                    Join as Creator
+                    Host Events
                   </Button>
                 </Link>
               </>
@@ -443,8 +375,8 @@ const Navbar = () => {
                             onClick={() => setBrandMenuOpen(!brandMenuOpen)}
                           >
                             <span className="flex items-center gap-2">
-                              <LayoutDashboard className="h-4 w-4" />
-                              Brand Dashboard
+                              <MapPin className="h-4 w-4" />
+                              Venue Dashboard
                             </span>
                             {brandMenuOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </Button>
@@ -466,24 +398,6 @@ const Navbar = () => {
                         </div>
                       )}
 
-                      {hasFranchiseProfile && (
-                        <Link to="/franchise-dashboard" onClick={() => setIsOpen(false)}>
-                          <Button variant="outline" className="w-full gap-2">
-                            <Globe className="h-4 w-4" />
-                            Franchise Dashboard
-                          </Button>
-                        </Link>
-                      )}
-
-                      {hasAffiliateProfile && (
-                        <Link to="/affiliate-dashboard" onClick={() => setIsOpen(false)}>
-                          <Button variant="outline" className="w-full gap-2">
-                            <LinkIcon className="h-4 w-4" />
-                            Affiliate Dashboard
-                          </Button>
-                        </Link>
-                      )}
-
                       <div className="pt-4 border-t border-border">
                         <div className="flex items-center gap-2 mb-4">
                           <Avatar className="h-8 w-8">
@@ -491,12 +405,15 @@ const Navbar = () => {
                               {user.email?.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm truncate">{user.email}</span>
+                          <span className="text-sm">{user.email}</span>
                         </div>
                         <Button 
                           variant="outline" 
                           className="w-full gap-2"
-                          onClick={handleLogout}
+                          onClick={() => {
+                            handleLogout();
+                            setIsOpen(false);
+                          }}
                         >
                           <LogOut className="h-4 w-4" />
                           Logout
@@ -512,12 +429,12 @@ const Navbar = () => {
                       </Link>
                       <Link to="/brand" onClick={() => setIsOpen(false)}>
                         <Button variant="outline" className="w-full">
-                          Join as Brand
+                          List Your Venue
                         </Button>
                       </Link>
                       <Link to="/creator" onClick={() => setIsOpen(false)}>
                         <Button className="w-full bg-accent hover:bg-accent-hover">
-                          Join as Creator
+                          Host Events
                         </Button>
                       </Link>
                     </>
