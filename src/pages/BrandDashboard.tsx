@@ -5,12 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BrandOverviewTab from "@/components/brand-dashboard/BrandOverviewTab";
 import BrandBookingsTab from "@/components/brand-dashboard/BrandBookingsTab";
 import BrandMessagesTab from "@/components/brand-dashboard/BrandMessagesTab";
-import BrandYourCreatorsTab from "@/components/brand-dashboard/BrandYourCreatorsTab";
-import BrandSubscriptionTab from "@/components/brand-dashboard/BrandSubscriptionTab";
-import BrandCampaignsTab from "@/components/brand-dashboard/BrandCampaignsTab";
-import BrandContentLibraryTab from "@/components/brand-dashboard/BrandContentLibraryTab";
 import BrandAccountTab from "@/components/brand-dashboard/BrandAccountTab";
-import { BarChart3, Calendar, MessageSquare, CreditCard, Megaphone, Heart, FolderOpen, User } from "lucide-react";
+import { BarChart3, Calendar, MessageSquare, MapPin, User } from "lucide-react";
 
 const BrandDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -35,8 +31,8 @@ const BrandDashboard = () => {
       <main className="flex-1 py-4 md:py-8">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="mb-4 md:mb-8">
-            <h1 className="text-2xl md:text-4xl font-heading font-bold mb-1 md:mb-2">Brand Dashboard</h1>
-            <p className="text-sm md:text-base text-muted-foreground">Manage your campaigns and collaborations</p>
+            <h1 className="text-2xl md:text-4xl font-heading font-bold mb-1 md:mb-2">Venue Dashboard</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Manage your venue and creator events</p>
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 md:space-y-6">
@@ -45,29 +41,17 @@ const BrandDashboard = () => {
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
               </TabsTrigger>
-              <TabsTrigger value="campaigns" className="gap-2 shrink-0">
-                <Megaphone className="h-4 w-4" />
-                <span className="hidden sm:inline">Campaigns</span>
+              <TabsTrigger value="venue" className="gap-2 shrink-0">
+                <MapPin className="h-4 w-4" />
+                <span className="hidden sm:inline">Venue Profile</span>
               </TabsTrigger>
               <TabsTrigger value="bookings" className="gap-2 shrink-0">
                 <Calendar className="h-4 w-4" />
-                <span className="hidden sm:inline">Bookings</span>
-              </TabsTrigger>
-              <TabsTrigger value="your-creators" className="gap-2 shrink-0">
-                <Heart className="h-4 w-4" />
-                <span className="hidden sm:inline">Your Creators</span>
-              </TabsTrigger>
-              <TabsTrigger value="content-library" className="gap-2 shrink-0">
-                <FolderOpen className="h-4 w-4" />
-                <span className="hidden sm:inline">Content Library</span>
+                <span className="hidden sm:inline">Events</span>
               </TabsTrigger>
               <TabsTrigger value="account" className="gap-2 shrink-0">
                 <User className="h-4 w-4" />
                 <span className="hidden sm:inline">Account</span>
-              </TabsTrigger>
-              <TabsTrigger value="subscription" className="gap-2 shrink-0">
-                <CreditCard className="h-4 w-4" />
-                <span className="hidden sm:inline">Subscription</span>
               </TabsTrigger>
               <TabsTrigger value="messages" className="gap-2 shrink-0">
                 <MessageSquare className="h-4 w-4" />
@@ -79,28 +63,16 @@ const BrandDashboard = () => {
               <BrandOverviewTab />
             </TabsContent>
 
-            <TabsContent value="campaigns" className="space-y-6">
-              <BrandCampaignsTab />
+            <TabsContent value="venue" className="space-y-6">
+              <BrandAccountTab />
             </TabsContent>
 
             <TabsContent value="bookings" className="space-y-6">
               <BrandBookingsTab />
             </TabsContent>
 
-            <TabsContent value="your-creators" className="space-y-6">
-              <BrandYourCreatorsTab />
-            </TabsContent>
-
-            <TabsContent value="content-library" className="space-y-6">
-              <BrandContentLibraryTab />
-            </TabsContent>
-
             <TabsContent value="account" className="space-y-6">
               <BrandAccountTab />
-            </TabsContent>
-
-            <TabsContent value="subscription" className="space-y-6">
-              <BrandSubscriptionTab />
             </TabsContent>
 
             <TabsContent value="messages" className="space-y-6">

@@ -16,8 +16,6 @@ import NativeAppGate from "./components/NativeAppGate";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Influencers from "./pages/Influencers";
-import Campaigns from "./pages/Campaigns";
-import Pricing from "./pages/Pricing";
 import AboutUs from "./pages/AboutUs";
 import Contact from "./pages/Contact";
 import TermsOfService from "./pages/TermsOfService";
@@ -32,8 +30,6 @@ import CreatorSignup from "./pages/CreatorSignup";
 import CreatorProfile from "./pages/CreatorProfile";
 import CreatorDashboard from "./pages/CreatorDashboard";
 import BrandDashboard from "./pages/BrandDashboard";
-import FranchiseDashboard from "./pages/FranchiseDashboard";
-import AffiliateDashboard from "./pages/AffiliateDashboard";
 import Admin from "./pages/Admin";
 import BackupHistory from "./pages/BackupHistory";
 import KnowledgeBase from "./pages/KnowledgeBase";
@@ -41,9 +37,6 @@ import KnowledgeBaseCategory from "./pages/KnowledgeBaseCategory";
 import KnowledgeBaseArticle from "./pages/KnowledgeBaseArticle";
 import WhatsNew from "./pages/WhatsNew";
 import Changelog from "./pages/Changelog";
-import Advertising from "./pages/Advertising";
-import BecomeAffiliate from "./pages/BecomeAffiliate";
-import FranchiseOpportunities from "./pages/FranchiseOpportunities";
 import Download from "./pages/Download";
 import Debug from "./pages/Debug";
 import NotFound from "./pages/NotFound";
@@ -52,8 +45,6 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorProtectedRoute from "./components/CreatorProtectedRoute";
 import BrandProtectedRoute from "./components/BrandProtectedRoute";
-import FranchiseProtectedRoute from "./components/FranchiseProtectedRoute";
-import AffiliateProtectedRoute from "./components/AffiliateProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -82,9 +73,6 @@ const NativeAppRoutes = () => (
       {/* Creator profile viewing */}
       <Route path="/creator/:id" element={<CreatorProfile />} />
       
-      {/* Campaigns for creators */}
-      <Route path="/campaigns" element={<Campaigns />} />
-      
       {/* Debug route for troubleshooting */}
       <Route path="/debug" element={<Debug />} />
       
@@ -100,8 +88,6 @@ const WebAppRoutes = () => (
     <Route path="/" element={<Index />} />
     <Route path="/login" element={<Login />} />
     <Route path="/influencers" element={<Influencers />} />
-    <Route path="/campaigns" element={<Campaigns />} />
-    <Route path="/pricing" element={<Pricing />} />
     <Route path="/about" element={<AboutUs />} />
     <Route path="/contact" element={<Contact />} />
     <Route path="/terms" element={<TermsOfService />} />
@@ -136,22 +122,6 @@ const WebAppRoutes = () => (
         <ProtectedRoute requireAdmin>
           <Admin />
         </ProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/franchise-dashboard" 
-      element={
-        <FranchiseProtectedRoute>
-          <FranchiseDashboard />
-        </FranchiseProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/affiliate-dashboard" 
-      element={
-        <AffiliateProtectedRoute>
-          <AffiliateDashboard />
-        </AffiliateProtectedRoute>
       } 
     />
     <Route 
@@ -203,12 +173,8 @@ const WebAppRoutes = () => (
         </ProtectedRoute>
       } 
     />
-    <Route path="/advertising" element={<Advertising />} />
-    <Route path="/become-affiliate" element={<BecomeAffiliate />} />
-    <Route path="/franchise" element={<FranchiseOpportunities />} />
     <Route path="/download" element={<Download />} />
     <Route path="/debug" element={<Debug />} />
-    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

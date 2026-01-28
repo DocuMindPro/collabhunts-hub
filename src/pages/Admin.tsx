@@ -520,7 +520,7 @@ const Admin = () => {
         .select(`
           *,
           creator_profiles(display_name),
-          brand_profiles(company_name),
+          brand_profiles!bookings_brand_profile_id_fkey(company_name),
           creator_services(service_type)
         `)
         .order("created_at", { ascending: false });

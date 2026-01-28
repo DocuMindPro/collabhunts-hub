@@ -2,29 +2,19 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Users, Shield, Calendar, Award, Clock } from "lucide-react";
+import { DollarSign, Users, Shield, Calendar, Award, Clock, MapPin, Star } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
-import AdPlacement from "@/components/AdPlacement";
+
 const Creator = () => {
   const [username, setUsername] = useState("");
   const [user, setUser] = useState<any>(null);
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
 
-  // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
-  // Capture referral code from URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const refCode = urlParams.get('ref');
-    if (refCode) {
-      localStorage.setItem('affiliate_referral_code', refCode);
-    }
   }, []);
 
   useEffect(() => {
@@ -83,35 +73,34 @@ const Creator = () => {
 
   const benefits = [
     {
-      icon: Clock,
-      title: "Save Valuable Time",
-      description: "No more filtering through endless DMs — only verified, serious brands ready to collaborate will contact you"
+      icon: MapPin,
+      title: "Host Live Events",
+      description: "Get booked by venues to host meet & greets, workshops, and fan experiences"
     },
     {
       icon: DollarSign,
-      title: "Get Paid Faster",
-      description: "Receive payments securely and in a timely manner"
+      title: "Earn 85% of Booking",
+      description: "Keep 85% of every event booking. We only take a 15% platform fee."
     },
     {
       icon: Users,
-      title: "Growing Brand Network",
-      description: "Connect with verified brands actively looking to hire and pay creators like you"
+      title: "Meet Your Fans",
+      description: "Connect with your followers in real life and create unforgettable moments"
     },
     {
       icon: Shield,
-      title: "Safe & Secure",
-      description: "Verified brands and professional contracts protect your work"
+      title: "Payment Protection",
+      description: "50% escrow deposit ensures you get paid for your time"
     },
     {
       icon: Calendar,
       title: "Flexible Schedule",
-      description: "Work on your own terms and choose your own rates"
+      description: "Set your availability and choose which events to accept"
     }
   ];
 
-  const categories = [
-    "Lifestyle", "Fashion", "Beauty", "Travel", "Health & Fitness",
-    "Family & Children", "Music & Dance", "Comedy & Entertainment"
+  const eventTypes = [
+    "Meet & Greet", "Workshop", "Competition", "Brand Activation", "Private Event"
   ];
 
   return (
@@ -123,19 +112,20 @@ const Creator = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold mb-6 animate-fade-in">
-              Get Paid to Work With{" "}
+              Get Paid to{" "}
               <span className="bg-gradient-accent bg-clip-text text-transparent">
-                Brands You Love
+                Meet Your Fans
               </span>
             </h1>
             <p className="text-xl text-muted-foreground mb-4">
-              The simple way to sell, manage, and get paid for your Instagram, TikTok, YouTube, and UGC brand deals
+              Host live events at venues near you. Meet & greets, workshops, competitions — 
+              you bring the audience, they bring the venue.
             </p>
             <p className="text-lg text-muted-foreground mb-8">
-              No more wasting time on unserious DMs — only verified brands ready to pay will reach out to you.
+              Keep 85% of every booking. Payment protected with 50% escrow deposits.
             </p>
 
-            {/* Username Claim or Dashboard Link */}
+            {/* CTA */}
             {hasCreatorProfile ? (
               <div className="max-w-2xl mx-auto mb-8">
                 <Link to="/creator-dashboard">
@@ -147,7 +137,7 @@ const Creator = () => {
             ) : user && hasBrandProfile ? (
               <div className="max-w-2xl mx-auto mb-8 space-y-3">
                 <p className="text-muted-foreground">
-                  You're logged in as a brand. To join as a creator, please create a new account with a different email.
+                  You're logged in as a venue. To host events as a creator, please create a new account.
                 </p>
                 <Button size="lg" variant="outline" onClick={() => supabase.auth.signOut()}>
                   Sign Out to Create Creator Account
@@ -155,126 +145,55 @@ const Creator = () => {
               </div>
             ) : (
               <div className="max-w-2xl mx-auto mb-8">
-                <div className="flex gap-2">
-                  <div className="flex-1 flex items-center bg-background border border-input rounded-lg px-4">
-                    <span className="text-muted-foreground mr-2">collabhunts.com/</span>
-                    <Input
-                      type="text"
-                      placeholder="yourname"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="border-0 focus-visible:ring-0 px-0"
-                    />
-                  </div>
-                  <Button 
-                    size="lg" 
-                    className="gradient-hero hover:opacity-90"
-                    onClick={() => window.location.href = '/creator-signup'}
-                  >
-                    Claim
+                <Link to="/creator-signup">
+                  <Button size="lg" className="gradient-hero hover:opacity-90 text-lg px-8 py-6">
+                    Start Hosting Events
                   </Button>
-                </div>
+                </Link>
               </div>
             )}
 
             <p className="text-sm text-muted-foreground">
-              Join our growing community of creators earning on CollabHunts
+              Join our community of creators hosting live fan experiences
             </p>
           </div>
         </div>
       </section>
 
-      {/* Work With Brands Section */}
-      <section className="py-20 md:py-32">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-heading font-bold mb-4">
-              Work with Brands of All Sizes
-            </h2>
-            <p className="text-xl text-muted-foreground mb-3">
-              Collaborate with startups, growing businesses, and established brands
-            </p>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Every brand on CollabHunts has been verified and is ready to work. Say goodbye to sorting through social media DMs from people who waste your time.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-            <AdPlacement 
-              placementId="creator_brand_spotlight_1" 
-              className="aspect-video"
-              showAdvertiseHere={true}
-            />
-            <AdPlacement 
-              placementId="creator_brand_spotlight_2" 
-              className="aspect-video"
-              showAdvertiseHere={true}
-            />
-            <AdPlacement 
-              placementId="creator_brand_spotlight_3" 
-              className="aspect-video"
-              showAdvertiseHere={true}
-            />
-            <AdPlacement 
-              placementId="creator_brand_spotlight_4" 
-              className="aspect-video"
-              showAdvertiseHere={true}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Categories Section */}
+      {/* Event Types Section */}
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-heading font-bold mb-4">
-              Trusted by Creators Everywhere
+              Event Types You Can Host
             </h2>
             <p className="text-xl text-muted-foreground">
-              Find your niche and start earning
+              From casual meet & greets to full-day activations
             </p>
           </div>
 
           <div className="flex flex-wrap justify-center gap-3 mb-12">
-            {categories.map((category) => (
+            {eventTypes.map((eventType) => (
               <button
-                key={category}
+                key={eventType}
                 className="px-6 py-3 rounded-full bg-background border border-border hover:border-primary hover:text-primary transition-colors"
               >
-                {category}
+                {eventType}
               </button>
             ))}
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {[
-              { id: "creator_featured_1", num: 1 },
-              { id: "creator_featured_2", num: 2 },
-              { id: "creator_featured_3", num: 3 }
+              { title: "Meet & Greet", price: "$300-$800", duration: "3 hours" },
+              { title: "Workshop", price: "$500-$1,200", duration: "2 hours" },
+              { title: "Competition", price: "$800-$2,000", duration: "4 hours" },
             ].map((item) => (
-              <AdPlacement 
-                key={item.id}
-                placementId={item.id} 
-                className="aspect-[3/4]"
-                fallback={
-                  <div className="bg-card rounded-xl overflow-hidden shadow-card h-full">
-                    <div className="aspect-square bg-muted"></div>
-                    <div className="p-6">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Award className="h-5 w-5 text-primary" />
-                        <span className="text-sm font-medium">Featured Creator</span>
-                      </div>
-                      <h3 className="font-heading font-semibold text-lg mb-1">
-                        Creator Spotlight {item.num}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Coming Soon
-                      </p>
-                    </div>
-                  </div>
-                }
-              />
+              <div key={item.title} className="bg-card rounded-xl p-6 border border-border">
+                <h3 className="font-heading font-semibold text-lg mb-2">{item.title}</h3>
+                <p className="text-2xl font-bold text-primary mb-1">{item.price}</p>
+                <p className="text-sm text-muted-foreground">{item.duration} typical duration</p>
+              </div>
             ))}
           </div>
         </div>
@@ -284,7 +203,7 @@ const Creator = () => {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl md:text-5xl font-heading font-bold text-center mb-16">
-            Why Creators Choose CollabHunts
+            Why Host Events on CollabHunts
           </h2>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8">
@@ -301,15 +220,41 @@ const Creator = () => {
         </div>
       </section>
 
+      {/* How It Works */}
+      <section className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl md:text-5xl font-heading font-bold text-center mb-16">
+            How It Works
+          </h2>
+
+          <div className="grid md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+            {[
+              { step: 1, title: "Create Your Profile", desc: "Set up your event portfolio and pricing" },
+              { step: 2, title: "Set Availability", desc: "Mark dates you're available for events" },
+              { step: 3, title: "Get Booked", desc: "Venues request your event packages" },
+              { step: 4, title: "Host & Get Paid", desc: "Meet fans, create content, get 85%" },
+            ].map((item) => (
+              <div key={item.step} className="text-center">
+                <div className="w-12 h-12 rounded-full gradient-hero flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white font-bold">{item.step}</span>
+                </div>
+                <h3 className="font-heading font-semibold mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 gradient-accent">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-3xl mx-auto bg-card/95 backdrop-blur rounded-2xl p-12 shadow-card">
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-              Ready to Start Earning?
+              Ready to Meet Your Fans?
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Create your profile in minutes and let serious, verified brands come to you — no more time wasted on dead-end inquiries
+              Create your profile and start getting booked for live events
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {hasCreatorProfile ? (
@@ -325,13 +270,13 @@ const Creator = () => {
               ) : (
                 <Link to="/creator-signup">
                   <Button size="lg" className="gradient-hero hover:opacity-90">
-                    Create Your Profile
+                    Start Hosting Events
                   </Button>
                 </Link>
               )}
               <Link to="/#how-it-works">
                 <Button size="lg" variant="outline">
-                  Learn How It Works
+                  Learn More
                 </Button>
               </Link>
             </div>
