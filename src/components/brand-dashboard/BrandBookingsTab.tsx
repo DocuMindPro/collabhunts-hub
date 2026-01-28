@@ -1,151 +1,293 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Mail, Users, CheckCircle, MessageSquare, Crown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  MessageSquare,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  ExternalLink,
+} from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getCurrentPlanType } from "@/lib/subscription-utils";
+import { format } from "date-fns";
+import { EVENT_PACKAGES, ESCROW_STATUSES, type EscrowStatus } from "@/config/packages";
+
+interface Booking {
+  id: string;
+  package_type: string | null;
+  event_date: string | null;
+  event_time_start: string | null;
+  event_time_end: string | null;
+  total_price_cents: number;
+  deposit_amount_cents: number | null;
+  status: string | null;
+  escrow_status: string | null;
+  message: string | null;
+  max_capacity: number | null;
+  created_at: string;
+  creator_profile: {
+    id: string;
+    display_name: string;
+    profile_image_url: string | null;
+  } | null;
+}
 
 const BrandBookingsTab = () => {
   const navigate = useNavigate();
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const [planType, setPlanType] = useState<string>('none');
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkSubscription = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const plan = await getCurrentPlanType(session.user.id);
-        setPlanType(plan);
-        setIsSubscribed(plan !== 'none');
-      }
-    };
-    checkSubscription();
+    fetchBookings();
   }, []);
 
-  const handleContactUs = () => {
-    window.location.href = "mailto:care@collabhunts.com?subject=Managed%20Collaboration%20Request";
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: brandProfile } = await supabase
+        .from("brand_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!brandProfile) return;
+
+      const { data, error } = await supabase
+        .from("bookings")
+        .select(`
+          id,
+          package_type,
+          event_date,
+          event_time_start,
+          event_time_end,
+          total_price_cents,
+          deposit_amount_cents,
+          status,
+          escrow_status,
+          message,
+          max_capacity,
+          created_at,
+          creator_profiles!bookings_creator_profile_id_fkey (
+            id,
+            display_name,
+            profile_image_url
+          )
+        `)
+        .eq("brand_profile_id", brandProfile.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setBookings(
+        (data || []).map((b) => ({
+          ...b,
+          creator_profile: b.creator_profiles,
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const getStatusBadge = (status: string | null) => {
+    switch (status) {
+      case "confirmed":
+        return <Badge className="bg-green-500">Confirmed</Badge>;
+      case "pending":
+        return <Badge variant="secondary">Pending</Badge>;
+      case "completed":
+        return <Badge className="bg-blue-500">Completed</Badge>;
+      case "cancelled":
+        return <Badge variant="destructive">Cancelled</Badge>;
+      default:
+        return <Badge variant="outline">{status || "Unknown"}</Badge>;
+    }
+  };
+
+  const getEscrowBadge = (escrowStatus: string | null) => {
+    if (!escrowStatus) return null;
+    const status = ESCROW_STATUSES[escrowStatus as EscrowStatus];
+    if (!status) return null;
+
+    const colorClasses: Record<string, string> = {
+      yellow: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+      blue: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+      green: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+      red: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+      orange: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+    };
+
+    return (
+      <Badge variant="outline" className={colorClasses[status.color]}>
+        {status.label}
+      </Badge>
+    );
+  };
+
+  const formatEventTime = (start: string | null, end: string | null) => {
+    if (!start) return "TBD";
+    const formatTime = (time: string) => {
+      const [hours, minutes] = time.split(":");
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? "PM" : "AM";
+      const displayHour = hour % 12 || 12;
+      return `${displayHour}:${minutes} ${ampm}`;
+    };
+    return end ? `${formatTime(start)} - ${formatTime(end)}` : formatTime(start);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-heading font-bold">My Bookings</h2>
-        <p className="text-muted-foreground">Work with creators your way</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-heading font-bold">My Bookings</h2>
+          <p className="text-muted-foreground">Manage your creator event bookings</p>
+        </div>
+        <Button onClick={() => navigate("/influencers")}>
+          <Users className="mr-2 h-4 w-4" />
+          Book a Creator
+        </Button>
       </div>
 
-      {/* Two Options Grid */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Option 1: Self-Service */}
-        <Card className={isSubscribed ? 'border-primary' : ''}>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <MessageSquare className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h3 className="text-lg font-heading font-bold">Self-Service</h3>
-                {isSubscribed && (
-                  <span className="text-xs text-primary font-medium">Your plan includes this</span>
-                )}
-              </div>
+      {bookings.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+              <Calendar className="h-8 w-8 text-primary" />
             </div>
-            <p className="text-muted-foreground text-sm mb-4">
-              Message creators directly, negotiate terms, and manage collaborations yourself.
+            <h3 className="text-2xl font-heading font-bold mb-2">No Bookings Yet</h3>
+            <p className="text-muted-foreground max-w-md mb-6">
+              Browse our marketplace to find creators and book them for live events at your venue.
             </p>
-            {isSubscribed ? (
-              <Button 
-                onClick={() => navigate('/influencers')}
-                className="w-full gap-2"
-              >
-                <Users className="h-4 w-4" />
-                Find Creators to Message
-              </Button>
-            ) : (
-              <Button 
-                onClick={() => navigate('/pricing')}
-                variant="outline"
-                className="w-full gap-2"
-              >
-                <Crown className="h-4 w-4" />
-                Subscribe to Unlock
-              </Button>
-            )}
-            <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>Direct communication with creators</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>You control the terms and timeline</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>Arrange payments directly</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Option 2: Managed Service */}
-        <Card className="border-accent/50">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
-                <Users className="h-6 w-6 text-accent" />
-              </div>
-              <div>
-                <h3 className="text-lg font-heading font-bold">Managed Service</h3>
-                <span className="text-xs text-muted-foreground font-medium">Available to everyone</span>
-              </div>
-            </div>
-            <p className="text-muted-foreground text-sm mb-4">
-              Let CollabHunts handle everything—we coordinate with creators and manage delivery.
-            </p>
-            <Button 
-              variant="outline"
-              onClick={handleContactUs}
-              className="w-full gap-2"
-            >
-              <Mail className="h-4 w-4" />
-              Request Managed Booking
+            <Button onClick={() => navigate("/influencers")}>
+              <Users className="mr-2 h-4 w-4" />
+              Find Creators
             </Button>
-            <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>We handle all coordination</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>Secure payments through us</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>Service fee applies</span>
-              </div>
-            </div>
           </CardContent>
         </Card>
-      </div>
+      ) : (
+        <div className="space-y-4">
+          {bookings.map((booking) => {
+            const pkg = booking.package_type
+              ? EVENT_PACKAGES[booking.package_type as keyof typeof EVENT_PACKAGES]
+              : null;
 
-      {/* Info Card */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-              <Calendar className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div>
-              <h4 className="font-semibold mb-1">No bookings yet</h4>
-              <p className="text-sm text-muted-foreground">
-                Once you start working with creators, your bookings will appear here. 
-                Browse our marketplace to find creators, or contact us for managed service.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            return (
+              <Card key={booking.id} className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="flex flex-col md:flex-row">
+                    {/* Creator Info */}
+                    <div className="p-4 md:p-6 flex items-center gap-4 md:w-1/3 bg-muted/30">
+                      <div className="w-16 h-16 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                        {booking.creator_profile?.profile_image_url ? (
+                          <img
+                            src={booking.creator_profile.profile_image_url}
+                            alt={booking.creator_profile.display_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Users className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold truncate">
+                          {booking.creator_profile?.display_name || "Creator"}
+                        </h3>
+                        {pkg && (
+                          <p className="text-sm text-muted-foreground">{pkg.name}</p>
+                        )}
+                        <Link
+                          to={`/creator/${booking.creator_profile?.id}`}
+                          className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1"
+                        >
+                          View Profile <ExternalLink className="h-3 w-3" />
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Booking Details */}
+                    <div className="flex-1 p-4 md:p-6">
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {getStatusBadge(booking.status)}
+                        {getEscrowBadge(booking.escrow_status)}
+                      </div>
+
+                      <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          {booking.event_date
+                            ? format(new Date(booking.event_date), "PPP")
+                            : "Date TBD"}
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          {formatEventTime(booking.event_time_start, booking.event_time_end)}
+                        </div>
+                        {booking.max_capacity && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Users className="h-4 w-4" />
+                            Up to {booking.max_capacity} attendees
+                          </div>
+                        )}
+                      </div>
+
+                      <Separator className="my-4" />
+
+                      <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total</p>
+                          <p className="text-lg font-bold">
+                            ${(booking.total_price_cents / 100).toFixed(2)}
+                          </p>
+                          {booking.deposit_amount_cents && (
+                            <p className="text-xs text-muted-foreground">
+                              Deposit: ${(booking.deposit_amount_cents / 100).toFixed(2)}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              navigate(`/brand-dashboard?tab=messages&creator=${booking.creator_profile?.id}`)
+                            }
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Message
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
