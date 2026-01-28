@@ -70,19 +70,34 @@
           max-width: 100%;
           display: none;
         "></div>
-        <button id="debug-btn" onclick="showDebugInfo()" style="
-          margin-top: 20px;
-          padding: 12px 24px;
-          background: #f97316;
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-        ">
-          Show Debug Info
-        </button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+          <button id="debug-btn" onclick="showDebugInfo()" style="
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #f97316;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+          ">
+            Show Debug Info
+          </button>
+          <button id="test-fetch-btn" onclick="testBundleFetch()" style="
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+          ">
+            Test Bundle Fetch
+          </button>
+        </div>
       </div>
     </div>
 
@@ -101,13 +116,47 @@
       // Track if React ever mounts
       window.REACT_MOUNTED = false;
       window.PRE_REACT_LOGS = ['[' + new Date().toISOString() + '] Pre-React script loaded'];
+      window.CAPTURED_ERRORS = [];
       
       // Log function for debugging
       window.preReactLog = function(msg) {
         var entry = '[' + new Date().toISOString() + '] ' + msg;
         console.log('[PRE-REACT] ' + msg);
         window.PRE_REACT_LOGS.push(entry);
+        
+        // Auto-update debug output if visible
+        var output = document.getElementById('debug-output');
+        if (output && output.style.display === 'block') {
+          window.showDebugInfo();
+        }
       };
+      
+      // Capture ALL window errors (including module loading errors)
+      window.addEventListener('error', function(event) {
+        var errorInfo = 'WINDOW ERROR: ' + (event.message || 'Unknown error');
+        if (event.filename) {
+          errorInfo += ' | File: ' + event.filename;
+        }
+        if (event.lineno) {
+          errorInfo += ' | Line: ' + event.lineno;
+        }
+        window.CAPTURED_ERRORS.push(errorInfo);
+        window.preReactLog(errorInfo);
+        
+        // Show debug panel automatically on error
+        var output = document.getElementById('debug-output');
+        if (output) {
+          output.style.display = 'block';
+          window.showDebugInfo();
+        }
+      }, true);
+      
+      // Capture unhandled promise rejections
+      window.addEventListener('unhandledrejection', function(event) {
+        var errorInfo = 'UNHANDLED PROMISE: ' + (event.reason || 'Unknown reason');
+        window.CAPTURED_ERRORS.push(errorInfo);
+        window.preReactLog(errorInfo);
+      });
       
       // Show debug info function
       window.showDebugInfo = function() {
@@ -125,6 +174,9 @@
           '=== APP STATUS ===',
           'React Mounted: ' + window.REACT_MOUNTED,
           '',
+          '=== CAPTURED ERRORS (' + window.CAPTURED_ERRORS.length + ') ===',
+          window.CAPTURED_ERRORS.length > 0 ? window.CAPTURED_ERRORS.join('\n') : 'No errors captured',
+          '',
           '=== LOGS ===',
           window.PRE_REACT_LOGS.join('\n')
         ].join('\n');
@@ -138,6 +190,41 @@
         console.log('[PRE-REACT] Debug Info:\n' + info);
       };
       
+      // Test if we can fetch files from the bundle
+      window.testBundleFetch = function() {
+        window.preReactLog('Testing bundle fetch...');
+        
+        // Try to fetch the index.html to see what server returns
+        fetch(location.href)
+          .then(function(r) {
+            window.preReactLog('Index fetch status: ' + r.status + ' ' + r.statusText);
+            window.preReactLog('Content-Type: ' + r.headers.get('content-type'));
+            return r.text();
+          })
+          .then(function(text) {
+            window.preReactLog('Index length: ' + text.length + ' chars');
+            // Check if it has script tags
+            var hasModuleScript = text.indexOf('type="module"') > -1;
+            window.preReactLog('Has module script: ' + hasModuleScript);
+          })
+          .catch(function(e) {
+            window.preReactLog('Index fetch error: ' + e.message);
+          });
+        
+        // Try to list assets directory
+        fetch('/assets/')
+          .then(function(r) {
+            window.preReactLog('Assets dir status: ' + r.status);
+            return r.text();
+          })
+          .then(function(text) {
+            window.preReactLog('Assets response: ' + text.substring(0, 300));
+          })
+          .catch(function(e) {
+            window.preReactLog('Assets fetch error: ' + e.message);
+          });
+      };
+      
       // Check if React mounts within 10 seconds
       setTimeout(function() {
         if (!window.REACT_MOUNTED) {
@@ -145,14 +232,33 @@
           var statusEl = document.getElementById('js-status');
           if (statusEl) {
             statusEl.innerHTML = '<span style="color: #ff6b6b; font-weight: bold;">React failed to mount after 10s</span>' +
+              '<br/><span style="color: #ffa94d; font-size: 11px;">Errors: ' + window.CAPTURED_ERRORS.length + '</span>' +
               '<br/><button onclick="location.reload()" style="margin-top:10px;padding:8px 16px;background:#4dabf7;color:white;border:none;border-radius:4px;cursor:pointer;">Reload App</button>';
+          }
+          // Auto-show debug on timeout
+          var output = document.getElementById('debug-output');
+          if (output) {
+            output.style.display = 'block';
+            window.showDebugInfo();
           }
         }
       }, 10000);
       
       window.preReactLog('Waiting for React bundle to load...');
+      window.preReactLog('About to load module script...');
     </script>
 
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx" onerror="window.preReactLog && window.preReactLog('MODULE SCRIPT ONERROR: Failed to load')"></script>
+    
+    <!-- Fallback: Also try to detect if module script silently fails -->
+    <script>
+      // This runs AFTER the module script tag is parsed
+      // If the module loads, it will set REACT_MOUNTED before this timeout
+      setTimeout(function() {
+        if (!window.REACT_MOUNTED) {
+          window.preReactLog('Module script may have failed silently (no React after 2s)');
+        }
+      }, 2000);
+    </script>
   </body>
 </html>
