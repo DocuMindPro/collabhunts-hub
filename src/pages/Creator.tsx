@@ -203,7 +203,7 @@ const Creator = () => {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl md:text-5xl font-heading font-bold text-center mb-16">
-            Why Host Events on CollabHunts
+            Why Join as a Creator on CollabHunts
           </h2>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8">

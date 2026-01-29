@@ -165,7 +165,7 @@ const Footer = () => {
                   </Link>
                 ) : (
                   <Link to="/creator" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Host Events
+                    Join as a Creator
                   </Link>
                 )}
               </li>
