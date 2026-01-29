@@ -1,47 +1,57 @@
 
-# Change "Host Events" to "Join as a Creator"
+# Fix Creator Signup Phone Verification in Testing Mode
 
-## Overview
-Update all button text and relevant labels from "Host Events" to "Join as a Creator" to maintain consistent branding and messaging across the platform.
+## Problem
+The "Continue" button is currently disabled even when phone verification is turned off in testing mode because:
 
-## Files to Update
+1. **Button Disabled Logic (Line 925)**: The button has `disabled={!phoneVerified}` which ignores the `requirePhone` setting
+2. **Phone Validation (Line 253)**: The phone number format is always validated with `phoneSchema.parse(phoneNumber)`, even in testing mode
 
-### 1. src/pages/Index.tsx (Line 356)
-**Current:** `Host Events`
-**New:** `Join as a Creator`
+## Solution
 
-### 2. src/components/Navbar.tsx (Lines 294 and 437)
-Two buttons to update:
-- Desktop navigation button (Line 294)
-- Mobile navigation button (Line 437)
+### Fix 1: Update Button Disabled State
+**File:** `src/pages/CreatorSignup.tsx` (Line 925)
 
-**Current:** `Host Events`
-**New:** `Join as a Creator`
+```tsx
+// Current (broken):
+disabled={!phoneVerified}
 
-### 3. src/components/Footer.tsx (Line 168)
-**Current:** `Host Events`
-**New:** `Join as a Creator`
+// Fixed:
+disabled={requirePhone && !phoneVerified}
+```
 
-### 4. src/pages/Creator.tsx (Line 206)
-Section heading that says "Why Host Events on CollabHunts"
-**Current:** `Why Host Events on CollabHunts`
-**New:** `Why Join as a Creator on CollabHunts`
+This means:
+- When `requirePhone` is `true` → button disabled until phone is verified
+- When `requirePhone` is `false` → button always enabled (testing mode)
 
-### Contextual Text (No Change Needed)
-The following instances use "host events" in a contextual/descriptive way and should remain unchanged:
-- **Creator.tsx (Line 140):** "To host events as a creator" - describes the action
-- **BrandWelcome.tsx (Lines 99-100):** "creators ready to host events at your venue" - describes what creators do
-- **Brand.tsx (Line 357):** "Host events in major cities" - describes venue capability
-- **AboutUs.tsx (Line 61):** "Local venues book creators to host events" - describes the platform model
+### Fix 2: Make Phone Validation Conditional
+**File:** `src/pages/CreatorSignup.tsx` (Lines 249-263)
 
-## Summary Table
+Only validate phone format when phone verification is required:
 
-| File | Line | Current Text | New Text |
-|------|------|--------------|----------|
-| Index.tsx | 356 | Host Events | Join as a Creator |
-| Navbar.tsx | 294 | Host Events | Join as a Creator |
-| Navbar.tsx | 437 | Host Events | Join as a Creator |
-| Footer.tsx | 168 | Host Events | Join as a Creator |
-| Creator.tsx | 206 | Why Host Events on CollabHunts | Why Join as a Creator on CollabHunts |
+```tsx
+// Current (always validates):
+try {
+  phoneSchema.parse(phoneNumber);
+} catch (error) { ... }
 
-Total: 5 text changes across 4 files
+// Fixed (conditional):
+if (requirePhone) {
+  try {
+    phoneSchema.parse(phoneNumber);
+  } catch (error) { ... }
+}
+```
+
+## Files to Modify
+
+| File | Line | Change |
+|------|------|--------|
+| `src/pages/CreatorSignup.tsx` | 253 | Make phoneSchema validation conditional on `requirePhone` |
+| `src/pages/CreatorSignup.tsx` | 925 | Change `disabled={!phoneVerified}` to `disabled={requirePhone && !phoneVerified}` |
+
+## Expected Result
+After these changes, when phone verification is disabled in the Admin Testing tab:
+- The Continue button will be clickable immediately
+- Phone number field is still visible but optional
+- Users can proceed without entering or verifying a phone number
