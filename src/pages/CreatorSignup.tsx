@@ -12,6 +12,14 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, Play, Image as ImageIcon, User, Camera, Phone, Loader2, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import PhoneInput from "@/components/PhoneInput";
@@ -101,6 +109,19 @@ const CreatorSignup = () => {
   const [autoReleaseAccepted, setAutoReleaseAccepted] = useState(false);
   const [metricsAccurate, setMetricsAccurate] = useState(false);
   const [showPricingToPublic, setShowPricingToPublic] = useState(true);
+
+  // Modal states for Social Media
+  const [showSocialModal, setShowSocialModal] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState<'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'twitch' | null>(null);
+  const [socialUsername, setSocialUsername] = useState("");
+  const [socialFollowers, setSocialFollowers] = useState("");
+
+  // Modal states for Services
+  const [showServiceModal, setShowServiceModal] = useState(false);
+  const [selectedServiceType, setSelectedServiceType] = useState("");
+  const [servicePrice, setServicePrice] = useState("");
+  const [serviceDescription, setServiceDescription] = useState("");
+  const [serviceDeliveryDays, setServiceDeliveryDays] = useState("7");
 
   const categories = [
     "Lifestyle", "Fashion", "Beauty", "Travel", "Health & Fitness",
@@ -717,12 +738,18 @@ const CreatorSignup = () => {
     }
   };
 
-  const addSocialAccount = (platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'twitch') => {
-    const username = prompt(`Enter your ${platform} username:`);
-    if (!username) return;
+  const openSocialModal = (platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'twitch') => {
+    setSelectedPlatform(platform);
+    setSocialUsername("");
+    setSocialFollowers("");
+    setShowSocialModal(true);
+  };
+
+  const handleSocialSubmit = () => {
+    if (!selectedPlatform) return;
 
     try {
-      usernameSchema.parse(username);
+      usernameSchema.parse(socialUsername);
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
@@ -734,9 +761,7 @@ const CreatorSignup = () => {
       }
     }
 
-    const followerCountStr = prompt(`How many followers do you have on ${platform}?`);
-    const followerCount = parseInt(followerCountStr || "0");
-
+    const followerCount = parseInt(socialFollowers || "0");
     if (isNaN(followerCount) || followerCount < 0) {
       toast({
         title: "Invalid Input",
@@ -746,12 +771,27 @@ const CreatorSignup = () => {
       return;
     }
 
-    setSocialAccounts([...socialAccounts, { platform, username, followerCount }]);
+    setSocialAccounts([...socialAccounts, { 
+      platform: selectedPlatform, 
+      username: socialUsername, 
+      followerCount 
+    }]);
+    setShowSocialModal(false);
+    setSelectedPlatform(null);
+    setSocialUsername("");
+    setSocialFollowers("");
   };
 
-  const addService = (serviceType: string) => {
-    const priceStr = prompt(`What's your price for ${serviceType}? (in USD)`);
-    const price = parseFloat(priceStr || "0");
+  const openServiceModal = (serviceType: string) => {
+    setSelectedServiceType(serviceType);
+    setServicePrice("");
+    setServiceDescription("");
+    setServiceDeliveryDays("7");
+    setShowServiceModal(true);
+  };
+
+  const handleServiceSubmit = () => {
+    const price = parseFloat(servicePrice || "0");
 
     if (isNaN(price) || price <= 0) {
       toast({
@@ -762,16 +802,19 @@ const CreatorSignup = () => {
       return;
     }
 
-    const description = prompt(`Add a brief description for this service (optional):`);
-    const deliveryDaysStr = prompt(`How many days for delivery? (default: 7)`);
-    const deliveryDays = parseInt(deliveryDaysStr || "7");
+    const deliveryDays = parseInt(serviceDeliveryDays || "7");
 
     setServices([...services, {
-      serviceType,
+      serviceType: selectedServiceType,
       priceCents: Math.round(price * 100),
-      description: description || "",
+      description: serviceDescription || "",
       deliveryDays: isNaN(deliveryDays) ? 7 : deliveryDays
     }]);
+    setShowServiceModal(false);
+    setSelectedServiceType("");
+    setServicePrice("");
+    setServiceDescription("");
+    setServiceDeliveryDays("7");
   };
 
   return (
@@ -1276,7 +1319,7 @@ const CreatorSignup = () => {
                         type="button"
                         variant="outline"
                         className="w-full justify-start"
-                        onClick={() => addSocialAccount(platform.value)}
+                        onClick={() => openSocialModal(platform.value)}
                       >
                         <platform.icon className="mr-2 h-5 w-5" />
                         Add {platform.label}
@@ -1333,7 +1376,7 @@ const CreatorSignup = () => {
                         type="button"
                         variant="outline"
                         className="w-full justify-start"
-                        onClick={() => addService(service.value)}
+                        onClick={() => openServiceModal(service.value)}
                         disabled={services.some(s => s.serviceType === service.value)}
                       >
                         {service.label}
@@ -1629,6 +1672,120 @@ const CreatorSignup = () => {
           </Card>
         </div>
       </main>
+
+      {/* Social Media Account Modal */}
+      <Dialog open={showSocialModal} onOpenChange={setShowSocialModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedPlatform && (() => {
+                const PlatformIcon = platforms.find(p => p.value === selectedPlatform)?.icon || Instagram;
+                return <PlatformIcon className="h-5 w-5" />;
+              })()}
+              Add {selectedPlatform ? platforms.find(p => p.value === selectedPlatform)?.label : ''} Account
+            </DialogTitle>
+            <DialogDescription>
+              Enter your account details below
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="social-username">Username</Label>
+              <Input
+                id="social-username"
+                value={socialUsername}
+                onChange={(e) => setSocialUsername(e.target.value)}
+                placeholder="@yourusername"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="social-followers">Follower Count</Label>
+              <Input
+                id="social-followers"
+                type="number"
+                value={socialFollowers}
+                onChange={(e) => setSocialFollowers(e.target.value)}
+                placeholder="e.g., 50000"
+                min="0"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowSocialModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSocialSubmit} className="gradient-hero hover:opacity-90">
+              Add Account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Service & Pricing Modal */}
+      <Dialog open={showServiceModal} onOpenChange={setShowServiceModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Add {serviceTypes.find(s => s.value === selectedServiceType)?.label || 'Service'}
+            </DialogTitle>
+            <DialogDescription>
+              Set your pricing for this experience
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="service-price">
+                Price (USD) <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="service-price"
+                type="number"
+                value={servicePrice}
+                onChange={(e) => setServicePrice(e.target.value)}
+                placeholder="e.g., 500"
+                min="0"
+                step="0.01"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="service-description">Description (optional)</Label>
+              <Textarea
+                id="service-description"
+                value={serviceDescription}
+                onChange={(e) => setServiceDescription(e.target.value)}
+                placeholder="Describe what's included in this service..."
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="service-delivery">Delivery Days</Label>
+              <Input
+                id="service-delivery"
+                type="number"
+                value={serviceDeliveryDays}
+                onChange={(e) => setServiceDeliveryDays(e.target.value)}
+                placeholder="7"
+                min="1"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowServiceModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleServiceSubmit} className="gradient-hero hover:opacity-90">
+              Add Service
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
