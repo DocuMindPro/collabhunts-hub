@@ -772,8 +772,8 @@ const CreatorProfile = () => {
               {/* Services & Pricing */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Services & Pricing</CardTitle>
-                  <CardDescription>Available collaboration packages</CardDescription>
+                  <CardTitle>Event Experiences</CardTitle>
+                  <CardDescription>Available event packages you can book</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4">

@@ -107,13 +107,13 @@ const CreatorSignup = () => {
   ];
 
   const serviceTypes = [
-    { value: "instagram_post", label: "Instagram Post" },
-    { value: "instagram_story", label: "Instagram Story" },
-    { value: "instagram_reel", label: "Instagram Reel" },
-    { value: "tiktok_video", label: "TikTok Video" },
-    { value: "youtube_video", label: "YouTube Video" },
-    { value: "youtube_short", label: "YouTube Short" },
-    { value: "ugc_content", label: "UGC Content" }
+    { value: "meet_greet", label: "Meet & Greet" },
+    { value: "workshop", label: "Workshop" },
+    { value: "competition", label: "Competition Event" },
+    { value: "brand_activation", label: "Brand Activation" },
+    { value: "private_event", label: "Private Event" },
+    { value: "live_performance", label: "Live Performance" },
+    { value: "custom", label: "Custom Experience" }
   ];
 
   const GENDERS = ["Male", "Female", "Non-binary", "Prefer not to say"];
@@ -1308,7 +1308,7 @@ const CreatorSignup = () => {
                 <form onSubmit={handleStep5} className="space-y-4">
                   <CardHeader className="px-0">
                     <CardTitle>Services & Pricing</CardTitle>
-                    <CardDescription>What services do you offer?</CardDescription>
+                    <CardDescription>What event experiences can brands book?</CardDescription>
                   </CardHeader>
 
                   <div className="space-y-3">

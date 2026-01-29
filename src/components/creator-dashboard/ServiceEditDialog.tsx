@@ -134,7 +134,7 @@ const ServiceEditDialog = ({
               id="service_type"
               value={formData.service_type}
               onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
-              placeholder="e.g., instagram_post, youtube_video"
+              placeholder="e.g., meet_greet, workshop, brand_activation"
               required
             />
           </div>
