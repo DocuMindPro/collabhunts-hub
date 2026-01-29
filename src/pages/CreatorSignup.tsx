@@ -46,7 +46,9 @@ interface SocialAccount {
 
 interface Service {
   serviceType: string;
-  priceCents: number;
+  minPriceCents: number;
+  maxPriceCents: number;
+  priceTierId?: string;
   description: string;
   deliveryDays: number;
 }
@@ -119,20 +121,22 @@ const CreatorSignup = () => {
   // Modal states for Services
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [selectedServiceType, setSelectedServiceType] = useState("");
-  const [servicePrice, setServicePrice] = useState("");
+  const [selectedTierId, setSelectedTierId] = useState("");
   const [serviceDescription, setServiceDescription] = useState("");
   const [serviceDeliveryDays, setServiceDeliveryDays] = useState("7");
 
-  // Price ranges from admin settings
-  interface PriceRange {
+  // Price tiers from admin settings
+  interface PriceTier {
+    id: string;
     service_type: string;
-    display_name: string;
+    tier_name: string;
     min_price_cents: number;
     max_price_cents: number;
+    sort_order: number;
     is_enabled: boolean;
   }
-  const [priceRanges, setPriceRanges] = useState<PriceRange[]>([]);
-  const [priceRangesLoading, setPriceRangesLoading] = useState(true);
+  const [priceTiers, setPriceTiers] = useState<PriceTier[]>([]);
+  const [priceTiersLoading, setPriceTiersLoading] = useState(true);
 
   const categories = [
     "Lifestyle", "Fashion", "Beauty", "Travel", "Health & Fitness",
@@ -140,27 +144,49 @@ const CreatorSignup = () => {
     "Family & Children", "Business", "Education"
   ];
 
-  // Fetch price ranges from database
+  // Fetch price tiers from database
   useEffect(() => {
-    const fetchPriceRanges = async () => {
+    const fetchPriceTiers = async () => {
       const { data, error } = await supabase
-        .from("service_price_ranges")
-        .select("service_type, display_name, min_price_cents, max_price_cents, is_enabled");
+        .from("service_price_tiers")
+        .select("*")
+        .eq("is_enabled", true)
+        .order("service_type")
+        .order("sort_order");
       
       if (error) {
-        console.error("Error fetching price ranges:", error);
+        console.error("Error fetching price tiers:", error);
       } else {
-        setPriceRanges(data || []);
+        setPriceTiers(data || []);
       }
-      setPriceRangesLoading(false);
+      setPriceTiersLoading(false);
     };
-    fetchPriceRanges();
+    fetchPriceTiers();
   }, []);
 
-  // Filter to only enabled services from database
-  const enabledServiceTypes = priceRanges
-    .filter(r => r.is_enabled)
-    .map(r => ({ value: r.service_type, label: r.display_name }));
+  // Helper function for display names
+  const getServiceDisplayName = (type: string) => {
+    const names: Record<string, string> = {
+      meet_greet: "Meet & Greet",
+      workshop: "Workshop",
+      competition: "Competition Event",
+      brand_activation: "Brand Activation",
+      nightlife: "Nightlife Appearance",
+      private_event: "Private Event",
+      content_collab: "Content Collaboration",
+      custom: "Custom Experience"
+    };
+    return names[type] || type;
+  };
+
+  // Get unique enabled service types from tiers
+  const enabledServiceTypes = [...new Set(priceTiers.map(t => t.service_type))].map(type => ({
+    value: type,
+    label: getServiceDisplayName(type)
+  }));
+
+  // Get tiers for the currently selected service type
+  const currentServiceTiers = priceTiers.filter(t => t.service_type === selectedServiceType);
 
   const GENDERS = ["Male", "Female", "Non-binary", "Prefer not to say"];
   const ETHNICITIES = ["African American", "Asian", "Caucasian", "Hispanic/Latino", "Middle Eastern", "Mixed/Other", "Prefer not to say"];
@@ -659,11 +685,14 @@ const CreatorSignup = () => {
 
       if (socialError) throw socialError;
 
-      // Create services
+      // Create services with price ranges
       const servicesData = services.map(service => ({
         creator_profile_id: profileData.id,
         service_type: service.serviceType,
-        price_cents: service.priceCents,
+        price_cents: service.minPriceCents, // Use min as the base price for backwards compatibility
+        min_price_cents: service.minPriceCents,
+        max_price_cents: service.maxPriceCents,
+        price_tier_id: service.priceTierId || null,
         description: service.description,
         delivery_days: service.deliveryDays,
         is_active: true
@@ -807,49 +836,38 @@ const CreatorSignup = () => {
 
   const openServiceModal = (serviceType: string) => {
     setSelectedServiceType(serviceType);
-    setServicePrice("");
+    setSelectedTierId("");
     setServiceDescription("");
     setServiceDeliveryDays("7");
     setShowServiceModal(true);
   };
 
   const handleServiceSubmit = () => {
-    const price = parseFloat(servicePrice || "0");
-
-    if (isNaN(price) || price <= 0) {
+    // Find the selected tier
+    const selectedTier = priceTiers.find(t => t.id === selectedTierId);
+    
+    if (!selectedTier) {
       toast({
-        title: "Invalid Input",
-        description: "Please enter a valid price",
+        title: "Selection Required",
+        description: "Please select a pricing tier",
         variant: "destructive"
       });
       return;
-    }
-
-    // Validate against admin-defined price ranges
-    const priceRange = priceRanges.find(r => r.service_type === selectedServiceType);
-    if (priceRange) {
-      const priceCents = Math.round(price * 100);
-      if (priceCents < priceRange.min_price_cents || priceCents > priceRange.max_price_cents) {
-        toast({
-          title: "Price Out of Range",
-          description: `Price must be between $${(priceRange.min_price_cents / 100).toFixed(0)} and $${(priceRange.max_price_cents / 100).toFixed(0)}`,
-          variant: "destructive"
-        });
-        return;
-      }
     }
 
     const deliveryDays = parseInt(serviceDeliveryDays || "7");
 
     setServices([...services, {
       serviceType: selectedServiceType,
-      priceCents: Math.round(price * 100),
+      minPriceCents: selectedTier.min_price_cents,
+      maxPriceCents: selectedTier.max_price_cents,
+      priceTierId: selectedTier.id,
       description: serviceDescription || "",
       deliveryDays: isNaN(deliveryDays) ? 7 : deliveryDays
     }]);
     setShowServiceModal(false);
     setSelectedServiceType("");
-    setServicePrice("");
+    setSelectedTierId("");
     setServiceDescription("");
     setServiceDeliveryDays("7");
   };
@@ -1406,7 +1424,7 @@ const CreatorSignup = () => {
                     <CardDescription>What event experiences can brands book?</CardDescription>
                   </CardHeader>
 
-                  {priceRangesLoading ? (
+                  {priceTiersLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
@@ -1436,10 +1454,10 @@ const CreatorSignup = () => {
                         <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                           <div>
                             <p className="font-medium">
-                              {enabledServiceTypes.find(t => t.value === service.serviceType)?.label || priceRanges.find(r => r.service_type === service.serviceType)?.display_name || service.serviceType}
+                              {enabledServiceTypes.find(t => t.value === service.serviceType)?.label || getServiceDisplayName(service.serviceType)}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              ${(service.priceCents / 100).toFixed(2)} • {service.deliveryDays} days delivery
+                              ${(service.minPriceCents / 100).toFixed(0)} - ${(service.maxPriceCents / 100).toFixed(0)} • {service.deliveryDays} days delivery
                             </p>
                           </div>
                           <Button
@@ -1608,7 +1626,7 @@ const CreatorSignup = () => {
                       <div className="space-y-1">
                         {services.map((service, index) => (
                           <p key={index} className="text-sm text-muted-foreground">
-                            {enabledServiceTypes.find(t => t.value === service.serviceType)?.label || priceRanges.find(r => r.service_type === service.serviceType)?.display_name || service.serviceType}: ${(service.priceCents / 100).toFixed(2)}
+                            {enabledServiceTypes.find(t => t.value === service.serviceType)?.label || getServiceDisplayName(service.serviceType)}: ${(service.minPriceCents / 100).toFixed(0)} - ${(service.maxPriceCents / 100).toFixed(0)}
                           </p>
                         ))}
                       </div>
@@ -1774,38 +1792,56 @@ const CreatorSignup = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              Add {enabledServiceTypes.find(s => s.value === selectedServiceType)?.label || priceRanges.find(r => r.service_type === selectedServiceType)?.display_name || 'Service'}
+              Add {enabledServiceTypes.find(s => s.value === selectedServiceType)?.label || getServiceDisplayName(selectedServiceType) || 'Service'}
             </DialogTitle>
             <DialogDescription>
-              Set your pricing for this experience
+              Select your pricing tier for this experience
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="service-price">
-                Price (USD) <span className="text-destructive">*</span>
+            <div className="space-y-3">
+              <Label>
+                Price Range <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="service-price"
-                type="number"
-                value={servicePrice}
-                onChange={(e) => setServicePrice(e.target.value)}
-                placeholder={(() => {
-                  const range = priceRanges.find(r => r.service_type === selectedServiceType);
-                  return range ? `${(range.min_price_cents / 100).toFixed(0)} - ${(range.max_price_cents / 100).toFixed(0)}` : "e.g., 500";
-                })()}
-                min="0"
-                step="0.01"
-              />
-              {(() => {
-                const range = priceRanges.find(r => r.service_type === selectedServiceType);
-                return range ? (
-                  <p className="text-xs text-muted-foreground">
-                    Price must be between ${(range.min_price_cents / 100).toFixed(0)} - ${(range.max_price_cents / 100).toFixed(0)}
-                  </p>
-                ) : null;
-              })()}
+              {currentServiceTiers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No pricing tiers available for this service.</p>
+              ) : (
+                <div className="space-y-2">
+                  {currentServiceTiers.map((tier) => (
+                    <label
+                      key={tier.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                        selectedTierId === tier.id 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:bg-muted/50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="price-tier"
+                        value={tier.id}
+                        checked={selectedTierId === tier.id}
+                        onChange={() => setSelectedTierId(tier.id)}
+                        className="sr-only"
+                      />
+                      <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                        selectedTierId === tier.id ? 'border-primary' : 'border-muted-foreground'
+                      }`}>
+                        {selectedTierId === tier.id && (
+                          <div className="h-2 w-2 rounded-full bg-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{tier.tier_name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          ${(tier.min_price_cents / 100).toFixed(0)} - ${(tier.max_price_cents / 100).toFixed(0)}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -1836,7 +1872,7 @@ const CreatorSignup = () => {
             <Button variant="outline" onClick={() => setShowServiceModal(false)}>
               Cancel
             </Button>
-            <Button onClick={handleServiceSubmit} className="gradient-hero hover:opacity-90">
+            <Button onClick={handleServiceSubmit} className="gradient-hero hover:opacity-90" disabled={!selectedTierId}>
               Add Service
             </Button>
           </DialogFooter>

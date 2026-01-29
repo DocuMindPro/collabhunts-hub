@@ -1278,8 +1278,11 @@ export type Database = {
           includes_description: string | null
           is_active: boolean | null
           max_attendees: number | null
+          max_price_cents: number | null
           min_attendees: number | null
+          min_price_cents: number | null
           price_cents: number
+          price_tier_id: string | null
           service_type: string
         }
         Insert: {
@@ -1292,8 +1295,11 @@ export type Database = {
           includes_description?: string | null
           is_active?: boolean | null
           max_attendees?: number | null
+          max_price_cents?: number | null
           min_attendees?: number | null
+          min_price_cents?: number | null
           price_cents: number
+          price_tier_id?: string | null
           service_type: string
         }
         Update: {
@@ -1306,8 +1312,11 @@ export type Database = {
           includes_description?: string | null
           is_active?: boolean | null
           max_attendees?: number | null
+          max_price_cents?: number | null
           min_attendees?: number | null
+          min_price_cents?: number | null
           price_cents?: number
+          price_tier_id?: string | null
           service_type?: string
         }
         Relationships: [
@@ -1316,6 +1325,13 @@ export type Database = {
             columns: ["creator_profile_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_services_price_tier_id_fkey"
+            columns: ["price_tier_id"]
+            isOneToOne: false
+            referencedRelation: "service_price_tiers"
             referencedColumns: ["id"]
           },
         ]
@@ -2288,6 +2304,42 @@ export type Database = {
           service_type?: string
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      service_price_tiers: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          max_price_cents: number
+          min_price_cents: number
+          service_type: string
+          sort_order: number
+          tier_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          max_price_cents: number
+          min_price_cents: number
+          service_type: string
+          sort_order?: number
+          tier_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          max_price_cents?: number
+          min_price_cents?: number
+          service_type?: string
+          sort_order?: number
+          tier_name?: string
+          updated_at?: string
         }
         Relationships: []
       }
