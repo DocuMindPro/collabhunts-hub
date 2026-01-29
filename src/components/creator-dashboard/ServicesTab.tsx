@@ -2,19 +2,35 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import ServiceEditDialog from "./ServiceEditDialog";
+import { Badge } from "@/components/ui/badge";
 
 interface Service {
   id: string;
   service_type: string;
   price_cents: number;
+  min_price_cents: number | null;
+  max_price_cents: number | null;
+  price_tier_id: string | null;
   description: string | null;
   delivery_days: number;
   is_active: boolean;
   creator_profile_id: string;
 }
+
+const formatPrice = (service: Service) => {
+  if (service.min_price_cents && service.max_price_cents) {
+    return `$${(service.min_price_cents / 100).toLocaleString()} - $${(service.max_price_cents / 100).toLocaleString()}`;
+  }
+  // Fallback for legacy services
+  return `$${(service.price_cents / 100).toFixed(2)}`;
+};
+
+const isLegacyService = (service: Service) => {
+  return !service.min_price_cents && !service.max_price_cents && !service.price_tier_id;
+};
 
 const ServicesTab = () => {
   const [services, setServices] = useState<Service[]>([]);
@@ -36,14 +52,14 @@ const ServicesTab = () => {
         .from("creator_profiles")
         .select("id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (!profile) return;
       setCreatorProfileId(profile.id);
 
       const { data, error } = await supabase
         .from("creator_services")
-        .select("*")
+        .select("id, service_type, price_cents, min_price_cents, max_price_cents, price_tier_id, description, delivery_days, is_active, creator_profile_id")
         .eq("creator_profile_id", profile.id)
         .order("created_at", { ascending: false });
 
@@ -122,10 +138,18 @@ const ServicesTab = () => {
             <Card key={service.id}>
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="capitalize">
-                      {service.service_type.replace(/_/g, " ")}
-                    </CardTitle>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="capitalize">
+                        {service.service_type.replace(/_/g, " ")}
+                      </CardTitle>
+                      {isLegacyService(service) && (
+                        <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          Needs Update
+                        </Badge>
+                      )}
+                    </div>
                     <CardDescription>
                       {service.description || "No description provided"}
                     </CardDescription>
@@ -151,9 +175,9 @@ const ServicesTab = () => {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Price</p>
+                    <p className="text-sm text-muted-foreground">Price Range</p>
                     <p className="text-2xl font-bold">
-                      ${(service.price_cents / 100).toFixed(2)}
+                      {formatPrice(service)}
                     </p>
                   </div>
                   <div className="space-y-1 text-right">

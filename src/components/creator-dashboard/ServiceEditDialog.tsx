@@ -8,19 +8,41 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface Service {
   id: string;
   service_type: string;
   price_cents: number;
+  min_price_cents: number | null;
+  max_price_cents: number | null;
+  price_tier_id: string | null;
   description: string | null;
   delivery_days: number;
   is_active: boolean;
+}
+
+interface PriceTier {
+  id: string;
+  service_type: string;
+  tier_name: string;
+  min_price_cents: number;
+  max_price_cents: number;
+  sort_order: number;
+  is_enabled: boolean;
 }
 
 interface ServiceEditDialogProps {
@@ -31,6 +53,15 @@ interface ServiceEditDialogProps {
   onSuccess: () => void;
 }
 
+const SERVICE_TYPE_LABELS: Record<string, string> = {
+  meet_greet: "Meet & Greet",
+  workshop: "Workshop",
+  brand_activation: "Brand Activation",
+  appearance: "Appearance",
+  hosting: "Event Hosting",
+  content_creation: "Content Creation",
+};
+
 const ServiceEditDialog = ({
   service,
   creatorProfileId,
@@ -38,57 +69,125 @@ const ServiceEditDialog = ({
   onClose,
   onSuccess,
 }: ServiceEditDialogProps) => {
-  const [formData, setFormData] = useState({
-    service_type: "",
-    price_cents: "",
-    description: "",
-    delivery_days: "7",
-    is_active: true,
-  });
+  const [availableServiceTypes, setAvailableServiceTypes] = useState<string[]>([]);
+  const [selectedServiceType, setSelectedServiceType] = useState<string>("");
+  const [priceTiers, setPriceTiers] = useState<PriceTier[]>([]);
+  const [selectedTierId, setSelectedTierId] = useState<string>("");
+  const [description, setDescription] = useState("");
+  const [deliveryDays, setDeliveryDays] = useState("7");
+  const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [loadingTiers, setLoadingTiers] = useState(false);
 
+  // Fetch available service types on mount
   useEffect(() => {
-    if (service) {
-      setFormData({
-        service_type: service.service_type,
-        price_cents: (service.price_cents / 100).toString(),
-        description: service.description || "",
-        delivery_days: service.delivery_days.toString(),
-        is_active: service.is_active,
-      });
-    } else {
-      setFormData({
-        service_type: "",
-        price_cents: "",
-        description: "",
-        delivery_days: "7",
-        is_active: true,
-      });
+    const fetchServiceTypes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("service_price_tiers")
+          .select("service_type")
+          .eq("is_enabled", true);
+
+        if (error) throw error;
+
+        // Get unique service types
+        const types = [...new Set(data?.map((t) => t.service_type) || [])];
+        setAvailableServiceTypes(types);
+      } catch (error) {
+        console.error("Error fetching service types:", error);
+      }
+    };
+
+    if (isOpen) {
+      fetchServiceTypes();
     }
-  }, [service]);
+  }, [isOpen]);
+
+  // Fetch tiers when service type changes
+  useEffect(() => {
+    const fetchTiers = async () => {
+      if (!selectedServiceType) {
+        setPriceTiers([]);
+        return;
+      }
+
+      setLoadingTiers(true);
+      try {
+        const { data, error } = await supabase
+          .from("service_price_tiers")
+          .select("id, service_type, tier_name, min_price_cents, max_price_cents, sort_order, is_enabled")
+          .eq("service_type", selectedServiceType)
+          .eq("is_enabled", true)
+          .order("sort_order", { ascending: true });
+
+        if (error) throw error;
+        setPriceTiers(data || []);
+      } catch (error) {
+        console.error("Error fetching price tiers:", error);
+        toast.error("Failed to load price tiers");
+      } finally {
+        setLoadingTiers(false);
+      }
+    };
+
+    fetchTiers();
+  }, [selectedServiceType]);
+
+  // Reset form when dialog opens/closes or service changes
+  useEffect(() => {
+    if (isOpen) {
+      if (service) {
+        setSelectedServiceType(service.service_type);
+        setSelectedTierId(service.price_tier_id || "");
+        setDescription(service.description || "");
+        setDeliveryDays(service.delivery_days?.toString() || "7");
+        setIsActive(service.is_active);
+      } else {
+        setSelectedServiceType("");
+        setSelectedTierId("");
+        setDescription("");
+        setDeliveryDays("7");
+        setIsActive(true);
+      }
+    }
+  }, [isOpen, service]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!creatorProfileId) {
       toast.error("Creator profile not found");
       return;
     }
 
+    if (!selectedServiceType) {
+      toast.error("Please select a service type");
+      return;
+    }
+
+    if (!selectedTierId) {
+      toast.error("Please select a price range");
+      return;
+    }
+
+    const selectedTier = priceTiers.find((t) => t.id === selectedTierId);
+    if (!selectedTier) {
+      toast.error("Invalid price tier selected");
+      return;
+    }
+
     setLoading(true);
     try {
-      const price = parseFloat(formData.price_cents);
-      if (isNaN(price) || price <= 0) {
-        toast.error("Please enter a valid price");
-        return;
-      }
-
       const serviceData = {
         creator_profile_id: creatorProfileId,
-        service_type: formData.service_type,
-        price_cents: Math.round(price * 100),
-        description: formData.description || null,
-        delivery_days: parseInt(formData.delivery_days),
-        is_active: formData.is_active,
+        service_type: selectedServiceType,
+        price_cents: selectedTier.min_price_cents, // For backwards compatibility
+        min_price_cents: selectedTier.min_price_cents,
+        max_price_cents: selectedTier.max_price_cents,
+        price_tier_id: selectedTierId,
+        description: description || null,
+        delivery_days: parseInt(deliveryDays) || 7,
+        is_active: isActive,
       };
 
       if (service) {
@@ -117,9 +216,13 @@ const ServiceEditDialog = ({
     }
   };
 
+  const formatTierPrice = (tier: PriceTier) => {
+    return `$${(tier.min_price_cents / 100).toLocaleString()} - $${(tier.max_price_cents / 100).toLocaleString()}`;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{service ? "Edit Service" : "Add New Service"}</DialogTitle>
           <DialogDescription>
@@ -127,70 +230,127 @@ const ServiceEditDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Service Type Selection */}
           <div className="space-y-2">
-            <Label htmlFor="service_type">Service Type</Label>
-            <Input
-              id="service_type"
-              value={formData.service_type}
-              onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
-              placeholder="e.g., meet_greet, workshop, brand_activation"
-              required
+            <Label htmlFor="service_type">Service Type *</Label>
+            <Select
+              value={selectedServiceType}
+              onValueChange={(value) => {
+                setSelectedServiceType(value);
+                setSelectedTierId(""); // Reset tier when type changes
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a service type" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableServiceTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {SERVICE_TYPE_LABELS[type] || type.replace(/_/g, " ")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Price Tier Selection */}
+          <div className="space-y-3">
+            <Label>Price Range *</Label>
+            {loadingTiers ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : priceTiers.length > 0 ? (
+              <RadioGroup
+                value={selectedTierId}
+                onValueChange={setSelectedTierId}
+                className="space-y-2"
+              >
+                {priceTiers.map((tier) => (
+                  <label
+                    key={tier.id}
+                    className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                      selectedTierId === tier.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <RadioGroupItem value={tier.id} />
+                    <div className="flex-1">
+                      <p className="font-medium">{tier.tier_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatTierPrice(tier)}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </RadioGroup>
+            ) : selectedServiceType ? (
+              <p className="text-sm text-muted-foreground py-2">
+                No price tiers available for this service type.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground py-2">
+                Select a service type to see available price ranges.
+              </p>
+            )}
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe what's included in this service..."
+              rows={3}
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="price">Price (USD)</Label>
-            <Input
-              id="price"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.price_cents}
-              onChange={(e) => setFormData({ ...formData, price_cents: e.target.value })}
-              placeholder="100.00"
-              required
-            />
-          </div>
-
+          {/* Delivery Days */}
           <div className="space-y-2">
             <Label htmlFor="delivery_days">Delivery Time (days)</Label>
             <Input
               id="delivery_days"
               type="number"
               min="1"
-              value={formData.delivery_days}
-              onChange={(e) => setFormData({ ...formData, delivery_days: e.target.value })}
-              required
+              value={deliveryDays}
+              onChange={(e) => setDeliveryDays(e.target.value)}
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Describe what's included in this service..."
-              rows={3}
-            />
-          </div>
-
+          {/* Active Toggle */}
           <div className="flex items-center justify-between">
             <Label htmlFor="is_active">Active</Label>
             <Switch
               id="is_active"
-              checked={formData.is_active}
-              onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+              checked={isActive}
+              onCheckedChange={setIsActive}
             />
           </div>
 
+          {/* Action Buttons */}
           <div className="flex gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? "Saving..." : service ? "Update" : "Create"}
+            <Button 
+              type="submit" 
+              disabled={loading || !selectedServiceType || !selectedTierId} 
+              className="flex-1"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : service ? (
+                "Update"
+              ) : (
+                "Create"
+              )}
             </Button>
           </div>
         </form>
