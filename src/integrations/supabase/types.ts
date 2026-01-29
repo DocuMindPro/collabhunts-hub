@@ -2255,6 +2255,42 @@ export type Database = {
           },
         ]
       }
+      service_price_ranges: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          is_enabled: boolean
+          max_price_cents: number
+          min_price_cents: number
+          service_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id?: string
+          is_enabled?: boolean
+          max_price_cents?: number
+          min_price_cents?: number
+          service_type: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_enabled?: boolean
+          max_price_cents?: number
+          min_price_cents?: number
+          service_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           category: string
