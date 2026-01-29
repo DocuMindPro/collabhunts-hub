@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ProfileAvatarProps {
   src: string | null | undefined;
@@ -8,11 +15,14 @@ interface ProfileAvatarProps {
   className?: string;
   fallbackClassName?: string;
   imageClassName?: string;
+  openToInvitations?: boolean;
+  showBadge?: boolean;
 }
 
 /**
  * ProfileAvatar - A reusable avatar component with automatic 404 fallback handling.
  * Shows a gradient background with the first letter of the name when image fails to load.
+ * Optionally displays a green "Open to Invitations" ring around the avatar.
  */
 const ProfileAvatar = ({
   src,
@@ -20,6 +30,8 @@ const ProfileAvatar = ({
   className,
   fallbackClassName,
   imageClassName,
+  openToInvitations = false,
+  showBadge = false,
 }: ProfileAvatarProps) => {
   const [imageFailed, setImageFailed] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -61,27 +73,63 @@ const ProfileAvatar = ({
 
   const initial = fallbackName?.charAt(0)?.toUpperCase() || "?";
 
-  return (
-    <Avatar className={cn("relative", className)}>
-      {src && !imageFailed && (
-        <AvatarImage
-          src={src}
-          alt={fallbackName}
-          className={cn("object-cover", imageClassName)}
-          onError={() => setImageFailed(true)}
-          onLoad={() => setImageLoaded(true)}
-        />
-      )}
-      <AvatarFallback
+  const avatarElement = (
+    <div className="relative inline-block">
+      <Avatar 
         className={cn(
-          "bg-gradient-accent text-white font-semibold",
-          fallbackClassName
+          "relative",
+          openToInvitations && "ring-[3px] ring-green-500 ring-offset-2 ring-offset-background",
+          className
         )}
       >
-        {initial}
-      </AvatarFallback>
-    </Avatar>
+        {src && !imageFailed && (
+          <AvatarImage
+            src={src}
+            alt={fallbackName}
+            className={cn("object-cover", imageClassName)}
+            onError={() => setImageFailed(true)}
+            onLoad={() => setImageLoaded(true)}
+          />
+        )}
+        <AvatarFallback
+          className={cn(
+            "bg-gradient-accent text-white font-semibold",
+            fallbackClassName
+          )}
+        >
+          {initial}
+        </AvatarFallback>
+      </Avatar>
+      
+      {/* Small badge indicator */}
+      {openToInvitations && showBadge && (
+        <Badge 
+          className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-green-500 hover:bg-green-500 text-white text-[8px] px-1.5 py-0 h-4 whitespace-nowrap border-2 border-background"
+        >
+          Open to Invites
+        </Badge>
+      )}
+    </div>
   );
+
+  // Wrap with tooltip if open to invitations
+  if (openToInvitations) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {avatarElement}
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-sm">Open to experience-based collaborations</p>
+            <p className="text-xs text-muted-foreground">Free collabs in exchange for products/services</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return avatarElement;
 };
 
 export default ProfileAvatar;

@@ -57,6 +57,7 @@ const ProfileTab = () => {
     phone_verified: false,
     allow_mass_messages: true,
     show_pricing_to_public: true,
+    open_to_invitations: false,
   });
 
   useEffect(() => {
@@ -98,6 +99,7 @@ const ProfileTab = () => {
           phone_verified: data.phone_verified || false,
           allow_mass_messages: data.allow_mass_messages ?? true,
           show_pricing_to_public: data.show_pricing_to_public ?? true,
+          open_to_invitations: data.open_to_invitations ?? false,
         });
       }
     } catch (error) {
@@ -382,6 +384,7 @@ const ProfileTab = () => {
           secondary_languages: profile.secondary_languages.length > 0 ? profile.secondary_languages : null,
           allow_mass_messages: profile.allow_mass_messages,
           show_pricing_to_public: profile.show_pricing_to_public,
+          open_to_invitations: profile.open_to_invitations,
         })
         .eq("id", profile.id);
 
@@ -595,6 +598,26 @@ const ProfileTab = () => {
               id="show-pricing-to-public"
               checked={profile.show_pricing_to_public}
               onCheckedChange={(checked) => setProfile({ ...profile, show_pricing_to_public: checked })}
+            />
+          </div>
+          
+          <Separator />
+
+          {/* Open to Invitations Toggle */}
+          <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-200 dark:border-green-800">
+            <div className="space-y-1">
+              <Label htmlFor="open-to-invitations" className="text-base font-medium flex items-center gap-2">
+                Open to Invitations
+                <Badge className="bg-green-500 text-white text-[10px] px-1.5">New</Badge>
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Show brands you're open to free collaborations in exchange for experiences (free meals, hotel stays, products, etc.)
+              </p>
+            </div>
+            <Switch
+              id="open-to-invitations"
+              checked={profile.open_to_invitations}
+              onCheckedChange={(checked) => setProfile({ ...profile, open_to_invitations: checked })}
             />
           </div>
           

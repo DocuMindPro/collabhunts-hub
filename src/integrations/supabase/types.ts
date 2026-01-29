@@ -1181,6 +1181,7 @@ export type Database = {
           location_state: string | null
           max_event_price_cents: number | null
           min_event_price_cents: number | null
+          open_to_invitations: boolean | null
           phone_number: string | null
           phone_verified: boolean | null
           primary_language: string | null
@@ -1216,6 +1217,7 @@ export type Database = {
           location_state?: string | null
           max_event_price_cents?: number | null
           min_event_price_cents?: number | null
+          open_to_invitations?: boolean | null
           phone_number?: string | null
           phone_verified?: boolean | null
           primary_language?: string | null
@@ -1251,6 +1253,7 @@ export type Database = {
           location_state?: string | null
           max_event_price_cents?: number | null
           min_event_price_cents?: number | null
+          open_to_invitations?: boolean | null
           phone_number?: string | null
           phone_verified?: boolean | null
           primary_language?: string | null
