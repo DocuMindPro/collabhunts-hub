@@ -1,65 +1,165 @@
 
 
-# Add "Open to Invitations" Badge Feature ✅ IMPLEMENTED
+# Fix Creator Dashboard Services to Use Price Tier System
 
-## Overview
-Added a LinkedIn-style "Open to Invitations" badge around creator profile pictures. This signals that creators are available for free collaborations where businesses offer experiences (free meals, hotel stays, products, etc.) in exchange for content/promotion.
+## Problem Identified
+The Creator Dashboard's "Event Packages" (Services) tab was not updated when we implemented the price tier system. It still uses the old single-price model while the signup flow uses the new tier-based pricing.
 
-## Implementation Status: COMPLETE
+**Current State:**
+- `ServicesTab.tsx` displays only `price_cents` ($50.00)
+- `ServiceEditDialog.tsx` asks for an exact price input
+- Existing services have `min_price_cents`, `max_price_cents`, `price_tier_id` all set to `null`
 
-### Database Changes ✅
-- Added `open_to_invitations` boolean column to `creator_profiles` table (default: false)
+**Expected State:**
+- Display price ranges ($300 - $500)
+- Use tier selection radio buttons (like signup flow)
+- Store tier data in the new columns
 
-### UI Changes ✅
+## Files to Update
 
-#### 1. ProfileAvatar Component (`src/components/ProfileAvatar.tsx`)
-- Added `openToInvitations` prop for green ring effect
-- Added `showBadge` prop for optional badge overlay
-- Includes tooltip explaining the feature
+### 1. `src/components/creator-dashboard/ServicesTab.tsx`
+**Changes:**
+- Update `Service` interface to include `min_price_cents`, `max_price_cents`, `price_tier_id`
+- Modify price display to show range format: "$300 - $500" instead of "$50.00"
+- Handle backwards compatibility for old services that only have `price_cents`
 
-#### 2. Creator Dashboard - ProfileTab (`src/components/creator-dashboard/ProfileTab.tsx`)
-- Added toggle switch in Preferences section with green highlight
-- Toggle saves to database when profile is saved
-- Includes description explaining the feature to creators
+### 2. `src/components/creator-dashboard/ServiceEditDialog.tsx`
+**Complete redesign to:**
+- Fetch available tiers from `service_price_tiers` table
+- Replace price text input with tier selection radio buttons
+- Show service type as a dropdown of available types (not free text)
+- Save `min_price_cents`, `max_price_cents`, and `price_tier_id` to database
 
-#### 3. Influencers Page (`src/pages/Influencers.tsx`)
-- Updated interface to include `open_to_invitations` field
-- Fetches `open_to_invitations` from database
-- Displays "Open to Invites" badge on creator cards when enabled
-- Badge appears in top-left corner with green background
+## Implementation Details
 
-#### 4. Creator Profile Page (`src/pages/CreatorProfile.tsx`)
-- Updated CreatorData interface
-- Fetches and displays `open_to_invitations` status
-- Shows green ring around avatar when enabled (desktop)
-- Shows "Open to Invites" badge below avatar
+### Updated Service Interface
+```typescript
+interface Service {
+  id: string;
+  service_type: string;
+  price_cents: number;           // Keep for backwards compatibility
+  min_price_cents: number | null;  // New tier min
+  max_price_cents: number | null;  // New tier max
+  price_tier_id: string | null;    // Reference to tier
+  description: string | null;
+  delivery_days: number;
+  is_active: boolean;
+  creator_profile_id: string;
+}
+```
 
-## Visual Design
+### Price Display Logic
+```typescript
+// In ServicesTab.tsx card display
+const formatPrice = (service: Service) => {
+  if (service.min_price_cents && service.max_price_cents) {
+    return `$${(service.min_price_cents / 100).toLocaleString()} - $${(service.max_price_cents / 100).toLocaleString()}`;
+  }
+  // Fallback for legacy services
+  return `$${(service.price_cents / 100).toFixed(2)}`;
+};
+```
 
-**Creator Cards (Influencers page):**
-- Green "Open to Invites" badge in top-left corner
-- Follower count badge shifts down when badge is present
+### ServiceEditDialog Changes
+```text
++------------------------------------------------+
+|  Edit Service                                  |
+|  Update your service details                   |
+|------------------------------------------------|
+|  Service Type *                                |
+|  +------------------------------------------+  |
+|  | Meet & Greet                         ▼   |  |
+|  +------------------------------------------+  |
+|                                                |
+|  Price Range *                                 |
+|  +------------------------------------------+  |
+|  | ○ Standard ($300 - $500)                 |  |
+|  | ● Premium ($500 - $800)    ← selected    |  |
+|  | ○ VIP ($800 - $1,200)                    |  |
+|  +------------------------------------------+  |
+|                                                |
+|  Description (optional)                        |
+|  +------------------------------------------+  |
+|  | ...                                      |  |
+|  +------------------------------------------+  |
+|                                                |
+|  Delivery Days                                 |
+|  +------------------------------------------+  |
+|  | 7                                        |  |
+|  +------------------------------------------+  |
+|                                                |
+|  [Toggle] Active                               |
+|                                                |
+|  [Cancel]                    [Update]          |
++------------------------------------------------+
+```
 
-**Creator Profile (Desktop):**
-- Green ring around profile avatar
-- Small badge below avatar text
+### New State in ServiceEditDialog
+```typescript
+// States for tier selection
+const [availableServiceTypes, setAvailableServiceTypes] = useState<string[]>([]);
+const [selectedServiceType, setSelectedServiceType] = useState<string>("");
+const [priceTiers, setPriceTiers] = useState<PriceTier[]>([]);
+const [selectedTierId, setSelectedTierId] = useState<string>("");
+const [loadingTiers, setLoadingTiers] = useState(false);
 
-**Creator Dashboard Toggle:**
-- Highlighted green section in Preferences
-- Toggle switch with descriptive text
+// Fetch unique service types from tiers
+useEffect(() => {
+  fetchServiceTypes();
+}, []);
 
-## How It Works
+// Fetch tiers when service type changes
+useEffect(() => {
+  if (selectedServiceType) {
+    fetchTiersForType(selectedServiceType);
+  }
+}, [selectedServiceType]);
+```
 
-**For Creators:**
-1. Go to Dashboard → Profile
-2. Find "Open to Invitations" toggle in Preferences section
-3. Turn it ON
-4. Save profile
-5. Badge appears around profile picture everywhere
+### Database Save Logic
+```typescript
+const handleSubmit = async () => {
+  const selectedTier = priceTiers.find(t => t.id === selectedTierId);
+  
+  const serviceData = {
+    creator_profile_id: creatorProfileId,
+    service_type: selectedServiceType,
+    price_cents: selectedTier?.min_price_cents || 0, // For backwards compat
+    min_price_cents: selectedTier?.min_price_cents,
+    max_price_cents: selectedTier?.max_price_cents,
+    price_tier_id: selectedTierId,
+    description: formData.description || null,
+    delivery_days: parseInt(formData.delivery_days),
+    is_active: formData.is_active,
+  };
+  
+  // Insert or update...
+};
+```
 
-**For Brands:**
-1. Browse creators in the Influencers page
-2. See green "Open to Invites" badge on some creator cards
-3. Understand these creators accept barter/trade deals
-4. Can reach out for experience-based collaborations
+## Backwards Compatibility
+
+For existing services without tier data:
+1. **Display**: Show legacy `price_cents` if `min_price_cents` is null
+2. **Edit**: When editing, require selecting a new tier
+3. **No data loss**: Keep `price_cents` populated as a fallback
+
+## Expected Behavior After Fix
+
+**Existing creators:**
+1. Go to Dashboard → Event Packages
+2. See their existing service with legacy price display
+3. Click Edit → Now shown tier selection options
+4. Select appropriate tier → Service updated with new tier system
+
+**New creators:**
+1. Create service using tier radio buttons (same as signup)
+2. See price range displayed in their dashboard
+
+## Files Changed Summary
+
+| File | Type of Change |
+|------|----------------|
+| `ServicesTab.tsx` | Update interface, modify price display |
+| `ServiceEditDialog.tsx` | Complete redesign with tier selection |
 
