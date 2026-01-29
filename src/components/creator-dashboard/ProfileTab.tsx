@@ -114,6 +114,36 @@ const ProfileTab = () => {
     }
   };
 
+  // Auto-save handler for Open to Invitations toggle
+  const handleOpenToInvitationsChange = async (checked: boolean) => {
+    // Optimistic update
+    setProfile({ ...profile, open_to_invitations: checked });
+    
+    try {
+      const { error } = await supabase
+        .from("creator_profiles")
+        .update({ open_to_invitations: checked })
+        .eq("id", profile.id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: checked ? "You're now open to invitations!" : "Invitations disabled",
+        description: checked 
+          ? "Brands can now see you're open to free collaborations"
+          : "Your profile no longer shows the open to invitations badge",
+      });
+    } catch (error) {
+      // Rollback on error
+      setProfile({ ...profile, open_to_invitations: !checked });
+      toast({
+        title: "Error",
+        description: "Failed to update setting. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -617,7 +647,7 @@ const ProfileTab = () => {
             <Switch
               id="open-to-invitations"
               checked={profile.open_to_invitations}
-              onCheckedChange={(checked) => setProfile({ ...profile, open_to_invitations: checked })}
+              onCheckedChange={handleOpenToInvitationsChange}
             />
           </div>
           
