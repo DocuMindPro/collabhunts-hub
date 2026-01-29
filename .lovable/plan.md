@@ -1,165 +1,106 @@
 
 
-# Fix Creator Dashboard Services to Use Price Tier System
+# Fix "Open to Invitations" Toggle Not Persisting
 
 ## Problem Identified
-The Creator Dashboard's "Event Packages" (Services) tab was not updated when we implemented the price tier system. It still uses the old single-price model while the signup flow uses the new tier-based pricing.
 
-**Current State:**
-- `ServicesTab.tsx` displays only `price_cents` ($50.00)
-- `ServiceEditDialog.tsx` asks for an exact price input
-- Existing services have `min_price_cents`, `max_price_cents`, `price_tier_id` all set to `null`
+After investigating the code, I found **two related issues**:
 
-**Expected State:**
-- Display price ranges ($300 - $500)
-- Use tier selection radio buttons (like signup flow)
-- Store tier data in the new columns
+### Issue 1: Toggle Requires Manual Save (UX Problem)
+The "Open to Invitations" toggle only updates local React state. Users must scroll down and click "Save Changes" to persist the change to the database. This is not intuitive - users expect the toggle to work immediately like on LinkedIn.
 
-## Files to Update
+### Issue 2: No Immediate Visual Feedback
+After saving, the avatar on the page doesn't update to show the green ring until a page refresh because there's no state synchronization between the ProfileTab and other components showing the avatar.
 
-### 1. `src/components/creator-dashboard/ServicesTab.tsx`
-**Changes:**
-- Update `Service` interface to include `min_price_cents`, `max_price_cents`, `price_tier_id`
-- Modify price display to show range format: "$300 - $500" instead of "$50.00"
-- Handle backwards compatibility for old services that only have `price_cents`
+## Solution: Auto-Save on Toggle Change
 
-### 2. `src/components/creator-dashboard/ServiceEditDialog.tsx`
-**Complete redesign to:**
-- Fetch available tiers from `service_price_tiers` table
-- Replace price text input with tier selection radio buttons
-- Show service type as a dropdown of available types (not free text)
-- Save `min_price_cents`, `max_price_cents`, and `price_tier_id` to database
+Implement immediate save when the toggle changes (like LinkedIn), with proper feedback:
 
-## Implementation Details
+### Changes to `src/components/creator-dashboard/ProfileTab.tsx`
 
-### Updated Service Interface
+1. Create a new function `handleOpenToInvitationsChange` that:
+   - Updates local state immediately
+   - Saves to database immediately
+   - Shows toast confirmation
+   - Handles errors gracefully
+
 ```typescript
-interface Service {
-  id: string;
-  service_type: string;
-  price_cents: number;           // Keep for backwards compatibility
-  min_price_cents: number | null;  // New tier min
-  max_price_cents: number | null;  // New tier max
-  price_tier_id: string | null;    // Reference to tier
-  description: string | null;
-  delivery_days: number;
-  is_active: boolean;
-  creator_profile_id: string;
-}
-```
-
-### Price Display Logic
-```typescript
-// In ServicesTab.tsx card display
-const formatPrice = (service: Service) => {
-  if (service.min_price_cents && service.max_price_cents) {
-    return `$${(service.min_price_cents / 100).toLocaleString()} - $${(service.max_price_cents / 100).toLocaleString()}`;
+const handleOpenToInvitationsChange = async (checked: boolean) => {
+  // Optimistic update
+  setProfile({ ...profile, open_to_invitations: checked });
+  
+  try {
+    const { error } = await supabase
+      .from("creator_profiles")
+      .update({ open_to_invitations: checked })
+      .eq("id", profile.id);
+      
+    if (error) throw error;
+    
+    toast({
+      title: checked ? "You're now open to invitations!" : "Invitations disabled",
+      description: checked 
+        ? "Brands can now see you're open to free collaborations"
+        : "Your profile no longer shows the open to invitations badge",
+    });
+  } catch (error) {
+    // Rollback on error
+    setProfile({ ...profile, open_to_invitations: !checked });
+    toast({
+      title: "Error",
+      description: "Failed to update setting. Please try again.",
+      variant: "destructive",
+    });
   }
-  // Fallback for legacy services
-  return `$${(service.price_cents / 100).toFixed(2)}`;
 };
 ```
 
-### ServiceEditDialog Changes
+2. Update the Switch component to use this new handler:
+
+```typescript
+<Switch
+  id="open-to-invitations"
+  checked={profile.open_to_invitations}
+  onCheckedChange={handleOpenToInvitationsChange}
+/>
+```
+
+## Visual Flow After Fix
+
 ```text
-+------------------------------------------------+
-|  Edit Service                                  |
-|  Update your service details                   |
-|------------------------------------------------|
-|  Service Type *                                |
-|  +------------------------------------------+  |
-|  | Meet & Greet                         ▼   |  |
-|  +------------------------------------------+  |
-|                                                |
-|  Price Range *                                 |
-|  +------------------------------------------+  |
-|  | ○ Standard ($300 - $500)                 |  |
-|  | ● Premium ($500 - $800)    ← selected    |  |
-|  | ○ VIP ($800 - $1,200)                    |  |
-|  +------------------------------------------+  |
-|                                                |
-|  Description (optional)                        |
-|  +------------------------------------------+  |
-|  | ...                                      |  |
-|  +------------------------------------------+  |
-|                                                |
-|  Delivery Days                                 |
-|  +------------------------------------------+  |
-|  | 7                                        |  |
-|  +------------------------------------------+  |
-|                                                |
-|  [Toggle] Active                               |
-|                                                |
-|  [Cancel]                    [Update]          |
-+------------------------------------------------+
+User toggles "Open to Invitations" ON
+          ↓
+Local state updates immediately (optimistic)
+          ↓
+Database update sent in background
+          ↓
+   ┌──────┴──────┐
+   ↓             ↓
+SUCCESS       FAILURE
+   ↓             ↓
+Toast:        Rollback state
+"You're       + Error toast
+now open!"
 ```
 
-### New State in ServiceEditDialog
-```typescript
-// States for tier selection
-const [availableServiceTypes, setAvailableServiceTypes] = useState<string[]>([]);
-const [selectedServiceType, setSelectedServiceType] = useState<string>("");
-const [priceTiers, setPriceTiers] = useState<PriceTier[]>([]);
-const [selectedTierId, setSelectedTierId] = useState<string>("");
-const [loadingTiers, setLoadingTiers] = useState(false);
+## Files to Modify
 
-// Fetch unique service types from tiers
-useEffect(() => {
-  fetchServiceTypes();
-}, []);
+| File | Change |
+|------|--------|
+| `src/components/creator-dashboard/ProfileTab.tsx` | Add auto-save function for the toggle |
 
-// Fetch tiers when service type changes
-useEffect(() => {
-  if (selectedServiceType) {
-    fetchTiersForType(selectedServiceType);
-  }
-}, [selectedServiceType]);
-```
+## Implementation Steps
 
-### Database Save Logic
-```typescript
-const handleSubmit = async () => {
-  const selectedTier = priceTiers.find(t => t.id === selectedTierId);
-  
-  const serviceData = {
-    creator_profile_id: creatorProfileId,
-    service_type: selectedServiceType,
-    price_cents: selectedTier?.min_price_cents || 0, // For backwards compat
-    min_price_cents: selectedTier?.min_price_cents,
-    max_price_cents: selectedTier?.max_price_cents,
-    price_tier_id: selectedTierId,
-    description: formData.description || null,
-    delivery_days: parseInt(formData.delivery_days),
-    is_active: formData.is_active,
-  };
-  
-  // Insert or update...
-};
-```
-
-## Backwards Compatibility
-
-For existing services without tier data:
-1. **Display**: Show legacy `price_cents` if `min_price_cents` is null
-2. **Edit**: When editing, require selecting a new tier
-3. **No data loss**: Keep `price_cents` populated as a fallback
+1. Add new async handler function `handleOpenToInvitationsChange`
+2. Replace the inline `onCheckedChange` with the new handler
+3. Add optimistic update with rollback on failure
+4. Show appropriate toast messages for success/failure
 
 ## Expected Behavior After Fix
 
-**Existing creators:**
-1. Go to Dashboard → Event Packages
-2. See their existing service with legacy price display
-3. Click Edit → Now shown tier selection options
-4. Select appropriate tier → Service updated with new tier system
-
-**New creators:**
-1. Create service using tier radio buttons (same as signup)
-2. See price range displayed in their dashboard
-
-## Files Changed Summary
-
-| File | Type of Change |
-|------|----------------|
-| `ServicesTab.tsx` | Update interface, modify price display |
-| `ServiceEditDialog.tsx` | Complete redesign with tier selection |
+1. User toggles "Open to Invitations" ON
+2. Switch immediately shows ON state
+3. Toast appears: "You're now open to invitations!"
+4. Refresh page - setting persists
+5. Green ring appears around avatar everywhere
 
