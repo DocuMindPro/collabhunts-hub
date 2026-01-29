@@ -661,18 +661,21 @@ const Influencers = () => {
                           {/* Overlay badges on image */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           
-                          {/* Open to Invitations Badge - Top Left (before platform badge) */}
-                          {creator.open_to_invitations && (
-                            <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full text-white text-[10px] font-medium z-10">
-                              Open to Invites
-                            </div>
-                          )}
-                          
-                          {/* Platform & Followers Badge - Top Left (shifts down if open to invitations) */}
-                          <div className={`absolute ${creator.open_to_invitations ? 'top-10' : 'top-3'} left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium`}>
+                          {/* Platform & Followers Badge - Top Left */}
+                          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
                             <PlatformIcon className="h-3.5 w-3.5" />
                             <span>{formatFollowers(mainPlatform.followers)}</span>
                           </div>
+                          
+                          {/* Open to Invitations Banner - LinkedIn-style tab at bottom-left */}
+                          {creator.open_to_invitations && (
+                            <div className="absolute bottom-14 left-0 z-10">
+                              <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
+                                <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
+                                #OpenToInvite
+                              </div>
+                            </div>
+                          )}
 
                           {/* Rating Badge - Top Right */}
                           <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium">
@@ -758,17 +761,21 @@ const Influencers = () => {
                           
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           
-                          {/* Open to Invitations Badge */}
-                          {creator.open_to_invitations && (
-                            <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full text-white text-[10px] font-medium z-10">
-                              Open to Invites
-                            </div>
-                          )}
-                          
-                          <div className={`absolute ${creator.open_to_invitations ? 'top-10' : 'top-3'} left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium`}>
+                          {/* Platform & Followers Badge - Top Left */}
+                          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
                             <PlatformIcon className="h-3.5 w-3.5" />
                             <span>{formatFollowers(mainPlatform.followers)}</span>
                           </div>
+                          
+                          {/* Open to Invitations Banner - LinkedIn-style tab at bottom-left */}
+                          {creator.open_to_invitations && (
+                            <div className="absolute bottom-14 left-0 z-10">
+                              <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
+                                <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
+                                #OpenToInvite
+                              </div>
+                            </div>
+                          )}
 
                           <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium">
                             <Star className="h-3 w-3 fill-primary text-primary" />
@@ -851,17 +858,21 @@ const Influencers = () => {
                           
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           
-                          {/* Open to Invitations Badge */}
-                          {creator.open_to_invitations && (
-                            <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full text-white text-[10px] font-medium z-10">
-                              Open to Invites
-                            </div>
-                          )}
-                          
-                          <div className={`absolute ${creator.open_to_invitations ? 'top-10' : 'top-3'} left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium`}>
+                          {/* Platform & Followers Badge - Top Left */}
+                          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
                             <PlatformIcon className="h-3.5 w-3.5" />
                             <span>{formatFollowers(mainPlatform.followers)}</span>
                           </div>
+                          
+                          {/* Open to Invitations Banner - LinkedIn-style tab at bottom-left */}
+                          {creator.open_to_invitations && (
+                            <div className="absolute bottom-14 left-0 z-10">
+                              <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
+                                <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
+                                #OpenToInvite
+                              </div>
+                            </div>
+                          )}
 
                           <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium">
                             <Star className="h-3 w-3 fill-primary text-primary" />
