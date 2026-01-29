@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useVerificationSettings } from "@/hooks/useVerificationSettings";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, Play, Image as ImageIcon, User, Camera, Phone, Loader2 } from "lucide-react";
+import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, Play, Image as ImageIcon, User, Camera, Phone, Loader2, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import PhoneInput from "@/components/PhoneInput";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
@@ -53,6 +54,7 @@ const CreatorSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const { requirePhone, loading: verificationLoading } = useVerificationSettings();
 
   // Step 1: Basic info
   const [email, setEmail] = useState("");
@@ -260,7 +262,7 @@ const CreatorSignup = () => {
       }
     }
 
-    if (!phoneVerified) {
+    if (requirePhone && !phoneVerified) {
       toast({
         title: "Phone Verification Required",
         description: "Please verify your phone number before continuing",
@@ -834,8 +836,19 @@ const CreatorSignup = () => {
                     <div className="flex items-center gap-2 mb-3">
                       <Phone className="h-4 w-4 text-primary" />
                       <Label className="font-semibold">Phone Verification</Label>
-                      <span className="text-destructive text-xs">*Required</span>
+                      {requirePhone ? (
+                        <span className="text-destructive text-xs">*Required</span>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">(Optional - Testing Mode)</span>
+                      )}
                     </div>
+                    
+                    {!requirePhone && !phoneVerified && (
+                      <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-md mb-3">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>Phone verification is disabled for testing</span>
+                      </div>
+                    )}
                     
                     <div className="space-y-3">
                       <div>

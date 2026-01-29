@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useVerificationSettings } from "@/hooks/useVerificationSettings";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { z } from "zod";
-import { Phone, CheckCircle, Loader2 } from "lucide-react";
+import { Phone, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import PhoneInput from "@/components/PhoneInput";
 import CountrySelect from "@/components/CountrySelect";
 
@@ -34,6 +35,7 @@ const BrandSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const { requirePhone, loading: verificationLoading } = useVerificationSettings();
 
   // Form fields
   const [fullName, setFullName] = useState("");
@@ -187,7 +189,7 @@ const BrandSignup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!phoneVerified) {
+    if (requirePhone && !phoneVerified) {
       toast({
         title: "Phone Verification Required",
         description: "Please verify your phone number before creating your account",
@@ -371,8 +373,19 @@ const BrandSignup = () => {
                   <div className="flex items-center gap-2 mb-3">
                     <Phone className="h-4 w-4 text-primary" />
                     <Label className="font-semibold">Phone Verification</Label>
-                    <span className="text-destructive text-xs">*Required</span>
+                    {requirePhone ? (
+                      <span className="text-destructive text-xs">*Required</span>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">(Optional - Testing Mode)</span>
+                    )}
                   </div>
+                  
+                  {!requirePhone && !phoneVerified && (
+                    <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-md mb-3">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>Phone verification is disabled for testing</span>
+                    </div>
+                  )}
                   
                   <div className="space-y-3">
                     <div>
