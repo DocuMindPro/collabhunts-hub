@@ -41,17 +41,13 @@ const PLATFORMS = [
 ];
 
 const SERVICE_TYPES = [
-  'Instagram Post',
-  'Instagram Story',
-  'Instagram Reel',
-  'TikTok Video',
-  'YouTube Video',
-  'YouTube Short',
-  'Twitter/X Post',
-  'Brand Ambassador',
-  'Product Review',
-  'Shoutout',
-  'Custom Content',
+  'Meet & Greet',
+  'Workshop',
+  'Competition Event',
+  'Brand Activation',
+  'Private Event',
+  'Live Performance',
+  'Custom Experience',
 ];
 
 export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboardingProps) {
@@ -433,7 +429,7 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
           <div className="space-y-6">
             <div>
               <h1 className="text-xl font-bold text-foreground">Set your services & pricing</h1>
-              <p className="text-muted-foreground mt-1">Add at least one service you offer</p>
+              <p className="text-muted-foreground mt-1">Add at least one event experience you offer</p>
             </div>
 
             {services.map((service, index) => (

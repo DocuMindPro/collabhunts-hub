@@ -65,11 +65,13 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
   const maxBirthDateStr = maxBirthDate.toISOString().split('T')[0];
 
   const serviceTypes = [
-    { value: "instagram_post", label: "Instagram Post" },
-    { value: "instagram_reel", label: "Instagram Reel" },
-    { value: "tiktok_video", label: "TikTok Video" },
-    { value: "youtube_video", label: "YouTube Video" },
-    { value: "ugc_content", label: "UGC Content" }
+    { value: "meet_greet", label: "Meet & Greet" },
+    { value: "workshop", label: "Workshop" },
+    { value: "competition", label: "Competition Event" },
+    { value: "brand_activation", label: "Brand Activation" },
+    { value: "private_event", label: "Private Event" },
+    { value: "live_performance", label: "Live Performance" },
+    { value: "custom", label: "Custom Experience" }
   ];
 
   const progress = (step / 7) * 100;
@@ -472,7 +474,7 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
             <div className="space-y-4">
               <CardHeader className="px-0 pt-0">
                 <CardTitle>Services & Pricing</CardTitle>
-                <CardDescription>What do you offer?</CardDescription>
+                <CardDescription>What event experiences do you offer?</CardDescription>
               </CardHeader>
 
               <div className="flex flex-wrap gap-2">
