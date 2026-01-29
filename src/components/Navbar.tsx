@@ -55,7 +55,7 @@ const Navbar = () => {
   
   const baseNavLinks: NavLink[] = [
     { to: "/influencers", label: "Find Creators" },
-    { to: "/brand", label: "For Venues" },
+    { to: "/brand", label: "For Brands" },
   ];
 
   const getNavLinks = (): NavLink[] => {
@@ -248,7 +248,7 @@ const Navbar = () => {
                   <Link to="/brand-dashboard">
                     <Button variant="outline" size="sm" className="gap-2">
                       <MapPin className="h-4 w-4" />
-                      Venue Dashboard
+                      Brand Dashboard
                     </Button>
                   </Link>
                 )}
@@ -286,7 +286,7 @@ const Navbar = () => {
                 </Link>
                 <Link to="/brand">
                   <Button variant="outline" size="sm">
-                    List Your Venue
+                    Register Your Brand
                   </Button>
                 </Link>
                 <Link to="/creator">
@@ -376,7 +376,7 @@ const Navbar = () => {
                           >
                             <span className="flex items-center gap-2">
                               <MapPin className="h-4 w-4" />
-                              Venue Dashboard
+                              Brand Dashboard
                             </span>
                             {brandMenuOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </Button>
@@ -429,7 +429,7 @@ const Navbar = () => {
                       </Link>
                       <Link to="/brand" onClick={() => setIsOpen(false)}>
                         <Button variant="outline" className="w-full">
-                          List Your Venue
+                          Register Your Brand
                         </Button>
                       </Link>
                       <Link to="/creator" onClick={() => setIsOpen(false)}>

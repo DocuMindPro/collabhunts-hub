@@ -432,7 +432,7 @@ const Login = () => {
                 variant="outline"
                 className="w-full h-12"
               >
-                Register a Venue
+                Register a Brand
               </Button>
             </div>
           </DialogContent>

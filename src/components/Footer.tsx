@@ -126,9 +126,9 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* For Venues */}
+          {/* For Brands */}
           <div>
-            <h3 className="font-heading font-semibold mb-4">For Venues</h3>
+            <h3 className="font-heading font-semibold mb-4">For Brands</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/influencers" className="text-sm text-muted-foreground hover:text-primary transition-colors">
@@ -143,11 +143,11 @@ const Footer = () => {
               <li>
                 {hasBrandProfile ? (
                   <Link to="/brand-dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Venue Dashboard
+                    Brand Dashboard
                   </Link>
                 ) : (
                   <Link to="/brand" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    List Your Venue
+                    Register Your Brand
                   </Link>
                 )}
               </li>

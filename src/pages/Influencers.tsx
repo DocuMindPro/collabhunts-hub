@@ -350,7 +350,7 @@ const Influencers = () => {
               Book Creators for Events
             </h1>
             <p className="text-xl text-muted-foreground">
-              Find verified creators available for live fan experiences at your venue
+              Find verified creators available for live fan experiences at your location
             </p>
           </div>
 
@@ -582,11 +582,11 @@ const Influencers = () => {
                     </div>
                     <div>
                       <p className="font-semibold">
-                        {currentPlan === "none" ? "List your venue to book creators" : "Upgrade for more features"}
+                        {currentPlan === "none" ? "Register your brand to book creators" : "Upgrade for more features"}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {currentPlan === "none" 
-                          ? "Free to list - Only pay 15% platform fee when you book events" 
+                          ? "Free to register - Only pay 15% platform fee when you book events" 
                           : "Filter by age, ethnicity, language + save favorites"}
                       </p>
                     </div>
@@ -596,7 +596,7 @@ const Influencers = () => {
                     className="gap-2 bg-primary hover:bg-primary/90 whitespace-nowrap"
                   >
                     <Calendar className="h-4 w-4" />
-                    {currentPlan === "none" ? "List Your Venue" : "See Plans"}
+                    {currentPlan === "none" ? "Register Your Brand" : "See Plans"}
                   </Button>
                 </div>
               </div>

@@ -142,7 +142,7 @@ const AboutUs = () => {
                 Join as Creator
               </a>
               <a href="/brand" className="inline-flex items-center justify-center px-6 py-3 bg-secondary text-secondary-foreground rounded-lg font-medium hover:bg-secondary/80 transition-colors">
-                Register Your Venue
+                Register Your Brand
               </a>
             </div>
           </div>
