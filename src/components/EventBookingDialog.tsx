@@ -416,7 +416,7 @@ const EventBookingDialog = ({
               <div className="bg-muted/50 rounded-lg p-4">
                 <h4 className="font-semibold mb-2 flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  Your Venue
+                  Your Location
                 </h4>
                 <p className="text-sm">{venueProfile.venue_name || venueProfile.company_name}</p>
                 {venueProfile.venue_address && (

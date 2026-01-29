@@ -107,7 +107,7 @@ const Brand = () => {
     return (
       <Link to="/brand-signup">
         <Button size={size} className={`gradient-hero hover:opacity-90 ${className}`}>
-          List Your Venue
+          Register Your Brand
         </Button>
       </Link>
     );
@@ -123,7 +123,7 @@ const Brand = () => {
   const howItWorks = [
     { 
       step: 1, 
-      title: "List Your Venue", 
+      title: "Register Your Brand", 
       description: "Add your location, capacity, and what makes it special for events" 
     },
     { 
@@ -181,12 +181,12 @@ const Brand = () => {
             <div className="text-center lg:text-left">
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
                 <Sparkles className="h-4 w-4" />
-                For Venues & Businesses
+                For Brands
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold mb-6 animate-fade-in text-foreground">
                 Host Creator Events{" "}
                 <span className="bg-gradient-accent bg-clip-text text-transparent">
-                  at Your Venue
+                  at Your Location
                 </span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0">
@@ -233,7 +233,7 @@ const Brand = () => {
               Why Host Creator Events?
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Turn your venue into a destination for creator fans
+              Turn your brand into a destination for creator fans
             </p>
           </div>
 
@@ -259,7 +259,7 @@ const Brand = () => {
               Event Packages
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Choose the right experience for your venue
+              Choose the right experience for your brand
             </p>
           </div>
 
@@ -326,7 +326,7 @@ const Brand = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-              Perfect for Any Venue
+              Perfect for Any Business
             </h2>
             <p className="text-lg text-muted-foreground">
               Creator events work for businesses of all types
@@ -402,7 +402,7 @@ const Brand = () => {
               Ready to Host Creator Events?
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
-              List your venue for free and start booking creators
+              Register your brand for free and start booking creators
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {renderCTA("lg")}

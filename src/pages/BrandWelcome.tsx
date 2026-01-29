@@ -66,7 +66,7 @@ const BrandWelcome = () => {
     {
       icon: Search,
       title: "Browse Creators",
-      description: "Find creators who match your venue's vibe and audience",
+      description: "Find creators who match your brand's vibe and audience",
     },
     {
       icon: Calendar,
@@ -89,7 +89,7 @@ const BrandWelcome = () => {
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
             <Sparkles className="h-4 w-4" />
-            <span className="text-sm font-medium">Venue Registered!</span>
+            <span className="text-sm font-medium">Brand Registered!</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-4">
             Welcome to CollabHunts, {venueName}!

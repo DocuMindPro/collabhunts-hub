@@ -294,7 +294,7 @@ const Index = () => {
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <AnimatedSection animation="slide-left" className="h-full">
               <div className="h-full bg-card/95 backdrop-blur p-8 rounded-2xl shadow-card hover:shadow-hover transition-shadow duration-300 flex flex-col">
-                <h3 className="text-3xl font-heading font-bold mb-4">For Venues</h3>
+                <h3 className="text-3xl font-heading font-bold mb-4">For Brands</h3>
                 <p className="text-muted-foreground mb-6 flex-1">
                   List your space and book creators to host live fan events. 
                   Drive foot traffic and create buzz for your business.
@@ -308,7 +308,7 @@ const Index = () => {
                 ) : user && hasCreatorProfile ? (
                   <div className="space-y-3">
                     <p className="text-sm text-muted-foreground">
-                      Want to list your venue? Create a new account with a different email.
+                      Want to list your brand? Create a new account with a different email.
                     </p>
                     <Link to="/brand">
                       <Button size="lg" variant="outline" className="btn-animated">
@@ -319,7 +319,7 @@ const Index = () => {
                 ) : (
                   <Link to="/brand">
                     <Button size="lg" variant="default" className="btn-animated">
-                      List Your Venue
+                      Register Your Brand
                     </Button>
                   </Link>
                 )}

@@ -41,7 +41,7 @@ const Contact = () => {
             Get in <span className="bg-gradient-accent bg-clip-text text-transparent">Touch</span>
           </h1>
           <p className="text-lg text-muted-foreground">
-            Have a question about hosting an event, becoming a creator, or registering your venue? We're here to help.
+            Have a question about hosting an event, becoming a creator, or registering your brand? We're here to help.
           </p>
         </div>
 

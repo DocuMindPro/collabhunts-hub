@@ -31,8 +31,8 @@ const BrandDashboard = () => {
       <main className="flex-1 py-4 md:py-8">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="mb-4 md:mb-8">
-            <h1 className="text-2xl md:text-4xl font-heading font-bold mb-1 md:mb-2">Venue Dashboard</h1>
-            <p className="text-sm md:text-base text-muted-foreground">Manage your venue and creator events</p>
+            <h1 className="text-2xl md:text-4xl font-heading font-bold mb-1 md:mb-2">Brand Dashboard</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Manage your brand and creator events</p>
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 md:space-y-6">
@@ -43,7 +43,7 @@ const BrandDashboard = () => {
               </TabsTrigger>
               <TabsTrigger value="venue" className="gap-2 shrink-0">
                 <MapPin className="h-4 w-4" />
-                <span className="hidden sm:inline">Venue Profile</span>
+                <span className="hidden sm:inline">Brand Profile</span>
               </TabsTrigger>
               <TabsTrigger value="bookings" className="gap-2 shrink-0">
                 <Calendar className="h-4 w-4" />
