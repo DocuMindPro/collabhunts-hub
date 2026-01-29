@@ -123,21 +123,44 @@ const CreatorSignup = () => {
   const [serviceDescription, setServiceDescription] = useState("");
   const [serviceDeliveryDays, setServiceDeliveryDays] = useState("7");
 
+  // Price ranges from admin settings
+  interface PriceRange {
+    service_type: string;
+    display_name: string;
+    min_price_cents: number;
+    max_price_cents: number;
+    is_enabled: boolean;
+  }
+  const [priceRanges, setPriceRanges] = useState<PriceRange[]>([]);
+  const [priceRangesLoading, setPriceRangesLoading] = useState(true);
+
   const categories = [
     "Lifestyle", "Fashion", "Beauty", "Travel", "Health & Fitness",
     "Food & Drink", "Tech & Gaming", "Music & Dance", "Comedy & Entertainment",
     "Family & Children", "Business", "Education"
   ];
 
-  const serviceTypes = [
-    { value: "meet_greet", label: "Meet & Greet" },
-    { value: "workshop", label: "Workshop" },
-    { value: "competition", label: "Competition Event" },
-    { value: "brand_activation", label: "Brand Activation" },
-    { value: "private_event", label: "Private Event" },
-    { value: "live_performance", label: "Live Performance" },
-    { value: "custom", label: "Custom Experience" }
-  ];
+  // Fetch price ranges from database
+  useEffect(() => {
+    const fetchPriceRanges = async () => {
+      const { data, error } = await supabase
+        .from("service_price_ranges")
+        .select("service_type, display_name, min_price_cents, max_price_cents, is_enabled");
+      
+      if (error) {
+        console.error("Error fetching price ranges:", error);
+      } else {
+        setPriceRanges(data || []);
+      }
+      setPriceRangesLoading(false);
+    };
+    fetchPriceRanges();
+  }, []);
+
+  // Filter to only enabled services from database
+  const enabledServiceTypes = priceRanges
+    .filter(r => r.is_enabled)
+    .map(r => ({ value: r.service_type, label: r.display_name }));
 
   const GENDERS = ["Male", "Female", "Non-binary", "Prefer not to say"];
   const ETHNICITIES = ["African American", "Asian", "Caucasian", "Hispanic/Latino", "Middle Eastern", "Mixed/Other", "Prefer not to say"];
@@ -802,6 +825,20 @@ const CreatorSignup = () => {
       return;
     }
 
+    // Validate against admin-defined price ranges
+    const priceRange = priceRanges.find(r => r.service_type === selectedServiceType);
+    if (priceRange) {
+      const priceCents = Math.round(price * 100);
+      if (priceCents < priceRange.min_price_cents || priceCents > priceRange.max_price_cents) {
+        toast({
+          title: "Price Out of Range",
+          description: `Price must be between $${(priceRange.min_price_cents / 100).toFixed(0)} and $${(priceRange.max_price_cents / 100).toFixed(0)}`,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     const deliveryDays = parseInt(serviceDeliveryDays || "7");
 
     setServices([...services, {
@@ -1369,20 +1406,28 @@ const CreatorSignup = () => {
                     <CardDescription>What event experiences can brands book?</CardDescription>
                   </CardHeader>
 
-                  <div className="space-y-3">
-                    {serviceTypes.map((service) => (
-                      <Button
-                        key={service.value}
-                        type="button"
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => openServiceModal(service.value)}
-                        disabled={services.some(s => s.serviceType === service.value)}
-                      >
-                        {service.label}
-                      </Button>
-                    ))}
-                  </div>
+                  {priceRangesLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : enabledServiceTypes.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4">No services are currently available.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {enabledServiceTypes.map((service) => (
+                        <Button
+                          key={service.value}
+                          type="button"
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => openServiceModal(service.value)}
+                          disabled={services.some(s => s.serviceType === service.value)}
+                        >
+                          {service.label}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
 
                   {services.length > 0 && (
                     <div className="space-y-2">
@@ -1391,7 +1436,7 @@ const CreatorSignup = () => {
                         <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                           <div>
                             <p className="font-medium">
-                              {serviceTypes.find(t => t.value === service.serviceType)?.label}
+                              {enabledServiceTypes.find(t => t.value === service.serviceType)?.label || priceRanges.find(r => r.service_type === service.serviceType)?.display_name || service.serviceType}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               ${(service.priceCents / 100).toFixed(2)} • {service.deliveryDays} days delivery
@@ -1563,7 +1608,7 @@ const CreatorSignup = () => {
                       <div className="space-y-1">
                         {services.map((service, index) => (
                           <p key={index} className="text-sm text-muted-foreground">
-                            {serviceTypes.find(t => t.value === service.serviceType)?.label}: ${(service.priceCents / 100).toFixed(2)}
+                            {enabledServiceTypes.find(t => t.value === service.serviceType)?.label || priceRanges.find(r => r.service_type === service.serviceType)?.display_name || service.serviceType}: ${(service.priceCents / 100).toFixed(2)}
                           </p>
                         ))}
                       </div>
@@ -1729,7 +1774,7 @@ const CreatorSignup = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              Add {serviceTypes.find(s => s.value === selectedServiceType)?.label || 'Service'}
+              Add {enabledServiceTypes.find(s => s.value === selectedServiceType)?.label || priceRanges.find(r => r.service_type === selectedServiceType)?.display_name || 'Service'}
             </DialogTitle>
             <DialogDescription>
               Set your pricing for this experience
@@ -1746,10 +1791,21 @@ const CreatorSignup = () => {
                 type="number"
                 value={servicePrice}
                 onChange={(e) => setServicePrice(e.target.value)}
-                placeholder="e.g., 500"
+                placeholder={(() => {
+                  const range = priceRanges.find(r => r.service_type === selectedServiceType);
+                  return range ? `${(range.min_price_cents / 100).toFixed(0)} - ${(range.max_price_cents / 100).toFixed(0)}` : "e.g., 500";
+                })()}
                 min="0"
                 step="0.01"
               />
+              {(() => {
+                const range = priceRanges.find(r => r.service_type === selectedServiceType);
+                return range ? (
+                  <p className="text-xs text-muted-foreground">
+                    Price must be between ${(range.min_price_cents / 100).toFixed(0)} - ${(range.max_price_cents / 100).toFixed(0)}
+                  </p>
+                ) : null;
+              })()}
             </div>
 
             <div className="space-y-2">
