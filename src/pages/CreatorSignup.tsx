@@ -250,7 +250,9 @@ const CreatorSignup = () => {
       emailSchema.parse(email);
       passwordSchema.parse(password);
       displayNameSchema.parse(fullName);
-      phoneSchema.parse(phoneNumber);
+      if (requirePhone) {
+        phoneSchema.parse(phoneNumber);
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
@@ -922,7 +924,7 @@ const CreatorSignup = () => {
                   <Button 
                     type="submit" 
                     className="w-full gradient-hero hover:opacity-90"
-                    disabled={!phoneVerified}
+                    disabled={requirePhone && !phoneVerified}
                   >
                     Continue
                   </Button>
