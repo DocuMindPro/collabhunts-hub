@@ -1,129 +1,143 @@
 
+# Add Admin-Controlled Service Price Ranges
 
-# Replace Browser Prompts with Professional Modals
+## Overview
+Enable admins to configure minimum and maximum price ranges for each service type. Creators will only be able to set prices within these admin-defined ranges during signup.
 
-## Problem Summary
-The creator signup flow currently uses JavaScript's native `prompt()` function to collect:
-1. **Social Media Accounts** (Step 4): Username and follower count
-2. **Services & Pricing** (Step 5): Price, description, and delivery days
+## Current State
+- Service types are hardcoded in `CreatorSignup.tsx` (meet_greet, workshop, competition, etc.)
+- The service pricing modal accepts any positive number with no constraints
+- Some default ranges exist in `src/config/packages.ts` but are never enforced
 
-These browser prompts appear as ugly system dialogs in the top-left corner, looking unprofessional and inconsistent with the rest of the application's design.
+## Solution Architecture
 
-## Solution Overview
-Replace all `prompt()` calls with beautiful, styled modal dialogs using the existing Radix UI Dialog component. Each modal will have:
-- Professional header with title and description
-- Properly styled input fields with labels
-- Cancel and Submit buttons
-- Form validation with error feedback
-- Smooth animations (already built into Dialog component)
+### 1. Database Table for Service Price Ranges
+Create a new `service_price_ranges` table to store admin-configurable price limits:
 
-## Detailed Implementation Plan
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| service_type | text | e.g., "meet_greet", "workshop" |
+| min_price_cents | integer | Minimum allowed price |
+| max_price_cents | integer | Maximum allowed price |
+| is_enabled | boolean | Whether this service type is available |
+| updated_at | timestamp | Last update time |
+| updated_by | uuid | Admin who made the change |
 
-### 1. Create Reusable Modal State (in CreatorSignup.tsx)
-Add new state variables to manage the modal dialogs:
+Seed with default values from the existing `packages.ts` configuration.
+
+### 2. Admin Panel: Service Settings Section
+Add a new card to the Admin Testing tab (or create a new "Services" tab) with:
+- List of all service types with editable min/max price fields
+- Toggle to enable/disable each service type
+- Save button to persist changes
 
 ```text
-+------------------------------------------+
-| New State Variables                      |
-+------------------------------------------+
-| - showSocialModal: boolean               |
-| - selectedPlatform: string               |
-| - socialUsername: string                 |
-| - socialFollowers: string                |
-| - showServiceModal: boolean              |
-| - selectedServiceType: string            |
-| - servicePrice: string                   |
-| - serviceDescription: string             |
-| - serviceDeliveryDays: string            |
-+------------------------------------------+
++-----------------------------------------------+
+|  Service Price Ranges                         |
+|  Configure pricing limits for each service    |
+|-----------------------------------------------|
+|  Meet & Greet                        [Toggle] |
+|  Min: $[300]  Max: $[800]                     |
+|-----------------------------------------------|
+|  Workshop                            [Toggle] |
+|  Min: $[500]  Max: $[1,200]                   |
+|-----------------------------------------------|
+|  Competition Event                   [Toggle] |
+|  Min: $[800]  Max: $[2,000]                   |
+|-----------------------------------------------|
+|  ...                                          |
+|-----------------------------------------------|
+|                                [Save Changes] |
++-----------------------------------------------+
 ```
 
-### 2. Social Media Account Modal
-Replace the `addSocialAccount()` function with:
-- Button click opens a modal dialog
-- Modal contains fields for username and follower count
-- Platform icon displayed in modal header
-- Submit button validates and adds the account
+### 3. Update Creator Signup Service Modal
+Modify the service modal in `CreatorSignup.tsx` to:
+- Fetch price ranges from database on component mount
+- Display allowed range below the price input ("Price must be between $300 - $800")
+- Validate on submit that price falls within range
+- Show error if creator enters price outside range
+- Only show enabled service types in the list
 
 ```text
 +------------------------------------------------+
-|  [Instagram Icon] Add Instagram Account        |
-|------------------------------------------------|
-|  Username                                      |
-|  +------------------------------------------+  |
-|  | @yourusername                            |  |
-|  +------------------------------------------+  |
-|                                                |
-|  Follower Count                                |
-|  +------------------------------------------+  |
-|  | 50000                                    |  |
-|  +------------------------------------------+  |
-|                                                |
-|  [Cancel]                    [Add Account]     |
-+------------------------------------------------+
-```
-
-### 3. Service & Pricing Modal
-Replace the `addService()` function with:
-- Button click opens a modal dialog
-- Modal contains fields for price, description (optional), and delivery days
-- Service type displayed in modal header
-- Submit button validates price and adds the service
-
-```text
-+------------------------------------------------+
-|  Add Workshop Service                          |
+|  Add Meet & Greet                              |
 |  Set your pricing for this experience          |
 |------------------------------------------------|
 |  Price (USD) *                                 |
 |  +------------------------------------------+  |
 |  | 500                                      |  |
 |  +------------------------------------------+  |
+|  Price must be between $300 - $800             |
 |                                                |
 |  Description (optional)                        |
 |  +------------------------------------------+  |
-|  | A 2-hour interactive workshop...         |  |
+|  | ...                                      |  |
 |  +------------------------------------------+  |
-|                                                |
-|  Delivery Days                                 |
-|  +------------------------------------------+  |
-|  | 7                                        |  |
-|  +------------------------------------------+  |
-|                                                |
-|  [Cancel]                    [Add Service]     |
 +------------------------------------------------+
 ```
 
-### 4. Files to Modify
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/components/admin/AdminServicesSettings.tsx` | New component for admin service configuration |
+
+## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/CreatorSignup.tsx` | Add modal state, Dialog components, replace `prompt()` calls with modal opens, add modal submission handlers |
+| Database Migration | Create `service_price_ranges` table with default data |
+| `src/components/admin/AdminTestingTab.tsx` | Add Services Settings card or link to new section |
+| `src/pages/CreatorSignup.tsx` | Fetch price ranges, display limits, validate input, filter enabled services |
 
-### 5. Implementation Details
+## Implementation Steps
 
-**Step 1: Add imports**
-- Import `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter` from `@/components/ui/dialog`
+1. **Database Migration**
+   - Create `service_price_ranges` table
+   - Add RLS policies for admin write / public read
+   - Insert default rows for each service type
 
-**Step 2: Add state variables** (around line 100)
-- 9 new state variables for managing modal visibility and form inputs
+2. **Admin Component**
+   - Create `AdminServicesSettings.tsx` with price range editors
+   - Fetch current settings on mount
+   - Save changes to database
 
-**Step 3: Replace `addSocialAccount()` function** (lines 720-750)
-- New function `openSocialModal(platform)` - opens modal with selected platform
-- New function `handleSocialSubmit()` - validates and saves the account, closes modal
+3. **Integrate into Admin Panel**
+   - Add the new component to `AdminTestingTab.tsx` or create a new tab
 
-**Step 4: Replace `addService()` function** (lines 752-775)
-- New function `openServiceModal(serviceType)` - opens modal with selected service type
-- New function `handleServiceSubmit()` - validates and saves the service, closes modal
+4. **Update Creator Signup**
+   - Add state for price ranges
+   - Fetch from database on mount
+   - Filter `serviceTypes` array to only show enabled services
+   - Update service modal to show price range hint
+   - Add validation in `handleServiceSubmit()`
 
-**Step 5: Add Modal JSX** (after step 7's JSX, before closing CardContent)
-- Two Dialog components with proper form fields and buttons
+## Validation Logic
 
-## Expected Result
-After this change:
-- Clicking a platform button (Instagram, TikTok, etc.) opens a professional modal centered on screen
-- Clicking a service button (Meet & Greet, Workshop, etc.) opens a professional modal centered on screen
-- All inputs are properly styled with labels, placeholders, and validation
-- The modals match the application's design system perfectly
-- No more ugly browser prompts!
+```typescript
+// In handleServiceSubmit()
+const priceRange = priceRanges.find(r => r.service_type === selectedServiceType);
+if (priceRange) {
+  const priceCents = Math.round(price * 100);
+  if (priceCents < priceRange.min_price_cents || priceCents > priceRange.max_price_cents) {
+    toast.error(`Price must be between $${priceRange.min_price_cents/100} and $${priceRange.max_price_cents/100}`);
+    return;
+  }
+}
+```
 
+## Expected Behavior
+
+**Admin Side:**
+- Navigate to Admin > Testing (or new Services tab)
+- See all service types with current min/max prices
+- Edit any price range and save
+- Toggle services on/off
+
+**Creator Side:**
+- During signup, only see enabled service types
+- When adding a service, see the allowed price range
+- Cannot submit a price outside the allowed range
+- Clear error message if validation fails
