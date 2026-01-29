@@ -34,6 +34,7 @@ interface CreatorData {
   location_country: string | null;
   categories: string[];
   show_pricing_to_public: boolean;
+  open_to_invitations: boolean;
   social_accounts: Array<{
     platform: string;
     username: string;
@@ -410,6 +411,7 @@ const CreatorProfile = () => {
         location_country: profileData.location_country,
         categories: profileData.categories,
         show_pricing_to_public: profileData.show_pricing_to_public !== false,
+        open_to_invitations: profileData.open_to_invitations ?? false,
         social_accounts: socialData || [],
         services: servicesData || [],
         reviews,
@@ -594,18 +596,27 @@ const CreatorProfile = () => {
             ) : (
               /* Desktop: Original layout with avatar */
               <div className="flex flex-row items-start gap-4 text-left">
-                <Avatar className="h-28 w-28 border-4 border-background shadow-lg flex-shrink-0">
-                  {creator.profile_image_url && !avatarFailed ? (
-                    <AvatarImage 
-                      src={creator.profile_image_url} 
-                      className="object-cover" 
-                      onError={() => setAvatarFailed(true)}
-                    />
-                  ) : null}
-                  <AvatarFallback className="text-3xl bg-gradient-accent text-white">
-                    {creator.display_name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
+                {/* Avatar with Open to Invitations ring */}
+                <div className="relative flex-shrink-0">
+                  <Avatar className={`h-28 w-28 border-4 border-background shadow-lg ${creator.open_to_invitations ? 'ring-[3px] ring-green-500 ring-offset-2 ring-offset-background' : ''}`}>
+                    {creator.profile_image_url && !avatarFailed ? (
+                      <AvatarImage 
+                        src={creator.profile_image_url} 
+                        className="object-cover" 
+                        onError={() => setAvatarFailed(true)}
+                      />
+                    ) : null}
+                    <AvatarFallback className="text-3xl bg-gradient-accent text-white">
+                      {creator.display_name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Open to Invitations badge */}
+                  {creator.open_to_invitations && (
+                    <Badge className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-green-500 hover:bg-green-500 text-white text-[9px] px-2 py-0.5 whitespace-nowrap border-2 border-background">
+                      Open to Invites
+                    </Badge>
+                  )}
+                </div>
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-start gap-3 flex-wrap mb-2">

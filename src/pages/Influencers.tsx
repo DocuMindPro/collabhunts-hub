@@ -41,6 +41,7 @@ interface CreatorWithDetails {
   primary_language: string | null;
   secondary_languages: string[] | null;
   show_pricing_to_public: boolean | null;
+  open_to_invitations: boolean | null;
   social_accounts: Array<{
     platform: string;
     username: string;
@@ -200,6 +201,7 @@ const Influencers = () => {
           primary_language,
           secondary_languages,
           show_pricing_to_public,
+          open_to_invitations,
           creator_social_accounts(platform, username, follower_count),
           creator_services(service_type, price_cents)
         `)
@@ -221,6 +223,7 @@ const Influencers = () => {
         primary_language: creator.primary_language,
         secondary_languages: creator.secondary_languages,
         show_pricing_to_public: creator.show_pricing_to_public,
+        open_to_invitations: creator.open_to_invitations,
         social_accounts: creator.creator_social_accounts || [],
         services: creator.creator_services || []
       }));
@@ -658,8 +661,15 @@ const Influencers = () => {
                           {/* Overlay badges on image */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           
-                          {/* Platform & Followers Badge - Top Left */}
-                          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+                          {/* Open to Invitations Badge - Top Left (before platform badge) */}
+                          {creator.open_to_invitations && (
+                            <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full text-white text-[10px] font-medium z-10">
+                              Open to Invites
+                            </div>
+                          )}
+                          
+                          {/* Platform & Followers Badge - Top Left (shifts down if open to invitations) */}
+                          <div className={`absolute ${creator.open_to_invitations ? 'top-10' : 'top-3'} left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium`}>
                             <PlatformIcon className="h-3.5 w-3.5" />
                             <span>{formatFollowers(mainPlatform.followers)}</span>
                           </div>
@@ -748,7 +758,14 @@ const Influencers = () => {
                           
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           
-                          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+                          {/* Open to Invitations Badge */}
+                          {creator.open_to_invitations && (
+                            <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full text-white text-[10px] font-medium z-10">
+                              Open to Invites
+                            </div>
+                          )}
+                          
+                          <div className={`absolute ${creator.open_to_invitations ? 'top-10' : 'top-3'} left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium`}>
                             <PlatformIcon className="h-3.5 w-3.5" />
                             <span>{formatFollowers(mainPlatform.followers)}</span>
                           </div>
@@ -834,7 +851,14 @@ const Influencers = () => {
                           
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           
-                          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+                          {/* Open to Invitations Badge */}
+                          {creator.open_to_invitations && (
+                            <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full text-white text-[10px] font-medium z-10">
+                              Open to Invites
+                            </div>
+                          )}
+                          
+                          <div className={`absolute ${creator.open_to_invitations ? 'top-10' : 'top-3'} left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium`}>
                             <PlatformIcon className="h-3.5 w-3.5" />
                             <span>{formatFollowers(mainPlatform.followers)}</span>
                           </div>
