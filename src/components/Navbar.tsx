@@ -291,7 +291,7 @@ const Navbar = () => {
                 </Link>
                 <Link to="/creator">
                   <Button size="sm" className="bg-accent hover:bg-accent-hover">
-                    Host Events
+                    Join as a Creator
                   </Button>
                 </Link>
               </>
@@ -434,7 +434,7 @@ const Navbar = () => {
                       </Link>
                       <Link to="/creator" onClick={() => setIsOpen(false)}>
                         <Button className="w-full bg-accent hover:bg-accent-hover">
-                          Host Events
+                          Join as a Creator
                         </Button>
                       </Link>
                     </>

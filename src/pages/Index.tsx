@@ -353,7 +353,7 @@ const Index = () => {
                 ) : (
                   <Link to="/creator">
                     <Button size="lg" className="bg-accent hover:bg-accent-hover btn-animated">
-                      Host Events
+                      Join as a Creator
                     </Button>
                   </Link>
                 )}
