@@ -1,143 +1,221 @@
 
-# Add Admin-Controlled Service Price Ranges
+
+# Implement Price Range Tiers Selection System
 
 ## Overview
-Enable admins to configure minimum and maximum price ranges for each service type. Creators will only be able to set prices within these admin-defined ranges during signup.
+Transform the pricing system from "exact price within bounds" to "select from predefined price tiers". Each service type will have multiple selectable price ranges that admins configure, and creators will pick their tier during signup.
 
-## Current State
-- Service types are hardcoded in `CreatorSignup.tsx` (meet_greet, workshop, competition, etc.)
-- The service pricing modal accepts any positive number with no constraints
-- Some default ranges exist in `src/config/packages.ts` but are never enforced
+## Current vs. New Behavior
 
-## Solution Architecture
+| Aspect | Current | New |
+|--------|---------|-----|
+| Admin defines | One min/max per service | Multiple tier ranges per service |
+| Creator input | Types exact price (e.g., $500) | Selects tier (e.g., "$500 - $800") |
+| Stored value | Single `price_cents` | `min_price_cents` + `max_price_cents` |
+| Brand sees | Exact price | Price range tier |
 
-### 1. Database Table for Service Price Ranges
-Create a new `service_price_ranges` table to store admin-configurable price limits:
+## Database Changes
+
+### 1. Create New `service_price_tiers` Table
+Store multiple tier options per service type:
 
 | Column | Type | Description |
 |--------|------|-------------|
 | id | uuid | Primary key |
-| service_type | text | e.g., "meet_greet", "workshop" |
-| min_price_cents | integer | Minimum allowed price |
-| max_price_cents | integer | Maximum allowed price |
-| is_enabled | boolean | Whether this service type is available |
-| updated_at | timestamp | Last update time |
-| updated_by | uuid | Admin who made the change |
+| service_type | text | e.g., "meet_greet" |
+| tier_name | text | e.g., "Standard", "Premium" |
+| min_price_cents | integer | Lower bound of tier |
+| max_price_cents | integer | Upper bound of tier |
+| sort_order | integer | Display order |
+| is_enabled | boolean | Can creators select this tier? |
 
-Seed with default values from the existing `packages.ts` configuration.
-
-### 2. Admin Panel: Service Settings Section
-Add a new card to the Admin Testing tab (or create a new "Services" tab) with:
-- List of all service types with editable min/max price fields
-- Toggle to enable/disable each service type
-- Save button to persist changes
-
+Example data:
 ```text
-+-----------------------------------------------+
-|  Service Price Ranges                         |
-|  Configure pricing limits for each service    |
-|-----------------------------------------------|
-|  Meet & Greet                        [Toggle] |
-|  Min: $[300]  Max: $[800]                     |
-|-----------------------------------------------|
-|  Workshop                            [Toggle] |
-|  Min: $[500]  Max: $[1,200]                   |
-|-----------------------------------------------|
-|  Competition Event                   [Toggle] |
-|  Min: $[800]  Max: $[2,000]                   |
-|-----------------------------------------------|
-|  ...                                          |
-|-----------------------------------------------|
-|                                [Save Changes] |
-+-----------------------------------------------+
+| service_type | tier_name | min_price_cents | max_price_cents |
+|--------------|-----------|-----------------|-----------------|
+| meet_greet   | Standard  | 30000           | 50000           |
+| meet_greet   | Premium   | 50000           | 80000           |
+| meet_greet   | VIP       | 80000           | 120000          |
+| workshop     | Basic     | 50000           | 80000           |
+| workshop     | Advanced  | 80000           | 120000          |
 ```
 
-### 3. Update Creator Signup Service Modal
-Modify the service modal in `CreatorSignup.tsx` to:
-- Fetch price ranges from database on component mount
-- Display allowed range below the price input ("Price must be between $300 - $800")
-- Validate on submit that price falls within range
-- Show error if creator enters price outside range
-- Only show enabled service types in the list
+### 2. Modify `creator_services` Table
+Add columns to store the selected range instead of exact price:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| min_price_cents | integer (new) | Lower bound of selected tier |
+| max_price_cents | integer (new) | Upper bound of selected tier |
+| price_tier_id | uuid (new) | Reference to selected tier |
+
+Keep existing `price_cents` for backwards compatibility (can be set to midpoint or min).
+
+## Admin Panel Changes
+
+### Update `AdminServicesSettings.tsx`
+Transform the UI to manage multiple tiers per service:
+
+```text
++--------------------------------------------------+
+|  Service Price Tiers                             |
+|  Configure pricing tiers for each service        |
+|--------------------------------------------------|
+|  Meet & Greet                           [Toggle] |
+|  +--------------------------------------------+  |
+|  | Tier 1: $300 - $500         [Edit] [X]    |  |
+|  | Tier 2: $500 - $800         [Edit] [X]    |  |
+|  | Tier 3: $800 - $1,200       [Edit] [X]    |  |
+|  +--------------------------------------------+  |
+|  [+ Add Tier]                                    |
+|--------------------------------------------------|
+|  Workshop                               [Toggle] |
+|  +--------------------------------------------+  |
+|  | Basic: $500 - $800          [Edit] [X]    |  |
+|  | Advanced: $800 - $1,200     [Edit] [X]    |  |
+|  +--------------------------------------------+  |
+|  [+ Add Tier]                                    |
+|--------------------------------------------------|
+|                                  [Save Changes]  |
++--------------------------------------------------+
+```
+
+Admin capabilities:
+- Add new tiers for any service type
+- Edit tier name, min/max prices
+- Remove tiers
+- Reorder tiers
+- Toggle service type on/off
+
+## Creator Signup Changes
+
+### Update Service Modal in `CreatorSignup.tsx`
+Replace the price input field with a tier selection dropdown/radio buttons:
 
 ```text
 +------------------------------------------------+
 |  Add Meet & Greet                              |
-|  Set your pricing for this experience          |
+|  Select your pricing tier for this experience  |
 |------------------------------------------------|
-|  Price (USD) *                                 |
+|  Price Range *                                 |
 |  +------------------------------------------+  |
-|  | 500                                      |  |
+|  | ○ Standard ($300 - $500)                 |  |
+|  | ● Premium ($500 - $800)    ← selected    |  |
+|  | ○ VIP ($800 - $1,200)                    |  |
 |  +------------------------------------------+  |
-|  Price must be between $300 - $800             |
 |                                                |
 |  Description (optional)                        |
 |  +------------------------------------------+  |
 |  | ...                                      |  |
 |  +------------------------------------------+  |
+|                                                |
+|  Delivery Days                                 |
+|  +------------------------------------------+  |
+|  | 7                                        |  |
+|  +------------------------------------------+  |
+|                                                |
+|  [Cancel]                    [Add Service]     |
 +------------------------------------------------+
 ```
 
-## Files to Create
+Creator flow:
+1. Click on a service type (e.g., Meet & Greet)
+2. Modal opens showing available tiers as radio buttons
+3. Select desired tier
+4. Optionally add description and delivery days
+5. Submit - stores min/max from selected tier
 
-| File | Purpose |
-|------|---------|
-| `src/components/admin/AdminServicesSettings.tsx` | New component for admin service configuration |
+## Files to Create/Modify
 
-## Files to Modify
+### Database Migration
+- Create `service_price_tiers` table
+- Add `min_price_cents`, `max_price_cents`, `price_tier_id` columns to `creator_services`
+- Migrate existing data: keep current `service_price_ranges` or convert to tiers
+- Add RLS policies
+
+### Files to Modify
 
 | File | Changes |
 |------|---------|
-| Database Migration | Create `service_price_ranges` table with default data |
-| `src/components/admin/AdminTestingTab.tsx` | Add Services Settings card or link to new section |
-| `src/pages/CreatorSignup.tsx` | Fetch price ranges, display limits, validate input, filter enabled services |
+| `src/components/admin/AdminServicesSettings.tsx` | Complete redesign for multi-tier management |
+| `src/pages/CreatorSignup.tsx` | Replace price input with tier selector radio buttons |
+| `src/integrations/supabase/types.ts` | Will auto-update after migration |
+
+### Display Updates (Future)
+Files that show creator prices to brands will need updates to display ranges instead of exact prices:
+- Creator profile pages
+- Booking dialogs
+- Search/browse listings
 
 ## Implementation Steps
 
 1. **Database Migration**
-   - Create `service_price_ranges` table
-   - Add RLS policies for admin write / public read
-   - Insert default rows for each service type
+   - Create `service_price_tiers` table with seed data
+   - Add new columns to `creator_services`
+   - Set up RLS policies
 
-2. **Admin Component**
-   - Create `AdminServicesSettings.tsx` with price range editors
-   - Fetch current settings on mount
+2. **Admin Panel Redesign**
+   - Fetch tiers grouped by service type
+   - Add/edit/delete tier UI
    - Save changes to database
 
-3. **Integrate into Admin Panel**
-   - Add the new component to `AdminTestingTab.tsx` or create a new tab
+3. **Creator Signup Modal**
+   - Fetch tiers for selected service type
+   - Display as radio button group
+   - Store selected tier's min/max on submit
 
-4. **Update Creator Signup**
-   - Add state for price ranges
-   - Fetch from database on mount
-   - Filter `serviceTypes` array to only show enabled services
-   - Update service modal to show price range hint
-   - Add validation in `handleServiceSubmit()`
+4. **Update Service Interface**
+   - Change `Service` interface to include `minPriceCents` and `maxPriceCents`
+   - Update form submission logic
 
-## Validation Logic
+## Technical Details
 
+### Service Interface Change
 ```typescript
-// In handleServiceSubmit()
-const priceRange = priceRanges.find(r => r.service_type === selectedServiceType);
-if (priceRange) {
-  const priceCents = Math.round(price * 100);
-  if (priceCents < priceRange.min_price_cents || priceCents > priceRange.max_price_cents) {
-    toast.error(`Price must be between $${priceRange.min_price_cents/100} and $${priceRange.max_price_cents/100}`);
-    return;
-  }
+// Current
+interface Service {
+  serviceType: string;
+  priceCents: number;        // Single exact price
+  description: string;
+  deliveryDays: number;
 }
+
+// New
+interface Service {
+  serviceType: string;
+  minPriceCents: number;     // Selected tier min
+  maxPriceCents: number;     // Selected tier max
+  priceTierId?: string;      // Optional reference
+  description: string;
+  deliveryDays: number;
+}
+```
+
+### Tier Selection State
+```typescript
+const [selectedTierId, setSelectedTierId] = useState<string>("");
+const [serviceTiers, setServiceTiers] = useState<PriceTier[]>([]);
 ```
 
 ## Expected Behavior
 
 **Admin Side:**
-- Navigate to Admin > Testing (or new Services tab)
-- See all service types with current min/max prices
-- Edit any price range and save
-- Toggle services on/off
+1. Navigate to Admin > Settings
+2. See all service types with their tiers
+3. Add new tier: Click "+ Add Tier", enter name and range
+4. Edit tier: Modify name/prices inline
+5. Delete tier: Click X to remove
+6. Save all changes
 
 **Creator Side:**
-- During signup, only see enabled service types
-- When adding a service, see the allowed price range
-- Cannot submit a price outside the allowed range
-- Clear error message if validation fails
+1. During signup, click "Meet & Greet"
+2. Modal shows available tiers as radio options
+3. Select "Premium ($500 - $800)"
+4. Add description and delivery days
+5. Submit - service saved with that range
+
+**Brand Side (future):**
+1. View creator profile
+2. See "Meet & Greet: $500 - $800"
+3. Can negotiate within or discuss pricing
+
