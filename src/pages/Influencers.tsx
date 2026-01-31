@@ -24,7 +24,7 @@ import UpgradePrompt from "@/components/UpgradePrompt";
 import UpgradeBanner from "@/components/UpgradeBanner";
 import { userHasAdvancedFilters, getBrandSubscription } from "@/lib/subscription-utils";
 import AdPlacement from "@/components/AdPlacement";
-import DimmedPrice from "@/components/DimmedPrice";
+import DimmedPriceRange from "@/components/DimmedPriceRange";
 import UpgradeModal from "@/components/UpgradeModal";
 import { canViewCreatorPricing, type PlanType } from "@/lib/stripe-mock";
 import LebaneseCitySelect from "@/components/LebaneseCitySelect";
@@ -321,9 +321,13 @@ const Influencers = () => {
     return { platform: sorted[0].platform, followers: sorted[0].follower_count };
   };
 
-  const getLowestPrice = (services: CreatorWithDetails['services']) => {
-    if (services.length === 0) return 0;
-    return Math.min(...services.map(s => s.price_cents));
+  const getPriceRange = (services: CreatorWithDetails['services']) => {
+    if (services.length === 0) return { min: 0, max: 0 };
+    const prices = services.map(s => s.price_cents);
+    return { 
+      min: Math.min(...prices), 
+      max: Math.max(...prices) 
+    };
   };
 
   const formatFollowers = (count: number) => {
@@ -627,7 +631,7 @@ const Influencers = () => {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                 {filteredCreators.slice(0, 8).map((creator) => {
                   const mainPlatform = getMainPlatform(creator.social_accounts);
-                  const lowestPrice = getLowestPrice(creator.services);
+                  const priceRange = getPriceRange(creator.services);
                   const PlatformIcon = getPlatformIcon(mainPlatform.platform);
 
                   return (
@@ -697,16 +701,14 @@ const Influencers = () => {
                         {/* Price & Location Bar */}
                         <div className="p-4 flex items-center justify-between">
                           <div>
-                            {lowestPrice > 0 ? (
-                              <div className="flex items-baseline gap-1">
-                                <DimmedPrice 
-                                  price={lowestPrice} 
-                                  canViewPrice={canViewPrice(creator)} 
-                                  size="md"
-                                  onClick={() => setIsPricingModalOpen(true)}
-                                />
-                                <span className="text-xs text-muted-foreground">+</span>
-                              </div>
+                            {priceRange.min > 0 ? (
+                              <DimmedPriceRange 
+                                minPrice={priceRange.min}
+                                maxPrice={priceRange.max}
+                                canViewPrice={canViewPrice(creator)} 
+                                size="md"
+                                onClick={() => setIsPricingModalOpen(true)}
+                              />
                             ) : (
                               <span className="text-sm text-muted-foreground">Contact</span>
                             )}
@@ -730,7 +732,7 @@ const Influencers = () => {
                 {/* Rest of the creators */}
                 {filteredCreators.slice(8, 16).map((creator) => {
                   const mainPlatform = getMainPlatform(creator.social_accounts);
-                  const lowestPrice = getLowestPrice(creator.services);
+                  const priceRange = getPriceRange(creator.services);
                   const PlatformIcon = getPlatformIcon(mainPlatform.platform);
 
                   return (
@@ -794,16 +796,14 @@ const Influencers = () => {
 
                         <div className="p-4 flex items-center justify-between">
                           <div>
-                            {lowestPrice > 0 ? (
-                              <div className="flex items-baseline gap-1">
-                                <DimmedPrice 
-                                  price={lowestPrice} 
-                                  canViewPrice={canViewPrice(creator)} 
-                                  size="md"
-                                  onClick={() => setIsPricingModalOpen(true)}
-                                />
-                                <span className="text-xs text-muted-foreground">+</span>
-                              </div>
+                            {priceRange.min > 0 ? (
+                              <DimmedPriceRange 
+                                minPrice={priceRange.min}
+                                maxPrice={priceRange.max}
+                                canViewPrice={canViewPrice(creator)} 
+                                size="md"
+                                onClick={() => setIsPricingModalOpen(true)}
+                              />
                             ) : (
                               <span className="text-sm text-muted-foreground">Contact</span>
                             )}
@@ -827,7 +827,7 @@ const Influencers = () => {
                 {/* Remaining creators */}
                 {filteredCreators.slice(16).map((creator) => {
                   const mainPlatform = getMainPlatform(creator.social_accounts);
-                  const lowestPrice = getLowestPrice(creator.services);
+                  const priceRange = getPriceRange(creator.services);
                   const PlatformIcon = getPlatformIcon(mainPlatform.platform);
 
                   return (
@@ -891,16 +891,14 @@ const Influencers = () => {
 
                         <div className="p-4 flex items-center justify-between">
                           <div>
-                            {lowestPrice > 0 ? (
-                              <div className="flex items-baseline gap-1">
-                                <DimmedPrice 
-                                  price={lowestPrice} 
-                                  canViewPrice={canViewPrice(creator)} 
-                                  size="md"
-                                  onClick={() => setIsPricingModalOpen(true)}
-                                />
-                                <span className="text-xs text-muted-foreground">+</span>
-                              </div>
+                            {priceRange.min > 0 ? (
+                              <DimmedPriceRange 
+                                minPrice={priceRange.min}
+                                maxPrice={priceRange.max}
+                                canViewPrice={canViewPrice(creator)} 
+                                size="md"
+                                onClick={() => setIsPricingModalOpen(true)}
+                              />
                             ) : (
                               <span className="text-sm text-muted-foreground">Contact</span>
                             )}
