@@ -601,6 +601,7 @@ const CreatorSignup = () => {
 
     try {
       // Create auth user
+      let authUser;
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -613,14 +614,57 @@ const CreatorSignup = () => {
         }
       });
 
-      if (signUpError) throw signUpError;
-      if (!authData.user) throw new Error("Failed to create user");
+      // Handle "user already registered" - try to sign in instead
+      if (signUpError) {
+        if (signUpError.message.toLowerCase().includes('already registered') || 
+            signUpError.message.toLowerCase().includes('already been registered')) {
+          // User exists - try to sign in with their credentials
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+          
+          if (signInError) {
+            // Password might be wrong or email not confirmed
+            if (signInError.message.toLowerCase().includes('invalid login credentials')) {
+              throw new Error("This email is already registered. Please use the correct password or try the login page.");
+            }
+            if (signInError.message.toLowerCase().includes('email not confirmed')) {
+              throw new Error("This email is already registered but not confirmed. Please check your email for the confirmation link.");
+            }
+            throw signInError;
+          }
+          
+          if (!signInData.user) {
+            throw new Error("Failed to sign in with existing account");
+          }
+          
+          // Check if they already have a creator profile
+          const { data: existingProfile } = await supabase
+            .from("creator_profiles")
+            .select("id")
+            .eq("user_id", signInData.user.id)
+            .maybeSingle();
+          
+          if (existingProfile) {
+            throw new Error("You already have a creator profile. Please log in to access your dashboard.");
+          }
+          
+          // Use existing user for profile creation
+          authUser = signInData.user;
+        } else {
+          throw signUpError;
+        }
+      } else {
+        if (!authData.user) throw new Error("Failed to create user");
+        authUser = authData.user;
+      }
 
       // Upload profile image
       let profileImageUrl: string | null = null;
       if (profileImage) {
         const fileExt = profileImage.name.split(".").pop();
-        const filePath = `${authData.user.id}/profile.${fileExt}`;
+        const filePath = `${authUser.id}/profile.${fileExt}`;
         
         const { error: profileUploadError } = await supabase.storage
           .from("profile-images")
@@ -642,7 +686,7 @@ const CreatorSignup = () => {
         const coverImg = coverImages[i];
         if (coverImg) {
           const fileExt = coverImg.name.split(".").pop();
-          const filePath = `${authData.user.id}/cover-${i + 1}.${fileExt}`;
+          const filePath = `${authUser.id}/cover-${i + 1}.${fileExt}`;
           
           const { error: coverUploadError } = await supabase.storage
             .from("profile-images")
@@ -663,7 +707,7 @@ const CreatorSignup = () => {
       const { data: profileData, error: profileError } = await supabase
         .from("creator_profiles")
         .insert({
-          user_id: authData.user.id,
+          user_id: authUser.id,
           display_name: displayName,
           bio,
           location_city: locationCity || null,
@@ -735,7 +779,7 @@ const CreatorSignup = () => {
           const item = portfolioItems[i];
           const fileExt = item.file.name.split(".").pop();
           const fileName = `${Date.now()}-${i}.${fileExt}`;
-          const filePath = `${authData.user.id}/${fileName}`;
+          const filePath = `${authUser.id}/${fileName}`;
 
           const { error: uploadError } = await supabase.storage
             .from("portfolio-media")
@@ -770,7 +814,7 @@ const CreatorSignup = () => {
           if (affiliateId) {
             await supabase.from('referrals').insert({
               affiliate_id: affiliateId,
-              referred_user_id: authData.user.id,
+              referred_user_id: authUser.id,
               referred_user_type: 'creator',
               referral_code_used: referralCode
             });

@@ -182,6 +182,18 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
 
     const result = await safeNativeAsync(
       async () => {
+        // Check if profile already exists for this user
+        const { data: existingProfile } = await supabase
+          .from('creator_profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (existingProfile) {
+          // Profile already exists - just complete
+          return true;
+        }
+
         // 1. Upload profile image
         let profileImageUrl = null;
         if (profileImage) {
@@ -216,7 +228,13 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
           .select()
           .single();
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          // Handle unique constraint violation (profile already exists)
+          if (profileError.code === '23505') {
+            return true; // Profile exists, treat as success
+          }
+          throw profileError;
+        }
 
         // 3. Add social accounts
         const validSocialAccounts = socialAccounts.filter(
