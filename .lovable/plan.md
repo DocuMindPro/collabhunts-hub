@@ -1,204 +1,121 @@
 
-# Add Dynamic City/State Dropdown Based on Country Selection
 
-## Overview
-Replace the free-text City and State input fields in the creator onboarding (Step 2) with dynamic dropdown menus that automatically populate based on the selected country. For example, when Lebanon is selected, the City dropdown will show Lebanese cities like Beirut, Jounieh, Tripoli, Zouk Mikael, etc.
+# Expand City/State Data for Lebanon and Middle East
 
-## Current State
-- **City**: Free-text `<Input>` field
-- **State**: Free-text `<Input>` field  
-- **Country**: Already using `<CountrySelect>` dropdown component
+## Current State Analysis
 
-The existing `LebaneseCitySelect` component already groups Lebanese cities by region (Mount Lebanon, North, South, Bekaa) and the `LEBANESE_CITIES` config exists in `lebanese-market.ts`.
+The `src/config/country-locations.ts` file currently has:
 
-## Proposed Solution
+| Country | Regions/States | Cities |
+|---------|----------------|--------|
+| Lebanon | 7 | 47 cities |
+| UAE | 7 | 4 cities |
+| Saudi Arabia | 4 | 6 cities |
+| USA | 51 | 37 cities |
 
-### 1. Create New Config File: `src/config/country-locations.ts`
+**Problem**: Lebanon needs more cities (especially in Akkar - only 2 cities), and GCC countries are severely limited.
 
-This file will contain city/state data for supported countries. Initially focus on:
-- **Lebanon** (primary market) - cities grouped by region
-- **United States** - states with major cities
-- **Other countries** - fallback to free-text input
+## Expansion Plan
 
-Structure:
-```typescript
-interface LocationData {
-  states?: { value: string; label: string }[];
-  cities: { value: string; label: string; state?: string }[];
-}
+### 1. Lebanon - Significantly Expanded (47 to 120+ cities)
 
-export const COUNTRY_LOCATIONS: Record<string, LocationData> = {
-  LB: {
-    // Lebanese cities already defined, grouped by region
-    cities: [
-      { value: 'beirut', label: 'Beirut', state: 'Mount Lebanon' },
-      { value: 'jounieh', label: 'Jounieh', state: 'Mount Lebanon' },
-      { value: 'zouk_mikael', label: 'Zouk Mikael', state: 'Mount Lebanon' },
-      { value: 'tripoli', label: 'Tripoli', state: 'North' },
-      // ... more cities
-    ]
-  },
-  US: {
-    states: [
-      { value: 'CA', label: 'California' },
-      { value: 'NY', label: 'New York' },
-      // ...
-    ],
-    cities: [
-      { value: 'los_angeles', label: 'Los Angeles', state: 'CA' },
-      // ...
-    ]
-  },
-  // Add more countries as needed
-};
-```
+**Mount Lebanon** (currently 18, adding 15+):
+- Add: Mansourieh, Fanar, Jal el Dib, Naccache, Rabieh, Yarze, Hadath, Jdeideh, Zalka, Sahel Alma, Ghazir, Kfarhbab, Amchit, Mayrouba, Faraya, Harissa, Tabarja, Maameltein, Adma, Haret Sakher, Sarba, Ajaltoun, Jeita, Zouk Mosbeh, Dora, Achrafieh, Hamra, Verdun, Gemmayze, Mar Mikhael, Ras Beirut
 
-### 2. Create New Component: `src/components/LocationSelect.tsx`
+**North Lebanon** (currently 8, adding 10+):
+- Add: Mina, Beddawi, Amioun, Kousba, Douma, Tannourine, Beit Mery (Koura), Anfeh, Qalamoun, Ras Maska
 
-A smart component that:
-- Takes the selected country code as a prop
-- Shows a dropdown if the country has predefined cities/states
-- Falls back to a text input if country has no data
-- Supports search/filter within the dropdown
+**South Lebanon** (currently 5, adding 10+):
+- Add: Abra, Ghazieh, Maghdouche, Jiyeh, Damour, Rmeileh, Sarafand, Adloun, Cana, Beit Yahoun, Khiam
 
-```typescript
-interface LocationSelectProps {
-  countryCode: string;
-  cityValue: string;
-  stateValue: string;
-  onCityChange: (city: string) => void;
-  onStateChange: (state: string) => void;
-}
-```
+**Nabatieh** (currently 2, adding 5+):
+- Add: Arnoun, Tebnine, Kfar Tibnit, Jbaa, Kfarouman
 
-### 3. Update `src/pages/CreatorSignup.tsx`
+**Bekaa** (currently 4, adding 10+):
+- Add: Ablah, Jeb Jennine, Marj, Rashaya, Saghbine, Kabb Elias, Bar Elias, Taanayel, Ferzol, Majdel Anjar
 
-**Replace lines 1079-1104:**
+**Baalbek-Hermel** (currently 2, adding 5+):
+- Add: Labweh, Ras Baalbek, Arsal, Nabi Sheet, Deir el Ahmar
 
-Current:
-```tsx
-<div className="grid grid-cols-3 gap-3">
-  <div>
-    <Label htmlFor="city">City</Label>
-    <Input value={locationCity} onChange={...} />
-  </div>
-  <div>
-    <Label htmlFor="state">State</Label>
-    <Input value={locationState} onChange={...} />
-  </div>
-  <div>
-    <Label htmlFor="country">Country</Label>
-    <CountrySelect value={locationCountry} onChange={...} />
-  </div>
-</div>
-```
+**Akkar** (currently 2, adding 10+):
+- Add: Qoubaiyat, Bebnine, Fneidek, Tikrit, Minyara, Rahbe, Michmich, Andaket, Sheikh Mohammad, Halba
 
-New:
-```tsx
-<div className="grid grid-cols-3 gap-3">
-  <div>
-    <Label htmlFor="country">Country</Label>
-    <CountrySelect value={locationCountry} onChange={handleCountryChange} />
-  </div>
-  <div>
-    <Label htmlFor="state">State/Region</Label>
-    <LocationSelect type="state" countryCode={locationCountry} ... />
-  </div>
-  <div>
-    <Label htmlFor="city">City</Label>
-    <LocationSelect type="city" countryCode={locationCountry} stateFilter={locationState} ... />
-  </div>
-</div>
-```
+### 2. UAE - Comprehensive Expansion (4 to 40+ cities)
 
-**Add logic:**
-- When country changes, reset city and state
-- When state changes, reset city (if cities are state-filtered)
-- For unsupported countries, show text inputs as fallback
+**Dubai** (adding 10+):
+- Dubai Marina, JBR, Downtown Dubai, Business Bay, Deira, Bur Dubai, Al Barsha, Jumeirah, Palm Jumeirah, Al Quoz, Silicon Oasis, Dubai Hills
 
-## Lebanese Cities to Include
+**Abu Dhabi** (adding 8+):
+- Abu Dhabi Island, Al Reem Island, Yas Island, Saadiyat Island, Al Ain, Khalifa City, Mussafah, Al Raha
 
-Expanding the existing list with more cities:
-- **Mount Lebanon**: Beirut, Jounieh, Byblos/Jbeil, Zouk Mikael, Kaslik, Aley, Broummana, Dbayeh, Antelias, Baabda
-- **North**: Tripoli, Batroun, Zgharta, Bcharre, Koura
-- **South**: Sidon/Saida, Tyre, Nabatieh, Jezzine
-- **Bekaa**: Zahle, Baalbek, Chtaura
+**Sharjah** (adding 5+):
+- Al Nahda, Al Khan, Al Majaz, Muwaileh, Al Qasimia
 
-## Visual Flow
+**Other Emirates**:
+- Ras Al Khaimah City, Al Hamra, Khorfakkan, Fujairah City, Dibba, Umm Al Quwain City
 
-```text
-1. User selects "Lebanon" from Country dropdown
-          ↓
-2. State dropdown populates with regions: Mount Lebanon, North, South, Bekaa
-          ↓
-3. User selects "Mount Lebanon"
-          ↓
-4. City dropdown filters to show only Mount Lebanon cities:
-   - Beirut
-   - Jounieh
-   - Zouk Mikael
-   - Byblos
-   - etc.
-```
+### 3. Saudi Arabia - Major Expansion (6 to 50+ cities)
 
-## Files to Create/Modify
+**Add All 13 Regions**:
+- Asir, Jazan, Najran, Al Baha, Hail, Al Jouf, Northern Borders, Tabuk, Qassim
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/config/country-locations.ts` | Create | Country-specific city/state data |
-| `src/components/LocationSelect.tsx` | Create | Smart dropdown with fallback |
-| `src/pages/CreatorSignup.tsx` | Modify | Update Step 2 location fields |
+**Major Cities per Region**:
+- Riyadh Region: Al Kharj, Ad Diriyah, Al Majmaah
+- Makkah Region: Taif, Rabigh, Al Qunfudhah
+- Eastern Province: Jubail, Khobar, Qatif, Hofuf, Ras Tanura
+- Madinah Region: Yanbu, Al Ula, Badr
+- Qassim: Buraidah, Unaizah
+- Asir: Abha, Khamis Mushait, Najran
+- Tabuk: Tabuk City, NEOM, Duba
 
-## Technical Details
+### 4. Add New GCC Countries
 
-### Country Change Handler
-```typescript
-const handleCountryChange = (code: string) => {
-  setLocationCountry(code);
-  setLocationState(""); // Reset state
-  setLocationCity("");  // Reset city
-};
-```
+**Kuwait (KW)**:
+- Governorates: Capital, Hawalli, Farwaniya, Ahmadi, Jahra, Mubarak Al-Kabeer
+- Cities: Kuwait City, Salmiya, Hawalli, Jahra, Ahmadi, Fahaheel, Mangaf
 
-### LocationSelect Component Logic
-```typescript
-const LocationSelect = ({ type, countryCode, stateFilter, value, onChange }) => {
-  const locationData = COUNTRY_LOCATIONS[countryCode];
-  
-  // No data for this country - show text input
-  if (!locationData) {
-    return <Input value={value} onChange={(e) => onChange(e.target.value)} />;
-  }
-  
-  // Get options based on type (state or city)
-  const options = type === 'state' 
-    ? locationData.states 
-    : locationData.cities.filter(c => !stateFilter || c.state === stateFilter);
-  
-  // Show dropdown with search
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger><SelectValue placeholder={`Select ${type}`} /></SelectTrigger>
-      <SelectContent>
-        {options?.map(opt => (
-          <SelectItem key={opt.value} value={opt.label}>{opt.label}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-};
-```
+**Qatar (QA)**:
+- Municipalities: Doha, Al Rayyan, Al Wakrah, Al Khor, Al Shamal, Umm Salal, Al Daayen
+- Cities: Doha, Lusail, The Pearl, West Bay, Al Wakra, Dukhan, Mesaieed
 
-### Dropdown Styling
-Following project conventions with proper z-index and non-transparent background:
-```tsx
-<SelectContent className="bg-background border shadow-lg z-50">
-```
+**Bahrain (BH)**:
+- Governorates: Capital, Muharraq, Northern, Southern
+- Cities: Manama, Muharraq, Riffa, Hamad Town, Isa Town, Sitra
 
-## Summary
-This implementation provides a user-friendly location selection that:
-1. Automatically shows Lebanese cities when Lebanon is selected
-2. Supports other countries with similar data structures
-3. Gracefully falls back to text inputs for countries without data
-4. Resets dependent fields when parent selection changes
-5. Groups cities by region/state for easy navigation
+**Oman (OM)**:
+- Governorates: Muscat, Dhofar, Al Batinah North, Al Batinah South, Al Dakhiliyah
+- Cities: Muscat, Salalah, Sohar, Nizwa, Sur, Barka, Ibri
+
+**Jordan (JO)**:
+- Governorates: Amman, Irbid, Zarqa, Balqa, Aqaba, Mafraq, Karak
+- Cities: Amman, Zarqa, Irbid, Aqaba, Salt, Madaba, Jerash
+
+**Egypt (EG)**:
+- Governorates: Cairo, Alexandria, Giza, Dakahlia, Sharqia, Gharbia
+- Cities: Cairo, Alexandria, Giza, Sharm El Sheikh, Hurghada, Luxor, Aswan
+
+## Implementation
+
+### File to Modify
+`src/config/country-locations.ts`
+
+### Changes Summary
+
+| Country | Before | After |
+|---------|--------|-------|
+| Lebanon (LB) | 47 cities | 120+ cities |
+| UAE (AE) | 4 cities | 40+ cities |
+| Saudi Arabia (SA) | 6 cities, 4 regions | 50+ cities, 13 regions |
+| Kuwait (KW) | - | NEW: 6 governorates, 15+ cities |
+| Qatar (QA) | - | NEW: 7 municipalities, 15+ cities |
+| Bahrain (BH) | - | NEW: 4 governorates, 10+ cities |
+| Oman (OM) | - | NEW: 5+ governorates, 15+ cities |
+| Jordan (JO) | - | NEW: 7+ governorates, 15+ cities |
+| Egypt (EG) | - | NEW: 6+ governorates, 15+ cities |
+
+### Technical Notes
+- All cities will reference their parent state/region via the `state` property
+- Values use snake_case for consistency
+- Labels show proper local names (with transliterations where helpful)
+- Helper functions remain unchanged - they already support the expanded data
+
