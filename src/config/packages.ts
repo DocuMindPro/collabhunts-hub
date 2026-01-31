@@ -123,7 +123,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
   competition: {
     name: 'Live Competition',
     description: 'Exciting competition event with live audience engagement',
-    priceRange: { min: 80000, max: 200000 }, // $800-$2,000
+    priceRange: null, // Custom pricing - requires consultation
     durationRange: { min: 2, max: 6 }, // 2-6 hours
     includes: [
       '2 weeks pre-promotion',
@@ -155,12 +155,6 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
           'Prizes = brand products/services',
         ],
       },
-    ],
-    upsells: [
-      { id: 'second_creator', name: 'Second Creator', description: 'Add another creator', priceCents: 30000 },
-      { id: 'streaming_setup', name: 'Professional Streaming', description: 'Pro streaming equipment', priceCents: 20000 },
-      { id: 'prize_package', name: 'Prize Package Sponsorship', description: 'Branded prize setup', priceCents: 15000 },
-      { id: 'analytics', name: 'Advanced Analytics', description: 'Detailed engagement report', priceCents: 10000 },
     ],
     idealFor: ['Malls', 'Large venues', 'Product launches'],
   },
