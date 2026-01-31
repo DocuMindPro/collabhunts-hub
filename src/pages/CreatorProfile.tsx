@@ -875,12 +875,16 @@ const CreatorProfile = () => {
                               </p>
                             </div>
                             <div className="text-right flex-shrink-0">
-                              <DimmedPrice 
-                                price={service.price_cents} 
-                                canViewPrice={canViewPrice} 
-                                size="lg"
-                                onClick={() => setIsPricingModalOpen(true)}
-                              />
+                              {packageType === 'competition' ? (
+                                <p className="text-lg font-semibold text-muted-foreground">Contact for pricing</p>
+                              ) : (
+                                <DimmedPrice 
+                                  price={service.price_cents} 
+                                  canViewPrice={canViewPrice} 
+                                  size="lg"
+                                  onClick={() => setIsPricingModalOpen(true)}
+                                />
+                              )}
                               {packageInfo.duration && (
                                 <Badge variant="outline" className="mt-1 text-xs">
                                   {packageInfo.duration}

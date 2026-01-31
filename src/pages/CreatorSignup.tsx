@@ -49,9 +49,7 @@ interface SocialAccount {
 
 interface Service {
   serviceType: string;
-  minPriceCents: number;
-  maxPriceCents: number;
-  priceTierId?: string;
+  priceCents: number;
   description: string;
   deliveryDays: number;
 }
@@ -125,7 +123,7 @@ const CreatorSignup = () => {
   // Modal states for Services
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [selectedServiceType, setSelectedServiceType] = useState("");
-  const [selectedTierId, setSelectedTierId] = useState("");
+  const [servicePrice, setServicePrice] = useState("");
   const [serviceDescription, setServiceDescription] = useState("");
   const [serviceDeliveryDays, setServiceDeliveryDays] = useState("7");
 
@@ -708,18 +706,22 @@ const CreatorSignup = () => {
 
       if (socialError) throw socialError;
 
-      // Create services with price ranges
-      const servicesData = services.map(service => ({
-        creator_profile_id: profileData.id,
-        service_type: service.serviceType,
-        price_cents: service.minPriceCents, // Use min as the base price for backwards compatibility
-        min_price_cents: service.minPriceCents,
-        max_price_cents: service.maxPriceCents,
-        price_tier_id: service.priceTierId || null,
-        description: service.description,
-        delivery_days: service.deliveryDays,
-        is_active: true
-      }));
+      // Create services with single price
+      const servicesData = services.map(service => {
+        const isPKBattle = service.serviceType === 'competition';
+        const priceCents = isPKBattle ? 0 : service.priceCents;
+        return {
+          creator_profile_id: profileData.id,
+          service_type: service.serviceType,
+          price_cents: priceCents,
+          min_price_cents: priceCents,
+          max_price_cents: priceCents,
+          price_tier_id: null, // No longer using tiers
+          description: service.description,
+          delivery_days: service.deliveryDays,
+          is_active: true
+        };
+      });
 
       const { error: servicesError } = await supabase
         .from("creator_services")
@@ -908,38 +910,40 @@ const CreatorSignup = () => {
 
   const openServiceModal = (serviceType: string) => {
     setSelectedServiceType(serviceType);
-    setSelectedTierId("");
+    setServicePrice("");
     setServiceDescription("");
     setServiceDeliveryDays("7");
     setShowServiceModal(true);
   };
 
   const handleServiceSubmit = () => {
-    // Find the selected tier
-    const selectedTier = priceTiers.find(t => t.id === selectedTierId);
+    const isPKBattle = selectedServiceType === 'competition';
     
-    if (!selectedTier) {
-      toast({
-        title: "Selection Required",
-        description: "Please select a pricing tier",
-        variant: "destructive"
-      });
-      return;
+    // For PK Battle, no price needed
+    if (!isPKBattle) {
+      const priceValue = parseInt(servicePrice);
+      if (!priceValue || priceValue < 10) {
+        toast({
+          title: "Invalid Price",
+          description: "Please enter a valid price (minimum $10)",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
+    const priceCents = isPKBattle ? 0 : parseInt(servicePrice) * 100;
     const deliveryDays = parseInt(serviceDeliveryDays || "7");
 
     setServices([...services, {
       serviceType: selectedServiceType,
-      minPriceCents: selectedTier.min_price_cents,
-      maxPriceCents: selectedTier.max_price_cents,
-      priceTierId: selectedTier.id,
+      priceCents,
       description: serviceDescription || "",
       deliveryDays: isNaN(deliveryDays) ? 7 : deliveryDays
     }]);
     setShowServiceModal(false);
     setSelectedServiceType("");
-    setSelectedTierId("");
+    setServicePrice("");
     setServiceDescription("");
     setServiceDeliveryDays("7");
   };
@@ -1558,26 +1562,29 @@ const CreatorSignup = () => {
                   {services.length > 0 && (
                     <div className="space-y-2">
                       <Label>Added Services</Label>
-                      {services.map((service, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                          <div>
-                            <p className="font-medium">
-                              {enabledServiceTypes.find(t => t.value === service.serviceType)?.label || getServiceDisplayName(service.serviceType)}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              ${(service.minPriceCents / 100).toFixed(0)} - ${(service.maxPriceCents / 100).toFixed(0)} • {service.deliveryDays} days delivery
-                            </p>
+                      {services.map((service, index) => {
+                        const isPKBattle = service.serviceType === 'competition';
+                        return (
+                          <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div>
+                              <p className="font-medium">
+                                {enabledServiceTypes.find(t => t.value === service.serviceType)?.label || getServiceDisplayName(service.serviceType)}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {isPKBattle ? 'Available' : `$${(service.priceCents / 100).toFixed(0)}`} • {service.deliveryDays} days delivery
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setServices(services.filter((_, i) => i !== index))}
+                            >
+                              Remove
+                            </Button>
                           </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setServices(services.filter((_, i) => i !== index))}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
@@ -1739,13 +1746,16 @@ const CreatorSignup = () => {
                     </div>
 
                     <div>
-                      <h3 className="font-semibold mb-2">Services</h3>
+                      <h3 className="font-semibold mb-2">Packages</h3>
                       <div className="space-y-1">
-                        {services.map((service, index) => (
-                          <p key={index} className="text-sm text-muted-foreground">
-                            {enabledServiceTypes.find(t => t.value === service.serviceType)?.label || getServiceDisplayName(service.serviceType)}: ${(service.minPriceCents / 100).toFixed(0)} - ${(service.maxPriceCents / 100).toFixed(0)}
-                          </p>
-                        ))}
+                        {services.map((service, index) => {
+                          const isPKBattle = service.serviceType === 'competition';
+                          return (
+                            <p key={index} className="text-sm text-muted-foreground">
+                              {enabledServiceTypes.find(t => t.value === service.serviceType)?.label || getServiceDisplayName(service.serviceType)}: {isPKBattle ? 'Available' : `$${(service.priceCents / 100).toFixed(0)}`}
+                            </p>
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -1974,49 +1984,39 @@ const CreatorSignup = () => {
               </ul>
             </div>
 
-            <div className="space-y-3">
-              <Label>
-                Your Price Range <span className="text-destructive">*</span>
-              </Label>
-              {currentServiceTiers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No pricing tiers available for this package.</p>
-              ) : (
-                <div className="space-y-2">
-                  {currentServiceTiers.map((tier) => (
-                    <label
-                      key={tier.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        selectedTierId === tier.id 
-                          ? 'border-primary bg-primary/5' 
-                          : 'border-border hover:bg-muted/50'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="price-tier"
-                        value={tier.id}
-                        checked={selectedTierId === tier.id}
-                        onChange={() => setSelectedTierId(tier.id)}
-                        className="sr-only"
-                      />
-                      <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
-                        selectedTierId === tier.id ? 'border-primary' : 'border-muted-foreground'
-                      }`}>
-                        {selectedTierId === tier.id && (
-                          <div className="h-2 w-2 rounded-full bg-primary" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{tier.tier_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          ${(tier.min_price_cents / 100).toFixed(0)} - ${(tier.max_price_cents / 100).toFixed(0)}
-                        </p>
-                      </div>
-                    </label>
-                  ))}
+            {/* Price Input - hidden for PK Battle */}
+            {selectedServiceType !== 'competition' && (
+              <div className="space-y-3">
+                <Label htmlFor="service-price">
+                  Your Price (USD) <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    id="service-price"
+                    type="number"
+                    min="10"
+                    value={servicePrice}
+                    onChange={(e) => setServicePrice(e.target.value)}
+                    placeholder="e.g., 200"
+                    className="pl-8"
+                  />
                 </div>
-              )}
-            </div>
+                <p className="text-xs text-muted-foreground">
+                  Set your own price for this package (minimum $10)
+                </p>
+              </div>
+            )}
+
+            {/* PK Battle Notice */}
+            {selectedServiceType === 'competition' && (
+              <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-sm">
+                <p className="font-medium mb-1">💡 Pricing handled by CollabHunts</p>
+                <p className="text-muted-foreground">
+                  We'll discuss pricing with you when brands are interested in booking PK battles.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="service-description">Description (optional)</Label>
@@ -2029,25 +2029,31 @@ const CreatorSignup = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="service-delivery">Delivery Days</Label>
-              <Input
-                id="service-delivery"
-                type="number"
-                value={serviceDeliveryDays}
-                onChange={(e) => setServiceDeliveryDays(e.target.value)}
-                placeholder="7"
-                min="1"
-              />
-            </div>
+            {selectedServiceType !== 'competition' && (
+              <div className="space-y-2">
+                <Label htmlFor="service-delivery">Delivery Days</Label>
+                <Input
+                  id="service-delivery"
+                  type="number"
+                  value={serviceDeliveryDays}
+                  onChange={(e) => setServiceDeliveryDays(e.target.value)}
+                  placeholder="7"
+                  min="1"
+                />
+              </div>
+            )}
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setShowServiceModal(false)}>
               Cancel
             </Button>
-            <Button onClick={handleServiceSubmit} className="gradient-hero hover:opacity-90" disabled={!selectedTierId}>
-              Add Service
+            <Button 
+              onClick={handleServiceSubmit} 
+              className="gradient-hero hover:opacity-90" 
+              disabled={selectedServiceType !== 'competition' && (!servicePrice || parseInt(servicePrice) < 10)}
+            >
+              {selectedServiceType === 'competition' ? 'Add Availability' : 'Add Package'}
             </Button>
           </DialogFooter>
         </DialogContent>

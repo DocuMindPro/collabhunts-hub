@@ -1,18 +1,10 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -20,8 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Loader2, Save, Gift, Sparkles, Users, Swords, Wand2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { EVENT_PACKAGES, type PackageType } from "@/config/packages";
 
 interface Service {
   id: string;
@@ -33,16 +27,7 @@ interface Service {
   description: string | null;
   delivery_days: number;
   is_active: boolean;
-}
-
-interface PriceTier {
-  id: string;
-  service_type: string;
-  tier_name: string;
-  min_price_cents: number;
-  max_price_cents: number;
-  sort_order: number;
-  is_enabled: boolean;
+  creator_profile_id: string;
 }
 
 interface ServiceEditDialogProps {
@@ -53,327 +38,282 @@ interface ServiceEditDialogProps {
   onSuccess: () => void;
 }
 
-// Map service types to package names
-const SERVICE_TYPE_LABELS: Record<string, string> = {
+const PACKAGE_ICONS: Record<string, React.ReactNode> = {
+  unbox_review: <Gift className="h-5 w-5" />,
+  social_boost: <Sparkles className="h-5 w-5" />,
+  meet_greet: <Users className="h-5 w-5" />,
+  competition: <Swords className="h-5 w-5" />,
+  custom: <Wand2 className="h-5 w-5" />
+};
+
+const PACKAGE_NAMES: Record<string, string> = {
   unbox_review: "Unbox & Review",
   social_boost: "Social Boost",
   meet_greet: "Meet & Greet",
   competition: "Live PK Battle",
-  custom: "Custom Experience",
-  // Legacy fallbacks
-  workshop: "Workshop",
-  brand_activation: "Brand Activation",
-  appearance: "Appearance",
-  hosting: "Event Hosting",
-  content_creation: "Content Creation",
+  custom: "Custom Experience"
 };
 
-// Package descriptions for context
-const SERVICE_DESCRIPTIONS: Record<string, string> = {
-  unbox_review: "Brands send products for you to review from home",
-  social_boost: "Visit a venue and create content showcasing the experience",
-  meet_greet: "Appear at a venue to meet fans and promote the brand",
-  competition: "Participate in live PK battles at venues",
-  custom: "Tailored experiences for unique brand needs",
-};
-
-const ServiceEditDialog = ({
-  service,
-  creatorProfileId,
-  isOpen,
-  onClose,
-  onSuccess,
-}: ServiceEditDialogProps) => {
-  const [availableServiceTypes, setAvailableServiceTypes] = useState<string[]>([]);
-  const [selectedServiceType, setSelectedServiceType] = useState<string>("");
-  const [priceTiers, setPriceTiers] = useState<PriceTier[]>([]);
-  const [selectedTierId, setSelectedTierId] = useState<string>("");
+const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSuccess }: ServiceEditDialogProps) => {
+  const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [deliveryDays, setDeliveryDays] = useState("7");
   const [isActive, setIsActive] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [loadingTiers, setLoadingTiers] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [serviceType, setServiceType] = useState<string>("");
+  const [availableTypes, setAvailableTypes] = useState<string[]>([]);
 
-  // Fetch available service types on mount
+  const isPKBattle = serviceType === "competition";
+
+  // Fetch available package types
   useEffect(() => {
-    const fetchServiceTypes = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("service_price_tiers")
-          .select("service_type")
-          .eq("is_enabled", true);
+    const fetchTypes = async () => {
+      const { data } = await supabase
+        .from("service_price_tiers")
+        .select("service_type")
+        .eq("is_enabled", true);
 
-        if (error) throw error;
-
-        // Get unique service types
-        const types = [...new Set(data?.map((t) => t.service_type) || [])];
-        setAvailableServiceTypes(types);
-      } catch (error) {
-        console.error("Error fetching service types:", error);
+      if (data) {
+        const types = [...new Set(data.map(d => d.service_type))];
+        // Filter to only show the 5 main packages
+        const mainPackages = ['unbox_review', 'social_boost', 'meet_greet', 'competition', 'custom'];
+        setAvailableTypes(types.filter(t => mainPackages.includes(t)));
       }
     };
-
-    if (isOpen) {
-      fetchServiceTypes();
-    }
+    
+    if (isOpen) fetchTypes();
   }, [isOpen]);
 
-  // Fetch tiers when service type changes
   useEffect(() => {
-    const fetchTiers = async () => {
-      if (!selectedServiceType) {
-        setPriceTiers([]);
-        return;
-      }
-
-      setLoadingTiers(true);
-      try {
-        const { data, error } = await supabase
-          .from("service_price_tiers")
-          .select("id, service_type, tier_name, min_price_cents, max_price_cents, sort_order, is_enabled")
-          .eq("service_type", selectedServiceType)
-          .eq("is_enabled", true)
-          .order("sort_order", { ascending: true });
-
-        if (error) throw error;
-        setPriceTiers(data || []);
-      } catch (error) {
-        console.error("Error fetching price tiers:", error);
-        toast.error("Failed to load price tiers");
-      } finally {
-        setLoadingTiers(false);
-      }
-    };
-
-    fetchTiers();
-  }, [selectedServiceType]);
-
-  // Reset form when dialog opens/closes or service changes
-  useEffect(() => {
-    if (isOpen) {
-      if (service) {
-        setSelectedServiceType(service.service_type);
-        setSelectedTierId(service.price_tier_id || "");
-        setDescription(service.description || "");
-        setDeliveryDays(service.delivery_days?.toString() || "7");
-        setIsActive(service.is_active);
-      } else {
-        setSelectedServiceType("");
-        setSelectedTierId("");
-        setDescription("");
-        setDeliveryDays("7");
-        setIsActive(true);
-      }
+    if (service) {
+      setServiceType(service.service_type);
+      // Use the single price_cents value
+      setPrice(((service.price_cents || 0) / 100).toString());
+      setDescription(service.description || "");
+      setDeliveryDays(service.delivery_days?.toString() || "7");
+      setIsActive(service.is_active);
+    } else {
+      setServiceType("");
+      setPrice("");
+      setDescription("");
+      setDeliveryDays("7");
+      setIsActive(true);
     }
-  }, [isOpen, service]);
+  }, [service, isOpen]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSave = async () => {
     if (!creatorProfileId) {
       toast.error("Creator profile not found");
       return;
     }
 
-    if (!selectedServiceType) {
-      toast.error("Please select a service type");
+    if (!serviceType) {
+      toast.error("Please select a package type");
       return;
     }
 
-    if (!selectedTierId) {
-      toast.error("Please select a price range");
+    // Validate price (except for PK Battle)
+    const priceValue = parseFloat(price);
+    if (!isPKBattle && (!priceValue || priceValue < 10)) {
+      toast.error("Please enter a valid price (minimum $10)");
       return;
     }
 
-    const selectedTier = priceTiers.find((t) => t.id === selectedTierId);
-    if (!selectedTier) {
-      toast.error("Invalid price tier selected");
-      return;
-    }
+    setIsSaving(true);
 
-    setLoading(true);
     try {
-      const serviceData = {
-        creator_profile_id: creatorProfileId,
-        service_type: selectedServiceType,
-        price_cents: selectedTier.min_price_cents, // For backwards compatibility
-        min_price_cents: selectedTier.min_price_cents,
-        max_price_cents: selectedTier.max_price_cents,
-        price_tier_id: selectedTierId,
+      const priceCents = isPKBattle ? 0 : Math.round(priceValue * 100);
+      
+      const updateData = {
+        service_type: serviceType,
+        price_cents: priceCents,
+        min_price_cents: priceCents,
+        max_price_cents: priceCents,
+        price_tier_id: null, // No longer using tiers
         description: description || null,
         delivery_days: parseInt(deliveryDays) || 7,
-        is_active: isActive,
+        is_active: isActive
       };
 
       if (service) {
+        // Update existing service
         const { error } = await supabase
           .from("creator_services")
-          .update(serviceData)
+          .update(updateData)
           .eq("id", service.id);
 
         if (error) throw error;
-        toast.success("Service updated successfully");
+        toast.success("Package updated successfully");
       } else {
+        // Create new service
         const { error } = await supabase
           .from("creator_services")
-          .insert(serviceData);
+          .insert({
+            ...updateData,
+            creator_profile_id: creatorProfileId
+          });
 
         if (error) throw error;
-        toast.success("Service created successfully");
+        toast.success("Package added successfully");
       }
 
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving service:", error);
-      toast.error("Failed to save service");
+      toast.error(error.message || "Failed to save package");
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
-  const formatTierPrice = (tier: PriceTier) => {
-    return `$${(tier.min_price_cents / 100).toLocaleString()} - $${(tier.max_price_cents / 100).toLocaleString()}`;
-  };
+  const packageInfo = serviceType ? EVENT_PACKAGES[serviceType as PackageType] : null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{service ? "Edit Package" : "Add New Package"}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            {serviceType && PACKAGE_ICONS[serviceType]}
+            {service ? "Edit Package" : "Add Package"}
+          </DialogTitle>
           <DialogDescription>
-            {service ? "Update your package details" : "Create a new event package"}
+            {service 
+              ? `Update your ${PACKAGE_NAMES[serviceType] || serviceType} settings`
+              : "Configure your package details"
+            }
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Service Type Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="service_type">Package Type *</Label>
-            <Select
-              value={selectedServiceType}
-              onValueChange={(value) => {
-                setSelectedServiceType(value);
-                setSelectedTierId(""); // Reset tier when type changes
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a package type" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableServiceTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {SERVICE_TYPE_LABELS[type] || type.replace(/_/g, " ")}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedServiceType && SERVICE_DESCRIPTIONS[selectedServiceType] && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {SERVICE_DESCRIPTIONS[selectedServiceType]}
-              </p>
-            )}
-          </div>
+        <div className="space-y-4 pt-4">
+          {/* Package Type Selection (only for new) */}
+          {!service && (
+            <div className="space-y-2">
+              <Label htmlFor="serviceType">Package Type</Label>
+              <Select value={serviceType} onValueChange={setServiceType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a package" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTypes.map(type => (
+                    <SelectItem key={type} value={type}>
+                      {PACKAGE_NAMES[type] || type.replace(/_/g, ' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-          {/* Price Tier Selection */}
-          <div className="space-y-3">
-            <Label>Price Range *</Label>
-            {loadingTiers ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          {/* Package Info */}
+          {packageInfo && (
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <p className="font-medium">{packageInfo.name}</p>
+              <p className="text-sm text-muted-foreground">{packageInfo.description}</p>
+            </div>
+          )}
+
+          {/* Price (hidden for PK Battle) */}
+          {serviceType && !isPKBattle && (
+            <div className="space-y-2">
+              <Label htmlFor="price">Your Price (USD)</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                <Input
+                  id="price"
+                  type="number"
+                  min="10"
+                  step="1"
+                  placeholder="e.g., 200"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  className="pl-8"
+                />
               </div>
-            ) : priceTiers.length > 0 ? (
-              <RadioGroup
-                value={selectedTierId}
-                onValueChange={setSelectedTierId}
-                className="space-y-2"
-              >
-                {priceTiers.map((tier) => (
-                  <label
-                    key={tier.id}
-                    className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-                      selectedTierId === tier.id
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <RadioGroupItem value={tier.id} />
-                    <div className="flex-1">
-                      <p className="font-medium">{tier.tier_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatTierPrice(tier)}
-                      </p>
-                    </div>
-                  </label>
-                ))}
-              </RadioGroup>
-            ) : selectedServiceType ? (
-              <p className="text-sm text-muted-foreground py-2">
-                No price tiers available for this service type.
+              <p className="text-xs text-muted-foreground">
+                Set your own price for this package
               </p>
-            ) : (
-              <p className="text-sm text-muted-foreground py-2">
-                Select a service type to see available price ranges.
+            </div>
+          )}
+
+          {/* PK Battle Notice */}
+          {isPKBattle && (
+            <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-sm">
+              <p className="font-medium mb-1">💡 Pricing handled by CollabHunts</p>
+              <p className="text-muted-foreground">
+                We'll discuss pricing with you when brands are interested in booking PK battles.
               </p>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe what's included in this service..."
-              rows={3}
-            />
-          </div>
+          {serviceType && (
+            <div className="space-y-2">
+              <Label htmlFor="description">Description (optional)</Label>
+              <Textarea
+                id="description"
+                placeholder="Add any special details about your offering..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+          )}
 
-          {/* Delivery Days */}
-          <div className="space-y-2">
-            <Label htmlFor="delivery_days">Delivery Time (days)</Label>
-            <Input
-              id="delivery_days"
-              type="number"
-              min="1"
-              value={deliveryDays}
-              onChange={(e) => setDeliveryDays(e.target.value)}
-            />
-          </div>
+          {/* Delivery Days (hidden for PK Battle) */}
+          {serviceType && !isPKBattle && (
+            <div className="space-y-2">
+              <Label htmlFor="deliveryDays">Delivery Time (days)</Label>
+              <Input
+                id="deliveryDays"
+                type="number"
+                min="1"
+                max="90"
+                value={deliveryDays}
+                onChange={(e) => setDeliveryDays(e.target.value)}
+              />
+            </div>
+          )}
 
           {/* Active Toggle */}
-          <div className="flex items-center justify-between">
-            <Label htmlFor="is_active">Active</Label>
-            <Switch
-              id="is_active"
-              checked={isActive}
-              onCheckedChange={setIsActive}
-            />
-          </div>
+          {serviceType && (
+            <div className="flex items-center justify-between py-2">
+              <div className="space-y-0.5">
+                <Label>Active</Label>
+                <p className="text-xs text-muted-foreground">
+                  {isPKBattle ? "Available for PK battles" : "Visible to brands"}
+                </p>
+              </div>
+              <Switch
+                checked={isActive}
+                onCheckedChange={setIsActive}
+              />
+            </div>
+          )}
 
-          {/* Action Buttons */}
-          <div className="flex gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+          {/* Actions */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={onClose}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={loading || !selectedServiceType || !selectedTierId} 
-              className="flex-1"
+            <Button
+              className="flex-1 gap-2"
+              onClick={handleSave}
+              disabled={isSaving || !serviceType}
             >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : service ? (
-                "Update"
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Create"
+                <Save className="h-4 w-4" />
               )}
+              Save
             </Button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
