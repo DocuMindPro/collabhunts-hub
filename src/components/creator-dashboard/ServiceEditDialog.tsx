@@ -53,13 +53,28 @@ interface ServiceEditDialogProps {
   onSuccess: () => void;
 }
 
+// Map service types to package names
 const SERVICE_TYPE_LABELS: Record<string, string> = {
+  unbox_review: "Unbox & Review",
+  social_boost: "Social Boost",
   meet_greet: "Meet & Greet",
+  competition: "Live PK Battle",
+  custom: "Custom Experience",
+  // Legacy fallbacks
   workshop: "Workshop",
   brand_activation: "Brand Activation",
   appearance: "Appearance",
   hosting: "Event Hosting",
   content_creation: "Content Creation",
+};
+
+// Package descriptions for context
+const SERVICE_DESCRIPTIONS: Record<string, string> = {
+  unbox_review: "Brands send products for you to review from home",
+  social_boost: "Visit a venue and create content showcasing the experience",
+  meet_greet: "Appear at a venue to meet fans and promote the brand",
+  competition: "Participate in live PK battles at venues",
+  custom: "Tailored experiences for unique brand needs",
 };
 
 const ServiceEditDialog = ({
@@ -224,16 +239,16 @@ const ServiceEditDialog = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{service ? "Edit Service" : "Add New Service"}</DialogTitle>
+          <DialogTitle>{service ? "Edit Package" : "Add New Package"}</DialogTitle>
           <DialogDescription>
-            {service ? "Update your service details" : "Create a new collaboration package"}
+            {service ? "Update your package details" : "Create a new event package"}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Service Type Selection */}
           <div className="space-y-2">
-            <Label htmlFor="service_type">Service Type *</Label>
+            <Label htmlFor="service_type">Package Type *</Label>
             <Select
               value={selectedServiceType}
               onValueChange={(value) => {
@@ -242,7 +257,7 @@ const ServiceEditDialog = ({
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a service type" />
+                <SelectValue placeholder="Select a package type" />
               </SelectTrigger>
               <SelectContent>
                 {availableServiceTypes.map((type) => (
@@ -252,6 +267,11 @@ const ServiceEditDialog = ({
                 ))}
               </SelectContent>
             </Select>
+            {selectedServiceType && SERVICE_DESCRIPTIONS[selectedServiceType] && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {SERVICE_DESCRIPTIONS[selectedServiceType]}
+              </p>
+            )}
           </div>
 
           {/* Price Tier Selection */}
