@@ -26,6 +26,8 @@ import PhoneInput from "@/components/PhoneInput";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
 import { Link } from "react-router-dom";
 import CountrySelect from "@/components/CountrySelect";
+import LocationSelect from "@/components/LocationSelect";
+import { hasLocationData } from "@/config/country-locations";
 
 // Validation schemas
 const emailSchema = z.string().email("Invalid email address").max(255);
@@ -1078,27 +1080,41 @@ const CreatorSignup = () => {
 
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
-                        value={locationCity}
-                        onChange={(e) => setLocationCity(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="state">State</Label>
-                      <Input
-                        id="state"
-                        value={locationState}
-                        onChange={(e) => setLocationState(e.target.value)}
-                      />
-                    </div>
-                    <div>
                       <Label htmlFor="country">Country</Label>
                       <CountrySelect
                         value={locationCountry}
-                        onChange={setLocationCountry}
+                        onChange={(code) => {
+                          setLocationCountry(code);
+                          // Reset state and city when country changes
+                          setLocationState("");
+                          setLocationCity("");
+                        }}
                         placeholder="Select country"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="state">State/Region</Label>
+                      <LocationSelect
+                        type="state"
+                        countryCode={locationCountry}
+                        value={locationState}
+                        onChange={(value) => {
+                          setLocationState(value);
+                          // Reset city when state changes
+                          setLocationCity("");
+                        }}
+                        placeholder="Select region"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="city">City</Label>
+                      <LocationSelect
+                        type="city"
+                        countryCode={locationCountry}
+                        value={locationCity}
+                        onChange={setLocationCity}
+                        stateFilter={locationState}
+                        placeholder="Select city"
                       />
                     </div>
                   </div>
