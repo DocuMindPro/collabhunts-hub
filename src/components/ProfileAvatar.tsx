@@ -106,7 +106,7 @@ const ProfileAvatar = ({
         <Badge 
           className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-green-500 hover:bg-green-500 text-white text-[8px] px-1.5 py-0 h-4 whitespace-nowrap border-2 border-background"
         >
-          Open to Invites
+          Open to Free Invites
         </Badge>
       )}
     </div>
