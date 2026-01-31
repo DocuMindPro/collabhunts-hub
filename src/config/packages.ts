@@ -1,7 +1,7 @@
 // Event-based package configuration for in-person creator experiences
 // Single source of truth for all event package data
 
-export type PackageType = 'social_boost' | 'meet_greet' | 'workshop' | 'competition' | 'custom';
+export type PackageType = 'social_boost' | 'meet_greet' | 'competition' | 'custom';
 
 export interface PackagePhase {
   title: string;
@@ -119,20 +119,6 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
       { id: 'discount_codes', name: 'Custom Discount Codes', description: 'Trackable promo codes', priceCents: 10000 },
     ],
     idealFor: ['Stores', 'Boutiques', 'Entertainment venues'],
-  },
-  workshop: {
-    name: 'Workshop',
-    description: 'Creator hosts an educational or creative session',
-    priceRange: { min: 50000, max: 120000 }, // $500-$1,200
-    defaultDuration: 2,
-    includes: [
-      '2-hour workshop session',
-      'Ticket sales management',
-      'Professional content capture',
-      'Q&A session',
-      'Workshop materials coordination',
-    ],
-    idealFor: ['Studios', 'Gyms', 'Creative spaces', 'Educational venues'],
   },
   competition: {
     name: 'Live Competition',
@@ -262,4 +248,4 @@ export const calculateUpsellsTotal = (selectedUpsellIds: string[], packageType: 
 };
 
 // Package type ordering for display
-export const PACKAGE_ORDER: PackageType[] = ['social_boost', 'meet_greet', 'workshop', 'competition', 'custom'];
+export const PACKAGE_ORDER: PackageType[] = ['social_boost', 'meet_greet', 'competition', 'custom'];
