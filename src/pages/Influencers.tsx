@@ -672,7 +672,7 @@ const Influencers = () => {
                             <div className="absolute bottom-14 left-0 z-10">
                               <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
                                 <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
-                                #OpenToInvite
+                                Open to Free Invites
                               </div>
                             </div>
                           )}
@@ -772,7 +772,7 @@ const Influencers = () => {
                             <div className="absolute bottom-14 left-0 z-10">
                               <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
                                 <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
-                                #OpenToInvite
+                                Open to Free Invites
                               </div>
                             </div>
                           )}
@@ -869,7 +869,7 @@ const Influencers = () => {
                             <div className="absolute bottom-14 left-0 z-10">
                               <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
                                 <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
-                                #OpenToInvite
+                                Open to Free Invites
                               </div>
                             </div>
                           )}

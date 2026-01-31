@@ -678,7 +678,7 @@ const CreatorProfile = () => {
                   {/* Open to Invitations badge */}
                   {creator.open_to_invitations && (
                     <Badge className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-green-500 hover:bg-green-500 text-white text-[9px] px-2 py-0.5 whitespace-nowrap border-2 border-background">
-                      Open to Invites
+                      Open to Free Invites
                     </Badge>
                   )}
                 </div>
