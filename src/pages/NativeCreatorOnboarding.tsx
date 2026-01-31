@@ -147,6 +147,17 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
       toast.error('Please add at least one social account');
       return false;
     }
+    
+    // Validate follower counts don't exceed max (10 billion)
+    const MAX_FOLLOWER_COUNT = 10_000_000_000;
+    for (const account of validAccounts) {
+      const count = parseInt(account.followerCount.replace(/,/g, '')) || 0;
+      if (count > MAX_FOLLOWER_COUNT) {
+        toast.error(`Follower count for ${account.platform} seems too high. Please enter an accurate number.`);
+        return false;
+      }
+    }
+    
     return true;
   };
 
@@ -236,45 +247,52 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
           throw profileError;
         }
 
-        // 3. Add social accounts
-        const validSocialAccounts = socialAccounts.filter(
-          a => a.platform && a.username && a.followerCount
-        );
+        // 3. Add social accounts and services - with cleanup on failure
+        try {
+          const validSocialAccounts = socialAccounts.filter(
+            a => a.platform && a.username && a.followerCount
+          );
 
-        if (validSocialAccounts.length > 0) {
-          const { error: socialError } = await supabase
-            .from('creator_social_accounts')
-            .insert(
-              validSocialAccounts.map(a => ({
-                creator_profile_id: profile.id,
-                platform: a.platform,
-                username: a.username,
-                follower_count: parseInt(a.followerCount.replace(/,/g, '')) || 0,
-              }))
-            );
+          if (validSocialAccounts.length > 0) {
+            const { error: socialError } = await supabase
+              .from('creator_social_accounts')
+              .insert(
+                validSocialAccounts.map(a => ({
+                  creator_profile_id: profile.id,
+                  platform: a.platform,
+                  username: a.username,
+                  follower_count: parseInt(a.followerCount.replace(/,/g, '')) || 0,
+                }))
+              );
 
-          if (socialError) throw socialError;
-        }
+            if (socialError) throw socialError;
+          }
 
-        // 4. Add services
-        const validServices = services.filter(
-          s => s.serviceType && s.price && parseInt(s.price) > 0
-        );
+          // 4. Add services
+          const validServices = services.filter(
+            s => s.serviceType && s.price && parseInt(s.price) > 0
+          );
 
-        if (validServices.length > 0) {
-          const { error: servicesError } = await supabase
-            .from('creator_services')
-            .insert(
-              validServices.map(s => ({
-                creator_profile_id: profile.id,
-                service_type: s.serviceType,
-                price_cents: parseInt(s.price) * 100,
-                delivery_days: parseInt(s.deliveryDays) || 7,
-                is_active: true,
-              }))
-            );
+          if (validServices.length > 0) {
+            const { error: servicesError } = await supabase
+              .from('creator_services')
+              .insert(
+                validServices.map(s => ({
+                  creator_profile_id: profile.id,
+                  service_type: s.serviceType,
+                  price_cents: parseInt(s.price) * 100,
+                  delivery_days: parseInt(s.deliveryDays) || 7,
+                  is_active: true,
+                }))
+              );
 
-          if (servicesError) throw servicesError;
+            if (servicesError) throw servicesError;
+          }
+        } catch (insertError: any) {
+          // Clean up partial profile if social/services insertion fails
+          console.error("Failed to create social accounts/services, cleaning up profile:", insertError);
+          await supabase.from("creator_profiles").delete().eq("id", profile.id);
+          throw insertError;
         }
 
         return true;
