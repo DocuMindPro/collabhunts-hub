@@ -668,7 +668,7 @@ const CreatorSignup = () => {
         
         const { error: profileUploadError } = await supabase.storage
           .from("profile-images")
-          .upload(filePath, profileImage);
+          .upload(filePath, profileImage, { upsert: true });
 
         if (profileUploadError) {
           console.error("Profile image upload error:", profileUploadError);
@@ -690,7 +690,7 @@ const CreatorSignup = () => {
           
           const { error: coverUploadError } = await supabase.storage
             .from("profile-images")
-            .upload(filePath, coverImg);
+            .upload(filePath, coverImg, { upsert: true });
 
           if (coverUploadError) {
             console.error(`Cover image ${i + 1} upload error:`, coverUploadError);
@@ -783,7 +783,7 @@ const CreatorSignup = () => {
 
           const { error: uploadError } = await supabase.storage
             .from("portfolio-media")
-            .upload(filePath, item.file);
+            .upload(filePath, item.file, { upsert: true });
 
           if (uploadError) {
             console.error("Portfolio upload error:", uploadError);
