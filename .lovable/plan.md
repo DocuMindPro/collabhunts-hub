@@ -1,130 +1,138 @@
 
-# Align Creator Onboarding & Brand Experience with Event Packages
+# Simplify Creator Pricing & Sequential Onboarding
 
 ## Overview
-Update the creator onboarding and brand-facing views to use the standardized event packages (Unbox & Review, Social Boost, Meet & Greet, Live PK Battle, Custom) instead of the legacy generic service types. This ensures creators understand exactly what brands expect, and brands see clear deliverables for each package.
 
-## Current State Analysis
+This plan addresses your feedback to simplify the pricing system and make onboarding more intuitive:
 
-**Problem 1: Database service types don't match package types**
-The `service_price_tiers` table currently has these service types:
-- `meet_greet`, `competition`, `custom`, `brand_activation`, `nightlife`, `private_event`, `content_collab`, `workshop`
-
-But our packages are:
-- `unbox_review`, `social_boost`, `meet_greet`, `competition`, `custom`
-
-**Problem 2: No package descriptions during onboarding**
-Creators only see service type names (e.g., "Meet & Greet") with no explanation of what they're expected to deliver.
-
-**Problem 3: Brands don't see package deliverables**
-On creator profiles, brands only see price and delivery days without the full package details.
+1. **Remove admin-controlled price brackets** (Basic/Standard/Premium) - creators set their own single price per package
+2. **Remove pricing for Live PK Battle** - just ask if they're available (Yes/No toggle)
+3. **Make onboarding sequential** - one question at a time, wizard-style flow
+4. **Keep package descriptions** - so creators understand what's expected
 
 ---
 
-## Implementation Plan
+## What Changes
 
-### Phase 1: Database Migration
-
-Update `service_price_tiers` to align with the new package types.
-
-| Action | Details |
-|--------|---------|
-| Add new tiers | Create tiers for `unbox_review` and `social_boost` |
-| Keep existing | Keep `meet_greet`, `competition`, `custom` tiers (already aligned) |
-| Disable legacy | Disable `brand_activation`, `nightlife`, `private_event`, `content_collab`, `workshop` |
-
-**New Tier Structure:**
-
-| Package | Tiers |
-|---------|-------|
-| `unbox_review` | Basic ($50-$150), Standard ($150-$300), Premium ($300-$500) |
-| `social_boost` | Standard ($200-$400), Premium ($400-$700), Elite ($700-$1000) |
-| `meet_greet` | Keep existing tiers |
-| `competition` | Keep existing tiers |
-| `custom` | Keep existing tiers |
+| Current State | New State |
+|---------------|-----------|
+| Admin sets price brackets (Basic $50-150, Standard $150-300, Premium $300-500) | Creators enter their own single price per package |
+| Live PK Battle has pricing tiers | Just a Yes/No availability toggle |
+| All packages shown at once in Step 5 | Sequential flow - one package question at a time |
+| 7 steps total | 11+ micro-steps (feels shorter because each is quick) |
 
 ---
 
-### Phase 2: Create Shared Package Info Component
+## Technical Implementation
 
-**New File: `src/components/PackageInfoCard.tsx`**
+### Database Changes
 
-A reusable component that displays package details from `src/config/packages.ts`:
-- Package name and description
-- Phase breakdown (Pre-Event, During Event, Post-Event)
-- Duration range
-- "Ideal For" categories
+**Remove the `service_price_tiers` dependency:**
+- The `service_price_tiers` table will be deprecated (but not deleted for backwards compatibility)
+- Creator services will store a single `price_cents` value instead of `min_price_cents`/`max_price_cents` ranges
+- `price_tier_id` will become optional/unused
 
-This component will be used in:
-1. Creator onboarding (when selecting a package to offer)
-2. Creator dashboard service edit dialog
-3. Brand-facing creator profile pages
+**Schema impact on `creator_services`:**
+- Keep using `price_cents` as the single price
+- Set `min_price_cents = max_price_cents = price_cents` for display compatibility
+- `price_tier_id` = null for new signups
 
----
+### Admin Panel Changes
 
-### Phase 3: Update Creator Onboarding (Step 5)
+**File: `src/components/admin/AdminServicesSettings.tsx`**
+- Remove entirely or hide the "Service Price Tiers" section
+- Replace with a simple list showing which packages are enabled
+- No tier management, no min/max prices
+
+### Creator Onboarding Redesign
 
 **File: `src/pages/CreatorSignup.tsx`**
 
-| Change | Details |
-|--------|---------|
-| Replace service type buttons | Show package cards with full descriptions |
-| Add package info to modal | Display phase breakdown and deliverables |
-| Update service type labels | Map to package names from `packages.ts` |
-| Show "What brands expect" | Clear explanation of deliverables |
+**New Step Structure (Sequential Questions):**
 
-**New UX Flow:**
-1. Creator sees all 5 packages with descriptions
-2. Clicking "Add" opens modal with:
-   - Full package description
-   - Phase breakdown (what they need to do)
-   - Price tier selection
-3. Creator selects their price tier
-4. Added package shows in "Added Services" list with price range
+| Step | Question | Input Type |
+|------|----------|------------|
+| 1 | Basic Info (name, email, password) | Form |
+| 2 | Profile Details (display name, bio, location) | Form |
+| 3 | Categories | Multi-select badges |
+| 4 | Demographics (optional) | Form |
+| 5 | Profile Photo | File upload |
+| 6 | Cover Photos | File upload |
+| 7 | Social Media Accounts | One at a time modals |
+| 8 | **Unbox & Review** - "Would you do product reviews from home?" | Yes/No + Price input |
+| 9 | **Social Boost** - "Would you visit venues to create content?" | Yes/No + Price input |
+| 10 | **Meet & Greet** - "Would you do in-person appearances?" | Yes/No + Price input |
+| 11 | **Live PK Battle** - "Are you available for live PK battles?" | Yes/No only (no price) |
+| 12 | **Custom Experience** - "Open to custom brand projects?" | Yes/No + Price input |
+| 13 | Portfolio (optional) | File uploads |
+| 14 | Review & Submit | Terms acceptance |
 
----
+**Package Step Format (Example: Unbox & Review):**
 
-### Phase 4: Update Service Edit Dialog
+```text
++------------------------------------------+
+|  Package Icon         Step 8 of 14       |
+|                                          |
+|  UNBOX & REVIEW                          |
+|  ─────────────────────────────────────   |
+|  Brands send you products to review      |
+|  from home.                              |
+|                                          |
+|  What brands expect:                     |
+|  ✓ Create an unboxing video at home      |
+|  ✓ Post 1 Reel/TikTok + 2-3 Stories      |
+|  ✓ Tag the brand in all posts            |
+|                                          |
+|  Would you offer this service?           |
+|                                          |
+|  [ No, skip ]   [ Yes, I'm interested ]  |
+|                                          |
+|  (If Yes:)                               |
+|  Your Price: $ [________]                |
+|                                          |
+|  [ Back ]              [ Continue ]      |
++------------------------------------------+
+```
+
+**Live PK Battle Step (No Price):**
+
+```text
++------------------------------------------+
+|  LIVE PK BATTLE                          |
+|  ─────────────────────────────────────   |
+|  Live streaming competitions at venues.  |
+|  Fans buy tickets to watch in person.    |
+|                                          |
+|  Note: Pricing is handled by CollabHunts |
+|  during event planning discussions.      |
+|                                          |
+|  Are you available for PK battles?       |
+|                                          |
+|  [ No ]              [ Yes ]             |
+|                                          |
+|  [ Back ]              [ Continue ]      |
++------------------------------------------+
+```
+
+### Service Edit Dialog Update
 
 **File: `src/components/creator-dashboard/ServiceEditDialog.tsx`**
+- Remove price tier radio buttons
+- Replace with single price input field
+- Keep description and delivery days fields
+- For Live PK Battle: just an active toggle, no pricing
 
-| Change | Details |
-|--------|---------|
-| Add package info section | Show description and phases for selected type |
-| Update service type labels | Use package names from config |
-| Import `EVENT_PACKAGES` | Pull descriptions from single source of truth |
-
----
-
-### Phase 5: Update Creator Profile (Brand View)
-
-**File: `src/pages/CreatorProfile.tsx`**
-
-| Change | Details |
-|--------|---------|
-| Replace generic service cards | Show package cards with full deliverables |
-| Add phase breakdown | Brands see Pre/During/Post structure |
-| Import `EVENT_PACKAGES` | Pull package info from config |
-| Update card layout | Match the style from `/brand` page |
-
-**Brand View Will Show:**
-- Package name (e.g., "Social Boost")
-- Description
-- Creator's price range
-- Full deliverables list
-- Duration
-- "Contact Us" or "Inquire" button
-
----
-
-### Phase 6: Update Services Tab in Creator Dashboard
+### Services Tab Update
 
 **File: `src/components/creator-dashboard/ServicesTab.tsx`**
+- Show single price instead of price range
+- For Live PK Battle: show "Available" or "Not Available" instead of price
 
-| Change | Details |
-|--------|---------|
-| Show package descriptions | Display what the package includes |
-| Update display names | Use `EVENT_PACKAGES` for names |
+### Brand View (CreatorProfile) Update
+
+**File: `src/pages/CreatorProfile.tsx`**
+- Display creator's single price per package
+- For Live PK Battle: show "Contact Us" button (no price displayed)
 
 ---
 
@@ -132,63 +140,27 @@ This component will be used in:
 
 | File | Changes |
 |------|---------|
-| `src/config/packages.ts` | No changes (already complete) |
-| `src/components/PackageInfoCard.tsx` | **NEW** - Reusable package info display |
-| `src/pages/CreatorSignup.tsx` | Update Step 5 with package descriptions |
-| `src/components/creator-dashboard/ServiceEditDialog.tsx` | Add package info display |
-| `src/components/creator-dashboard/ServicesTab.tsx` | Update service display |
-| `src/pages/CreatorProfile.tsx` | Show package deliverables to brands |
-
-**Database Migration:**
-- Add tiers for `unbox_review` and `social_boost`
-- Disable legacy service types
+| `src/pages/CreatorSignup.tsx` | Complete rewrite to sequential flow with package-specific steps |
+| `src/components/admin/AdminServicesSettings.tsx` | Remove or simplify (just enable/disable packages) |
+| `src/components/creator-dashboard/ServiceEditDialog.tsx` | Single price input instead of tier selection |
+| `src/components/creator-dashboard/ServicesTab.tsx` | Display single price, handle PK Battle differently |
+| `src/pages/CreatorProfile.tsx` | Show single price, Contact Us for PK Battle |
 
 ---
 
-## Visual Result
+## User Experience Benefits
 
-### Creator Onboarding (Step 5)
-Before: Generic buttons like "Meet & Greet", "Competition"
-After: Package cards showing:
-- Package name + description
-- What's included (phases)
-- "What brands will expect from you"
-- Price tier selection
-
-### Brand View (Creator Profile)
-Before: Simple price + delivery days
-After: Full package card showing:
-- Package name
-- Creator's price range
-- All deliverables (phases)
-- Duration
-- Clear CTA button
+1. **Simpler for creators** - No confusing price brackets, just enter your price
+2. **Better flow** - Answer one question, move to next (less overwhelming)
+3. **Clear expectations** - Each package step explains what brands expect
+4. **Faster completion** - Each step is quick, feels like progress
+5. **Special handling for PK Battle** - No awkward pricing questions for event-style packages
 
 ---
 
-## Technical Details
+## Migration Notes
 
-### PackageInfoCard Component Props
-```text
-interface PackageInfoCardProps {
-  packageType: PackageType;
-  showPricing?: boolean;
-  priceRange?: { min: number; max: number };
-  compact?: boolean;
-  onSelect?: () => void;
-}
-```
+- Existing creators with tier-based pricing will keep working (backwards compatible)
+- When they edit a service, they'll be prompted to set a single price
+- No data migration required - just new signups use simplified flow
 
-### Package Type Mapping
-The `getServiceDisplayName` function in `CreatorSignup.tsx` will be updated to use `EVENT_PACKAGES`:
-```text
-const getServiceDisplayName = (type: string) => {
-  const pkg = EVENT_PACKAGES[type as PackageType];
-  return pkg?.name || type.replace(/_/g, ' ');
-};
-```
-
-### Database Changes Summary
-1. Insert new `unbox_review` tiers
-2. Insert new `social_boost` tiers
-3. Update legacy tiers to `is_enabled = false`
