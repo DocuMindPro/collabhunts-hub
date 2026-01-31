@@ -1,45 +1,45 @@
 
-
-# Remove Workshop Package
+# Update Live Competition & Custom Experience Package Cards
 
 ## Overview
-Remove the "workshop" package from the event packages configuration since it's not relevant to your current offerings.
+Modify the **Live Competition** and **Custom Experience** package cards to remove pricing and add a "Contact Us" button. These packages require consultation to determine pricing based on individual creator rates.
 
 ## Changes Required
 
-### File: `src/config/packages.ts`
+### 1. Update Package Configuration
+**File: `src/config/packages.ts`**
+
+| Package | Change |
+|---------|--------|
+| `competition` | Set `priceRange: null` (removes price display) |
+| `competition` | Remove `upsells` array (no fixed add-on pricing) |
+
+The `custom` package already has `priceRange: null`, so no change needed there.
+
+### 2. Update PackageCard Component
+**File: `src/components/brand/PackageCard.tsx`**
 
 | Change | Details |
 |--------|---------|
-| Update `PackageType` | Remove `'workshop'` from the union type |
-| Remove package data | Delete the `workshop` object from `EVENT_PACKAGES` |
-| Update `PACKAGE_ORDER` | Remove `'workshop'` from the display order array |
+| Add "Contact Us" button | For packages where `priceRange` is `null` |
+| Conditional price display | Only show price range for Social Boost and Meet & Greet |
+| Remove upsells section | Don't show for competition/custom (since pricing is custom) |
+| Import Button and Link | For the contact button navigation |
 
-### Before vs After
+### Visual Result
 
-**PackageType:**
-```typescript
-// Before
-export type PackageType = 'social_boost' | 'meet_greet' | 'workshop' | 'competition' | 'custom';
+**Social Boost & Meet & Greet:**
+- Shows price range ($200-$500, $400-$900)
+- Shows duration
+- Shows all deliverables
+- Shows upsells if available
 
-// After
-export type PackageType = 'social_boost' | 'meet_greet' | 'competition' | 'custom';
-```
+**Live Competition & Custom Experience:**
+- Shows duration (for competition: 2-6 hours)
+- Shows description and deliverables
+- **No price displayed**
+- **"Contact Us" button** linking to `/contact?subject=Live%20Competition%20Inquiry` or similar
+- Removes add-on pricing references
 
-**PACKAGE_ORDER:**
-```typescript
-// Before
-export const PACKAGE_ORDER: PackageType[] = ['social_boost', 'meet_greet', 'workshop', 'competition', 'custom'];
-
-// After
-export const PACKAGE_ORDER: PackageType[] = ['social_boost', 'meet_greet', 'competition', 'custom'];
-```
-
-## Final Package List
-After this change, the platform will offer 4 packages:
-
-1. **Social Boost** - $200-$500 (venue visits)
-2. **Meet & Greet Event** - $400-$900 (fan appearances)
-3. **Live Competition** - $800-$2,000 (competitions/tombolas)
-4. **Custom Experience** - Custom pricing
-
+### Contact Button Behavior
+The button will navigate to `/contact` with a prefilled subject (e.g., "Live Competition Inquiry" or "Custom Experience Inquiry") so your team knows exactly what package the brand is interested in.
