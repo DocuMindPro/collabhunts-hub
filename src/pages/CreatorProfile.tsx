@@ -768,39 +768,45 @@ const CreatorProfile = () => {
                   <CardDescription>Connect with me on these platforms</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-4">
-                    {creator.social_accounts.map((account, index) => {
-                      const Icon = getPlatformIcon(account.platform);
-                      return (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-4 bg-muted rounded-lg"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-background rounded-lg">
-                              <Icon className="h-6 w-6 text-primary" />
+                  {creator.social_accounts.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">
+                      No social accounts linked yet
+                    </p>
+                  ) : (
+                    <div className="grid gap-4">
+                      {creator.social_accounts.map((account, index) => {
+                        const Icon = getPlatformIcon(account.platform);
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-4 bg-muted rounded-lg"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-background rounded-lg">
+                                <Icon className="h-6 w-6 text-primary" />
+                              </div>
+                              <div>
+                                <p className="font-medium capitalize">{account.platform}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  @{account.username} • {formatFollowers(account.follower_count)} followers
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-medium capitalize">{account.platform}</p>
-                              <p className="text-sm text-muted-foreground">
-                                @{account.username} • {formatFollowers(account.follower_count)} followers
-                              </p>
-                            </div>
+                            {account.profile_url && (
+                              <a
+                                href={account.profile_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline text-sm"
+                              >
+                                Visit Profile
+                              </a>
+                            )}
                           </div>
-                          {account.profile_url && (
-                            <a
-                              href={account.profile_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline text-sm"
-                            >
-                              Visit Profile
-                            </a>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -852,82 +858,88 @@ const CreatorProfile = () => {
                   <CardDescription>Available experiences you can book with {creator.display_name}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-4">
-                    {creator.services.map((service, index) => {
-                      const packageType = service.service_type as any;
-                      const packageInfo = getPackageInfo(packageType);
-                      
-                      return (
-                        <div
-                          key={index}
-                          className="border rounded-lg p-5 hover:shadow-md transition-shadow"
-                        >
-                          <div className="flex items-start gap-4 mb-4">
-                            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                              {getPackageIcon(packageType)}
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="font-heading font-semibold text-lg">
-                                {packageInfo.name}
-                              </h3>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {packageInfo.description}
-                              </p>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              {packageType === 'competition' ? (
-                                <p className="text-lg font-semibold text-muted-foreground">Contact for pricing</p>
-                              ) : (
-                                <DimmedPrice 
-                                  price={service.price_cents} 
-                                  canViewPrice={canViewPrice} 
-                                  size="lg"
-                                  onClick={() => setIsPricingModalOpen(true)}
-                                />
-                              )}
-                              {packageInfo.duration && (
-                                <Badge variant="outline" className="mt-1 text-xs">
-                                  {packageInfo.duration}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Show package phases/deliverables */}
-                          {packageInfo.phases && packageInfo.phases.length > 0 && (
-                            <div className="bg-muted/50 rounded-lg p-3 mb-4">
-                              <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">What's Included</p>
-                              <div className="space-y-2">
-                                {packageInfo.phases.slice(0, 2).map((phase: any, phaseIdx: number) => (
-                                  <div key={phaseIdx}>
-                                    <p className="text-xs font-medium text-foreground">{phase.title}</p>
-                                    <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                                      {phase.items.slice(0, 3).map((item: string, itemIdx: number) => (
-                                        <li key={itemIdx} className="flex items-center gap-1.5">
-                                          <span className="h-1 w-1 rounded-full bg-primary flex-shrink-0" />
-                                          {item}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                ))}
+                  {creator.services.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">
+                      No packages available yet
+                    </p>
+                  ) : (
+                    <div className="grid gap-4">
+                      {creator.services.map((service, index) => {
+                        const packageType = service.service_type as any;
+                        const packageInfo = getPackageInfo(packageType);
+                        
+                        return (
+                          <div
+                            key={index}
+                            className="border rounded-lg p-5 hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex items-start gap-4 mb-4">
+                              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                {getPackageIcon(packageType)}
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="font-heading font-semibold text-lg">
+                                  {packageInfo.name}
+                                </h3>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {packageInfo.description}
+                                </p>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                {packageType === 'competition' ? (
+                                  <p className="text-lg font-semibold text-muted-foreground">Contact for pricing</p>
+                                ) : (
+                                  <DimmedPrice 
+                                    price={service.price_cents} 
+                                    canViewPrice={canViewPrice} 
+                                    size="lg"
+                                    onClick={() => setIsPricingModalOpen(true)}
+                                  />
+                                )}
+                                {packageInfo.duration && (
+                                  <Badge variant="outline" className="mt-1 text-xs">
+                                    {packageInfo.duration}
+                                  </Badge>
+                                )}
                               </div>
                             </div>
-                          )}
 
-                          {!isOwnProfile && (
-                            <Button 
-                              className="w-full gradient-hero hover:opacity-90"
-                              onClick={() => handleBookService(service)}
-                            >
-                              <MessageCircle className="h-4 w-4 mr-2" />
-                              Inquire About This Package
-                            </Button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                            {/* Show package phases/deliverables */}
+                            {packageInfo.phases && packageInfo.phases.length > 0 && (
+                              <div className="bg-muted/50 rounded-lg p-3 mb-4">
+                                <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">What's Included</p>
+                                <div className="space-y-2">
+                                  {packageInfo.phases.slice(0, 2).map((phase: any, phaseIdx: number) => (
+                                    <div key={phaseIdx}>
+                                      <p className="text-xs font-medium text-foreground">{phase.title}</p>
+                                      <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                                        {phase.items.slice(0, 3).map((item: string, itemIdx: number) => (
+                                          <li key={itemIdx} className="flex items-center gap-1.5">
+                                            <span className="h-1 w-1 rounded-full bg-primary flex-shrink-0" />
+                                            {item}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {!isOwnProfile && (
+                              <Button 
+                                className="w-full gradient-hero hover:opacity-90"
+                                onClick={() => handleBookService(service)}
+                              >
+                                <MessageCircle className="h-4 w-4 mr-2" />
+                                Inquire About This Package
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -955,12 +967,18 @@ const CreatorProfile = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Starting Price</p>
-                    <DimmedPrice 
-                      price={Math.min(...creator.services.map(s => s.price_cents))} 
-                      canViewPrice={canViewPrice} 
-                      size="lg"
-                      onClick={() => setIsPricingModalOpen(true)}
-                    />
+                    {creator.services.length > 0 ? (
+                      <DimmedPrice 
+                        price={Math.min(...creator.services.map(s => s.price_cents))} 
+                        canViewPrice={canViewPrice} 
+                        size="lg"
+                        onClick={() => setIsPricingModalOpen(true)}
+                      />
+                    ) : (
+                      <p className="text-2xl font-heading font-bold text-muted-foreground">
+                        N/A
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -970,15 +988,15 @@ const CreatorProfile = () => {
         </div>
       </main>
 
-      {/* Mobile Floating Contact Button (hide on own profile) */}
-      {!isOwnProfile && (
+      {/* Mobile Floating Contact Button (hide on own profile and when no services) */}
+      {!isOwnProfile && creator.services.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent md:hidden z-50">
           <div className="flex items-center gap-2">
             <Button 
               size="lg"
               className="flex-1 gradient-hero hover:opacity-90 shadow-lg"
               onClick={() => {
-                const lowestService = creator?.services.reduce((min, s) => 
+                const lowestService = creator.services.reduce((min, s) => 
                   s.price_cents < min.price_cents ? s : min, creator.services[0]);
                 if (lowestService) handleBookService(lowestService);
               }}
