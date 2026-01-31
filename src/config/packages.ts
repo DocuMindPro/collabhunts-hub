@@ -1,7 +1,7 @@
 // Event-based package configuration for in-person creator experiences
 // Single source of truth for all event package data
 
-export type PackageType = 'meet_greet' | 'workshop' | 'competition' | 'custom';
+export type PackageType = 'social_boost' | 'meet_greet' | 'workshop' | 'competition' | 'custom';
 
 export interface PackagePhase {
   title: string;
@@ -35,6 +35,47 @@ export interface EventPackage {
 }
 
 export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
+  social_boost: {
+    name: 'Social Boost',
+    description: 'Creator visits your venue and creates engaging content',
+    priceRange: { min: 20000, max: 50000 }, // $200-$500
+    defaultDuration: 2,
+    includes: [
+      '1-2 hour venue visit',
+      '1 Instagram Reel (permanent)',
+      '1 TikTok video',
+      '3 Instagram Stories',
+      'Tag & location in all posts',
+      'Honest review with CTA',
+    ],
+    phases: [
+      {
+        title: 'During Visit (1-2 hours)',
+        items: [
+          'Creator visits venue',
+          'Tries product/service',
+          'Captures content on-site',
+        ],
+      },
+      {
+        title: 'Content Delivered',
+        items: [
+          '1 Instagram Reel (permanent post)',
+          '1 TikTok video (same content)',
+          '3 Instagram Stories (during/post visit)',
+          'Tag & location in all posts',
+        ],
+      },
+      {
+        title: 'Call-to-Action',
+        items: [
+          'Creator\'s honest review/experience',
+          '"You should check this place out!" CTA',
+        ],
+      },
+    ],
+    idealFor: ['Restaurants', 'Cafes', 'New openings', 'Boutiques'],
+  },
   meet_greet: {
     name: 'Meet & Greet Event',
     description: 'Creator appearance with full promotional coverage',
@@ -221,4 +262,4 @@ export const calculateUpsellsTotal = (selectedUpsellIds: string[], packageType: 
 };
 
 // Package type ordering for display
-export const PACKAGE_ORDER: PackageType[] = ['meet_greet', 'workshop', 'competition', 'custom'];
+export const PACKAGE_ORDER: PackageType[] = ['social_boost', 'meet_greet', 'workshop', 'competition', 'custom'];
