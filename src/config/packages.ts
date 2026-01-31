@@ -1,7 +1,7 @@
 // Event-based package configuration for in-person creator experiences
 // Single source of truth for all event package data
 
-export type PackageType = 'social_boost' | 'meet_greet' | 'competition' | 'custom';
+export type PackageType = 'unbox_review' | 'social_boost' | 'meet_greet' | 'competition' | 'custom';
 
 export interface PackagePhase {
   title: string;
@@ -35,6 +35,45 @@ export interface EventPackage {
 }
 
 export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
+  unbox_review: {
+    name: 'Unbox & Review',
+    description: 'Send your product to a creator for an authentic unboxing and review from home',
+    priceRange: null,
+    durationRange: null, // Flexible - typically 3-7 days after product receipt
+    includes: [
+      'Product shipped to creator',
+      '1 Instagram Reel or TikTok video',
+      '2-3 Instagram Stories',
+      'Honest review with product highlights',
+      'Brand tagged in all posts',
+    ],
+    phases: [
+      {
+        title: 'Product Delivery',
+        items: [
+          'Brand ships product to creator',
+          'Creator confirms receipt',
+        ],
+      },
+      {
+        title: 'Content Creation',
+        items: [
+          'Unboxing video recorded at home',
+          'Product review/demonstration',
+          'Highlights key features & benefits',
+        ],
+      },
+      {
+        title: 'Content Posted',
+        items: [
+          '1 Reel/TikTok (permanent post)',
+          '2-3 Stories showcasing product',
+          'Brand tagged in all posts',
+        ],
+      },
+    ],
+    idealFor: ['E-commerce', 'Product launches', 'Beauty brands', 'Tech gadgets', 'Fashion'],
+  },
   social_boost: {
     name: 'Social Boost',
     description: 'Creator visits your venue and creates engaging content',
@@ -246,4 +285,4 @@ export const calculateUpsellsTotal = (selectedUpsellIds: string[], packageType: 
 };
 
 // Package type ordering for display
-export const PACKAGE_ORDER: PackageType[] = ['social_boost', 'meet_greet', 'competition', 'custom'];
+export const PACKAGE_ORDER: PackageType[] = ['unbox_review', 'social_boost', 'meet_greet', 'competition', 'custom'];
