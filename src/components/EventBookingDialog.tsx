@@ -98,9 +98,9 @@ const EventBookingDialog = ({
   useEffect(() => {
     if (selectedPackage && startTime) {
       const pkg = EVENT_PACKAGES[selectedPackage];
-      if (pkg.defaultDuration) {
+      if (pkg.durationRange) {
         const [hours] = startTime.split(":").map(Number);
-        const endHour = hours + pkg.defaultDuration;
+        const endHour = hours + pkg.durationRange.max;
         if (endHour <= 23) {
           setEndTime(`${String(endHour).padStart(2, "0")}:00`);
         }
@@ -279,10 +279,12 @@ const EventBookingDialog = ({
                             {pkg.description}
                           </p>
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {pkg.defaultDuration && (
+                            {pkg.durationRange && (
                               <span className="text-xs bg-muted px-2 py-1 rounded">
                                 <Clock className="h-3 w-3 inline mr-1" />
-                                {pkg.defaultDuration}h
+                                {pkg.durationRange.min === pkg.durationRange.max 
+                                  ? `${pkg.durationRange.min}h` 
+                                  : `${pkg.durationRange.min}-${pkg.durationRange.max}h`}
                               </span>
                             )}
                             {pkg.variants && pkg.variants.length > 0 && (

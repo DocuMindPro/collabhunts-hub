@@ -26,7 +26,7 @@ export interface EventPackage {
   name: string;
   description: string;
   priceRange: { min: number; max: number } | null; // in cents, null for custom
-  defaultDuration: number | null; // in hours
+  durationRange: { min: number; max: number } | null; // in hours, null for custom
   includes: string[]; // Quick summary for backwards compatibility
   phases?: PackagePhase[]; // Pre/During/Post breakdown
   variants?: PackageVariant[]; // Option A/B for packages with variants
@@ -39,7 +39,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     name: 'Social Boost',
     description: 'Creator visits your venue and creates engaging content',
     priceRange: { min: 20000, max: 50000 }, // $200-$500
-    defaultDuration: 2,
+    durationRange: { min: 1, max: 2 }, // 1-2 hours
     includes: [
       '1-2 hour venue visit',
       '1 Instagram Reel (permanent)',
@@ -80,7 +80,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     name: 'Meet & Greet Event',
     description: 'Creator appearance with full promotional coverage',
     priceRange: { min: 40000, max: 90000 }, // $400-$900
-    defaultDuration: 3,
+    durationRange: { min: 2, max: 4 }, // 2-4 hours
     includes: [
       '1-week pre-event promotion',
       '3 hours at venue',
@@ -124,7 +124,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     name: 'Live Competition',
     description: 'Exciting competition event with live audience engagement',
     priceRange: { min: 80000, max: 200000 }, // $800-$2,000
-    defaultDuration: 4,
+    durationRange: { min: 2, max: 6 }, // 2-6 hours
     includes: [
       '2 weeks pre-promotion',
       '4-hour live event',
@@ -168,7 +168,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     name: 'Custom Experience',
     description: 'Tailored experience designed for your specific needs',
     priceRange: null, // Variable pricing
-    defaultDuration: null,
+    durationRange: null, // Variable duration
     includes: [
       'Tailored to your needs',
       'Multi-day options available',

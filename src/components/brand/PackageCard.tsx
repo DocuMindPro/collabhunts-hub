@@ -23,10 +23,12 @@ const PackageCard = ({ pkgType, pkg }: PackageCardProps) => {
       <p className="text-2xl font-bold text-primary mb-1">
         {formatPriceRange(pkg.priceRange)}
       </p>
-      {pkg.defaultDuration && (
+      {pkg.durationRange && (
         <p className="text-sm text-muted-foreground mb-4 flex items-center gap-1">
           <Clock className="h-3 w-3" />
-          {pkg.defaultDuration} hours
+          {pkg.durationRange.min === pkg.durationRange.max 
+            ? `${pkg.durationRange.min} hours` 
+            : `${pkg.durationRange.min}-${pkg.durationRange.max} hours`}
         </p>
       )}
       <p className="text-sm text-muted-foreground mb-4">
