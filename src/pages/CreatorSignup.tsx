@@ -44,6 +44,7 @@ interface SocialAccount {
   platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'twitch';
   username: string;
   followerCount: number;
+  profileUrl: string;
 }
 
 interface Service {
@@ -119,6 +120,7 @@ const CreatorSignup = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'twitch' | null>(null);
   const [socialUsername, setSocialUsername] = useState("");
   const [socialFollowers, setSocialFollowers] = useState("");
+  const [socialProfileUrl, setSocialProfileUrl] = useState("");
 
   // Modal states for Services
   const [showServiceModal, setShowServiceModal] = useState(false);
@@ -678,7 +680,7 @@ const CreatorSignup = () => {
         platform: account.platform,
         username: account.username,
         follower_count: account.followerCount,
-        profile_url: `https://${account.platform}.com/${account.username}`
+        profile_url: account.profileUrl
       }));
 
       const { error: socialError } = await supabase
@@ -796,7 +798,20 @@ const CreatorSignup = () => {
     setSelectedPlatform(platform);
     setSocialUsername("");
     setSocialFollowers("");
+    setSocialProfileUrl("");
     setShowSocialModal(true);
+  };
+
+  // Platform URL patterns for validation
+  const getPlatformUrlPattern = (platform: string): RegExp => {
+    const patterns: Record<string, RegExp> = {
+      instagram: /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9._]+\/?$/,
+      tiktok: /^https?:\/\/(www\.)?(tiktok\.com\/@?[a-zA-Z0-9._]+|vm\.tiktok\.com\/[a-zA-Z0-9]+)\/?$/,
+      youtube: /^https?:\/\/(www\.)?(youtube\.com\/(c\/|channel\/|@)?[a-zA-Z0-9._-]+|youtu\.be\/[a-zA-Z0-9._-]+)\/?$/,
+      twitter: /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/?$/,
+      twitch: /^https?:\/\/(www\.)?twitch\.tv\/[a-zA-Z0-9_]+\/?$/,
+    };
+    return patterns[platform] || /.*/;
   };
 
   const handleSocialSubmit = () => {
@@ -825,15 +840,51 @@ const CreatorSignup = () => {
       return;
     }
 
+    // Validate profile URL
+    if (!socialProfileUrl.trim()) {
+      toast({
+        title: "Profile URL Required",
+        description: "Please enter your profile URL for verification",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check URL format
+    try {
+      new URL(socialProfileUrl);
+    } catch {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid URL (e.g., https://instagram.com/username)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate platform-specific URL pattern
+    const urlPattern = getPlatformUrlPattern(selectedPlatform);
+    if (!urlPattern.test(socialProfileUrl.trim())) {
+      const platformName = platforms.find(p => p.value === selectedPlatform)?.label || selectedPlatform;
+      toast({
+        title: "Invalid Profile URL",
+        description: `Please enter a valid ${platformName} profile URL`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     setSocialAccounts([...socialAccounts, { 
       platform: selectedPlatform, 
       username: socialUsername, 
-      followerCount 
+      followerCount,
+      profileUrl: socialProfileUrl.trim()
     }]);
     setShowSocialModal(false);
     setSelectedPlatform(null);
     setSocialUsername("");
     setSocialFollowers("");
+    setSocialProfileUrl("");
   };
 
   const openServiceModal = (serviceType: string) => {
@@ -1403,11 +1454,19 @@ const CreatorSignup = () => {
                       <Label>Added Accounts</Label>
                       {socialAccounts.map((account, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <p className="font-medium capitalize">{account.platform}</p>
                             <p className="text-sm text-muted-foreground">
                               @{account.username} • {account.followerCount.toLocaleString()} followers
                             </p>
+                            <a 
+                              href={account.profileUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary hover:underline truncate block"
+                            >
+                              {account.profileUrl}
+                            </a>
                           </div>
                           <Button
                             type="button"
@@ -1628,11 +1687,20 @@ const CreatorSignup = () => {
 
                     <div>
                       <h3 className="font-semibold mb-2">Social Accounts</h3>
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         {socialAccounts.map((account, index) => (
-                          <p key={index} className="text-sm text-muted-foreground">
-                            {account.platform}: @{account.username} ({account.followerCount.toLocaleString()} followers)
-                          </p>
+                          <div key={index} className="text-sm text-muted-foreground">
+                            <p className="capitalize font-medium text-foreground">{account.platform}: @{account.username}</p>
+                            <p>{account.followerCount.toLocaleString()} followers</p>
+                            <a 
+                              href={account.profileUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary hover:underline"
+                            >
+                              {account.profileUrl}
+                            </a>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -1789,6 +1857,22 @@ const CreatorSignup = () => {
                 placeholder="e.g., 50000"
                 min="0"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="social-profile-url">
+                Profile URL <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="social-profile-url"
+                type="url"
+                value={socialProfileUrl}
+                onChange={(e) => setSocialProfileUrl(e.target.value)}
+                placeholder={selectedPlatform ? `https://${selectedPlatform === 'twitter' ? 'x' : selectedPlatform}.com/yourusername` : 'https://...'}
+              />
+              <p className="text-xs text-muted-foreground">
+                Provide a direct link to your profile for admin verification
+              </p>
             </div>
           </div>
 
