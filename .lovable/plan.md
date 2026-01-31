@@ -1,45 +1,54 @@
 
-# Update Live Competition & Custom Experience Package Cards
+
+# Update Live Competition Package
 
 ## Overview
-Modify the **Live Competition** and **Custom Experience** package cards to remove pricing and add a "Contact Us" button. These packages require consultation to determine pricing based on individual creator rates.
+Replace the current Option A/B format with a single, focused description that clearly explains the **Creator PK Battle** concept - where live streamers compete at physical venues while fans attend in person.
 
-## Changes Required
+## What Is a "PK Battle"?
+A PK (Player Kill) is a popular live streaming format where two creators go head-to-head for 3-4 minutes, collecting points/diamonds from supporters. The one with the highest score wins. This package brings these battles to real-world venues.
 
-### 1. Update Package Configuration
-**File: `src/config/packages.ts`**
+## Changes to Live Competition Package
 
-| Package | Change |
-|---------|--------|
-| `competition` | Set `priceRange: null` (removes price display) |
-| `competition` | Remove `upsells` array (no fixed add-on pricing) |
+### Remove
+- Option A: "Creator vs Creator Challenge"
+- Option B: "Fan Competition/Tombola"
+- The `variants` array entirely
 
-The `custom` package already has `priceRange: null`, so no change needed there.
+### Add
+A clear **phases structure** (Pre-Event → During Event → Post-Event) that explains:
 
-### 2. Update PackageCard Component
-**File: `src/components/brand/PackageCard.tsx`**
+| Phase | Details |
+|-------|---------|
+| **Pre-Event (2 weeks)** | Event announcement, ticket sales promotion, creator hype content |
+| **During Event (2-6 hours)** | Live PK battles at venue, in-person audience experience, dual-screen setup (live stream + in-person) |
+| **Post-Event** | Highlight reels, recap content, testimonials |
 
-| Change | Details |
-|--------|---------|
-| Add "Contact Us" button | For packages where `priceRange` is `null` |
-| Conditional price display | Only show price range for Social Boost and Meet & Greet |
-| Remove upsells section | Don't show for competition/custom (since pricing is custom) |
-| Import Button and Link | For the contact button navigation |
+### Updated Description
+*"Live PK battles between creators at your venue - fans buy tickets to watch in person while streaming audiences tune in online"*
 
-### Visual Result
+### Updated Includes
+- 2-week pre-event promotion & ticket sales
+- Live PK battles at venue (3-4 min rounds)
+- In-person fan experience with live viewing setup
+- Dual exposure: live stream + venue foot traffic
+- Full event management by CollabHunts
+- Revenue share from ticket sales
 
-**Social Boost & Meet & Greet:**
-- Shows price range ($200-$500, $400-$900)
-- Shows duration
-- Shows all deliverables
-- Shows upsells if available
+### Updated Ideal For
+- Restaurants, Cafes, Entertainment venues, Malls
 
-**Live Competition & Custom Experience:**
-- Shows duration (for competition: 2-6 hours)
-- Shows description and deliverables
-- **No price displayed**
-- **"Contact Us" button** linking to `/contact?subject=Live%20Competition%20Inquiry` or similar
-- Removes add-on pricing references
+## Revenue Model Explained
+The card will clearly communicate the win-win-win model:
+- **Venue**: Gets foot traffic + advertising exposure
+- **Creators**: Earn from event + their normal PK earnings
+- **CollabHunts**: Event management fee from ticket revenue
+- **Venue bonus**: Optional cut from ticket sales
 
-### Contact Button Behavior
-The button will navigate to `/contact` with a prefilled subject (e.g., "Live Competition Inquiry" or "Custom Experience Inquiry") so your team knows exactly what package the brand is interested in.
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/config/packages.ts` | Remove `variants`, add `phases`, update description and includes |
+| `src/components/brand/PackageCard.tsx` | No changes needed - already handles phases display |
+
