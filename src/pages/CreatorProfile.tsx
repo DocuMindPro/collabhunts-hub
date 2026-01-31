@@ -444,6 +444,71 @@ const CreatorProfile = () => {
     }
   };
 
+  // Package info helpers for services display
+  const getPackageInfo = (packageType: string) => {
+    const packages: Record<string, { name: string; description: string; duration?: string; phases?: Array<{ title: string; items: string[] }> }> = {
+      unbox_review: {
+        name: 'Unbox & Review',
+        description: 'Authentic unboxing and review from home',
+        phases: [
+          { title: 'Product Delivery', items: ['Brand ships product', 'Creator confirms receipt'] },
+          { title: 'Content Created', items: ['1 Reel/TikTok', '2-3 Stories', 'Brand tagged'] },
+        ],
+      },
+      social_boost: {
+        name: 'Social Boost',
+        description: 'Creator visits venue and creates engaging content',
+        duration: '1-2 hours',
+        phases: [
+          { title: 'During Visit', items: ['Venue visit', 'Content capture', 'Try product/service'] },
+          { title: 'Content Delivered', items: ['1 Reel + 1 TikTok', '3 Stories', 'Honest review'] },
+        ],
+      },
+      meet_greet: {
+        name: 'Meet & Greet',
+        description: 'Creator appearance with promotional coverage',
+        duration: '2-4 hours',
+        phases: [
+          { title: 'Pre-Event', items: ['1-week promotion', 'Announcement content'] },
+          { title: 'During Event', items: ['Fan interaction', 'Photos with attendees'] },
+        ],
+      },
+      competition: {
+        name: 'Live PK Battle',
+        description: 'Live PK battles at your venue',
+        duration: '2-6 hours',
+        phases: [
+          { title: 'Pre-Event', items: ['Ticket promotion', 'Creator lineup reveal'] },
+          { title: 'During Event', items: ['Live battles', 'In-person audience'] },
+        ],
+      },
+      custom: {
+        name: 'Custom Experience',
+        description: 'Tailored experience for your specific needs',
+        phases: [
+          { title: 'Customized', items: ['Tailored deliverables', 'Flexible timeline'] },
+        ],
+      },
+    };
+    return packages[packageType] || { name: packageType.replace(/_/g, ' '), description: '' };
+  };
+
+  const getPackageIcon = (packageType: string) => {
+    // Return appropriate icon based on package type
+    switch (packageType) {
+      case 'unbox_review':
+        return <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>;
+      case 'social_boost':
+        return <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>;
+      case 'meet_greet':
+        return <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>;
+      case 'competition':
+        return <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>;
+      default:
+        return <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -780,51 +845,84 @@ const CreatorProfile = () => {
                 </Card>
               )}
 
-              {/* Services & Pricing */}
+              {/* Services & Pricing - Using Package Cards */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Event Experiences</CardTitle>
-                  <CardDescription>Available event packages you can book</CardDescription>
+                  <CardTitle>Event Packages</CardTitle>
+                  <CardDescription>Available experiences you can book with {creator.display_name}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4">
-                    {creator.services.map((service, index) => (
-                      <div
-                        key={index}
-                        className="border rounded-lg p-6 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h3 className="font-heading font-semibold text-lg capitalize mb-1">
-                              {service.service_type.replace(/_/g, " ")}
-                            </h3>
-                            {service.description && (
-                              <p className="text-sm text-muted-foreground">{service.description}</p>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <DimmedPrice 
-                              price={service.price_cents} 
-                              canViewPrice={canViewPrice} 
-                              size="lg"
-                              onClick={() => setIsPricingModalOpen(true)}
-                            />
-                            <div className="text-xs text-muted-foreground">
-                              {service.delivery_days} day{service.delivery_days !== 1 ? "s" : ""} delivery
+                    {creator.services.map((service, index) => {
+                      const packageType = service.service_type as any;
+                      const packageInfo = getPackageInfo(packageType);
+                      
+                      return (
+                        <div
+                          key={index}
+                          className="border rounded-lg p-5 hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-start gap-4 mb-4">
+                            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              {getPackageIcon(packageType)}
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-heading font-semibold text-lg">
+                                {packageInfo.name}
+                              </h3>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {packageInfo.description}
+                              </p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <DimmedPrice 
+                                price={service.price_cents} 
+                                canViewPrice={canViewPrice} 
+                                size="lg"
+                                onClick={() => setIsPricingModalOpen(true)}
+                              />
+                              {packageInfo.duration && (
+                                <Badge variant="outline" className="mt-1 text-xs">
+                                  {packageInfo.duration}
+                                </Badge>
+                              )}
                             </div>
                           </div>
+
+                          {/* Show package phases/deliverables */}
+                          {packageInfo.phases && packageInfo.phases.length > 0 && (
+                            <div className="bg-muted/50 rounded-lg p-3 mb-4">
+                              <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">What's Included</p>
+                              <div className="space-y-2">
+                                {packageInfo.phases.slice(0, 2).map((phase: any, phaseIdx: number) => (
+                                  <div key={phaseIdx}>
+                                    <p className="text-xs font-medium text-foreground">{phase.title}</p>
+                                    <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                                      {phase.items.slice(0, 3).map((item: string, itemIdx: number) => (
+                                        <li key={itemIdx} className="flex items-center gap-1.5">
+                                          <span className="h-1 w-1 rounded-full bg-primary flex-shrink-0" />
+                                          {item}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {!isOwnProfile && (
+                            <Button 
+                              className="w-full gradient-hero hover:opacity-90"
+                              onClick={() => handleBookService(service)}
+                            >
+                              <MessageCircle className="h-4 w-4 mr-2" />
+                              Inquire About This Package
+                            </Button>
+                          )}
                         </div>
-                        {!isOwnProfile && (
-                          <Button 
-                            className="w-full gradient-hero hover:opacity-90"
-                            onClick={() => handleBookService(service)}
-                          >
-                            <MessageCircle className="h-4 w-4 mr-2" />
-                            Book This Service
-                          </Button>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>

@@ -28,6 +28,33 @@ const formatPrice = (service: Service) => {
   return `$${(service.price_cents / 100).toFixed(2)}`;
 };
 
+// Map service types to package names
+const getServiceDisplayName = (type: string) => {
+  const names: Record<string, string> = {
+    unbox_review: "Unbox & Review",
+    social_boost: "Social Boost",
+    meet_greet: "Meet & Greet",
+    competition: "Live PK Battle",
+    custom: "Custom Experience",
+    // Legacy fallbacks
+    workshop: "Workshop",
+    brand_activation: "Brand Activation",
+  };
+  return names[type] || type.replace(/_/g, ' ');
+};
+
+// Package descriptions for context
+const getServiceDescription = (type: string) => {
+  const descriptions: Record<string, string> = {
+    unbox_review: "Brands send products for you to review from home",
+    social_boost: "Visit a venue and create content showcasing the experience",
+    meet_greet: "Appear at a venue to meet fans and promote the brand",
+    competition: "Participate in live PK battles at venues",
+    custom: "Tailored experiences for unique brand needs",
+  };
+  return descriptions[type] || "";
+};
+
 const isLegacyService = (service: Service) => {
   return !service.min_price_cents && !service.max_price_cents && !service.price_tier_id;
 };
@@ -113,22 +140,22 @@ const ServicesTab = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-heading font-bold">My Services</h2>
-          <p className="text-muted-foreground">Manage your collaboration packages</p>
+          <h2 className="text-2xl font-heading font-bold">My Packages</h2>
+          <p className="text-muted-foreground">Manage your event packages and pricing</p>
         </div>
         <Button onClick={handleAddNew} className="gap-2">
           <Plus className="h-4 w-4" />
-          Add Service
+          Add Package
         </Button>
       </div>
 
       {services.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground mb-4">No services added yet</p>
+            <p className="text-muted-foreground mb-4">No packages added yet</p>
             <Button onClick={handleAddNew} className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Your First Service
+              Add Your First Package
             </Button>
           </CardContent>
         </Card>
@@ -140,18 +167,18 @@ const ServicesTab = () => {
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <CardTitle className="capitalize">
-                        {service.service_type.replace(/_/g, " ")}
+                      <CardTitle>
+                        {getServiceDisplayName(service.service_type)}
                       </CardTitle>
                       {isLegacyService(service) && (
-                        <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">
+                        <Badge variant="destructive" className="text-xs">
                           <AlertCircle className="h-3 w-3 mr-1" />
                           Needs Update
                         </Badge>
                       )}
                     </div>
                     <CardDescription>
-                      {service.description || "No description provided"}
+                      {service.description || getServiceDescription(service.service_type) || "No description provided"}
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">

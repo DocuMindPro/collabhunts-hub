@@ -168,26 +168,45 @@ const CreatorSignup = () => {
     fetchPriceTiers();
   }, []);
 
-  // Helper function for display names
+  // Import package names from config
   const getServiceDisplayName = (type: string) => {
-    const names: Record<string, string> = {
+    const packageNames: Record<string, string> = {
+      unbox_review: "Unbox & Review",
+      social_boost: "Social Boost",
       meet_greet: "Meet & Greet",
+      competition: "Live PK Battle",
+      custom: "Custom Experience",
+      // Legacy fallbacks
       workshop: "Workshop",
-      competition: "Competition Event",
       brand_activation: "Brand Activation",
       nightlife: "Nightlife Appearance",
       private_event: "Private Event",
-      content_collab: "Content Collaboration",
-      custom: "Custom Experience"
+      content_collab: "Content Collaboration"
     };
-    return names[type] || type;
+    return packageNames[type] || type.replace(/_/g, ' ');
   };
 
-  // Get unique enabled service types from tiers
-  const enabledServiceTypes = [...new Set(priceTiers.map(t => t.service_type))].map(type => ({
-    value: type,
-    label: getServiceDisplayName(type)
-  }));
+  // Package descriptions for creator education
+  const getPackageDescription = (type: string) => {
+    const descriptions: Record<string, string> = {
+      unbox_review: "Brands send you products to review from home. You create an unboxing video and post it on social media.",
+      social_boost: "Visit a venue, try their product/service, and create content showcasing your experience.",
+      meet_greet: "Appear at a venue for 2-4 hours to meet fans, take photos, and promote the brand.",
+      competition: "Participate in live PK battles at venues - fans buy tickets to watch in person.",
+      custom: "Tailored experiences for unique brand needs - multi-day events, launches, etc.",
+    };
+    return descriptions[type] || "";
+  };
+
+  // Get unique enabled service types from tiers - prioritize our core packages
+  const corePackageTypes = ['unbox_review', 'social_boost', 'meet_greet', 'competition', 'custom'];
+  const enabledServiceTypes = corePackageTypes
+    .filter(type => priceTiers.some(t => t.service_type === type))
+    .map(type => ({
+      value: type,
+      label: getServiceDisplayName(type),
+      description: getPackageDescription(type)
+    }));
 
   // Get tiers for the currently selected service type
   const currentServiceTiers = priceTiers.filter(t => t.service_type === selectedServiceType);
@@ -1504,21 +1523,35 @@ const CreatorSignup = () => {
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
                   ) : enabledServiceTypes.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4">No services are currently available.</p>
+                    <p className="text-sm text-muted-foreground py-4">No packages are currently available.</p>
                   ) : (
                     <div className="space-y-3">
-                      {enabledServiceTypes.map((service) => (
-                        <Button
-                          key={service.value}
-                          type="button"
-                          variant="outline"
-                          className="w-full justify-start"
-                          onClick={() => openServiceModal(service.value)}
-                          disabled={services.some(s => s.serviceType === service.value)}
-                        >
-                          {service.label}
-                        </Button>
-                      ))}
+                      {enabledServiceTypes.map((service) => {
+                        const isAdded = services.some(s => s.serviceType === service.value);
+                        return (
+                          <div
+                            key={service.value}
+                            className={`p-4 rounded-lg border transition-all ${
+                              isAdded 
+                                ? 'border-primary/50 bg-primary/5 opacity-60' 
+                                : 'border-border hover:border-primary/50 cursor-pointer hover:bg-muted/50'
+                            }`}
+                            onClick={() => !isAdded && openServiceModal(service.value)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-medium">{service.label}</h4>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {service.description}
+                                </p>
+                              </div>
+                              <Badge variant={isAdded ? "secondary" : "outline"} className="ml-2 flex-shrink-0">
+                                {isAdded ? "Added" : "Add"}
+                              </Badge>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
 
@@ -1889,23 +1922,64 @@ const CreatorSignup = () => {
 
       {/* Service & Pricing Modal */}
       <Dialog open={showServiceModal} onOpenChange={setShowServiceModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Add {enabledServiceTypes.find(s => s.value === selectedServiceType)?.label || getServiceDisplayName(selectedServiceType) || 'Service'}
+              {enabledServiceTypes.find(s => s.value === selectedServiceType)?.label || getServiceDisplayName(selectedServiceType) || 'Add Package'}
             </DialogTitle>
             <DialogDescription>
-              Select your pricing tier for this experience
+              {getPackageDescription(selectedServiceType)}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* What brands expect from you */}
+            <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+              <h4 className="text-sm font-semibold text-foreground">What brands expect from you:</h4>
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                {selectedServiceType === 'unbox_review' && (
+                  <>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Create an unboxing video at home</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Post 1 Reel/TikTok + 2-3 Stories</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Tag the brand in all posts</li>
+                  </>
+                )}
+                {selectedServiceType === 'social_boost' && (
+                  <>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Visit the venue for 1-2 hours</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Create 1 Reel + 1 TikTok + 3 Stories</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Share honest review with CTA</li>
+                  </>
+                )}
+                {selectedServiceType === 'meet_greet' && (
+                  <>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Appear at venue for 2-4 hours</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Pre-event promotion (1 week before)</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Meet fans, take photos, post recap</li>
+                  </>
+                )}
+                {selectedServiceType === 'competition' && (
+                  <>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Participate in live PK battles</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Help promote ticket sales</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Create event content & recaps</li>
+                  </>
+                )}
+                {selectedServiceType === 'custom' && (
+                  <>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Deliverables discussed per project</li>
+                    <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />Flexible timeline and scope</li>
+                  </>
+                )}
+              </ul>
+            </div>
+
             <div className="space-y-3">
               <Label>
-                Price Range <span className="text-destructive">*</span>
+                Your Price Range <span className="text-destructive">*</span>
               </Label>
               {currentServiceTiers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No pricing tiers available for this service.</p>
+                <p className="text-sm text-muted-foreground">No pricing tiers available for this package.</p>
               ) : (
                 <div className="space-y-2">
                   {currentServiceTiers.map((tier) => (
