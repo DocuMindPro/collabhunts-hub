@@ -1,99 +1,71 @@
 
-# Fix: Creator Signup Trigger Chain and User Registration Handling
+# Fix Creator Signup Partial Failure & Auto-Login Issue
 
-## Problem Analysis
+## Problem Summary
+When creating a creator account, if any step after profile creation fails (e.g., social accounts insertion), the user ends up in a broken state:
+- A creator profile exists in the database
+- But no social accounts or services are linked
+- The user is logged in automatically
+- On retry, they get "You already have a creator profile" error
 
-Two interconnected issues are preventing successful creator registration:
+The specific error causing this is: **follower count value exceeds integer max** (users entering numbers like 21,321,321,321 which is larger than 2,147,483,647).
 
-### Issue 1: Push Notification Trigger Failure
-When a creator profile is inserted, a chain of triggers fires:
-1. `on_creator_profile_created_notify_admin` → inserts a notification for admins
-2. `on_notification_insert_send_push` → tries to call `net.http_post()` (pg_net extension)
-3. The `net.http_post` function doesn't exist in the expected schema, causing the entire transaction to fail
+## Technical Solution
 
-Even though we added `EXCEPTION WHEN OTHERS`, the error occurs because PostgreSQL can't even resolve the function name during query planning (before execution), so the exception block doesn't catch it.
-
-### Issue 2: Partial User Registration
-The signup flow creates the auth user FIRST, then tries to create the profile. Since Supabase Auth runs in a separate transaction, if the profile creation fails, the auth user still exists - causing "user already registered" errors on retry.
-
----
-
-## Solution
-
-### Database Fix: Disable or Replace the Push Notification Trigger
-
-Since pg_net extension isn't available, we have two options:
-
-**Option A (Recommended): Disable the trigger entirely**
-The push notification trigger relies on pg_net which isn't set up. Disable the trigger until push notifications are properly configured.
-
-**Option B: Replace with a no-op function**
-Make the trigger function do nothing until the infrastructure is ready.
-
-### Code Fix: Add Pre-Check for Existing User
-
-Add a guard in the signup flow to check if the user already exists and handle the partial registration scenario gracefully.
-
----
-
-## Technical Implementation
-
-### Step 1: Database - Disable the Push Trigger
+### 1. Database Change: Increase follower_count capacity
+Change the `follower_count` column from `integer` to `bigint` to handle influencers with billions of followers.
 
 ```sql
--- Disable the push notification trigger until pg_net is configured
-DROP TRIGGER IF EXISTS on_notification_insert_send_push ON public.notifications;
+ALTER TABLE public.creator_social_accounts 
+ALTER COLUMN follower_count TYPE bigint;
 ```
 
-Or replace with a safe no-op:
+### 2. Code Changes: Add cleanup on failure
 
-```sql
-CREATE OR REPLACE FUNCTION trigger_push_notification()
-RETURNS TRIGGER AS $$
-BEGIN
-  -- Push notifications disabled until pg_net extension is configured
-  -- This prevents blocking other operations
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+**File: `src/pages/CreatorSignup.tsx`**
+- Wrap the social accounts and services insertion in try-catch
+- If insertion fails after profile creation, delete the partial profile
+- Add frontend validation for follower count (max 10 billion)
+
+```typescript
+// After profile creation, wrap remaining steps
+try {
+  // Create social accounts
+  // Create services
+  // Upload portfolio
+} catch (insertError) {
+  // Clean up the partial profile
+  await supabase.from("creator_profiles")
+    .delete()
+    .eq("id", profileData.id);
+  throw insertError;
+}
 ```
 
-### Step 2: Code - Handle Existing User Recovery
+**File: `src/pages/NativeCreatorOnboarding.tsx`**
+- Apply the same cleanup pattern
+- Add follower count validation
 
-Modify `CreatorSignup.tsx` to:
-1. Check if email already exists before signup
-2. If user exists but no creator profile, offer to sign in and complete profile
-3. Add a client-side guard to prevent double-submission
+### 3. Frontend Validation
+- Add maximum follower count check (10 billion)
+- Show user-friendly error message if exceeded
 
-**Files to modify:**
+### 4. Recovery for existing partial profiles
+- If user has profile but no social accounts, allow them to complete signup
+- Check for incomplete profiles and resume onboarding
+
+## Files to Modify
+
 | File | Changes |
 |------|---------|
-| Database migration | Disable/fix `on_notification_insert_send_push` trigger |
-| `src/pages/CreatorSignup.tsx` | Add pre-submission check and double-click guard |
+| `supabase/migrations/` | New migration to alter follower_count to bigint |
+| `src/pages/CreatorSignup.tsx` | Add cleanup on failure + validation |
+| `src/pages/NativeCreatorOnboarding.tsx` | Add cleanup on failure + validation |
 
----
+## Implementation Order
 
-## What This Fixes
-
-| Before | After |
-|--------|-------|
-| Profile insert triggers notification, which triggers broken push function | Push trigger is disabled - notification still works, just no push |
-| Retry shows "user already registered" | Check for existing user and provide recovery path |
-| Error blocks entire signup | Graceful fallback allows core signup to complete |
-
----
-
-## Future Consideration
-
-When you want to re-enable push notifications:
-1. Set up Firebase with the required credentials
-2. Enable pg_net extension in the database
-3. Re-create the trigger with proper function calls
-
----
-
-## Summary
-
-This is a two-part fix:
-1. **Database**: Disable the push notification trigger to stop it from blocking signups
-2. **Code**: Add protection against partial registration states
+1. Create database migration to change column type
+2. Add cleanup logic to CreatorSignup.tsx
+3. Add cleanup logic to NativeCreatorOnboarding.tsx  
+4. Add frontend validation for follower count
+5. Test full signup flow to verify fix
