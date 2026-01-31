@@ -38,7 +38,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
   social_boost: {
     name: 'Social Boost',
     description: 'Creator visits your venue and creates engaging content',
-    priceRange: { min: 20000, max: 50000 }, // $200-$500
+    priceRange: null, // Custom pricing - depends on creator rates
     durationRange: { min: 1, max: 2 }, // 1-2 hours
     includes: [
       '1-2 hour venue visit',
@@ -79,7 +79,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
   meet_greet: {
     name: 'Meet & Greet',
     description: 'Creator appearance with full promotional coverage',
-    priceRange: { min: 40000, max: 90000 }, // $400-$900
+    priceRange: null, // Custom pricing - depends on creator rates
     durationRange: { min: 2, max: 4 }, // 2-4 hours
     includes: [
       '1-week pre-event promotion',
