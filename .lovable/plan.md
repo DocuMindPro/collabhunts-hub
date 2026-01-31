@@ -1,121 +1,289 @@
 
 
-# Expand City/State Data for Lebanon and Middle East
+# Update Event Packages to New Detailed Structure
 
-## Current State Analysis
+## Overview
+Update the package configuration to include detailed pre-event, during-event, and post-event deliverables, plus upsell options for "Meet & Greet Event" and "Live Competition" packages.
 
-The `src/config/country-locations.ts` file currently has:
+## Current vs New Structure
 
-| Country | Regions/States | Cities |
-|---------|----------------|--------|
-| Lebanon | 7 | 47 cities |
-| UAE | 7 | 4 cities |
-| Saudi Arabia | 4 | 6 cities |
-| USA | 51 | 37 cities |
+### Package 2: Meet & Greet Event
 
-**Problem**: Lebanon needs more cities (especially in Akkar - only 2 cities), and GCC countries are severely limited.
+| Aspect | Current | New |
+|--------|---------|-----|
+| Price | $300-$800 | $400-$900 |
+| Duration | 3 hours | 3 hours |
+| Includes | 5 basic items | 12+ detailed items across 3 phases |
+| Upsells | None | 3 options ($150-$200 each) |
 
-## Expansion Plan
+### Package 3: Live Competition
 
-### 1. Lebanon - Significantly Expanded (47 to 120+ cities)
+| Aspect | Current | New |
+|--------|---------|-----|
+| Price | $800-$2,000 | $800-$2,000 (same) |
+| Duration | 4 hours | 4 hours |
+| Structure | Single format | 2 options (Creator vs Creator / Fan Competition) |
+| Upsells | None | 4 options ($100-$300 each) |
 
-**Mount Lebanon** (currently 18, adding 15+):
-- Add: Mansourieh, Fanar, Jal el Dib, Naccache, Rabieh, Yarze, Hadath, Jdeideh, Zalka, Sahel Alma, Ghazir, Kfarhbab, Amchit, Mayrouba, Faraya, Harissa, Tabarja, Maameltein, Adma, Haret Sakher, Sarba, Ajaltoun, Jeita, Zouk Mosbeh, Dora, Achrafieh, Hamra, Verdun, Gemmayze, Mar Mikhael, Ras Beirut
+## New Data Structure
 
-**North Lebanon** (currently 8, adding 10+):
-- Add: Mina, Beddawi, Amioun, Kousba, Douma, Tannourine, Beit Mery (Koura), Anfeh, Qalamoun, Ras Maska
+To support the richer package data, we need to extend the `EventPackage` interface:
 
-**South Lebanon** (currently 5, adding 10+):
-- Add: Abra, Ghazieh, Maghdouche, Jiyeh, Damour, Rmeileh, Sarafand, Adloun, Cana, Beit Yahoun, Khiam
+```typescript
+export interface PackagePhase {
+  title: string;
+  items: string[];
+}
 
-**Nabatieh** (currently 2, adding 5+):
-- Add: Arnoun, Tebnine, Kfar Tibnit, Jbaa, Kfarouman
+export interface UpsellOption {
+  id: string;
+  name: string;
+  description: string;
+  priceCents: number;
+}
 
-**Bekaa** (currently 4, adding 10+):
-- Add: Ablah, Jeb Jennine, Marj, Rashaya, Saghbine, Kabb Elias, Bar Elias, Taanayel, Ferzol, Majdel Anjar
+export interface PackageVariant {
+  id: string;
+  name: string;
+  description: string;
+  includes: string[];
+}
 
-**Baalbek-Hermel** (currently 2, adding 5+):
-- Add: Labweh, Ras Baalbek, Arsal, Nabi Sheet, Deir el Ahmar
+export interface EventPackage {
+  name: string;
+  description: string;
+  priceRange: { min: number; max: number } | null;
+  defaultDuration: number | null;
+  includes: string[]; // Quick summary (backwards compatible)
+  phases?: PackagePhase[]; // Pre/During/Post breakdown
+  variants?: PackageVariant[]; // Option A/B for competition
+  upsells?: UpsellOption[]; // Add-on options
+  idealFor: string[];
+}
+```
 
-**Akkar** (currently 2, adding 10+):
-- Add: Qoubaiyat, Bebnine, Fneidek, Tikrit, Minyara, Rahbe, Michmich, Andaket, Sheikh Mohammad, Halba
+## Package Details
 
-### 2. UAE - Comprehensive Expansion (4 to 40+ cities)
+### Meet & Greet Event ($400-$900, 3 hours)
 
-**Dubai** (adding 10+):
-- Dubai Marina, JBR, Downtown Dubai, Business Bay, Deira, Bur Dubai, Al Barsha, Jumeirah, Palm Jumeirah, Al Quoz, Silicon Oasis, Dubai Hills
+**Pre-Event (1 week before):**
+- 1 announcement video: "I'll be at [Venue] on [Date]!"
+- 3 countdown stories
 
-**Abu Dhabi** (adding 8+):
-- Abu Dhabi Island, Al Reem Island, Yas Island, Saadiyat Island, Al Ain, Khalifa City, Mussafah, Al Raha
+**During Event (3 hours):**
+- Creator present at venue
+- Live interaction with fans
+- Photos with attendees
+- Special offers/discounts promoted
 
-**Sharjah** (adding 5+):
-- Al Nahda, Al Khan, Al Majaz, Muwaileh, Al Qasimia
+**Post-Event:**
+- 1 recap video
+- 3 highlight stories
+- Attendee testimonials collected
 
-**Other Emirates**:
-- Ras Al Khaimah City, Al Hamra, Khorfakkan, Fujairah City, Dibba, Umm Al Quwain City
+**Upsell Options:**
+- +$150: Professional photographer
+- +$200: Extra hour
+- +$100: Custom discount codes
 
-### 3. Saudi Arabia - Major Expansion (6 to 50+ cities)
+### Live Competition ($800-$2,000, 4 hours)
 
-**Add All 13 Regions**:
-- Asir, Jazan, Najran, Al Baha, Hail, Al Jouf, Northern Borders, Tabuk, Qassim
+**Option A: Creator vs Creator Challenge**
+- 2 creators compete in brand-related challenge
+- Live stream on both creators' channels
+- Audience voting determines winner
+- Prizes sponsored by brand
 
-**Major Cities per Region**:
-- Riyadh Region: Al Kharj, Ad Diriyah, Al Majmaah
-- Makkah Region: Taif, Rabigh, Al Qunfudhah
-- Eastern Province: Jubail, Khobar, Qatif, Hofuf, Ras Tanura
-- Madinah Region: Yanbu, Al Ula, Badr
-- Qassim: Buraidah, Unaizah
-- Asir: Abha, Khamis Mushait, Najran
-- Tabuk: Tabuk City, NEOM, Duba
+**Option B: Fan Competition/Tombola**
+- Creator hosts game/raffle at venue
+- Tickets sold (revenue share with brand)
+- Live entertainment/interaction
+- Prizes = brand products/services
 
-### 4. Add New GCC Countries
+**Includes (both options):**
+- 2 weeks pre-promotion
+- 4-hour live event
+- Post-event highlight reel
+- Sales/lead tracking
+- Professional setup assistance
 
-**Kuwait (KW)**:
-- Governorates: Capital, Hawalli, Farwaniya, Ahmadi, Jahra, Mubarak Al-Kabeer
-- Cities: Kuwait City, Salmiya, Hawalli, Jahra, Ahmadi, Fahaheel, Mangaf
+**Upsell Options:**
+- +$300: Second creator
+- +$200: Professional streaming setup
+- +$150: Prize package sponsorship
+- +$100: Advanced analytics
 
-**Qatar (QA)**:
-- Municipalities: Doha, Al Rayyan, Al Wakrah, Al Khor, Al Shamal, Umm Salal, Al Daayen
-- Cities: Doha, Lusail, The Pearl, West Bay, Al Wakra, Dukhan, Mesaieed
+## Files to Modify
 
-**Bahrain (BH)**:
-- Governorates: Capital, Muharraq, Northern, Southern
-- Cities: Manama, Muharraq, Riffa, Hamad Town, Isa Town, Sitra
+| File | Changes |
+|------|---------|
+| `src/config/packages.ts` | Extended interface + updated package data |
+| `src/pages/Brand.tsx` | Enhanced package display with phases/variants |
+| `src/components/EventBookingDialog.tsx` | Show phases, variants selector, upsell checkboxes |
 
-**Oman (OM)**:
-- Governorates: Muscat, Dhofar, Al Batinah North, Al Batinah South, Al Dakhiliyah
-- Cities: Muscat, Salalah, Sohar, Nizwa, Sur, Barka, Ibri
+## Implementation Details
 
-**Jordan (JO)**:
-- Governorates: Amman, Irbid, Zarqa, Balqa, Aqaba, Mafraq, Karak
-- Cities: Amman, Zarqa, Irbid, Aqaba, Salt, Madaba, Jerash
+### 1. `src/config/packages.ts`
 
-**Egypt (EG)**:
-- Governorates: Cairo, Alexandria, Giza, Dakahlia, Sharqia, Gharbia
-- Cities: Cairo, Alexandria, Giza, Sharm El Sheikh, Hurghada, Luxor, Aswan
+```typescript
+// New interfaces added
+export interface PackagePhase {
+  title: string;
+  items: string[];
+}
 
-## Implementation
+export interface UpsellOption {
+  id: string;
+  name: string;
+  description: string;
+  priceCents: number;
+}
 
-### File to Modify
-`src/config/country-locations.ts`
+export interface PackageVariant {
+  id: string;
+  name: string;
+  description: string;
+}
 
-### Changes Summary
+// Updated meet_greet package
+meet_greet: {
+  name: 'Meet & Greet Event',
+  description: 'Creator appearance with full promotional coverage',
+  priceRange: { min: 40000, max: 90000 }, // $400-$900
+  defaultDuration: 3,
+  includes: [
+    '1-week pre-event promotion',
+    '3 hours at venue',
+    'Live fan interaction & photos',
+    'Recap video & stories',
+  ],
+  phases: [
+    {
+      title: 'Pre-Event (1 week before)',
+      items: [
+        '1 announcement video',
+        '3 countdown stories',
+      ],
+    },
+    {
+      title: 'During Event (3 hours)',
+      items: [
+        'Creator present at venue',
+        'Live interaction with fans',
+        'Photos with attendees',
+        'Special offers/discounts promoted',
+      ],
+    },
+    {
+      title: 'Post-Event',
+      items: [
+        '1 recap video',
+        '3 highlight stories',
+        'Attendee testimonials collected',
+      ],
+    },
+  ],
+  upsells: [
+    { id: 'photographer', name: 'Professional Photographer', description: 'Pro photos of the event', priceCents: 15000 },
+    { id: 'extra_hour', name: 'Extra Hour', description: '+1 hour venue time', priceCents: 20000 },
+    { id: 'discount_codes', name: 'Custom Discount Codes', description: 'Trackable promo codes', priceCents: 10000 },
+  ],
+  idealFor: ['Stores', 'Boutiques', 'Entertainment venues'],
+}
 
-| Country | Before | After |
-|---------|--------|-------|
-| Lebanon (LB) | 47 cities | 120+ cities |
-| UAE (AE) | 4 cities | 40+ cities |
-| Saudi Arabia (SA) | 6 cities, 4 regions | 50+ cities, 13 regions |
-| Kuwait (KW) | - | NEW: 6 governorates, 15+ cities |
-| Qatar (QA) | - | NEW: 7 municipalities, 15+ cities |
-| Bahrain (BH) | - | NEW: 4 governorates, 10+ cities |
-| Oman (OM) | - | NEW: 5+ governorates, 15+ cities |
-| Jordan (JO) | - | NEW: 7+ governorates, 15+ cities |
-| Egypt (EG) | - | NEW: 6+ governorates, 15+ cities |
+// Updated competition package
+competition: {
+  name: 'Live Competition',
+  description: 'Exciting competition event with live audience engagement',
+  priceRange: { min: 80000, max: 200000 }, // $800-$2,000
+  defaultDuration: 4,
+  includes: [
+    '2 weeks pre-promotion',
+    '4-hour live event',
+    'Post-event highlight reel',
+    'Sales/lead tracking',
+    'Professional setup assistance',
+  ],
+  variants: [
+    {
+      id: 'creator_vs_creator',
+      name: 'Creator vs Creator Challenge',
+      description: '2 creators compete in brand-related challenge with live streaming',
+    },
+    {
+      id: 'fan_competition',
+      name: 'Fan Competition/Tombola',
+      description: 'Creator hosts game/raffle with ticket sales and prizes',
+    },
+  ],
+  upsells: [
+    { id: 'second_creator', name: 'Second Creator', description: 'Add another creator', priceCents: 30000 },
+    { id: 'streaming_setup', name: 'Professional Streaming', description: 'Pro streaming equipment', priceCents: 20000 },
+    { id: 'prize_package', name: 'Prize Package Sponsorship', description: 'Branded prize setup', priceCents: 15000 },
+    { id: 'analytics', name: 'Advanced Analytics', description: 'Detailed engagement report', priceCents: 10000 },
+  ],
+  idealFor: ['Malls', 'Large venues', 'Product launches'],
+}
+```
 
-### Technical Notes
-- All cities will reference their parent state/region via the `state` property
-- Values use snake_case for consistency
-- Labels show proper local names (with transliterations where helpful)
-- Helper functions remain unchanged - they already support the expanded data
+### 2. `src/pages/Brand.tsx` - Enhanced Package Cards
+
+Update the package display section to show:
+- Phase breakdown (Pre/During/Post) for meet_greet
+- Variant options (A/B) for competition
+- Upsell options as "Add-ons available" badges
+
+### 3. `src/components/EventBookingDialog.tsx` - Booking Flow Updates
+
+- For competition package: Add variant selector (Option A or B)
+- Add upsell checkboxes to step 2
+- Calculate total including selected upsells
+- Store selected upsells in booking data
+
+## Visual Preview
+
+**Brand Page Package Card (Meet & Greet):**
+```text
++----------------------------------+
+| Meet & Greet Event               |
+| $400 - $900                      |
+| ⏱ 3 hours                        |
++----------------------------------+
+| Pre-Event:                       |
+|   ✓ 1 announcement video         |
+|   ✓ 3 countdown stories          |
+| During Event:                    |
+|   ✓ Creator at venue             |
+|   ✓ Fan photos & interaction     |
+| Post-Event:                      |
+|   ✓ Recap video + stories        |
++----------------------------------+
+| 💎 Add-ons available             |
++----------------------------------+
+```
+
+**Booking Dialog (Competition):**
+```text
++----------------------------------+
+| Choose Competition Type:         |
+| ○ Creator vs Creator Challenge   |
+| ○ Fan Competition/Tombola        |
++----------------------------------+
+| Add-ons:                         |
+| ☐ +$300 Second Creator           |
+| ☐ +$200 Professional Streaming   |
+| ☐ +$150 Prize Package            |
+| ☐ +$100 Advanced Analytics       |
++----------------------------------+
+| Estimated Total: $1,100          |
++----------------------------------+
+```
+
+## Summary
+
+1. **Extend `EventPackage` interface** with phases, variants, and upsells
+2. **Update package data** with detailed breakdown matching your specs
+3. **Enhance Brand page** to show rich package details
+4. **Update booking dialog** with variant selection and upsell checkboxes
+5. **Backward compatible** - existing bookings and components continue to work
 
