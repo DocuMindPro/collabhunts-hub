@@ -1,71 +1,106 @@
 
-# Fix Creator Signup Partial Failure & Auto-Login Issue
+# Fix Creator Profile Display Issues
 
-## Problem Summary
-When creating a creator account, if any step after profile creation fails (e.g., social accounts insertion), the user ends up in a broken state:
-- A creator profile exists in the database
-- But no social accounts or services are linked
-- The user is logged in automatically
-- On retry, they get "You already have a creator profile" error
+## Problems Found
 
-The specific error causing this is: **follower count value exceeds integer max** (users entering numbers like 21,321,321,321 which is larger than 2,147,483,647).
+After investigating the database and code, I found three related issues:
 
-## Technical Solution
+1. **Missing Social Media and Packages Data** - The creator profile exists but has no linked social accounts or services in the database
+2. **"$Infinity" Display Bug** - When a creator has no services, the price calculation breaks and shows "$Infinity"  
+3. **Empty Stats Display** - "Platforms: 0" and "Total Reach: 0" accurately reflect the missing data
 
-### 1. Database Change: Increase follower_count capacity
-Change the `follower_count` column from `integer` to `bigint` to handle influencers with billions of followers.
+## Root Cause
 
-```sql
-ALTER TABLE public.creator_social_accounts 
-ALTER COLUMN follower_count TYPE bigint;
-```
+The specific creator profile was created but the social accounts and services were never successfully saved. This could happen if:
+- The profile was created during the transition period before the cleanup fix was implemented
+- There was a silent failure during data insertion
 
-### 2. Code Changes: Add cleanup on failure
+## Solution
 
-**File: `src/pages/CreatorSignup.tsx`**
-- Wrap the social accounts and services insertion in try-catch
-- If insertion fails after profile creation, delete the partial profile
-- Add frontend validation for follower count (max 10 billion)
+### 1. Fix the "$Infinity" Display Bug
+
+**File: `src/pages/CreatorProfile.tsx`**
+
+Add a safety check when calculating the minimum price to handle empty services arrays:
 
 ```typescript
-// After profile creation, wrap remaining steps
-try {
-  // Create social accounts
-  // Create services
-  // Upload portfolio
-} catch (insertError) {
-  // Clean up the partial profile
-  await supabase.from("creator_profiles")
-    .delete()
-    .eq("id", profileData.id);
-  throw insertError;
-}
+// Before (line 959)
+price={Math.min(...creator.services.map(s => s.price_cents))}
+
+// After  
+price={creator.services.length > 0 
+  ? Math.min(...creator.services.map(s => s.price_cents)) 
+  : 0}
 ```
 
-**File: `src/pages/NativeCreatorOnboarding.tsx`**
-- Apply the same cleanup pattern
-- Add follower count validation
+Also add a fallback display when there are no services or social accounts instead of showing empty sections.
 
-### 3. Frontend Validation
-- Add maximum follower count check (10 billion)
-- Show user-friendly error message if exceeded
+### 2. Add Empty State Handling for Social Media Presence
 
-### 4. Recovery for existing partial profiles
-- If user has profile but no social accounts, allow them to complete signup
-- Check for incomplete profiles and resume onboarding
+**File: `src/pages/CreatorProfile.tsx`**
+
+Show a helpful message when there are no social accounts instead of an empty section:
+
+```typescript
+// If no social accounts
+{creator.social_accounts.length === 0 ? (
+  <p className="text-muted-foreground text-center py-4">
+    No social accounts linked yet
+  </p>
+) : (
+  // existing map code
+)}
+```
+
+### 3. Add Empty State Handling for Event Packages  
+
+**File: `src/pages/CreatorProfile.tsx`**
+
+Show a message when there are no services:
+
+```typescript
+// If no services
+{creator.services.length === 0 ? (
+  <p className="text-muted-foreground text-center py-4">
+    No packages available yet
+  </p>
+) : (
+  // existing map code
+)}
+```
+
+### 4. Fix Quick Stats Starting Price Display
+
+**File: `src/pages/CreatorProfile.tsx`**
+
+Handle the case when there are no services:
+
+```typescript
+{creator.services.length > 0 ? (
+  <DimmedPrice 
+    price={Math.min(...creator.services.map(s => s.price_cents))} 
+    canViewPrice={canViewPrice} 
+    size="lg"
+    onClick={() => setIsPricingModalOpen(true)}
+  />
+) : (
+  <p className="text-2xl font-heading font-bold text-muted-foreground">
+    N/A
+  </p>
+)}
+```
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `supabase/migrations/` | New migration to alter follower_count to bigint |
-| `src/pages/CreatorSignup.tsx` | Add cleanup on failure + validation |
-| `src/pages/NativeCreatorOnboarding.tsx` | Add cleanup on failure + validation |
+| `src/pages/CreatorProfile.tsx` | Add empty state handling for social accounts, services, and price display |
 
-## Implementation Order
+## Technical Details
 
-1. Create database migration to change column type
-2. Add cleanup logic to CreatorSignup.tsx
-3. Add cleanup logic to NativeCreatorOnboarding.tsx  
-4. Add frontend validation for follower count
-5. Test full signup flow to verify fix
+The fix focuses on defensive coding to handle edge cases where:
+- A creator profile exists but data insertion failed
+- Creator is approved but hasn't completed all setup steps
+- Profile is in an incomplete state
+
+After implementing these fixes, the profile page will display gracefully even when data is missing, preventing confusing displays like "$Infinity".
