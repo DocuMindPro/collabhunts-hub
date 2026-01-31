@@ -19,6 +19,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { SUBSCRIPTION_PLANS, type PlanType } from "@/lib/stripe-mock";
 import UpgradePrompt from "@/components/UpgradePrompt";
 import DimmedPrice from "@/components/DimmedPrice";
+import DimmedPriceRange from "@/components/DimmedPriceRange";
 import UpgradeModal from "@/components/UpgradeModal";
 interface CreatorData {
   id: string;
@@ -966,10 +967,11 @@ const CreatorProfile = () => {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Starting Price</p>
+                    <p className="text-sm text-muted-foreground mb-1">Price</p>
                     {creator.services.length > 0 ? (
-                      <DimmedPrice 
-                        price={Math.min(...creator.services.map(s => s.price_cents))} 
+                      <DimmedPriceRange 
+                        minPrice={Math.min(...creator.services.map(s => s.price_cents))}
+                        maxPrice={Math.max(...creator.services.map(s => s.price_cents))}
                         canViewPrice={canViewPrice} 
                         size="lg"
                         onClick={() => setIsPricingModalOpen(true)}
