@@ -735,43 +735,50 @@ const CreatorSignup = () => {
 
       if (profileError) throw profileError;
 
-      // Create social accounts
-      const socialAccountsData = socialAccounts.map(account => ({
-        creator_profile_id: profileData.id,
-        platform: account.platform,
-        username: account.username,
-        follower_count: account.followerCount,
-        profile_url: account.profileUrl
-      }));
-
-      const { error: socialError } = await supabase
-        .from("creator_social_accounts")
-        .insert(socialAccountsData);
-
-      if (socialError) throw socialError;
-
-      // Create services with single price
-      const servicesData = services.map(service => {
-        const isPKBattle = service.serviceType === 'competition';
-        const priceCents = isPKBattle ? 0 : service.priceCents;
-        return {
+      // Create social accounts and services - with cleanup on failure
+      try {
+        const socialAccountsData = socialAccounts.map(account => ({
           creator_profile_id: profileData.id,
-          service_type: service.serviceType,
-          price_cents: priceCents,
-          min_price_cents: priceCents,
-          max_price_cents: priceCents,
-          price_tier_id: null, // No longer using tiers
-          description: service.description,
-          delivery_days: service.deliveryDays,
-          is_active: true
-        };
-      });
+          platform: account.platform,
+          username: account.username,
+          follower_count: account.followerCount,
+          profile_url: account.profileUrl
+        }));
 
-      const { error: servicesError } = await supabase
-        .from("creator_services")
-        .insert(servicesData);
+        const { error: socialError } = await supabase
+          .from("creator_social_accounts")
+          .insert(socialAccountsData);
 
-      if (servicesError) throw servicesError;
+        if (socialError) throw socialError;
+
+        // Create services with single price
+        const servicesData = services.map(service => {
+          const isPKBattle = service.serviceType === 'competition';
+          const priceCents = isPKBattle ? 0 : service.priceCents;
+          return {
+            creator_profile_id: profileData.id,
+            service_type: service.serviceType,
+            price_cents: priceCents,
+            min_price_cents: priceCents,
+            max_price_cents: priceCents,
+            price_tier_id: null, // No longer using tiers
+            description: service.description,
+            delivery_days: service.deliveryDays,
+            is_active: true
+          };
+        });
+
+        const { error: servicesError } = await supabase
+          .from("creator_services")
+          .insert(servicesData);
+
+        if (servicesError) throw servicesError;
+      } catch (insertError: any) {
+        // Clean up partial profile if social/services insertion fails
+        console.error("Failed to create social accounts/services, cleaning up profile:", insertError);
+        await supabase.from("creator_profiles").delete().eq("id", profileData.id);
+        throw new Error(`Failed to complete signup: ${insertError.message}. Please try again.`);
+      }
 
       // Upload portfolio items if any
       if (portfolioItems.length > 0) {
@@ -900,6 +907,17 @@ const CreatorSignup = () => {
       toast({
         title: "Invalid Input",
         description: "Please enter a valid follower count",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate follower count doesn't exceed reasonable max (10 billion)
+    const MAX_FOLLOWER_COUNT = 10_000_000_000;
+    if (followerCount > MAX_FOLLOWER_COUNT) {
+      toast({
+        title: "Invalid Follower Count",
+        description: "Follower count seems too high. Please enter an accurate number.",
         variant: "destructive"
       });
       return;
