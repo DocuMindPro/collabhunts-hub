@@ -1,125 +1,194 @@
 
-
-# Add Entry-Level "Product Review" Package
+# Align Creator Onboarding & Brand Experience with Event Packages
 
 ## Overview
-Create a new first-tier package for brands who want to send products to creators for at-home reviews. This is the simplest, most accessible package - no venue visit required, just ship the product and get authentic social media content.
+Update the creator onboarding and brand-facing views to use the standardized event packages (Unbox & Review, Social Boost, Meet & Greet, Live PK Battle, Custom) instead of the legacy generic service types. This ensures creators understand exactly what brands expect, and brands see clear deliverables for each package.
 
-## Package Name Options
+## Current State Analysis
 
-| Name | Why It Works |
-|------|--------------|
-| **Unbox & Review** | Clear action words - creator unboxes and reviews the product |
-| **Product Spotlight** | Emphasizes the product is the star of the content |
-| **Send & Share** | Simple - brand sends, creator shares |
-| **Home Review** | Direct - review happens at creator's home |
+**Problem 1: Database service types don't match package types**
+The `service_price_tiers` table currently has these service types:
+- `meet_greet`, `competition`, `custom`, `brand_activation`, `nightlife`, `private_event`, `content_collab`, `workshop`
 
-**Recommendation: "Unbox & Review"** - It's catchy, describes the action, and feels approachable for an entry-level package.
+But our packages are:
+- `unbox_review`, `social_boost`, `meet_greet`, `competition`, `custom`
 
-## Package Details
+**Problem 2: No package descriptions during onboarding**
+Creators only see service type names (e.g., "Meet & Greet") with no explanation of what they're expected to deliver.
 
-### Description
-*"Send your product to a creator for an authentic unboxing and review from the comfort of their home"*
+**Problem 3: Brands don't see package deliverables**
+On creator profiles, brands only see price and delivery days without the full package details.
 
-### What's Included
-- Product shipped to creator
-- 1 Instagram Reel or TikTok video (unboxing/review)
-- 2-3 Instagram Stories showing the product
-- Honest review with product highlights
-- Tag brand account in all posts
-- Link in bio (if applicable)
+---
 
-### Phases Structure
+## Implementation Plan
 
-| Phase | Items |
-|-------|-------|
-| **Product Delivery** | Brand ships product to creator, Creator confirms receipt |
-| **Content Creation** | Unboxing video recorded at home, Product review/demonstration, Highlights key features |
-| **Content Posted** | 1 Reel/TikTok (permanent), 2-3 Stories, Brand tagged in all posts |
+### Phase 1: Database Migration
 
-### Ideal For
-- E-commerce brands
-- New product launches
-- Small businesses
-- Beauty & skincare products
-- Tech gadgets
-- Fashion items
+Update `service_price_tiers` to align with the new package types.
 
-### Pricing
-Custom pricing (like other packages) - depends on creator rates
+| Action | Details |
+|--------|---------|
+| Add new tiers | Create tiers for `unbox_review` and `social_boost` |
+| Keep existing | Keep `meet_greet`, `competition`, `custom` tiers (already aligned) |
+| Disable legacy | Disable `brand_activation`, `nightlife`, `private_event`, `content_collab`, `workshop` |
 
-### Duration
-No fixed duration (null) - content delivery typically within 3-7 days after receiving product
+**New Tier Structure:**
 
-## Technical Implementation
+| Package | Tiers |
+|---------|-------|
+| `unbox_review` | Basic ($50-$150), Standard ($150-$300), Premium ($300-$500) |
+| `social_boost` | Standard ($200-$400), Premium ($400-$700), Elite ($700-$1000) |
+| `meet_greet` | Keep existing tiers |
+| `competition` | Keep existing tiers |
+| `custom` | Keep existing tiers |
 
-### File: `src/config/packages.ts`
+---
+
+### Phase 2: Create Shared Package Info Component
+
+**New File: `src/components/PackageInfoCard.tsx`**
+
+A reusable component that displays package details from `src/config/packages.ts`:
+- Package name and description
+- Phase breakdown (Pre-Event, During Event, Post-Event)
+- Duration range
+- "Ideal For" categories
+
+This component will be used in:
+1. Creator onboarding (when selecting a package to offer)
+2. Creator dashboard service edit dialog
+3. Brand-facing creator profile pages
+
+---
+
+### Phase 3: Update Creator Onboarding (Step 5)
+
+**File: `src/pages/CreatorSignup.tsx`**
 
 | Change | Details |
 |--------|---------|
-| Update `PackageType` | Add `'unbox_review'` to the union type |
-| Add new package entry | Insert `unbox_review` object before `social_boost` in `EVENT_PACKAGES` |
-| Update `PACKAGE_ORDER` | Add `'unbox_review'` as first item in the array |
+| Replace service type buttons | Show package cards with full descriptions |
+| Add package info to modal | Display phase breakdown and deliverables |
+| Update service type labels | Map to package names from `packages.ts` |
+| Show "What brands expect" | Clear explanation of deliverables |
 
-### Package Configuration
+**New UX Flow:**
+1. Creator sees all 5 packages with descriptions
+2. Clicking "Add" opens modal with:
+   - Full package description
+   - Phase breakdown (what they need to do)
+   - Price tier selection
+3. Creator selects their price tier
+4. Added package shows in "Added Services" list with price range
 
+---
+
+### Phase 4: Update Service Edit Dialog
+
+**File: `src/components/creator-dashboard/ServiceEditDialog.tsx`**
+
+| Change | Details |
+|--------|---------|
+| Add package info section | Show description and phases for selected type |
+| Update service type labels | Use package names from config |
+| Import `EVENT_PACKAGES` | Pull descriptions from single source of truth |
+
+---
+
+### Phase 5: Update Creator Profile (Brand View)
+
+**File: `src/pages/CreatorProfile.tsx`**
+
+| Change | Details |
+|--------|---------|
+| Replace generic service cards | Show package cards with full deliverables |
+| Add phase breakdown | Brands see Pre/During/Post structure |
+| Import `EVENT_PACKAGES` | Pull package info from config |
+| Update card layout | Match the style from `/brand` page |
+
+**Brand View Will Show:**
+- Package name (e.g., "Social Boost")
+- Description
+- Creator's price range
+- Full deliverables list
+- Duration
+- "Contact Us" or "Inquire" button
+
+---
+
+### Phase 6: Update Services Tab in Creator Dashboard
+
+**File: `src/components/creator-dashboard/ServicesTab.tsx`**
+
+| Change | Details |
+|--------|---------|
+| Show package descriptions | Display what the package includes |
+| Update display names | Use `EVENT_PACKAGES` for names |
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/config/packages.ts` | No changes (already complete) |
+| `src/components/PackageInfoCard.tsx` | **NEW** - Reusable package info display |
+| `src/pages/CreatorSignup.tsx` | Update Step 5 with package descriptions |
+| `src/components/creator-dashboard/ServiceEditDialog.tsx` | Add package info display |
+| `src/components/creator-dashboard/ServicesTab.tsx` | Update service display |
+| `src/pages/CreatorProfile.tsx` | Show package deliverables to brands |
+
+**Database Migration:**
+- Add tiers for `unbox_review` and `social_boost`
+- Disable legacy service types
+
+---
+
+## Visual Result
+
+### Creator Onboarding (Step 5)
+Before: Generic buttons like "Meet & Greet", "Competition"
+After: Package cards showing:
+- Package name + description
+- What's included (phases)
+- "What brands will expect from you"
+- Price tier selection
+
+### Brand View (Creator Profile)
+Before: Simple price + delivery days
+After: Full package card showing:
+- Package name
+- Creator's price range
+- All deliverables (phases)
+- Duration
+- Clear CTA button
+
+---
+
+## Technical Details
+
+### PackageInfoCard Component Props
 ```text
-unbox_review: {
-  name: 'Unbox & Review',
-  description: 'Send your product to a creator for an authentic unboxing and review from home',
-  priceRange: null,
-  durationRange: null,  // Flexible - typically 3-7 days after product receipt
-  includes: [
-    'Product shipped to creator',
-    '1 Instagram Reel or TikTok video',
-    '2-3 Instagram Stories',
-    'Honest review with product highlights',
-    'Brand tagged in all posts',
-  ],
-  phases: [
-    {
-      title: 'Product Delivery',
-      items: [
-        'Brand ships product to creator',
-        'Creator confirms receipt',
-      ],
-    },
-    {
-      title: 'Content Creation',
-      items: [
-        'Unboxing video recorded at home',
-        'Product review/demonstration',
-        'Highlights key features & benefits',
-      ],
-    },
-    {
-      title: 'Content Posted',
-      items: [
-        '1 Reel/TikTok (permanent post)',
-        '2-3 Stories showcasing product',
-        'Brand tagged in all posts',
-      ],
-    },
-  ],
-  idealFor: ['E-commerce', 'Product launches', 'Beauty brands', 'Tech gadgets', 'Fashion'],
+interface PackageInfoCardProps {
+  packageType: PackageType;
+  showPricing?: boolean;
+  priceRange?: { min: number; max: number };
+  compact?: boolean;
+  onSelect?: () => void;
 }
 ```
 
-### Updated Package Order
-
+### Package Type Mapping
+The `getServiceDisplayName` function in `CreatorSignup.tsx` will be updated to use `EVENT_PACKAGES`:
 ```text
-PACKAGE_ORDER: ['unbox_review', 'social_boost', 'meet_greet', 'competition', 'custom']
+const getServiceDisplayName = (type: string) => {
+  const pkg = EVENT_PACKAGES[type as PackageType];
+  return pkg?.name || type.replace(/_/g, ' ');
+};
 ```
 
-## Result
-
-The packages will now display in this order:
-
-1. **Unbox & Review** - Entry-level, no venue visit, product shipped to creator
-2. **Social Boost** - Creator visits venue for content
-3. **Meet & Greet** - Full appearance with fan interaction
-4. **Live PK Battle** - Large-scale live streaming event
-5. **Custom Experience** - Tailored solutions
-
-This creates a clear progression from simple (send product) to complex (full event management).
-
+### Database Changes Summary
+1. Insert new `unbox_review` tiers
+2. Insert new `social_boost` tiers
+3. Update legacy tiers to `is_enabled = false`
