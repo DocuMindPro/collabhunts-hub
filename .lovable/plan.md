@@ -1,78 +1,99 @@
 
+# Fix: Creator Signup Trigger Chain and User Registration Handling
 
-# Fix: Notification Insert Trigger Error
+## Problem Analysis
 
-## Problem Identified
+Two interconnected issues are preventing successful creator registration:
 
-When a creator tries to submit their profile, the system creates notifications (e.g., to notify admins of the new pending creator). However, the notification insert triggers a push notification function that references a non-existent column.
+### Issue 1: Push Notification Trigger Failure
+When a creator profile is inserted, a chain of triggers fires:
+1. `on_creator_profile_created_notify_admin` → inserts a notification for admins
+2. `on_notification_insert_send_push` → tries to call `net.http_post()` (pg_net extension)
+3. The `net.http_post` function doesn't exist in the expected schema, causing the entire transaction to fail
 
-**Error:** `record "new" has no field "notification_type"`
+Even though we added `EXCEPTION WHEN OTHERS`, the error occurs because PostgreSQL can't even resolve the function name during query planning (before execution), so the exception block doesn't catch it.
 
-**Root Cause:** The `trigger_push_notification` function references `NEW.notification_type`, but the `notifications` table has a column called `type`, not `notification_type`.
+### Issue 2: Partial User Registration
+The signup flow creates the auth user FIRST, then tries to create the profile. Since Supabase Auth runs in a separate transaction, if the profile creation fails, the auth user still exists - causing "user already registered" errors on retry.
 
-## Current State
-
-**Notifications table columns:**
-- `id`, `user_id`, `title`, `message`, **`type`**, `read`, `link`, `created_at`
-
-**Broken trigger function (`trigger_push_notification`):**
-```sql
-payload := jsonb_build_object(
-  'user_id', NEW.user_id,
-  'title', NEW.title,
-  'body', NEW.message,
-  'notification_type', NEW.notification_type,  -- ❌ Column doesn't exist!
-  'data', ...
-);
-```
+---
 
 ## Solution
 
-Update the trigger function to reference the correct column name: `NEW.type` instead of `NEW.notification_type`.
+### Database Fix: Disable or Replace the Push Notification Trigger
 
-## Database Migration
+Since pg_net extension isn't available, we have two options:
 
-| Change | Details |
-|--------|---------|
-| Update function | Replace `NEW.notification_type` with `NEW.type` in `trigger_push_notification` |
-| No schema changes | The `notifications` table structure stays the same |
+**Option A (Recommended): Disable the trigger entirely**
+The push notification trigger relies on pg_net which isn't set up. Disable the trigger until push notifications are properly configured.
 
-**Fixed Function:**
+**Option B: Replace with a no-op function**
+Make the trigger function do nothing until the infrastructure is ready.
+
+### Code Fix: Add Pre-Check for Existing User
+
+Add a guard in the signup flow to check if the user already exists and handle the partial registration scenario gracefully.
+
+---
+
+## Technical Implementation
+
+### Step 1: Database - Disable the Push Trigger
+
+```sql
+-- Disable the push notification trigger until pg_net is configured
+DROP TRIGGER IF EXISTS on_notification_insert_send_push ON public.notifications;
+```
+
+Or replace with a safe no-op:
+
 ```sql
 CREATE OR REPLACE FUNCTION trigger_push_notification()
 RETURNS TRIGGER AS $$
-DECLARE
-  payload jsonb;
 BEGIN
-  payload := jsonb_build_object(
-    'user_id', NEW.user_id,
-    'title', NEW.title,
-    'body', NEW.message,
-    'notification_type', NEW.type,  -- ✅ Use correct column name
-    'data', jsonb_build_object(
-      'link', NEW.link,
-      'notification_id', NEW.id
-    )
-  );
-
-  PERFORM net.http_post(
-    url := 'https://olcygpkghmaqkezmunyu.supabase.co/functions/v1/send-push-notification',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key', true)
-    ),
-    body := payload
-  );
-
+  -- Push notifications disabled until pg_net extension is configured
+  -- This prevents blocking other operations
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 ```
 
-## Result
+### Step 2: Code - Handle Existing User Recovery
 
-After this fix:
-- Creator profile submissions will work without errors
-- Notifications will be created successfully
-- Push notifications will include the correct `type` value in their payload
+Modify `CreatorSignup.tsx` to:
+1. Check if email already exists before signup
+2. If user exists but no creator profile, offer to sign in and complete profile
+3. Add a client-side guard to prevent double-submission
 
+**Files to modify:**
+| File | Changes |
+|------|---------|
+| Database migration | Disable/fix `on_notification_insert_send_push` trigger |
+| `src/pages/CreatorSignup.tsx` | Add pre-submission check and double-click guard |
+
+---
+
+## What This Fixes
+
+| Before | After |
+|--------|-------|
+| Profile insert triggers notification, which triggers broken push function | Push trigger is disabled - notification still works, just no push |
+| Retry shows "user already registered" | Check for existing user and provide recovery path |
+| Error blocks entire signup | Graceful fallback allows core signup to complete |
+
+---
+
+## Future Consideration
+
+When you want to re-enable push notifications:
+1. Set up Firebase with the required credentials
+2. Enable pg_net extension in the database
+3. Re-create the trigger with proper function calls
+
+---
+
+## Summary
+
+This is a two-part fix:
+1. **Database**: Disable the push notification trigger to stop it from blocking signups
+2. **Code**: Add protection against partial registration states
