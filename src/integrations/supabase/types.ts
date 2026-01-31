@@ -2489,7 +2489,7 @@ export type Database = {
           email_data?: Json
           email_type: string
           to_email: string
-          to_name?: string
+          to_name: string
         }
         Returns: undefined
       }
