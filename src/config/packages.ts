@@ -121,42 +121,46 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     idealFor: ['Stores', 'Boutiques', 'Entertainment venues'],
   },
   competition: {
-    name: 'Live Competition',
-    description: 'Exciting competition event with live audience engagement',
+    name: 'Live PK Battle',
+    description: 'Live PK battles between creators at your venue - fans buy tickets to watch in person while streaming audiences tune in online',
     priceRange: null, // Custom pricing - requires consultation
     durationRange: { min: 2, max: 6 }, // 2-6 hours
     includes: [
-      '2 weeks pre-promotion',
-      '4-hour live event',
-      'Post-event highlight reel',
-      'Sales/lead tracking',
-      'Professional setup assistance',
+      '2-week pre-event promotion & ticket sales',
+      'Live PK battles at venue (3-4 min rounds)',
+      'In-person fan experience with live viewing setup',
+      'Dual exposure: live stream + venue foot traffic',
+      'Full event management by CollabHunts',
+      'Revenue share from ticket sales',
     ],
-    variants: [
+    phases: [
       {
-        id: 'creator_vs_creator',
-        name: 'Creator vs Creator Challenge',
-        description: '2 creators compete in brand-related challenge with live streaming',
-        includes: [
-          '2 creators compete in brand-related challenge',
-          'Live stream on both creators\' channels',
-          'Audience voting determines winner',
-          'Prizes sponsored by brand',
+        title: 'Pre-Event (2 weeks before)',
+        items: [
+          'Event announcement & creator lineup reveal',
+          'Ticket sales promotion across social channels',
+          'Hype content from participating creators',
         ],
       },
       {
-        id: 'fan_competition',
-        name: 'Fan Competition/Tombola',
-        description: 'Creator hosts game/raffle with ticket sales and prizes',
-        includes: [
-          'Creator hosts game/raffle at venue',
-          'Tickets sold (revenue share with brand)',
-          'Live entertainment/interaction',
-          'Prizes = brand products/services',
+        title: 'During Event (2-6 hours)',
+        items: [
+          'Live PK battles (3-4 min rounds) between creators',
+          'In-person audience experience at your venue',
+          'Dual-screen setup: live stream + venue display',
+          'Real-time engagement from online & in-person fans',
+        ],
+      },
+      {
+        title: 'Post-Event',
+        items: [
+          'Highlight reels & best moments',
+          'Recap content across creator channels',
+          'Venue testimonials & attendance stats',
         ],
       },
     ],
-    idealFor: ['Malls', 'Large venues', 'Product launches'],
+    idealFor: ['Restaurants', 'Cafes', 'Entertainment venues', 'Malls'],
   },
   custom: {
     name: 'Custom Experience',
