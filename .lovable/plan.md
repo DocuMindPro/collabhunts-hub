@@ -1,107 +1,204 @@
 
-# Enhance "Open to Invites" Banner - LinkedIn-Style Half-Moon Design
+# Add Dynamic City/State Dropdown Based on Country Selection
+
+## Overview
+Replace the free-text City and State input fields in the creator onboarding (Step 2) with dynamic dropdown menus that automatically populate based on the selected country. For example, when Lebanon is selected, the City dropdown will show Lebanese cities like Beirut, Jounieh, Tripoli, Zouk Mikael, etc.
 
 ## Current State
-The "Open to Invites" badge is currently a small green pill in the top-left corner of the creator card image. It's not prominent enough to catch attention.
+- **City**: Free-text `<Input>` field
+- **State**: Free-text `<Input>` field  
+- **Country**: Already using `<CountrySelect>` dropdown component
 
-## Proposed Design
-Create a larger, more visible banner similar to LinkedIn's "Open to Work" feature. Two options:
+The existing `LebaneseCitySelect` component already groups Lebanese cities by region (Mount Lebanon, North, South, Bekaa) and the `LEBANESE_CITIES` config exists in `lebanese-market.ts`.
 
-### Option A: Arc/Half-Moon Banner (Recommended)
-A curved green banner along the bottom-left corner of the image, similar to LinkedIn's iconic "Open to Work" frame.
+## Proposed Solution
 
-```text
-+---------------------------+
-|                    ★ 5.0  |
-|  ⓘ 1.1K                   |
-|                           |
-|       [Creator Photo]     |
-|                           |
-|  ╭───────────────╮        |
-|  │ #OpenToInvite │ ← Curved green arc
-|  ╰───────────────╯        |
-|   toto                    |
-|   Fashion                 |
-+---------------------------+
+### 1. Create New Config File: `src/config/country-locations.ts`
+
+This file will contain city/state data for supported countries. Initially focus on:
+- **Lebanon** (primary market) - cities grouped by region
+- **United States** - states with major cities
+- **Other countries** - fallback to free-text input
+
+Structure:
+```typescript
+interface LocationData {
+  states?: { value: string; label: string }[];
+  cities: { value: string; label: string; state?: string }[];
+}
+
+export const COUNTRY_LOCATIONS: Record<string, LocationData> = {
+  LB: {
+    // Lebanese cities already defined, grouped by region
+    cities: [
+      { value: 'beirut', label: 'Beirut', state: 'Mount Lebanon' },
+      { value: 'jounieh', label: 'Jounieh', state: 'Mount Lebanon' },
+      { value: 'zouk_mikael', label: 'Zouk Mikael', state: 'Mount Lebanon' },
+      { value: 'tripoli', label: 'Tripoli', state: 'North' },
+      // ... more cities
+    ]
+  },
+  US: {
+    states: [
+      { value: 'CA', label: 'California' },
+      { value: 'NY', label: 'New York' },
+      // ...
+    ],
+    cities: [
+      { value: 'los_angeles', label: 'Los Angeles', state: 'CA' },
+      // ...
+    ]
+  },
+  // Add more countries as needed
+};
 ```
 
-### Option B: Corner Banner (Alternative)
-A diagonal ribbon-style banner on the top-left or bottom-left corner.
+### 2. Create New Component: `src/components/LocationSelect.tsx`
 
-## Implementation Details
+A smart component that:
+- Takes the selected country code as a prop
+- Shows a dropdown if the country has predefined cities/states
+- Falls back to a text input if country has no data
+- Supports search/filter within the dropdown
 
-### File: `src/pages/Influencers.tsx`
+```typescript
+interface LocationSelectProps {
+  countryCode: string;
+  cityValue: string;
+  stateValue: string;
+  onCityChange: (city: string) => void;
+  onStateChange: (state: string) => void;
+}
+```
 
-Replace the current small pill badge with a curved arc banner positioned at the bottom-left of the image (above the creator name overlay).
+### 3. Update `src/pages/CreatorSignup.tsx`
 
-**Current Code (lines 665-668):**
+**Replace lines 1079-1104:**
+
+Current:
 ```tsx
-{creator.open_to_invitations && (
-  <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full text-white text-[10px] font-medium z-10">
-    Open to Invites
+<div className="grid grid-cols-3 gap-3">
+  <div>
+    <Label htmlFor="city">City</Label>
+    <Input value={locationCity} onChange={...} />
   </div>
-)}
+  <div>
+    <Label htmlFor="state">State</Label>
+    <Input value={locationState} onChange={...} />
+  </div>
+  <div>
+    <Label htmlFor="country">Country</Label>
+    <CountrySelect value={locationCountry} onChange={...} />
+  </div>
+</div>
 ```
 
-**New Design:**
+New:
 ```tsx
-{creator.open_to_invitations && (
-  <div className="absolute bottom-14 left-0 z-10">
-    <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
-      <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
-      Open to Invites
-    </div>
+<div className="grid grid-cols-3 gap-3">
+  <div>
+    <Label htmlFor="country">Country</Label>
+    <CountrySelect value={locationCountry} onChange={handleCountryChange} />
   </div>
-)}
+  <div>
+    <Label htmlFor="state">State/Region</Label>
+    <LocationSelect type="state" countryCode={locationCountry} ... />
+  </div>
+  <div>
+    <Label htmlFor="city">City</Label>
+    <LocationSelect type="city" countryCode={locationCountry} stateFilter={locationState} ... />
+  </div>
+</div>
 ```
 
-This creates a:
-- Larger banner positioned at bottom-left (above name)
-- Rounded on the right side only (tab/ribbon effect)
-- Includes a pulsing dot for attention
-- More padding and larger text (11px vs 10px)
-- Positioned above the creator name/category overlay
+**Add logic:**
+- When country changes, reset city and state
+- When state changes, reset city (if cities are state-filtered)
+- For unsupported countries, show text inputs as fallback
 
-### Also Update
-- Remove the conditional shift of the platform badge (no longer needed since badge moves to bottom)
-- Apply same changes to all 3 repeated card sections in the file (lines ~665, ~762, ~852)
+## Lebanese Cities to Include
 
-## Visual Comparison
+Expanding the existing list with more cities:
+- **Mount Lebanon**: Beirut, Jounieh, Byblos/Jbeil, Zouk Mikael, Kaslik, Aley, Broummana, Dbayeh, Antelias, Baabda
+- **North**: Tripoli, Batroun, Zgharta, Bcharre, Koura
+- **South**: Sidon/Saida, Tyre, Nabatieh, Jezzine
+- **Bekaa**: Zahle, Baalbek, Chtaura
 
-**Before:**
+## Visual Flow
+
 ```text
-+------------------+
-| [Open] [ⓘ 1.1K]  | ← Small pill, easily missed
-|                  |
-|   [Photo]        |
-|                  |
-|   Name           |
-|   Category       |
-+------------------+
+1. User selects "Lebanon" from Country dropdown
+          ↓
+2. State dropdown populates with regions: Mount Lebanon, North, South, Bekaa
+          ↓
+3. User selects "Mount Lebanon"
+          ↓
+4. City dropdown filters to show only Mount Lebanon cities:
+   - Beirut
+   - Jounieh
+   - Zouk Mikael
+   - Byblos
+   - etc.
 ```
 
-**After:**
-```text
-+------------------+
-|  [ⓘ 1.1K]   ★5.0 |
-|                  |
-|   [Photo]        |
-|                  |
-|  ● Open to Invites | ← Large tab banner
-|   Name           |
-|   Category       |
-+------------------+
+## Files to Create/Modify
+
+| File | Action | Description |
+|------|--------|-------------|
+| `src/config/country-locations.ts` | Create | Country-specific city/state data |
+| `src/components/LocationSelect.tsx` | Create | Smart dropdown with fallback |
+| `src/pages/CreatorSignup.tsx` | Modify | Update Step 2 location fields |
+
+## Technical Details
+
+### Country Change Handler
+```typescript
+const handleCountryChange = (code: string) => {
+  setLocationCountry(code);
+  setLocationState(""); // Reset state
+  setLocationCity("");  // Reset city
+};
 ```
 
-## Files to Modify
+### LocationSelect Component Logic
+```typescript
+const LocationSelect = ({ type, countryCode, stateFilter, value, onChange }) => {
+  const locationData = COUNTRY_LOCATIONS[countryCode];
+  
+  // No data for this country - show text input
+  if (!locationData) {
+    return <Input value={value} onChange={(e) => onChange(e.target.value)} />;
+  }
+  
+  // Get options based on type (state or city)
+  const options = type === 'state' 
+    ? locationData.states 
+    : locationData.cities.filter(c => !stateFilter || c.state === stateFilter);
+  
+  // Show dropdown with search
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger><SelectValue placeholder={`Select ${type}`} /></SelectTrigger>
+      <SelectContent>
+        {options?.map(opt => (
+          <SelectItem key={opt.value} value={opt.label}>{opt.label}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
+```
 
-| File | Changes |
-|------|---------|
-| `src/pages/Influencers.tsx` | Update badge style in all 3 card sections (0-8, 8-16, 16+) |
+### Dropdown Styling
+Following project conventions with proper z-index and non-transparent background:
+```tsx
+<SelectContent className="bg-background border shadow-lg z-50">
+```
 
 ## Summary
-- Move badge from top-left corner to bottom-left (above creator name)
-- Use a tab/ribbon style (rounded-r-full) instead of pill
-- Increase size with larger padding and font
-- Add pulsing indicator dot for extra visibility
-- Remove platform badge conditional positioning logic
+This implementation provides a user-friendly location selection that:
+1. Automatically shows Lebanese cities when Lebanon is selected
+2. Supports other countries with similar data structures
+3. Gracefully falls back to text inputs for countries without data
+4. Resets dependent fields when parent selection changes
+5. Groups cities by region/state for easy navigation
