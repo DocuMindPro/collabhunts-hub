@@ -673,7 +673,7 @@ const Influencers = () => {
                           
                           {/* Open to Invitations Banner - LinkedIn-style tab at bottom-left */}
                           {creator.open_to_invitations && (
-                            <div className="absolute bottom-14 left-0 z-10">
+                            <div className="absolute bottom-[72px] left-0 z-10">
                               <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
                                 <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
                                 Open to Free Invites
@@ -771,7 +771,7 @@ const Influencers = () => {
                           
                           {/* Open to Invitations Banner - LinkedIn-style tab at bottom-left */}
                           {creator.open_to_invitations && (
-                            <div className="absolute bottom-14 left-0 z-10">
+                            <div className="absolute bottom-[72px] left-0 z-10">
                               <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
                                 <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
                                 Open to Free Invites
@@ -866,7 +866,7 @@ const Influencers = () => {
                           
                           {/* Open to Invitations Banner - LinkedIn-style tab at bottom-left */}
                           {creator.open_to_invitations && (
-                            <div className="absolute bottom-14 left-0 z-10">
+                            <div className="absolute bottom-[72px] left-0 z-10">
                               <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
                                 <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
                                 Open to Free Invites
