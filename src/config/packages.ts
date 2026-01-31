@@ -77,7 +77,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     idealFor: ['Restaurants', 'Cafes', 'New openings', 'Boutiques'],
   },
   meet_greet: {
-    name: 'Meet & Greet Event',
+    name: 'Meet & Greet',
     description: 'Creator appearance with full promotional coverage',
     priceRange: { min: 40000, max: 90000 }, // $400-$900
     durationRange: { min: 2, max: 4 }, // 2-4 hours
