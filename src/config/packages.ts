@@ -3,29 +3,81 @@
 
 export type PackageType = 'meet_greet' | 'workshop' | 'competition' | 'custom';
 
+export interface PackagePhase {
+  title: string;
+  items: string[];
+}
+
+export interface UpsellOption {
+  id: string;
+  name: string;
+  description: string;
+  priceCents: number;
+}
+
+export interface PackageVariant {
+  id: string;
+  name: string;
+  description: string;
+  includes: string[];
+}
+
 export interface EventPackage {
   name: string;
   description: string;
   priceRange: { min: number; max: number } | null; // in cents, null for custom
   defaultDuration: number | null; // in hours
-  includes: string[];
+  includes: string[]; // Quick summary for backwards compatibility
+  phases?: PackagePhase[]; // Pre/During/Post breakdown
+  variants?: PackageVariant[]; // Option A/B for packages with variants
+  upsells?: UpsellOption[]; // Add-on options
   idealFor: string[];
 }
 
 export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
   meet_greet: {
-    name: 'Meet & Greet',
-    description: 'Creator meets fans at your venue with live social coverage',
-    priceRange: { min: 30000, max: 80000 }, // $300-$800
+    name: 'Meet & Greet Event',
+    description: 'Creator appearance with full promotional coverage',
+    priceRange: { min: 40000, max: 90000 }, // $400-$900
     defaultDuration: 3,
     includes: [
+      '1-week pre-event promotion',
       '3 hours at venue',
-      'Live social coverage',
-      '5 content pieces',
-      'Photo opportunities with fans',
-      'Social media posts from venue',
+      'Live fan interaction & photos',
+      'Recap video & stories',
     ],
-    idealFor: ['Cafes', 'Restaurants', 'Retail stores', 'Pop-up events'],
+    phases: [
+      {
+        title: 'Pre-Event (1 week before)',
+        items: [
+          '1 announcement video',
+          '3 countdown stories',
+        ],
+      },
+      {
+        title: 'During Event (3 hours)',
+        items: [
+          'Creator present at venue',
+          'Live interaction with fans',
+          'Photos with attendees',
+          'Special offers/discounts promoted',
+        ],
+      },
+      {
+        title: 'Post-Event',
+        items: [
+          '1 recap video',
+          '3 highlight stories',
+          'Attendee testimonials collected',
+        ],
+      },
+    ],
+    upsells: [
+      { id: 'photographer', name: 'Professional Photographer', description: 'Pro photos of the event', priceCents: 15000 },
+      { id: 'extra_hour', name: 'Extra Hour', description: '+1 hour venue time', priceCents: 20000 },
+      { id: 'discount_codes', name: 'Custom Discount Codes', description: 'Trackable promo codes', priceCents: 10000 },
+    ],
+    idealFor: ['Stores', 'Boutiques', 'Entertainment venues'],
   },
   workshop: {
     name: 'Workshop',
@@ -42,19 +94,48 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     idealFor: ['Studios', 'Gyms', 'Creative spaces', 'Educational venues'],
   },
   competition: {
-    name: 'Competition Event',
-    description: 'Two creators face off in an exciting PK challenge',
+    name: 'Live Competition',
+    description: 'Exciting competition event with live audience engagement',
     priceRange: { min: 80000, max: 200000 }, // $800-$2,000
     defaultDuration: 4,
     includes: [
-      '2 creators',
-      '4 hours of entertainment',
-      'PK challenge format',
-      'Highlight reel video',
-      'Live streaming support',
-      'Winner announcement ceremony',
+      '2 weeks pre-promotion',
+      '4-hour live event',
+      'Post-event highlight reel',
+      'Sales/lead tracking',
+      'Professional setup assistance',
     ],
-    idealFor: ['Malls', 'Large venues', 'Entertainment centers', 'Gaming cafes'],
+    variants: [
+      {
+        id: 'creator_vs_creator',
+        name: 'Creator vs Creator Challenge',
+        description: '2 creators compete in brand-related challenge with live streaming',
+        includes: [
+          '2 creators compete in brand-related challenge',
+          'Live stream on both creators\' channels',
+          'Audience voting determines winner',
+          'Prizes sponsored by brand',
+        ],
+      },
+      {
+        id: 'fan_competition',
+        name: 'Fan Competition/Tombola',
+        description: 'Creator hosts game/raffle with ticket sales and prizes',
+        includes: [
+          'Creator hosts game/raffle at venue',
+          'Tickets sold (revenue share with brand)',
+          'Live entertainment/interaction',
+          'Prizes = brand products/services',
+        ],
+      },
+    ],
+    upsells: [
+      { id: 'second_creator', name: 'Second Creator', description: 'Add another creator', priceCents: 30000 },
+      { id: 'streaming_setup', name: 'Professional Streaming', description: 'Pro streaming equipment', priceCents: 20000 },
+      { id: 'prize_package', name: 'Prize Package Sponsorship', description: 'Branded prize setup', priceCents: 15000 },
+      { id: 'analytics', name: 'Advanced Analytics', description: 'Detailed engagement report', priceCents: 10000 },
+    ],
+    idealFor: ['Malls', 'Large venues', 'Product launches'],
   },
   custom: {
     name: 'Custom Experience',
@@ -130,6 +211,14 @@ export const calculateCreatorEarnings = (totalCents: number): number =>
 
 export const calculateDeposit = (totalCents: number): number => 
   Math.round(totalCents * (DEPOSIT_PERCENT / 100));
+
+export const calculateUpsellsTotal = (selectedUpsellIds: string[], packageType: PackageType): number => {
+  const pkg = EVENT_PACKAGES[packageType];
+  if (!pkg.upsells) return 0;
+  return pkg.upsells
+    .filter(upsell => selectedUpsellIds.includes(upsell.id))
+    .reduce((total, upsell) => total + upsell.priceCents, 0);
+};
 
 // Package type ordering for display
 export const PACKAGE_ORDER: PackageType[] = ['meet_greet', 'workshop', 'competition', 'custom'];

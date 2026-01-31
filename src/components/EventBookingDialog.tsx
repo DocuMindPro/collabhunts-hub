@@ -20,7 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, Clock, Users, MapPin, Loader2, CheckCircle, MessageCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { CalendarIcon, Clock, Users, MapPin, Loader2, CheckCircle, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,8 +33,10 @@ import {
   PACKAGE_ORDER,
   type PackageType,
   formatPriceRange,
+  formatPrice,
   calculatePlatformFee,
   calculateDeposit,
+  calculateUpsellsTotal,
   PLATFORM_FEE_PERCENT,
   DEPOSIT_PERCENT,
 } from "@/config/packages";
@@ -74,6 +78,8 @@ const EventBookingDialog = ({
 
   // Form state
   const [selectedPackage, setSelectedPackage] = useState<PackageType | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<string>("");
+  const [selectedUpsells, setSelectedUpsells] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
@@ -102,6 +108,12 @@ const EventBookingDialog = ({
     }
   }, [selectedPackage, startTime]);
 
+  // Reset variant when package changes
+  useEffect(() => {
+    setSelectedVariant("");
+    setSelectedUpsells([]);
+  }, [selectedPackage]);
+
   const fetchVenueProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -124,7 +136,17 @@ const EventBookingDialog = ({
     if (!selectedPackage) return 0;
     const pkg = EVENT_PACKAGES[selectedPackage];
     if (!pkg.priceRange) return 0;
-    return pkg.priceRange.min;
+    const basePrice = pkg.priceRange.min;
+    const upsellsTotal = calculateUpsellsTotal(selectedUpsells, selectedPackage);
+    return basePrice + upsellsTotal;
+  };
+
+  const handleUpsellToggle = (upsellId: string) => {
+    setSelectedUpsells(prev => 
+      prev.includes(upsellId) 
+        ? prev.filter(id => id !== upsellId)
+        : [...prev, upsellId]
+    );
   };
 
   const handleSubmitBooking = async () => {
@@ -132,6 +154,17 @@ const EventBookingDialog = ({
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields including payment method",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if variant selection is required
+    const pkg = EVENT_PACKAGES[selectedPackage];
+    if (pkg.variants && pkg.variants.length > 0 && !selectedVariant) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a competition type",
         variant: "destructive",
       });
       return;
@@ -190,6 +223,8 @@ const EventBookingDialog = ({
   const handleClose = () => {
     setStep(1);
     setSelectedPackage(null);
+    setSelectedVariant("");
+    setSelectedUpsells([]);
     setSelectedDate(undefined);
     setStartTime("");
     setEndTime("");
@@ -202,6 +237,8 @@ const EventBookingDialog = ({
 
   const estimatedPrice = getEstimatedPrice();
   const depositAmount = calculateDeposit(estimatedPrice);
+  const currentPackage = selectedPackage ? EVENT_PACKAGES[selectedPackage] : null;
+  const upsellsTotal = selectedPackage ? calculateUpsellsTotal(selectedUpsells, selectedPackage) : 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -248,6 +285,17 @@ const EventBookingDialog = ({
                                 {pkg.defaultDuration}h
                               </span>
                             )}
+                            {pkg.variants && pkg.variants.length > 0 && (
+                              <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded">
+                                {pkg.variants.length} options
+                              </span>
+                            )}
+                            {pkg.upsells && pkg.upsells.length > 0 && (
+                              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded flex items-center gap-1">
+                                <Sparkles className="h-3 w-3" />
+                                Add-ons
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="text-right">
@@ -273,8 +321,88 @@ const EventBookingDialog = ({
         )}
 
         {/* Step 2: Date & Details */}
-        {step === 2 && selectedPackage && (
+        {step === 2 && selectedPackage && currentPackage && (
           <div className="space-y-6">
+            {/* Variant Selection (for competition package) */}
+            {currentPackage.variants && currentPackage.variants.length > 0 && (
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Choose Competition Type *</Label>
+                <RadioGroup value={selectedVariant} onValueChange={setSelectedVariant}>
+                  {currentPackage.variants.map((variant, index) => (
+                    <div 
+                      key={variant.id}
+                      className={cn(
+                        "flex items-start space-x-3 p-4 rounded-lg border transition-colors",
+                        selectedVariant === variant.id 
+                          ? "border-primary bg-primary/5" 
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <RadioGroupItem value={variant.id} id={variant.id} className="mt-1" />
+                      <label htmlFor={variant.id} className="flex-1 cursor-pointer">
+                        <p className="font-medium">
+                          Option {String.fromCharCode(65 + index)}: {variant.name}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {variant.description}
+                        </p>
+                        {variant.includes && variant.includes.length > 0 && (
+                          <ul className="mt-2 space-y-1">
+                            {variant.includes.map((item, i) => (
+                              <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                                <CheckCircle className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+            )}
+
+            {/* Upsells Selection */}
+            {currentPackage.upsells && currentPackage.upsells.length > 0 && (
+              <div className="space-y-3">
+                <Label className="text-base font-semibold flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  Add-ons (Optional)
+                </Label>
+                <div className="space-y-2">
+                  {currentPackage.upsells.map((upsell) => (
+                    <div 
+                      key={upsell.id}
+                      className={cn(
+                        "flex items-center space-x-3 p-3 rounded-lg border transition-colors",
+                        selectedUpsells.includes(upsell.id) 
+                          ? "border-primary bg-primary/5" 
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <Checkbox 
+                        id={upsell.id}
+                        checked={selectedUpsells.includes(upsell.id)}
+                        onCheckedChange={() => handleUpsellToggle(upsell.id)}
+                      />
+                      <label htmlFor={upsell.id} className="flex-1 cursor-pointer">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium text-sm">{upsell.name}</p>
+                            <p className="text-xs text-muted-foreground">{upsell.description}</p>
+                          </div>
+                          <span className="text-sm font-semibold text-primary">
+                            +{formatPrice(upsell.priceCents)}
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Date Selection */}
             <div className="space-y-2">
               <Label>Event Date *</Label>
@@ -384,14 +512,25 @@ const EventBookingDialog = ({
               <div className="bg-muted/50 rounded-lg p-4 space-y-2">
                 <h4 className="font-semibold">Estimated Cost</h4>
                 <div className="flex justify-between text-sm">
-                  <span>Package Price</span>
+                  <span>Base Package Price</span>
                   <div className="text-right">
-                    <span>${(estimatedPrice / 100).toFixed(0)}</span>
+                    <span>${((estimatedPrice - upsellsTotal) / 100).toFixed(0)}</span>
                     <span className="text-xs text-muted-foreground ml-2">
-                      (~{formatDualCurrency(estimatedPrice).lbp})
+                      (~{formatDualCurrency(estimatedPrice - upsellsTotal).lbp})
                     </span>
                   </div>
                 </div>
+                {upsellsTotal > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span>Add-ons ({selectedUpsells.length})</span>
+                    <div className="text-right">
+                      <span>+${(upsellsTotal / 100).toFixed(0)}</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        (~{formatDualCurrency(upsellsTotal).lbp})
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Platform Fee ({PLATFORM_FEE_PERCENT}%)</span>
                   <span>Included</span>

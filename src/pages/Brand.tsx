@@ -10,7 +10,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-brand-page.jpg";
-import { VENUE_TYPES, EVENT_PACKAGES, PACKAGE_ORDER, formatPriceRange } from "@/config/packages";
+import { VENUE_TYPES, EVENT_PACKAGES, PACKAGE_ORDER } from "@/config/packages";
+import PackageCard from "@/components/brand/PackageCard";
 import { LEBANESE_CITIES } from "@/config/lebanese-market";
 import {
   Accordion,
@@ -267,29 +268,7 @@ const Brand = () => {
             {PACKAGE_ORDER.map((pkgType) => {
               const pkg = EVENT_PACKAGES[pkgType];
               return (
-                <div key={pkgType} className="p-6 rounded-xl bg-card border border-border flex flex-col">
-                  <h3 className="font-heading font-semibold text-lg mb-2">{pkg.name}</h3>
-                  <p className="text-2xl font-bold text-primary mb-1">
-                    {formatPriceRange(pkg.priceRange)}
-                  </p>
-                  {pkg.defaultDuration && (
-                    <p className="text-sm text-muted-foreground mb-4 flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {pkg.defaultDuration} hours
-                    </p>
-                  )}
-                  <p className="text-sm text-muted-foreground mb-4 flex-1">
-                    {pkg.description}
-                  </p>
-                  <ul className="space-y-2">
-                    {pkg.includes.slice(0, 3).map((item, i) => (
-                      <li key={i} className="text-sm flex items-start gap-2">
-                        <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <PackageCard key={pkgType} pkgType={pkgType} pkg={pkg} />
               );
             })}
           </div>
