@@ -42,17 +42,12 @@ const PackageCard = ({ pkgType, pkg }: PackageCardProps) => {
                 {phase.title}
               </p>
               <ul className="space-y-1">
-                {phase.items.slice(0, 2).map((item, itemIndex) => (
+                {phase.items.map((item, itemIndex) => (
                   <li key={itemIndex} className="text-xs text-muted-foreground flex items-start gap-1.5">
                     <CheckCircle className="h-3 w-3 text-primary mt-0.5 shrink-0" />
                     <span>{item}</span>
                   </li>
                 ))}
-                {phase.items.length > 2 && (
-                  <li className="text-xs text-muted-foreground pl-4">
-                    +{phase.items.length - 2} more
-                  </li>
-                )}
               </ul>
             </div>
           ))}
