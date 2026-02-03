@@ -55,6 +55,7 @@ const Navbar = () => {
   
   const baseNavLinks: NavLink[] = [
     { to: "/influencers", label: "Find Creators" },
+    { to: "/opportunities", label: "Opportunities" },
     { to: "/brand", label: "For Brands" },
   ];
 

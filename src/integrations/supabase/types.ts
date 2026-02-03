@@ -553,6 +553,86 @@ export type Database = {
           },
         ]
       }
+      brand_opportunities: {
+        Row: {
+          application_deadline: string | null
+          brand_profile_id: string
+          budget_cents: number | null
+          created_at: string
+          description: string | null
+          end_time: string | null
+          event_date: string
+          id: string
+          is_paid: boolean
+          location_city: string | null
+          location_country: string | null
+          min_followers: number | null
+          package_type: string | null
+          required_categories: string[] | null
+          requirements: string | null
+          spots_available: number
+          spots_filled: number
+          start_time: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          application_deadline?: string | null
+          brand_profile_id: string
+          budget_cents?: number | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          event_date: string
+          id?: string
+          is_paid?: boolean
+          location_city?: string | null
+          location_country?: string | null
+          min_followers?: number | null
+          package_type?: string | null
+          required_categories?: string[] | null
+          requirements?: string | null
+          spots_available?: number
+          spots_filled?: number
+          start_time?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          application_deadline?: string | null
+          brand_profile_id?: string
+          budget_cents?: number | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          event_date?: string
+          id?: string
+          is_paid?: boolean
+          location_city?: string | null
+          location_country?: string | null
+          min_followers?: number | null
+          package_type?: string | null
+          required_categories?: string[] | null
+          requirements?: string | null
+          spots_available?: number
+          spots_filled?: number
+          start_time?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_opportunities_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_profiles: {
         Row: {
           accessibility_info: string | null
@@ -1993,6 +2073,70 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      opportunity_applications: {
+        Row: {
+          booking_id: string | null
+          confirmed_at: string | null
+          created_at: string
+          creator_profile_id: string
+          delivered_at: string | null
+          delivery_links: string[] | null
+          id: string
+          message: string | null
+          opportunity_id: string
+          proposed_price_cents: number | null
+          status: string
+        }
+        Insert: {
+          booking_id?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          creator_profile_id: string
+          delivered_at?: string | null
+          delivery_links?: string[] | null
+          id?: string
+          message?: string | null
+          opportunity_id: string
+          proposed_price_cents?: number | null
+          status?: string
+        }
+        Update: {
+          booking_id?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          creator_profile_id?: string
+          delivered_at?: string | null
+          delivery_links?: string[] | null
+          id?: string
+          message?: string | null
+          opportunity_id?: string
+          proposed_price_cents?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_applications_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_applications_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_applications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "brand_opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payouts: {
         Row: {

@@ -9,13 +9,34 @@ import ServicesTab from "@/components/creator-dashboard/ServicesTab";
 import BookingsTab from "@/components/creator-dashboard/BookingsTab";
 import MessagesTab from "@/components/creator-dashboard/MessagesTab";
 import PayoutsTab from "@/components/creator-dashboard/PayoutsTab";
+import OpportunitiesTab from "@/components/creator-dashboard/OpportunitiesTab";
 import MobileBottomNav from "@/components/mobile/MobileBottomNav";
-import { BarChart3, User, Package, Calendar, MessageSquare, Wallet } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { BarChart3, User, Package, Calendar, MessageSquare, Wallet, Briefcase } from "lucide-react";
 
 const CreatorDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
+  const [creatorProfileId, setCreatorProfileId] = useState<string | null>(null);
   const isNative = Capacitor.isNativePlatform();
+
+  useEffect(() => {
+    const fetchCreatorProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from("creator_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (data) {
+        setCreatorProfileId(data.id);
+      }
+    };
+    fetchCreatorProfile();
+  }, []);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -65,6 +86,10 @@ const CreatorDashboard = () => {
                   <Calendar className="h-4 w-4" />
                   <span className="hidden sm:inline">Events</span>
                 </TabsTrigger>
+                <TabsTrigger value="opportunities" className="gap-2 shrink-0">
+                  <Briefcase className="h-4 w-4" />
+                  <span className="hidden sm:inline">Opportunities</span>
+                </TabsTrigger>
                 <TabsTrigger value="payouts" className="gap-2 shrink-0">
                   <Wallet className="h-4 w-4" />
                   <span className="hidden sm:inline">Earnings</span>
@@ -90,6 +115,10 @@ const CreatorDashboard = () => {
 
             <TabsContent value="bookings" className="space-y-6">
               <BookingsTab />
+            </TabsContent>
+
+            <TabsContent value="opportunities" className="space-y-6">
+              {creatorProfileId && <OpportunitiesTab creatorProfileId={creatorProfileId} />}
             </TabsContent>
 
             <TabsContent value="payouts" className="space-y-6">
