@@ -9,18 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Star, Instagram, Youtube, Twitter, Play, Image as ImageIcon, Images, MessageCircle, Lock, Heart } from "lucide-react";
+import { MapPin, Star, Instagram, Youtube, Twitter, Play, Image as ImageIcon, Images, MessageCircle, Heart } from "lucide-react";
 import { useSaveCreator } from "@/hooks/useSaveCreator";
 import BookingDialog from "@/components/BookingDialog";
 import MessageDialog from "@/components/MessageDialog";
 import PortfolioGalleryModal from "@/components/PortfolioGalleryModal";
 import MobilePortfolioCarousel from "@/components/MobilePortfolioCarousel";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { SUBSCRIPTION_PLANS, type PlanType } from "@/lib/stripe-mock";
-import UpgradePrompt from "@/components/UpgradePrompt";
 import DimmedPrice from "@/components/DimmedPrice";
 import DimmedPriceRange from "@/components/DimmedPriceRange";
-import UpgradeModal from "@/components/UpgradeModal";
+
 interface CreatorData {
   id: string;
   user_id: string;
@@ -85,10 +83,9 @@ const CreatorProfile = () => {
   const [failedPortfolioImages, setFailedPortfolioImages] = useState<Set<number>>(new Set());
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [canContactCreators, setCanContactCreators] = useState(false);
-  const [checkingSubscription, setCheckingSubscription] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [canViewPrice, setCanViewPrice] = useState(false);
-  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+  // Pricing is now visible to everyone - no subscription required
+  const canViewPrice = true;
   
   const { isSaved, loading: saveLoading, toggleSave, hasBrandProfile, canUseCRM } = useSaveCreator(id);
 
@@ -158,26 +155,7 @@ const CreatorProfile = () => {
         return;
       }
 
-      // Check subscription allows contact (unless admin)
-      if (!adminCheck) {
-        const { data: subscription } = await supabase
-          .from("brand_subscriptions")
-          .select("plan_type")
-          .eq("brand_profile_id", brandProfile.id)
-          .eq("status", "active")
-          .maybeSingle();
-
-        const planType = (subscription?.plan_type || "basic") as PlanType;
-        if (!SUBSCRIPTION_PLANS[planType].canContactCreators) {
-          toast({
-            title: "Upgrade Required",
-            description: "Upgrade to Pro to message creators",
-            variant: "destructive"
-          });
-          navigate("/brand-dashboard?tab=subscription");
-          return;
-        }
-      }
+      // Messaging is now FREE for all brands - no subscription check needed
 
       // Build URL params for package context
       let packageParams = "";
@@ -323,46 +301,7 @@ const CreatorProfile = () => {
       const isOwn = user && profileData.user_id === user.id;
       setIsOwnProfile(!!isOwn);
       
-      // Determine if user can view price
-      // Price is visible if: creator allows public pricing, OR user is the creator, OR user has active subscription
-      let priceVisible = profileData.show_pricing_to_public !== false; // Default true if null
-      
-      if (!priceVisible && user && !isOwn) {
-        // Check if user has an active brand subscription
-        const { data: brandProfile } = await supabase
-          .from("brand_profiles")
-          .select("id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-          
-        if (brandProfile) {
-          const { data: subscription } = await supabase
-            .from("brand_subscriptions")
-            .select("plan_type")
-            .eq("brand_profile_id", brandProfile.id)
-            .eq("status", "active")
-            .maybeSingle();
-            
-          if (subscription) {
-            priceVisible = true;
-          }
-        }
-        
-        // Also check if admin
-        const { data: adminCheck } = await supabase.rpc('has_role', {
-          _user_id: user.id,
-          _role: 'admin'
-        });
-        if (adminCheck) {
-          priceVisible = true;
-        }
-      }
-      
-      if (isOwn) {
-        priceVisible = true; // Creators can always see their own prices
-      }
-      
-      setCanViewPrice(priceVisible);
+      // All pricing is now visible to everyone - no subscription checks needed
 
       const { data: socialData } = await supabase
         .from("creator_social_accounts")
@@ -894,7 +833,6 @@ const CreatorProfile = () => {
                                     price={service.price_cents} 
                                     canViewPrice={canViewPrice} 
                                     size="lg"
-                                    onClick={() => setIsPricingModalOpen(true)}
                                   />
                                 )}
                                 {packageInfo.duration && (
@@ -974,7 +912,6 @@ const CreatorProfile = () => {
                         maxPrice={Math.max(...creator.services.map(s => s.price_cents))}
                         canViewPrice={canViewPrice} 
                         size="lg"
-                        onClick={() => setIsPricingModalOpen(true)}
                       />
                     ) : (
                       <p className="text-2xl font-heading font-bold text-muted-foreground">
@@ -1049,12 +986,6 @@ const CreatorProfile = () => {
         media={creator.portfolio_media}
         creatorName={creator.display_name}
         initialIndex={galleryStartIndex}
-      />
-
-      <UpgradeModal
-        isOpen={isPricingModalOpen}
-        onClose={() => setIsPricingModalOpen(false)}
-        feature="pricing"
       />
     </div>
   );
