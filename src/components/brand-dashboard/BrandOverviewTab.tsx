@@ -1,25 +1,36 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Calendar, CheckCircle, Clock, Users, ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Users, Briefcase, MessageSquare, Calendar, ArrowRight } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
+
+interface RecentActivity {
+  id: string;
+  type: "booking" | "message";
+  description: string;
+  timeAgo: string;
+  link: string;
+}
 
 const BrandOverviewTab = () => {
   const navigate = useNavigate();
+  const [, setSearchParams] = useSearchParams();
   const [stats, setStats] = useState({
     totalSpent: 0,
     activeEvents: 0,
     completedEvents: 0,
     pendingRequests: 0,
   });
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardStats();
+    fetchDashboardData();
   }, []);
 
-  const fetchDashboardStats = async () => {
+  const fetchDashboardData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -32,10 +43,12 @@ const BrandOverviewTab = () => {
 
       if (!profile) return;
 
+      // Fetch bookings for stats
       const { data: bookingsData } = await supabase
         .from("bookings")
-        .select("status, total_price_cents")
-        .eq("brand_profile_id", profile.id);
+        .select("id, status, total_price_cents, created_at, creator_profile_id")
+        .eq("brand_profile_id", profile.id)
+        .order("created_at", { ascending: false });
 
       const completedBookings = bookingsData?.filter(b => b.status === "completed") || [];
       const totalSpent = completedBookings.reduce((sum, b) => sum + b.total_price_cents, 0);
@@ -48,135 +61,179 @@ const BrandOverviewTab = () => {
         completedEvents: completedBookings.length,
         pendingRequests,
       });
+
+      // Build recent activity from bookings
+      const activities: RecentActivity[] = [];
+      
+      if (bookingsData && bookingsData.length > 0) {
+        // Get creator names for bookings
+        const creatorIds = [...new Set(bookingsData.map(b => b.creator_profile_id))];
+        const { data: creators } = await supabase
+          .from("creator_profiles")
+          .select("id, display_name")
+          .in("id", creatorIds);
+        
+        const creatorMap = new Map(creators?.map(c => [c.id, c.display_name]) || []);
+
+        bookingsData.slice(0, 5).forEach(booking => {
+          const creatorName = creatorMap.get(booking.creator_profile_id) || "Creator";
+          let description = "";
+          
+          switch (booking.status) {
+            case "completed":
+              description = `Booking completed with ${creatorName}`;
+              break;
+            case "accepted":
+              description = `Booking confirmed with ${creatorName}`;
+              break;
+            case "pending":
+              description = `Booking request sent to ${creatorName}`;
+              break;
+            case "cancelled":
+              description = `Booking cancelled with ${creatorName}`;
+              break;
+            default:
+              description = `Booking with ${creatorName}`;
+          }
+
+          activities.push({
+            id: booking.id,
+            type: "booking",
+            description,
+            timeAgo: formatDistanceToNow(new Date(booking.created_at), { addSuffix: true }),
+            link: "/brand-dashboard?tab=bookings",
+          });
+        });
+      }
+
+      setRecentActivity(activities.slice(0, 3));
     } catch (error) {
-      console.error("Error fetching stats:", error);
+      console.error("Error fetching dashboard data:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleTabNavigation = (tab: string) => {
+    setSearchParams({ tab });
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Quick Action Card */}
-      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h3 className="text-lg font-semibold">Ready to book your next event?</h3>
-              <p className="text-muted-foreground text-sm">
-                Browse creators available for fan experiences, meet & greets, and more.
-              </p>
+    <div className="space-y-4">
+      {/* Stats Row - Unified Card */}
+      <Card>
+        <CardContent className="p-4 md:p-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <div className="text-center">
+              <p className="text-2xl md:text-3xl font-bold">${stats.totalSpent.toFixed(0)}</p>
+              <p className="text-xs text-muted-foreground mt-1">Total Spent</p>
             </div>
-            <Button 
-              onClick={() => navigate('/influencers')}
-              className="gap-2 shrink-0"
-            >
-              <Users className="h-4 w-4" />
-              Find Creators
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            <div className="text-center">
+              <p className="text-2xl md:text-3xl font-bold">{stats.activeEvents}</p>
+              <p className="text-xs text-muted-foreground mt-1">Active</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl md:text-3xl font-bold">{stats.completedEvents}</p>
+              <p className="text-xs text-muted-foreground mt-1">Completed</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl md:text-3xl font-bold">{stats.pendingRequests}</p>
+              <p className="text-xs text-muted-foreground mt-1">Pending</p>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Stats Header */}
+      {/* Recent Activity */}
       <Card>
-        <CardHeader>
-          <CardTitle>Event Overview</CardTitle>
-          <CardDescription>Your booking activity at a glance</CardDescription>
+        <CardHeader className="py-3 px-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs h-7 px-2"
+              onClick={() => handleTabNavigation('bookings')}
+            >
+              View All
+              <ArrowRight className="h-3 w-3 ml-1" />
+            </Button>
+          </div>
         </CardHeader>
+        <CardContent className="px-4 pb-4">
+          {recentActivity.length > 0 ? (
+            <div className="space-y-3">
+              {recentActivity.map((activity) => (
+                <div 
+                  key={activity.id} 
+                  className="flex items-center gap-3 text-sm cursor-pointer hover:bg-muted/50 -mx-2 px-2 py-1.5 rounded-md transition-colors"
+                  onClick={() => handleTabNavigation('bookings')}
+                >
+                  <div className="h-2 w-2 rounded-full bg-primary shrink-0" />
+                  <span className="flex-1 truncate">{activity.description}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">{activity.timeAgo}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <Calendar className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
+              <p className="text-sm text-muted-foreground">No recent activity</p>
+              <Button 
+                variant="link" 
+                size="sm" 
+                className="mt-1 h-auto p-0 text-xs"
+                onClick={() => navigate('/influencers')}
+              >
+                Find creators to get started
+              </Button>
+            </div>
+          )}
+        </CardContent>
       </Card>
 
-      {/* Stats Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${stats.totalSpent.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">On completed events</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Events</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activeEvents}</div>
-            <p className="text-xs text-muted-foreground">Currently in progress</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.completedEvents}</div>
-            <p className="text-xs text-muted-foreground">Successful events</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingRequests}</div>
-            <p className="text-xs text-muted-foreground">Awaiting response</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* How It Works Section */}
+      {/* Quick Actions */}
       <Card>
-        <CardHeader>
-          <CardTitle>How It Works</CardTitle>
-          <CardDescription>Simple event booking in 3 steps</CardDescription>
+        <CardHeader className="py-3 px-4">
+          <CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center space-y-2">
-              <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Users className="h-6 w-6 text-primary" />
-              </div>
-              <h4 className="font-medium">1. Find Creators</h4>
-              <p className="text-sm text-muted-foreground">
-                Browse verified creators and view their event packages
-              </p>
-            </div>
-            <div className="text-center space-y-2">
-              <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-primary" />
-              </div>
-              <h4 className="font-medium">2. Book an Event</h4>
-              <p className="text-sm text-muted-foreground">
-                Select a package, choose your date, and pay 50% deposit
-              </p>
-            </div>
-            <div className="text-center space-y-2">
-              <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-primary" />
-              </div>
-              <h4 className="font-medium">3. Host & Confirm</h4>
-              <p className="text-sm text-muted-foreground">
-                Event happens, you confirm completion, remaining balance is released
-              </p>
-            </div>
+        <CardContent className="px-4 pb-4">
+          <div className="grid grid-cols-3 gap-2 md:gap-3">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate('/influencers')} 
+              className="h-auto py-3 flex-col gap-1.5 text-xs"
+            >
+              <Users className="h-4 w-4" />
+              <span>Find Creators</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleTabNavigation('opportunities')} 
+              className="h-auto py-3 flex-col gap-1.5 text-xs"
+            >
+              <Briefcase className="h-4 w-4" />
+              <span>Opportunities</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleTabNavigation('messages')} 
+              className="h-auto py-3 flex-col gap-1.5 text-xs"
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span>Messages</span>
+            </Button>
           </div>
         </CardContent>
       </Card>
