@@ -53,14 +53,16 @@ const Navbar = () => {
 
   type NavLink = { to: string; label: string; icon?: typeof Sparkles };
   
-  const baseNavLinks: NavLink[] = [
-    { to: "/influencers", label: "Find Creators" },
-    { to: "/opportunities", label: "Opportunities" },
-    { to: "/brand", label: "For Brands" },
-  ];
-
   const getNavLinks = (): NavLink[] => {
-    const links = [...baseNavLinks];
+    const links: NavLink[] = [
+      { to: "/influencers", label: "Find Creators" },
+      { to: "/brand", label: "For Brands" },
+    ];
+    
+    // Only show Opportunities link to users with a creator profile
+    if (hasCreatorProfile) {
+      links.splice(1, 0, { to: "/opportunities", label: "Opportunities" });
+    }
     
     if (user) {
       links.push({ to: "/whats-new", label: "What's New", icon: Sparkles });
