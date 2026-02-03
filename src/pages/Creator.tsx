@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DollarSign, Users, Shield, Calendar, Award, Clock, MapPin, Star } from "lucide-react";
@@ -8,10 +8,12 @@ import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 
 const Creator = () => {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [user, setUser] = useState<any>(null);
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -23,14 +25,20 @@ const Creator = () => {
       if (session?.user) {
         setUser(session.user);
         
-        const { data: brandProfile } = await supabase
-          .from('brand_profiles')
+        const { data: creatorProfile } = await supabase
+          .from('creator_profiles')
           .select('id')
           .eq('user_id', session.user.id)
           .maybeSingle();
         
-        const { data: creatorProfile } = await supabase
-          .from('creator_profiles')
+        // If user has a creator profile, redirect to dashboard
+        if (creatorProfile) {
+          navigate("/creator-dashboard");
+          return;
+        }
+        
+        const { data: brandProfile } = await supabase
+          .from('brand_profiles')
           .select('id')
           .eq('user_id', session.user.id)
           .maybeSingle();
@@ -38,6 +46,7 @@ const Creator = () => {
         setHasBrandProfile(!!brandProfile);
         setHasCreatorProfile(!!creatorProfile);
       }
+      setAuthLoading(false);
     };
 
     checkUserProfiles();
@@ -46,30 +55,38 @@ const Creator = () => {
       if (session?.user) {
         setUser(session.user);
         setTimeout(async () => {
-          const { data: brandProfile } = await supabase
-            .from('brand_profiles')
-            .select('id')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-          
           const { data: creatorProfile } = await supabase
             .from('creator_profiles')
             .select('id')
             .eq('user_id', session.user.id)
             .maybeSingle();
           
+          // If user has a creator profile, redirect to dashboard
+          if (creatorProfile) {
+            navigate("/creator-dashboard");
+            return;
+          }
+          
+          const { data: brandProfile } = await supabase
+            .from('brand_profiles')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
           setHasBrandProfile(!!brandProfile);
           setHasCreatorProfile(!!creatorProfile);
+          setAuthLoading(false);
         }, 0);
       } else {
         setUser(null);
         setHasBrandProfile(false);
         setHasCreatorProfile(false);
+        setAuthLoading(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const benefits = [
     {
@@ -102,6 +119,15 @@ const Creator = () => {
   const eventTypes = [
     "Meet & Greet", "Workshop", "Competition", "Brand Activation", "Private Event"
   ];
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
