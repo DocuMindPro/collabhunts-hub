@@ -86,6 +86,7 @@ const Influencers = () => {
   
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
   const navigate = useNavigate();
 
   const platforms = ["All", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch"];
@@ -110,7 +111,6 @@ const Influencers = () => {
   const checkUserStatus = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      setIsLoggedIn(!!user);
       if (user) {
         const { data: brandProfile } = await supabase
           .from("brand_profiles")
@@ -119,11 +119,15 @@ const Influencers = () => {
           .maybeSingle();
         
         setHasBrandProfile(!!brandProfile);
+        setIsLoggedIn(true);
       } else {
         setHasBrandProfile(false);
+        setIsLoggedIn(false);
       }
     } catch (error) {
       console.error("Error checking user status:", error);
+    } finally {
+      setAuthCheckComplete(true);
     }
   };
 
@@ -711,7 +715,7 @@ const Influencers = () => {
           )}
 
           {/* Call to action for non-registered brands */}
-          {!hasBrandProfile && isLoggedIn && (
+          {authCheckComplete && !hasBrandProfile && isLoggedIn && (
             <div className="mb-6">
               <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/5 p-4 md:p-6">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
