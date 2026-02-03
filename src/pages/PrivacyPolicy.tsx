@@ -19,7 +19,7 @@ const PrivacyPolicy = () => {
             Privacy Policy
           </h1>
           <p className="text-muted-foreground mb-8">
-            Last updated: December 10, 2025 | Version 2.0
+            Last updated: February 3, 2026 | Version 3.0
           </p>
 
           <div className="prose prose-lg dark:prose-invert max-w-none space-y-10">
@@ -32,7 +32,7 @@ const PrivacyPolicy = () => {
                 explains how we collect, use, disclose, and safeguard your information when you use our platform at collabhunts.com ("the Platform").
               </p>
               <p className="text-muted-foreground mb-4">
-                This policy applies to all users of our Platform, including Brands, Creators, and visitors. 
+                This policy applies to all users of our Platform, including Brands, Venues, Creators, and visitors. 
                 Please read this privacy policy carefully. If you do not agree with the terms of this privacy 
                 policy, please do not access the Platform.
               </p>
@@ -51,12 +51,12 @@ const PrivacyPolicy = () => {
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li><strong>Account Information:</strong> Name, email address, password, phone number</li>
-                <li><strong>Profile Information:</strong> Company name, biography, profile photo, cover images, location (city, state, country)</li>
-                <li><strong>Creator-Specific Data:</strong> Social media usernames, follower counts, engagement metrics, date of birth, gender, ethnicity, primary language</li>
-                <li><strong>Brand-Specific Data:</strong> Company name, industry, company size, website URL, logo</li>
-                <li><strong>Payment Information:</strong> Billing address, payment method details (processed by our payment partner Paddle)</li>
+                <li><strong>Profile Information:</strong> Company/venue name, biography, profile photo, cover images, location (city, state, country)</li>
+                <li><strong>Creator-Specific Data:</strong> Social media usernames, follower counts, engagement metrics, date of birth, gender, primary language, event experience</li>
+                <li><strong>Brand/Venue-Specific Data:</strong> Company name, venue details, capacity, amenities, website URL, logo</li>
+                <li><strong>Booking Information:</strong> Event details, dates, times, special requirements</li>
+                <li><strong>Payment Information:</strong> Billing address, payment method details (processed by our payment partners)</li>
                 <li><strong>Communication Data:</strong> Messages sent through the Platform, support inquiries, feedback</li>
-                <li><strong>Content:</strong> Portfolio items, deliverables, campaign materials uploaded to the Platform</li>
               </ul>
 
               <h3 className="text-xl font-heading font-semibold mb-3">2.2 Information Collected Automatically</h3>
@@ -77,7 +77,7 @@ const PrivacyPolicy = () => {
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li><strong>Social Media Platforms:</strong> Public profile information when you connect social accounts</li>
-                <li><strong>Payment Processor:</strong> Transaction status and limited payment information from Paddle</li>
+                <li><strong>Payment Processor:</strong> Transaction status and limited payment information</li>
                 <li><strong>Analytics Providers:</strong> Aggregated usage and demographic data</li>
               </ul>
             </section>
@@ -92,10 +92,9 @@ const PrivacyPolicy = () => {
               <h3 className="text-xl font-heading font-semibold mb-3">3.1 Service Delivery</h3>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li>Create and manage your account</li>
-                <li>Facilitate connections between Brands and Creators</li>
-                <li>Process transactions and payments</li>
+                <li>Facilitate connections between Brands/Venues and Creators</li>
+                <li>Process bookings and payments through our escrow system</li>
                 <li>Enable messaging and communication features</li>
-                <li>Store and manage your Content Library</li>
                 <li>Handle disputes and provide customer support</li>
               </ul>
 
@@ -109,7 +108,7 @@ const PrivacyPolicy = () => {
 
               <h3 className="text-xl font-heading font-semibold mb-3">3.3 Communications</h3>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Send transactional emails (booking confirmations, delivery notifications, payment receipts)</li>
+                <li>Send transactional emails (booking confirmations, event reminders, payment receipts)</li>
                 <li>Send administrative information and platform updates</li>
                 <li>Respond to your inquiries and provide support</li>
                 <li>Send marketing communications (with your consent)</li>
@@ -131,7 +130,7 @@ const PrivacyPolicy = () => {
                 For users in the European Economic Area (EEA), we process your data based on:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Contract Performance:</strong> Processing necessary to provide our services (account creation, transactions, support)</li>
+                <li><strong>Contract Performance:</strong> Processing necessary to provide our services (account creation, bookings, payments, support)</li>
                 <li><strong>Legitimate Interests:</strong> Processing for fraud prevention, platform security, and service improvement</li>
                 <li><strong>Consent:</strong> Marketing communications and certain cookies (you may withdraw consent at any time)</li>
                 <li><strong>Legal Obligation:</strong> Processing required by law (tax records, fraud prevention)</li>
@@ -150,9 +149,9 @@ const PrivacyPolicy = () => {
                 To facilitate the marketplace:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Creator profiles (display name, bio, portfolio, location, social stats) are visible to Brands</li>
-                <li>Brand company information is visible to Creators during collaborations</li>
-                <li>Messages and booking details are shared between parties in a collaboration</li>
+                <li>Creator profiles (display name, bio, portfolio, location, social stats, pricing) are visible to Brands</li>
+                <li>Brand/Venue information is visible to Creators during bookings</li>
+                <li>Messages and booking details are shared between parties in a transaction</li>
               </ul>
 
               <h3 className="text-xl font-heading font-semibold mb-3">5.2 With Service Providers</h3>
@@ -160,12 +159,12 @@ const PrivacyPolicy = () => {
                 We share data with trusted third-party service providers who help us operate the Platform:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Payment Processing:</strong> Paddle.com (Merchant of Record) processes all payments and handles financial data</li>
+                <li><strong>Payment Processing:</strong> Secure payment partners process all transactions</li>
                 <li><strong>Cloud Infrastructure:</strong> Hosting and database services</li>
-                <li><strong>Email Services:</strong> SendGrid for transactional and notification emails</li>
-                <li><strong>File Storage:</strong> Cloudflare R2 for content and media storage</li>
+                <li><strong>Email Services:</strong> Transactional and notification emails</li>
+                <li><strong>File Storage:</strong> Secure content and media storage</li>
                 <li><strong>Analytics:</strong> Usage analytics and performance monitoring</li>
-                <li><strong>SMS Verification:</strong> Twilio for phone number verification</li>
+                <li><strong>SMS Verification:</strong> Phone number verification services</li>
               </ul>
 
               <h3 className="text-xl font-heading font-semibold mb-3">5.3 For Legal Reasons</h3>
@@ -196,7 +195,8 @@ const PrivacyPolicy = () => {
                 <li><strong>Encryption:</strong> Data encrypted in transit (TLS/SSL) and at rest</li>
                 <li><strong>Access Controls:</strong> Role-based access with authentication requirements</li>
                 <li><strong>Infrastructure Security:</strong> Secure cloud hosting with regular security updates</li>
-                <li><strong>Payment Security:</strong> PCI-DSS compliant payment processing through Paddle</li>
+                <li><strong>Payment Security:</strong> PCI-DSS compliant payment processing</li>
+                <li><strong>Escrow Protection:</strong> Secure fund holding until service delivery</li>
                 <li><strong>Regular Backups:</strong> Automated daily backups with secure storage</li>
                 <li><strong>Monitoring:</strong> Continuous monitoring for unauthorized access</li>
               </ul>
@@ -283,7 +283,7 @@ const PrivacyPolicy = () => {
               </ul>
               <p className="text-muted-foreground mb-4">
                 After account closure, we retain certain data as required by law or for legitimate business purposes. 
-                Transaction records may be retained for up to 7 years for tax and legal compliance.
+                Booking and transaction records may be retained for up to 7 years for tax and legal compliance.
               </p>
             </section>
 
@@ -291,71 +291,45 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">10. International Data Transfers</h2>
               <p className="text-muted-foreground mb-4">
-                Your information may be transferred to and processed in countries other than your country of residence, 
-                including the United States. These countries may have different data protection laws.
+                Your information may be transferred to and processed in countries other than your own. We ensure appropriate 
+                safeguards are in place for such transfers, including Standard Contractual Clauses approved by the European Commission.
               </p>
-              <p className="text-muted-foreground mb-4">
-                For EEA/UK users, we ensure appropriate safeguards are in place for international transfers, including:
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Standard Contractual Clauses approved by the European Commission</li>
-                <li>Adequacy decisions where applicable</li>
-                <li>Binding Corporate Rules for certain service providers</li>
-              </ul>
             </section>
 
             {/* Section 11 */}
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">11. Children's Privacy</h2>
               <p className="text-muted-foreground mb-4">
-                Our Platform is not intended for individuals under 18 years of age. We do not knowingly collect 
-                personal information from children under 18. If we learn we have collected personal information 
-                from a child under 18, we will delete that information promptly.
-              </p>
-              <p className="text-muted-foreground mb-4">
-                If you believe we have collected information from a minor, please contact us immediately.
+                Our Platform is not intended for children under 18 years of age. We do not knowingly collect personal information 
+                from children. If you believe we have collected information from a child, please contact us immediately.
               </p>
             </section>
 
             {/* Section 12 */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">12. Third-Party Links</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">12. Changes to This Policy</h2>
               <p className="text-muted-foreground mb-4">
-                Our Platform may contain links to third-party websites, including social media platforms. 
-                We are not responsible for the privacy practices of these external sites. We encourage you to 
-                read the privacy policies of any third-party sites you visit.
+                We may update this Privacy Policy from time to time. Changes will be posted on this page with an updated 
+                "Last updated" date. Material changes will be communicated via email to registered users. Your continued 
+                use of the Platform after changes constitutes acceptance of the updated policy.
               </p>
             </section>
 
             {/* Section 13 */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">13. Changes to This Policy</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">13. Contact Us</h2>
               <p className="text-muted-foreground mb-4">
-                We may update this Privacy Policy from time to time. We will notify you of material changes by:
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Posting the new Privacy Policy on this page</li>
-                <li>Updating the "Last updated" date</li>
-                <li>Sending email notification for significant changes</li>
-              </ul>
-              <p className="text-muted-foreground mb-4">
-                Your continued use of the Platform after changes constitutes acceptance of the updated policy.
-              </p>
-            </section>
-
-            {/* Section 14 */}
-            <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">14. Contact Us</h2>
-              <p className="text-muted-foreground mb-4">
-                If you have questions, concerns, or requests regarding this Privacy Policy or our data practices, 
-                please contact us:
+                If you have questions about this Privacy Policy or wish to exercise your privacy rights, please contact us:
               </p>
               <div className="bg-muted/50 rounded-lg p-4 border border-border">
                 <p className="text-muted-foreground mb-2">
-                  <strong>CollabHunts Support</strong>
+                  <strong>CollabHunts Privacy Team</strong>
                 </p>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground mb-1">
                   Email: <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a>
+                </p>
+                <p className="text-muted-foreground text-sm mt-3">
+                  Response time: Within 30 days for privacy requests
                 </p>
               </div>
             </section>

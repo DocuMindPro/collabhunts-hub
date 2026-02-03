@@ -9,14 +9,58 @@ import { Label } from "@/components/ui/label";
 import { Mail, MessageSquare, Clock, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import { supabase } from "@/integrations/supabase/client";
+import { safeNativeAsync } from "@/lib/supabase-native";
 
 const Contact = () => {
   const [searchParams] = useSearchParams();
   const prefilledSubject = searchParams.get("subject") || "";
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    const checkUserProfiles = async () => {
+      const session = await safeNativeAsync(
+        async () => {
+          const { data } = await supabase.auth.getSession();
+          return data.session;
+        },
+        null
+      );
+      
+      if (!session?.user) {
+        setIsLoggedIn(false);
+        return;
+      }
+
+      setIsLoggedIn(true);
+
+      const [brandData, creatorData] = await Promise.all([
+        safeNativeAsync(
+          async () => {
+            const { data } = await supabase.from("brand_profiles").select("id").eq("user_id", session.user.id).maybeSingle();
+            return data;
+          },
+          null
+        ),
+        safeNativeAsync(
+          async () => {
+            const { data } = await supabase.from("creator_profiles").select("id").eq("user_id", session.user.id).maybeSingle();
+            return data;
+          },
+          null
+        )
+      ]);
+
+      setHasBrandProfile(!!brandData);
+      setHasCreatorProfile(!!creatorData);
+    };
+
+    checkUserProfiles();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -158,16 +202,42 @@ const Contact = () => {
               </div>
             </div>
 
-            {/* FAQ CTA */}
-            <div className="bg-muted/50 rounded-xl p-6 border border-border">
-              <h3 className="font-heading font-semibold mb-2">Planning an event?</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Browse our events page to see what's happening, or check out our creator and venue guides.
-              </p>
-              <Button variant="outline" size="sm" asChild>
-                <a href="/events">Browse Events</a>
-              </Button>
-            </div>
+            {/* Role-aware FAQ CTA */}
+            {hasBrandProfile && (
+              <div className="bg-muted/50 rounded-xl p-6 border border-border">
+                <h3 className="font-heading font-semibold mb-2">Need help finding the right creator?</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Browse our curated selection of creators or check your dashboard for booking updates.
+                </p>
+                <Button variant="outline" size="sm" asChild>
+                  <a href="/influencers">Find Creators</a>
+                </Button>
+              </div>
+            )}
+
+            {hasCreatorProfile && !hasBrandProfile && (
+              <div className="bg-muted/50 rounded-xl p-6 border border-border">
+                <h3 className="font-heading font-semibold mb-2">Looking for your next opportunity?</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Browse open opportunities from venues and brands looking for creators like you.
+                </p>
+                <Button variant="outline" size="sm" asChild>
+                  <a href="/opportunities">Browse Opportunities</a>
+                </Button>
+              </div>
+            )}
+
+            {!isLoggedIn && (
+              <div className="bg-muted/50 rounded-xl p-6 border border-border">
+                <h3 className="font-heading font-semibold mb-2">Planning an event?</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Browse our events page to see what's happening, or check out our creator and venue guides.
+                </p>
+                <Button variant="outline" size="sm" asChild>
+                  <a href="/events">Browse Events</a>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </main>

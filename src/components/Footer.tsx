@@ -126,58 +126,122 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* For Brands */}
-          <div>
-            <h3 className="font-heading font-semibold mb-4">For Brands</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/influencers" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Find Creators
-                </Link>
-              </li>
-              <li>
-                <Link to="/brand" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  How It Works
-                </Link>
-              </li>
-              <li>
-                {hasBrandProfile ? (
-                  <Link to="/brand-dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Brand Dashboard
-                  </Link>
-                ) : (
-                  <Link to="/brand" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Register Your Brand
-                  </Link>
-                )}
-              </li>
-            </ul>
-          </div>
+          {/* Conditional: Role-aware navigation */}
+          {isLoggedIn ? (
+            <>
+              {/* Quick Links - contextual to user role */}
+              <div>
+                <h3 className="font-heading font-semibold mb-4">Quick Links</h3>
+                <ul className="space-y-2">
+                  <li>
+                    <Link to="/influencers" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                      Find Creators
+                    </Link>
+                  </li>
+                  {hasBrandProfile && (
+                    <>
+                      <li>
+                        <Link to="/brand-dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                          My Dashboard
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/brand-dashboard?tab=messages" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                          My Messages
+                        </Link>
+                      </li>
+                    </>
+                  )}
+                  {hasCreatorProfile && (
+                    <>
+                      <li>
+                        <Link to="/opportunities" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                          Browse Opportunities
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/creator-dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                          My Dashboard
+                        </Link>
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
 
-          {/* For Creators */}
-          <div>
-            <h3 className="font-heading font-semibold mb-4">For Creators</h3>
-            <ul className="space-y-2">
-              <li>
-                {hasCreatorProfile ? (
-                  <Link to="/creator-dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Creator Dashboard
-                  </Link>
-                ) : (
-                  <Link to="/creator" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Join as a Creator
-                  </Link>
-                )}
-              </li>
-              <li>
-                <Link to="/creator" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  How It Works
-                </Link>
-              </li>
-            </ul>
-          </div>
+              {/* Resources - useful for logged-in users */}
+              <div>
+                <h3 className="font-heading font-semibold mb-4">Resources</h3>
+                <ul className="space-y-2">
+                  <li>
+                    <Link to="/knowledge-base" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                      <BookOpen className="h-3 w-3" />
+                      Knowledge Base
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/whats-new" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      What's New
+                      {recentUpdatesCount > 0 && (
+                        <span className="ml-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full font-medium">
+                          {recentUpdatesCount}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                      Help & Support
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* For Brands - marketing to prospects */}
+              <div>
+                <h3 className="font-heading font-semibold mb-4">For Brands</h3>
+                <ul className="space-y-2">
+                  <li>
+                    <Link to="/influencers" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                      Find Creators
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/brand" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                      How It Works
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/brand" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                      Register Your Brand
+                    </Link>
+                  </li>
+                </ul>
+              </div>
 
-          {/* Company */}
+              {/* For Creators - marketing to prospects */}
+              <div>
+                <h3 className="font-heading font-semibold mb-4">For Creators</h3>
+                <ul className="space-y-2">
+                  <li>
+                    <Link to="/creator" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                      Join as a Creator
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/creator" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                      How It Works
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </>
+          )}
+
+          {/* Company - always visible */}
           <div>
             <h3 className="font-heading font-semibold mb-4">Company</h3>
             <ul className="space-y-2">
@@ -191,25 +255,19 @@ const Footer = () => {
                   Contact
                 </Link>
               </li>
-              {isLoggedIn && (
+              {!isLoggedIn && (
                 <li>
-                  <Link to="/knowledge-base" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
-                    <BookOpen className="h-3 w-3" />
-                    Knowledge Base
+                  <Link to="/whats-new" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    What's New
+                    {recentUpdatesCount > 0 && (
+                      <span className="ml-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full font-medium">
+                        {recentUpdatesCount}
+                      </span>
+                    )}
                   </Link>
                 </li>
               )}
-              <li>
-                <Link to="/whats-new" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  What's New
-                  {recentUpdatesCount > 0 && (
-                    <span className="ml-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full font-medium">
-                      {recentUpdatesCount}
-                    </span>
-                  )}
-                </Link>
-              </li>
               <li>
                 <Link to="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Terms of Service

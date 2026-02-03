@@ -19,7 +19,7 @@ const TermsOfService = () => {
             Terms of Service
           </h1>
           <p className="text-muted-foreground mb-8">
-            Last updated: December 10, 2025 | Version 2.0
+            Last updated: February 3, 2026 | Version 3.0
           </p>
 
           <div className="prose prose-lg dark:prose-invert max-w-none space-y-10">
@@ -42,41 +42,58 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">2. Service Description</h2>
               <p className="text-muted-foreground mb-4">
-                CollabHunts is a B2B SaaS marketplace platform that connects brands ("Brands" or "Buyers") with social media influencers and content creators 
-                ("Creators" or "Sellers") for marketing collaborations. Our services include:
+                CollabHunts is a transactional marketplace platform that connects venues and brands ("Brands" or "Buyers") with social media influencers and content creators 
+                ("Creators" or "Sellers") for live events and fan experiences. Our services include:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Subscription Services:</strong> Monthly subscription plans for Brands (Basic, Pro, Premium) providing access to platform features</li>
-                <li><strong>Discovery Services:</strong> Facilitating connections and communication between Brands and Creators</li>
-                <li><strong>Content Library:</strong> Secure storage for UGC and marketing content with usage rights management</li>
+                <li><strong>Event Booking:</strong> Facilitating bookings between Brands/Venues and Creators for meet & greets, workshops, and live appearances</li>
+                <li><strong>Discovery Services:</strong> Helping Brands find and connect with Creators through our marketplace</li>
+                <li><strong>Payment Processing:</strong> Secure escrow-based payment handling for all bookings</li>
                 <li><strong>Communication Tools:</strong> Messaging system for collaboration between parties</li>
               </ul>
             </section>
 
-            {/* Section 3 - Marketplace Role */}
+            {/* Section 3 - Business Model */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">3. Managed Collaboration Platform</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">3. Platform Fee & Payment Model</h2>
               <p className="text-muted-foreground mb-4">
-                <strong>CollabHunts facilitates and manages all collaborations between Brands and Creators.</strong> We act as the intermediary that coordinates projects, handles payments, and ensures smooth delivery.
+                CollabHunts operates on a <strong>transactional fee model</strong>. We charge a <strong>15% platform fee</strong> on each completed booking.
               </p>
               <p className="text-muted-foreground mb-4">
                 <strong>How it works:</strong>
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li>Brands browse and select Creators on our platform</li>
-                <li>Brands contact CollabHunts to request collaborations</li>
-                <li>Our team coordinates with Creators and finalizes project terms</li>
-                <li>Brands make payment securely to CollabHunts</li>
-                <li>CollabHunts manages the project and pays Creators upon delivery</li>
+                <li>Brands book Creators for events at the Creator's listed price</li>
+                <li>Upon booking confirmation, Brands pay a <strong>50% deposit</strong> which is held in escrow</li>
+                <li>The remaining 50% is due before the event date</li>
+                <li>After successful event completion and Brand approval, funds are released to the Creator (minus the 15% platform fee)</li>
               </ul>
               <p className="text-muted-foreground mb-4">
-                <strong>Important:</strong> While we manage the collaboration process, we do not guarantee specific outcomes, results, or performance metrics of content created. Final creative work is the Creator's responsibility.
+                <strong>Free Features:</strong> Account creation, browsing creators, viewing pricing, messaging, and advanced search filters are all free for Brands. You only pay when you book a Creator.
               </p>
             </section>
 
-            {/* Section 4 - User Accounts */}
+            {/* Section 4 - Escrow System */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">4. User Accounts & Verification</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">4. Escrow & Payment Protection</h2>
+              <p className="text-muted-foreground mb-4">
+                All booking payments are processed through our secure escrow system:
+              </p>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
+                <li><strong>50% Deposit:</strong> Paid at booking confirmation, held securely in escrow</li>
+                <li><strong>50% Balance:</strong> Due before the event date</li>
+                <li><strong>Release:</strong> Funds released to Creator after event completion and Brand approval (or automatically after 72 hours if no disputes)</li>
+                <li><strong>Platform Fee:</strong> 15% is deducted from the Creator's payout</li>
+              </ul>
+              <p className="text-muted-foreground mb-4">
+                This escrow system protects both Brands and Creators by ensuring funds are secure until services are delivered.
+              </p>
+            </section>
+
+            {/* Section 5 - User Accounts */}
+            <section>
+              <h2 className="text-2xl font-heading font-bold mb-4">5. User Accounts & Verification</h2>
               <p className="text-muted-foreground mb-4">
                 To access certain features of the Platform, you must register for an account. You agree to:
               </p>
@@ -96,69 +113,22 @@ const TermsOfService = () => {
               </p>
             </section>
 
-            {/* Section 5 - Payment Terms */}
+            {/* Section 6 - Booking Process */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">5. Payments, Pricing & Billing</h2>
-              
-              <h3 className="text-xl font-heading font-semibold mb-3">5.1 Payment Processing</h3>
+              <h2 className="text-2xl font-heading font-bold mb-4">6. Booking Process</h2>
               <p className="text-muted-foreground mb-4">
-                All payments on CollabHunts are processed by our payment partner, <strong>Paddle.com</strong>, who acts as the Merchant of Record. 
-                By making a purchase, you agree to Paddle's terms of service and privacy policy. Paddle handles:
+                All event bookings on CollabHunts follow this process:
               </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Payment processing and collection</li>
-                <li>Sales tax, VAT, and other applicable taxes</li>
-                <li>Invoicing and receipts</li>
-                <li>Refund processing</li>
-              </ul>
-
-              <h3 className="text-xl font-heading font-semibold mb-3">5.2 Subscription Plans</h3>
-              <p className="text-muted-foreground mb-4">
-                Brand subscription plans are billed on a monthly recurring basis. Current pricing is available on our <Link to="/pricing" className="text-primary hover:underline">Pricing page</Link>. 
-                Prices are subject to change with 30 days notice.
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Basic ($10/month):</strong> Contact creators, view pricing, 10GB Content Library</li>
-                <li><strong>Pro ($49/month):</strong> All Basic features plus CRM, campaigns, advanced filters</li>
-                <li><strong>Premium ($99/month):</strong> All features, 50GB Content Library, unlimited campaigns</li>
-              </ul>
-
-              <h3 className="text-xl font-heading font-semibold mb-3">5.3 Currency & Taxes</h3>
-              <p className="text-muted-foreground mb-4">
-                All prices are displayed in USD unless otherwise stated. Applicable taxes (VAT, sales tax, GST) are calculated and collected by Paddle 
-                based on your location and will be added at checkout where required by law.
-              </p>
-            </section>
-
-            {/* Section 6 - Collaboration Process */}
-            <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">6. Collaboration Process</h2>
-              <p className="text-muted-foreground mb-4">
-                CollabHunts offers two ways for Brands to work with Creators:
-              </p>
-              
-              <h3 className="text-xl font-heading font-semibold mb-3">6.1 Self-Service (Subscription Required)</h3>
-              <p className="text-muted-foreground mb-4">
-                Brands with an active subscription (Basic, Pro, or Premium) can message Creators directly through the platform. 
-                In this model, Brands and Creators negotiate terms, arrange payments, and manage the collaboration independently. 
-                <strong> CollabHunts is not responsible for transactions arranged directly between parties.</strong>
-              </p>
-              
-              <h3 className="text-xl font-heading font-semibold mb-3">6.2 Managed Service (Available to All)</h3>
-              <p className="text-muted-foreground mb-4">
-                For an additional service fee, CollabHunts can manage the entire collaboration process. Contact our team at{" "}
-                <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a> with your project requirements. 
-                We will:
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Coordinate with the Creator on your behalf</li>
-                <li>Finalize terms and project scope</li>
-                <li>Collect payment from you and pay the Creator</li>
-                <li>Manage the project through to delivery</li>
-              </ul>
-              <p className="text-muted-foreground mb-4">
-                <strong>Creator payments (Managed Service):</strong> Creators are paid by CollabHunts after successful delivery and Brand approval of content.
-              </p>
+              <ol className="list-decimal pl-6 text-muted-foreground space-y-2 mb-4">
+                <li><strong>Discovery:</strong> Brands browse and find Creators using our search and filter tools (free)</li>
+                <li><strong>Inquiry:</strong> Brands message Creators to discuss event details (free)</li>
+                <li><strong>Booking Request:</strong> Brands submit a booking request with event details</li>
+                <li><strong>Creator Confirmation:</strong> Creator reviews and accepts/declines the booking</li>
+                <li><strong>Deposit Payment:</strong> Brand pays 50% deposit to confirm the booking</li>
+                <li><strong>Balance Payment:</strong> Brand pays remaining 50% before the event</li>
+                <li><strong>Event Delivery:</strong> Creator performs at the event as agreed</li>
+                <li><strong>Approval & Release:</strong> Brand approves completion, funds are released to Creator</li>
+              </ol>
             </section>
 
             {/* Section 7 - Refunds & Cancellations */}
@@ -168,17 +138,22 @@ const TermsOfService = () => {
                 Our complete Refund & Cancellation Policy is available at <Link to="/refund" className="text-primary hover:underline">collabhunts.com/refund</Link>. Key points include:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>14-Day Money-Back Guarantee:</strong> New subscribers can request a full refund within 14 days if no paid features have been used</li>
-                <li><strong>Subscription Cancellation:</strong> Cancel anytime; access continues until the end of the billing period</li>
+                <li><strong>Before Creator Confirmation:</strong> Full refund if booking is cancelled before Creator accepts</li>
+                <li><strong>After Confirmation, Before Event:</strong> Refund eligibility depends on cancellation timing and reason</li>
+                <li><strong>Creator No-Show:</strong> Full refund plus potential compensation</li>
+                <li><strong>Event Issues:</strong> Disputes handled through our resolution process</li>
               </ul>
               <p className="text-muted-foreground mb-4">
-                All refunds are processed by Paddle within 5-10 business days to the original payment method.
+                All refunds are processed within 5-10 business days to the original payment method.
               </p>
             </section>
 
             {/* Section 8 - Dispute Resolution */}
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">8. Dispute Resolution</h2>
+              <p className="text-muted-foreground mb-4">
+                <strong>Platform Mediation:</strong> For disputes arising from bookings, both parties must first attempt resolution through our platform's dispute system. Either party can open a dispute within 72 hours of event completion.
+              </p>
               <p className="text-muted-foreground mb-4">
                 <strong>BINDING ARBITRATION:</strong> Any disputes between you and CollabHunts shall be resolved through binding arbitration 
                 in accordance with the American Arbitration Association rules. You agree to waive any right to a jury trial.
@@ -197,12 +172,11 @@ const TermsOfService = () => {
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li>Provide accurate information about your social media presence, follower counts, and audience demographics</li>
-                <li>Deliver services as described in your profile and agreed upon with Brands</li>
-                <li>Deliver work within the specified timeframe</li>
-                <li>Comply with all applicable advertising disclosure requirements (e.g., FTC guidelines, #ad, #sponsored)</li>
-                <li>Not misrepresent your engagement metrics, follower counts, or audience demographics</li>
-                <li>Maintain professional communication with Brands at all times</li>
-                <li>Fulfill reasonable revision requests (up to 2 per booking)</li>
+                <li>Arrive on time and fulfill all event obligations as agreed</li>
+                <li>Maintain professional conduct during all events</li>
+                <li>Respond to booking requests within 48 hours</li>
+                <li>Not cancel confirmed bookings except for genuine emergencies</li>
+                <li>Accept the 15% platform fee on all completed bookings</li>
               </ul>
               <p className="text-muted-foreground mb-4">
                 <strong>Misrepresentation of metrics (fake followers, purchased engagement, inflated statistics) will result in immediate account termination and forfeiture of pending payments.</strong>
@@ -211,18 +185,18 @@ const TermsOfService = () => {
 
             {/* Section 10 - Brand Terms */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">10. Brand Terms</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">10. Brand & Venue Terms</h2>
               <p className="text-muted-foreground mb-4">
-                As a Brand on CollabHunts, you agree to:
+                As a Brand or Venue on CollabHunts, you agree to:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Provide accurate information about your company and campaign requirements</li>
-                <li>Review deliverables within 72 hours of submission</li>
-                <li>Make reasonable revision requests only (not requests that fundamentally change scope)</li>
+                <li>Provide accurate information about your venue and event requirements</li>
+                <li>Pay deposits and balances on time as specified</li>
+                <li>Provide safe and appropriate event conditions for Creators</li>
+                <li>Approve or raise disputes within 72 hours of event completion</li>
                 <li>Not request services that violate platform policies or applicable laws</li>
-                <li>Respect Creator intellectual property and usage rights as agreed</li>
                 <li>Maintain professional communication with Creators at all times</li>
-                <li>Understand that inaction for 72 hours constitutes acceptance and triggers auto-release of payment</li>
+                <li>Understand that inaction for 72 hours constitutes approval and triggers auto-release of payment</li>
               </ul>
             </section>
 
@@ -239,9 +213,7 @@ const TermsOfService = () => {
                 (e.g., displaying portfolio items, thumbnails in search results).
               </p>
               <p className="text-muted-foreground mb-4">
-                <strong>Content Rights Transfer:</strong> Upon payment release, Brands receive usage rights to Creator-produced content as specified in the booking agreement. 
-                Unless otherwise agreed, standard bookings include perpetual, non-exclusive usage rights for marketing purposes. 
-                Creators retain portfolio rights (right to display work in their portfolio).
+                <strong>Event Content:</strong> Unless otherwise agreed, any content created during events (photos, videos) may be used by both Brand and Creator for promotional purposes.
               </p>
               <p className="text-muted-foreground mb-4">
                 <strong>DMCA Compliance:</strong> We respect intellectual property rights and will respond to valid DMCA takedown notices. 
@@ -257,16 +229,15 @@ const TermsOfService = () => {
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li>Violate any applicable laws or regulations</li>
+                <li>Circumvent platform payments or arrange off-platform transactions</li>
                 <li>Infringe upon intellectual property rights of others</li>
                 <li>Transmit harmful code, viruses, or malware</li>
                 <li>Engage in fraudulent activities or misrepresentation</li>
                 <li>Harass, abuse, threaten, or harm other users</li>
-                <li><strong>Use the Platform to spam or harass creators</strong></li>
                 <li>Create fake accounts or artificially inflate metrics</li>
                 <li>Share login credentials or allow unauthorized access to your account</li>
                 <li>Scrape, data mine, or extract data from the Platform</li>
                 <li>Manipulate reviews, ratings, or search rankings</li>
-                <li>Post illegal, harmful, explicit, or offensive content</li>
               </ul>
             </section>
 
@@ -278,18 +249,14 @@ const TermsOfService = () => {
                 INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Loss of profits, revenue, data, or business opportunities</li>
-                <li>Damages arising from user interactions or transactions</li>
-                <li>Damages from unauthorized access to your account</li>
-                <li>Damages from service interruptions or platform unavailability</li>
-                <li>Damages from content posted by users</li>
+                <li>Loss of profits, revenue, or business opportunities</li>
+                <li>Event cancellations or no-shows</li>
+                <li>Quality of Creator performance at events</li>
+                <li>Disputes between Brands and Creators</li>
+                <li>Any unauthorized access to or use of our servers</li>
               </ul>
               <p className="text-muted-foreground mb-4">
-                <strong>OUR TOTAL LIABILITY SHALL NOT EXCEED THE GREATER OF: (A) THE FEES YOU HAVE PAID TO US IN THE PAST TWELVE MONTHS, OR (B) ONE HUNDRED DOLLARS ($100).</strong>
-              </p>
-              <p className="text-muted-foreground mb-4">
-                THE PLATFORM IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
-                WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+                <strong>OUR TOTAL LIABILITY SHALL NOT EXCEED THE PLATFORM FEES YOU HAVE PAID TO US IN THE 12 MONTHS PRECEDING THE CLAIM.</strong>
               </p>
             </section>
 
@@ -297,84 +264,43 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">14. Indemnification</h2>
               <p className="text-muted-foreground mb-4">
-                You agree to indemnify, defend, and hold harmless CollabHunts and its officers, directors, employees, agents, licensors, and suppliers from and against 
-                any claims, actions, demands, liabilities, damages, losses, costs, and expenses (including reasonable attorneys' fees) arising out of or related to:
+                You agree to indemnify, defend, and hold harmless CollabHunts and its officers, directors, employees, agents, and affiliates from any claims, 
+                liabilities, damages, losses, and expenses arising from:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Your use of the Platform or services</li>
+                <li>Your use of the Platform</li>
                 <li>Your violation of these Terms</li>
-                <li>Your violation of any third-party rights, including intellectual property rights</li>
-                <li>Your content or any content you submit, post, or transmit</li>
-                <li>Any transaction or interaction with other users</li>
-                <li>Your violation of any applicable laws or regulations</li>
+                <li>Your violation of any third-party rights</li>
+                <li>Any content you submit to the Platform</li>
+                <li>Your conduct during events booked through the Platform</li>
               </ul>
             </section>
 
-            {/* Section 15 - Governing Law */}
+            {/* Section 15 - Changes to Terms */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">15. Governing Law & Jurisdiction</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">15. Changes to Terms</h2>
               <p className="text-muted-foreground mb-4">
-                These Terms shall be governed by and construed in accordance with the laws of the State of Delaware, United States, without regard to its conflict of law provisions. 
-                Any legal action or proceeding not subject to arbitration shall be brought exclusively in the federal or state courts located in Delaware, 
-                and you consent to the personal jurisdiction of such courts.
+                We reserve the right to modify these Terms at any time. Changes will be effective immediately upon posting to the Platform. 
+                Material changes will be communicated via email to registered users. Your continued use of the Platform after changes 
+                constitutes acceptance of the modified Terms.
               </p>
             </section>
 
-            {/* Section 16 - Force Majeure */}
+            {/* Section 16 - Contact */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">16. Force Majeure</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">16. Contact Us</h2>
               <p className="text-muted-foreground mb-4">
-                CollabHunts shall not be liable for any failure or delay in performance due to circumstances beyond our reasonable control, including but not limited to: 
-                acts of God, natural disasters, war, terrorism, riots, pandemics, government actions, power failures, internet or telecommunications failures, 
-                or any other cause beyond our reasonable control.
-              </p>
-            </section>
-
-            {/* Section 17 - Modifications */}
-            <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">17. Modifications to Terms & Services</h2>
-              <p className="text-muted-foreground mb-4">
-                We reserve the right to modify these Terms at any time. We will notify users of significant changes via email or platform notification at least 30 days before changes take effect. 
-                Continued use of the Platform after changes constitutes acceptance of the new Terms. If you do not agree with the modified Terms, you must stop using the Platform.
-              </p>
-              <p className="text-muted-foreground mb-4">
-                We also reserve the right to modify, suspend, or discontinue any aspect of the Platform at any time without notice. We shall not be liable to you or any third party 
-                for any modification, suspension, or discontinuation of the Platform.
-              </p>
-            </section>
-
-            {/* Section 18 - Severability */}
-            <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">18. Severability</h2>
-              <p className="text-muted-foreground mb-4">
-                If any provision of these Terms is found to be invalid, illegal, or unenforceable, the remaining provisions shall continue in full force and effect. 
-                The invalid provision shall be modified to the minimum extent necessary to make it valid and enforceable while preserving its original intent.
-              </p>
-            </section>
-
-            {/* Section 19 - Entire Agreement */}
-            <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">19. Entire Agreement</h2>
-              <p className="text-muted-foreground mb-4">
-                These Terms, together with our <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>, 
-                <Link to="/refund" className="text-primary hover:underline"> Refund & Cancellation Policy</Link>, and any other policies referenced herein, 
-                constitute the entire agreement between you and CollabHunts regarding your use of the Platform and supersede all prior or contemporaneous 
-                communications, proposals, and agreements, whether oral or written.
-              </p>
-            </section>
-
-            {/* Section 20 - Contact */}
-            <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">20. Contact Information</h2>
-              <p className="text-muted-foreground mb-4">
-                If you have any questions about these Terms of Service, please contact us at:
+                If you have questions about these Terms of Service, please contact us:
               </p>
               <div className="bg-muted/50 rounded-lg p-4 border border-border">
                 <p className="text-muted-foreground mb-2">
-                  <strong>CollabHunts</strong>
+                  <strong>CollabHunts Legal</strong>
                 </p>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground mb-1">
                   Email: <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a>
+                </p>
+                <p className="text-muted-foreground text-sm mt-3">
+                  Response time: Within 5 business days for legal inquiries
                 </p>
               </div>
             </section>
