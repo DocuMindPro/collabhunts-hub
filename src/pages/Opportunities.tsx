@@ -173,60 +173,64 @@ const Opportunities = () => {
             </p>
           </div>
 
-          {/* Filters */}
+          {/* Filters - Mobile Responsive */}
           <Card className="mb-6">
-            <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
+            <CardContent className="pt-4 sm:pt-6">
+              <div className="flex flex-col gap-3 sm:gap-4">
+                {/* Search */}
+                <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search opportunities..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-11"
                   />
                 </div>
                 
-                <Select value={selectedPackageType} onValueChange={setSelectedPackageType}>
-                  <SelectTrigger className="w-full md:w-[200px]">
-                    <SelectValue placeholder="Package Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Packages</SelectItem>
-                    {Object.entries(EVENT_PACKAGES).map(([key, pkg]) => (
-                      <SelectItem key={key} value={key}>{pkg.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Package Select + Toggles */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Select value={selectedPackageType} onValueChange={setSelectedPackageType}>
+                    <SelectTrigger className="w-full sm:w-[200px] h-11">
+                      <SelectValue placeholder="Package Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Packages</SelectItem>
+                      {Object.entries(EVENT_PACKAGES).map(([key, pkg]) => (
+                        <SelectItem key={key} value={key}>{pkg.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="paid-only"
-                      checked={showPaidOnly}
-                      onCheckedChange={(checked) => {
-                        setShowPaidOnly(checked);
-                        if (checked) setShowFreeOnly(false);
-                      }}
-                    />
-                    <Label htmlFor="paid-only" className="text-sm flex items-center gap-1">
-                      <DollarSign className="h-3 w-3" />
-                      Paid
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="free-only"
-                      checked={showFreeOnly}
-                      onCheckedChange={(checked) => {
-                        setShowFreeOnly(checked);
-                        if (checked) setShowPaidOnly(false);
-                      }}
-                    />
-                    <Label htmlFor="free-only" className="text-sm flex items-center gap-1">
-                      <Gift className="h-3 w-3" />
-                      Free
-                    </Label>
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="paid-only"
+                        checked={showPaidOnly}
+                        onCheckedChange={(checked) => {
+                          setShowPaidOnly(checked);
+                          if (checked) setShowFreeOnly(false);
+                        }}
+                      />
+                      <Label htmlFor="paid-only" className="text-sm flex items-center gap-1">
+                        <DollarSign className="h-3 w-3" />
+                        Paid
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="free-only"
+                        checked={showFreeOnly}
+                        onCheckedChange={(checked) => {
+                          setShowFreeOnly(checked);
+                          if (checked) setShowPaidOnly(false);
+                        }}
+                      />
+                      <Label htmlFor="free-only" className="text-sm flex items-center gap-1">
+                        <Gift className="h-3 w-3" />
+                        Free
+                      </Label>
+                    </div>
                   </div>
                 </div>
               </div>

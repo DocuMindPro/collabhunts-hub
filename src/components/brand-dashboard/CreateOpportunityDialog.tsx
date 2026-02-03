@@ -109,7 +109,7 @@ const CreateOpportunityDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[85vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Post an Opportunity</DialogTitle>
           <DialogDescription>
@@ -126,6 +126,7 @@ const CreateOpportunityDialog = ({
               placeholder="e.g., Looking for Food Creators for Restaurant Opening"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              className="h-11"
             />
           </div>
 
@@ -148,7 +149,7 @@ const CreateOpportunityDialog = ({
               value={formData.package_type} 
               onValueChange={(value) => setFormData(prev => ({ ...prev, package_type: value }))}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-11">
                 <SelectValue placeholder="Select a package type" />
               </SelectTrigger>
               <SelectContent>
@@ -159,8 +160,8 @@ const CreateOpportunityDialog = ({
             </Select>
           </div>
 
-          {/* Date and Time */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Date and Time - Responsive Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="event_date">Event Date *</Label>
               <Input
@@ -168,6 +169,7 @@ const CreateOpportunityDialog = ({
                 type="date"
                 value={formData.event_date}
                 onChange={(e) => setFormData(prev => ({ ...prev, event_date: e.target.value }))}
+                className="h-11"
               />
             </div>
             <div className="space-y-2">
@@ -177,6 +179,7 @@ const CreateOpportunityDialog = ({
                 type="time"
                 value={formData.start_time}
                 onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
+                className="h-11"
               />
             </div>
             <div className="space-y-2">
@@ -186,6 +189,7 @@ const CreateOpportunityDialog = ({
                 type="time"
                 value={formData.end_time}
                 onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
+                className="h-11"
               />
             </div>
           </div>
@@ -247,8 +251,8 @@ const CreateOpportunityDialog = ({
             />
           </div>
 
-          {/* Location */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Location - Responsive Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="city">City</Label>
               <Input
@@ -256,6 +260,7 @@ const CreateOpportunityDialog = ({
                 placeholder="e.g., Beirut"
                 value={formData.location_city}
                 onChange={(e) => setFormData(prev => ({ ...prev, location_city: e.target.value }))}
+                className="h-11"
               />
             </div>
             <div className="space-y-2">
@@ -265,6 +270,7 @@ const CreateOpportunityDialog = ({
                 placeholder="e.g., Lebanon"
                 value={formData.location_country}
                 onChange={(e) => setFormData(prev => ({ ...prev, location_country: e.target.value }))}
+                className="h-11"
               />
             </div>
           </div>
@@ -294,11 +300,11 @@ const CreateOpportunityDialog = ({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button onClick={handleSubmit} disabled={submitting} className="w-full sm:w-auto">
             {submitting ? "Creating..." : "Post Opportunity"}
           </Button>
         </DialogFooter>

@@ -148,13 +148,13 @@ const BrandOpportunitiesTab = ({ brandProfileId }: BrandOpportunitiesTabProps) =
 
   return (
     <div className="space-y-6">
-      {/* Header with Create Button */}
-      <div className="flex items-center justify-between">
+      {/* Header with Create Button - Mobile Responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold">My Opportunities</h2>
-          <p className="text-muted-foreground">Post opportunities for creators to apply</p>
+          <h2 className="text-xl sm:text-2xl font-bold">My Opportunities</h2>
+          <p className="text-sm text-muted-foreground">Post opportunities for creators to apply</p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+        <Button onClick={() => setCreateDialogOpen(true)} className="gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
           Post Opportunity
         </Button>

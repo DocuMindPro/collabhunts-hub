@@ -236,7 +236,7 @@ const BrandAccountTab = () => {
                       </InputOTPGroup>
                     </InputOTP>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       onClick={handleVerifyOtp}
                       disabled={verifyingOtp || otpCode.length !== 6}

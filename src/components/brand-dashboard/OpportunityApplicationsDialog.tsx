@@ -148,7 +148,7 @@ const OpportunityApplicationsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-[700px] max-h-[80vh] sm:max-h-[85vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Applications</DialogTitle>
           <DialogDescription>
@@ -253,14 +253,14 @@ const OpportunityApplicationsDialog = ({
                     </div>
                   )}
 
-                  {/* Actions */}
-                  <div className="flex flex-wrap gap-2 mt-3">
+                  {/* Actions - Mobile Responsive */}
+                  <div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-3">
                     {application.status === 'pending' && (
                       <>
                         <Button
                           size="sm"
                           onClick={() => updateApplicationStatus(application.id, 'accepted')}
-                          className="gap-1"
+                          className="gap-1 w-full sm:w-auto"
                         >
                           <Check className="h-3 w-3" />
                           Accept
@@ -269,7 +269,7 @@ const OpportunityApplicationsDialog = ({
                           size="sm"
                           variant="outline"
                           onClick={() => updateApplicationStatus(application.id, 'rejected')}
-                          className="gap-1"
+                          className="gap-1 w-full sm:w-auto"
                         >
                           <X className="h-3 w-3" />
                           Reject
@@ -281,7 +281,7 @@ const OpportunityApplicationsDialog = ({
                       <Button
                         size="sm"
                         onClick={() => confirmDelivery(application.id)}
-                        className="gap-1"
+                        className="gap-1 w-full sm:w-auto"
                       >
                         <Check className="h-3 w-3" />
                         Confirm Delivery
@@ -292,6 +292,7 @@ const OpportunityApplicationsDialog = ({
                       size="sm"
                       variant="ghost"
                       asChild
+                      className="w-full sm:w-auto"
                     >
                       <Link to={`/creator/${application.creator_profile_id}`}>
                         View Profile

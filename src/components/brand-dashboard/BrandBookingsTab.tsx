@@ -158,12 +158,13 @@ const BrandBookingsTab = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header - Mobile Responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-heading font-bold">My Bookings</h2>
-          <p className="text-muted-foreground">Manage your creator event bookings</p>
+          <h2 className="text-xl sm:text-2xl font-heading font-bold">My Bookings</h2>
+          <p className="text-sm text-muted-foreground">Manage your creator event bookings</p>
         </div>
-        <Button onClick={() => navigate("/influencers")}>
+        <Button onClick={() => navigate("/influencers")} className="w-full sm:w-auto">
           <Users className="mr-2 h-4 w-4" />
           Book a Creator
         </Button>
@@ -255,7 +256,7 @@ const BrandBookingsTab = () => {
 
                       <Separator className="my-4" />
 
-                      <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                         <div>
                           <p className="text-sm text-muted-foreground">Total</p>
                           <p className="text-lg font-bold">
@@ -267,18 +268,17 @@ const BrandBookingsTab = () => {
                             </p>
                           )}
                         </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              navigate(`/brand-dashboard?tab=messages&creator=${booking.creator_profile?.id}`)
-                            }
-                          >
-                            <MessageSquare className="h-4 w-4 mr-1" />
-                            Message
-                          </Button>
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            navigate(`/brand-dashboard?tab=messages&creator=${booking.creator_profile?.id}`)
+                          }
+                          className="w-full sm:w-auto"
+                        >
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Message
+                        </Button>
                       </div>
                     </div>
                   </div>
