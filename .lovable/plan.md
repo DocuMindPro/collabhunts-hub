@@ -1,109 +1,195 @@
 
+# Role-Aware Footer and Page Content for Logged-in Users
 
-# Redirect Logged-in Users from Homepage to Dashboard
+## The Problem
 
-## The Industry Standard
+Looking at the current footer (screenshot provided), logged-in brands see the same content as prospects:
 
-Professional SaaS platforms (Slack, Notion, Figma, Linear) follow a simple rule:
+**Current Footer Structure:**
+| For Brands | For Creators | Company |
+|------------|--------------|---------|
+| Find Creators | Join as a Creator | About Us |
+| How It Works | How It Works | Contact |
+| Brand Dashboard | (varies) | Knowledge Base |
+| | | What's New |
+| | | Terms, Privacy, Refund |
 
-**Marketing pages are for prospects. Logged-in users go to their workspace.**
+**Issues for Logged-in Brands:**
+1. "How It Works" links point to marketing pages (they already know how it works)
+2. "Join as a Creator" / "Register Your Brand" are irrelevant for existing users
+3. Footer sections titled "For Brands" and "For Creators" imply marketing, not workspace navigation
+4. Legal pages (Terms, Privacy, Refund) still reference subscription pricing that no longer applies
 
-When a logged-in user visits the homepage (`/`), they should be automatically redirected to their dashboard.
+**Additionally:** The About Us, Contact, and policy pages have marketing CTAs like "Join as Creator" and "Register Your Brand" which are irrelevant for logged-in users.
 
 ---
 
-## Current State vs. Desired State
+## Solution: Role-Aware Footer Pattern
 
-| User Type | Current Homepage Behavior | Proposed Behavior |
-|-----------|---------------------------|-------------------|
-| Not logged in | Full marketing page | No change |
-| Logged in (no profile) | Marketing page with CTAs | Marketing page (encourage signup) |
-| Brand (logged in) | Marketing page with "Go to Dashboard" button | **Auto-redirect to brand dashboard** |
-| Creator (logged in) | Marketing page with "Go to Dashboard" button | **Auto-redirect to creator dashboard** |
-| Both profiles | Marketing page | **Auto-redirect to preferred dashboard** |
+Based on professional SaaS best practices, the footer should adapt based on user authentication and profile status.
+
+### Footer Content by User State
+
+**For Logged-out Users (Prospects):**
+| For Brands | For Creators | Company |
+|------------|--------------|---------|
+| Find Creators | Join as a Creator | About Us |
+| How It Works | How It Works | Contact |
+| Register Your Brand | | What's New |
+| | | Legal Links |
+
+**For Logged-in Brands:**
+| Quick Links | Resources | Company |
+|-------------|-----------|---------|
+| Find Creators | Knowledge Base | About Us |
+| My Dashboard | What's New | Contact |
+| My Messages | Help & Support | Legal Links |
+
+**For Logged-in Creators:**
+| Quick Links | Resources | Company |
+|-------------|-----------|---------|
+| Browse Opportunities | Knowledge Base | About Us |
+| My Dashboard | What's New | Contact |
+| My Bookings | Help & Support | Legal Links |
 
 ---
 
-## Implementation Plan
+## Implementation Details
 
-### Update Index.tsx - Add Automatic Redirect
+### 1. Update Footer.tsx - Role-Aware Sections
 
-Add redirect logic after profile check:
-
-```typescript
-const navigate = useNavigate();
-
-useEffect(() => {
-  const checkUserProfiles = async (userId: string) => {
-    const brandProfile = await safeNativeAsync(/* ... */);
-    const creatorProfile = await safeNativeAsync(/* ... */);
-    
-    setHasBrandProfile(!!brandProfile);
-    setHasCreatorProfile(!!creatorProfile);
-    
-    // NEW: Auto-redirect logged-in users to their dashboard
-    if (brandProfile) {
-      navigate("/brand-dashboard");
-      return;
-    }
-    if (creatorProfile) {
-      navigate("/creator-dashboard");
-      return;
-    }
-    
-    setAuthLoading(false);
-  };
-  // ...
-}, [navigate]);
-```
-
-### Add Loading State
-
-Prevent flash of marketing content while checking auth:
+Add conditional rendering based on `hasBrandProfile`, `hasCreatorProfile`, and `isLoggedIn`:
 
 ```typescript
-const [authLoading, setAuthLoading] = useState(true);
-
-// Show spinner while checking
-if (authLoading) {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+// For logged-in users: Show contextual workspace links
+{isLoggedIn ? (
+  <>
+    {/* Quick Links - contextual to user role */}
+    <div>
+      <h3 className="font-heading font-semibold mb-4">Quick Links</h3>
+      <ul className="space-y-2">
+        <li><Link to="/influencers">Find Creators</Link></li>
+        {hasBrandProfile && (
+          <>
+            <li><Link to="/brand-dashboard">My Dashboard</Link></li>
+            <li><Link to="/brand-dashboard?tab=messages">My Messages</Link></li>
+          </>
+        )}
+        {hasCreatorProfile && (
+          <>
+            <li><Link to="/opportunities">Browse Opportunities</Link></li>
+            <li><Link to="/creator-dashboard">My Dashboard</Link></li>
+          </>
+        )}
+      </ul>
     </div>
-  );
-}
 
-// Show marketing page only for non-logged-in or no-profile users
-return (
-  <div className="min-h-screen flex flex-col">
-    <Navbar />
-    {/* ... rest of marketing content */}
-  </div>
-);
+    {/* Resources - useful for logged-in users */}
+    <div>
+      <h3 className="font-heading font-semibold mb-4">Resources</h3>
+      <ul className="space-y-2">
+        <li><Link to="/knowledge-base">Knowledge Base</Link></li>
+        <li><Link to="/whats-new">What's New</Link></li>
+        <li><Link to="/contact">Help & Support</Link></li>
+      </ul>
+    </div>
+  </>
+) : (
+  <>
+    {/* For Brands - marketing to prospects */}
+    <div>
+      <h3>For Brands</h3>
+      <ul>
+        <li>Find Creators</li>
+        <li>How It Works</li>
+        <li>Register Your Brand</li>
+      </ul>
+    </div>
+
+    {/* For Creators - marketing to prospects */}
+    <div>
+      <h3>For Creators</h3>
+      <ul>
+        <li>Join as a Creator</li>
+        <li>How It Works</li>
+      </ul>
+    </div>
+  </>
+)}
 ```
 
----
+### 2. Update AboutUs.tsx - Remove Marketing CTAs for Logged-in Users
 
-## Redirect Priority Logic
+The CTA section at the bottom shows "Join as Creator" and "Register Your Brand" - these should be hidden for users who already have profiles:
 
-When a user has both profiles (rare but possible), they need a priority:
+```typescript
+// Only show registration CTAs for prospects (not logged in or no profile)
+{!isLoggedIn && (
+  <div className="flex gap-4 justify-center">
+    <a href="/creator-signup">Join as Creator</a>
+    <a href="/brand-signup">Register Your Brand</a>
+  </div>
+)}
 
-1. **Brand takes priority** - Brands are the paying customers driving bookings
-2. **Creator second** - If they're a creator but not a brand, go to creator dashboard
+// For logged-in users, show relevant dashboard links instead
+{hasBrandProfile && (
+  <div className="flex gap-4 justify-center">
+    <a href="/influencers">Find Creators</a>
+    <a href="/brand-dashboard">Go to Dashboard</a>
+  </div>
+)}
+{hasCreatorProfile && !hasBrandProfile && (
+  <div className="flex gap-4 justify-center">
+    <a href="/opportunities">Browse Opportunities</a>
+    <a href="/creator-dashboard">Go to Dashboard</a>
+  </div>
+)}
+```
 
-This can be customized based on your business priorities.
+### 3. Update Contact.tsx - Contextual FAQ CTA
 
----
+The "Planning an event?" CTA at the bottom references the Events page, but for logged-in brands, we should guide them differently:
 
-## Edge Cases
+```typescript
+// For brands: Guide to finding creators
+{hasBrandProfile && (
+  <div className="bg-muted/50 rounded-xl p-6">
+    <h3>Need help finding the right creator?</h3>
+    <p>Browse our curated selection or check your dashboard.</p>
+    <Button asChild><a href="/influencers">Find Creators</a></Button>
+  </div>
+)}
 
-### User Logged In But No Profile
-- Show the marketing homepage so they can choose to sign up as brand or creator
-- This is their first visit after account creation, they need to complete signup
+// For creators: Guide to opportunities
+{hasCreatorProfile && !hasBrandProfile && (
+  <div className="bg-muted/50 rounded-xl p-6">
+    <h3>Looking for your next opportunity?</h3>
+    <p>Browse open opportunities from brands.</p>
+    <Button asChild><a href="/opportunities">Browse Opportunities</a></Button>
+  </div>
+)}
 
-### Native App (Capacitor)
-- The native app already uses `NativeAppGate` which handles this differently
-- These changes only affect the web platform
+// For prospects: Original CTA
+{!isLoggedIn && (
+  <div className="bg-muted/50 rounded-xl p-6">
+    <h3>Planning an event?</h3>
+    <p>Browse our events page...</p>
+    <Button asChild><a href="/events">Browse Events</a></Button>
+  </div>
+)}
+```
+
+### 4. Update Policy Pages (TermsOfService, PrivacyPolicy, RefundPolicy)
+
+These pages currently reference outdated subscription pricing. Since we've moved to a transactional model:
+
+**Changes needed:**
+- Remove references to "Basic ($10/month)", "Pro ($49/month)", "Premium ($99/month)" subscription tiers
+- Update language to reflect the 15% transaction fee model
+- Update escrow system description (50% deposit, release on completion)
+- Remove "14-day money-back guarantee" for subscriptions since there are no subscriptions
+
+This is a content update, not a UI change.
 
 ---
 
@@ -111,33 +197,45 @@ This can be customized based on your business priorities.
 
 | File | Changes |
 |------|---------|
-| `src/pages/Index.tsx` | Add useNavigate, authLoading state, and redirect logic |
+| `src/components/Footer.tsx` | Role-aware section rendering, contextual links |
+| `src/pages/AboutUs.tsx` | Add auth state, hide marketing CTAs for logged-in users |
+| `src/pages/Contact.tsx` | Contextual FAQ CTA based on user role |
+| `src/pages/TermsOfService.tsx` | Update to reflect transactional model (remove subscription refs) |
+| `src/pages/PrivacyPolicy.tsx` | Minor updates if needed |
+| `src/pages/RefundPolicy.tsx` | Update to reflect event booking cancellations, not subscriptions |
+
+---
+
+## Visual Summary
+
+### Footer for Prospects (Current)
+```
+Logo | For Brands | For Creators | Company
+     | Marketing  | Marketing    | Legal
+```
+
+### Footer for Logged-in Brand
+```
+Logo | Quick Links    | Resources      | Company
+     | Dashboard      | Knowledge Base | About/Contact
+     | Find Creators  | What's New     | Legal
+     | My Messages    | Help & Support |
+```
+
+### Footer for Logged-in Creator
+```
+Logo | Quick Links     | Resources      | Company
+     | Dashboard       | Knowledge Base | About/Contact
+     | Opportunities   | What's New     | Legal
+     | My Bookings     | Help & Support |
+```
 
 ---
 
 ## Benefits
 
-1. **Professional experience** - Matches expectations from other SaaS tools
-2. **Faster access** - Users get to their workspace immediately 
-3. **Less confusion** - No more "How It Works" or "Sign Up" prompts for existing users
-4. **Consistent with other pages** - Brand.tsx and Creator.tsx already redirect, homepage should too
-
----
-
-## User Experience After Changes
-
-### For Prospects (not logged in)
-- See full marketing homepage with all sections
-- CTAs to sign up as Brand or Creator
-- No change in experience
-
-### For Logged-in Users with Profile
-- Instant redirect to their dashboard
-- Brief loading spinner during auth check
-- Never see irrelevant marketing content
-
-### For Logged-in Users without Profile
-- Still see marketing homepage
-- Can choose to create Brand or Creator profile
-- Clear path to complete registration
-
+1. **Professional experience** - Matches expectations from other SaaS platforms
+2. **Relevant navigation** - Users see links that matter to their role
+3. **No marketing clutter** - Existing users don't see "Sign Up" prompts
+4. **Consistent with recent changes** - Navbar and homepage already redirect logged-in users
+5. **Updated legal content** - Policies reflect the current transactional business model
