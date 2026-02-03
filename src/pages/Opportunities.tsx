@@ -47,6 +47,7 @@ const Opportunities = () => {
   const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState<BrandOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPackageType, setSelectedPackageType] = useState<string>("all");
   const [showPaidOnly, setShowPaidOnly] = useState(false);
@@ -54,21 +55,38 @@ const Opportunities = () => {
   const [selectedOpportunity, setSelectedOpportunity] = useState<BrandOpportunity | null>(null);
   const [creatorProfileId, setCreatorProfileId] = useState<string | null>(null);
   const [appliedOpportunities, setAppliedOpportunities] = useState<string[]>([]);
+  const [isCreator, setIsCreator] = useState<boolean | null>(null);
+  const [isBrand, setIsBrand] = useState<boolean | null>(null);
 
   useEffect(() => {
-    fetchOpportunities();
-    checkCreatorProfile();
+    checkUserAccess();
   }, []);
 
-  const checkCreatorProfile = async () => {
+  const checkUserAccess = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    
+    if (!user) {
+      // Not logged in - redirect to login
+      navigate("/login");
+      return;
+    }
 
+    // Check for creator profile
     const { data: creatorProfile } = await supabase
       .from("creator_profiles")
       .select("id")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    // Check for brand profile
+    const { data: brandProfile } = await supabase
+      .from("brand_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    setIsCreator(!!creatorProfile);
+    setIsBrand(!!brandProfile);
 
     if (creatorProfile) {
       setCreatorProfileId(creatorProfile.id);
@@ -81,7 +99,15 @@ const Opportunities = () => {
       if (applications) {
         setAppliedOpportunities(applications.map(a => a.opportunity_id));
       }
+      // Fetch opportunities only for creators
+      fetchOpportunities();
+    } else if (brandProfile) {
+      // Brand only - redirect to their dashboard
+      navigate("/brand-dashboard?tab=opportunities");
+      return;
     }
+
+    setAuthLoading(false);
   };
 
   const fetchOpportunities = async () => {
@@ -156,6 +182,43 @@ const Opportunities = () => {
       default: return 'bg-muted text-muted-foreground';
     }
   };
+
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </main>
+      </div>
+    );
+  }
+
+  // If not a creator and not a brand, prompt to create profile
+  if (!isCreator && !isBrand) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 py-8">
+          <div className="container mx-auto px-4 max-w-md text-center">
+            <Card>
+              <CardContent className="py-12">
+                <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Creator Profile Required</h3>
+                <p className="text-muted-foreground mb-6">
+                  You need a creator profile to browse and apply to opportunities.
+                </p>
+                <Button onClick={() => navigate("/creator-signup")}>
+                  Become a Creator
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
