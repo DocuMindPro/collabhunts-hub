@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Users, MapPin, Calendar, Star, Sparkles } from "lucide-react";
@@ -13,8 +13,10 @@ import FloatingShapes from "@/components/FloatingShapes";
 import { isNativePlatform, safeNativeAsync } from "@/lib/supabase-native";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
 
@@ -48,6 +50,20 @@ const Index = () => {
       
       setHasBrandProfile(!!brandProfile);
       setHasCreatorProfile(!!creatorProfile);
+      
+      // Auto-redirect logged-in users to their dashboard
+      // Brand takes priority (they are the paying customers)
+      if (brandProfile) {
+        navigate("/brand-dashboard", { replace: true });
+        return;
+      }
+      if (creatorProfile) {
+        navigate("/creator-dashboard", { replace: true });
+        return;
+      }
+      
+      // No profile - show marketing page
+      setAuthLoading(false);
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -60,6 +76,7 @@ const Index = () => {
         setUser(null);
         setHasBrandProfile(false);
         setHasCreatorProfile(false);
+        setAuthLoading(false);
       }
     });
 
@@ -75,6 +92,8 @@ const Index = () => {
         if (session?.user) {
           setUser(session.user);
           checkUserProfiles(session.user.id);
+        } else {
+          setAuthLoading(false);
         }
       });
     };
@@ -86,7 +105,7 @@ const Index = () => {
     }
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const eventTypes = [
     "Meet & Greet", "Workshop", "Competition", "Brand Activation", "Private Event"
@@ -118,6 +137,15 @@ const Index = () => {
     { icon: MapPin, title: "Local Focus", description: "Find creators in your city ready for in-person events" },
     { icon: Sparkles, title: "Payment Protection", description: "50% escrow system protects both parties" },
   ];
+
+  // Show loading spinner while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
