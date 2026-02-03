@@ -1,19 +1,21 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import BrandOverviewTab from "@/components/brand-dashboard/BrandOverviewTab";
 import BrandBookingsTab from "@/components/brand-dashboard/BrandBookingsTab";
 import BrandMessagesTab from "@/components/brand-dashboard/BrandMessagesTab";
 import BrandAccountTab from "@/components/brand-dashboard/BrandAccountTab";
 import BrandOpportunitiesTab from "@/components/brand-dashboard/BrandOpportunitiesTab";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, Calendar, MessageSquare, User, Briefcase } from "lucide-react";
+import { BarChart3, Calendar, MessageSquare, User, Briefcase, Users } from "lucide-react";
 
 const BrandDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [brandProfileId, setBrandProfileId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -51,9 +53,12 @@ const BrandDashboard = () => {
       
       <main className="flex-1 py-4 md:py-8">
         <div className="container mx-auto px-4 max-w-7xl">
-          <div className="mb-4 md:mb-8">
-            <h1 className="text-2xl md:text-4xl font-heading font-bold mb-1 md:mb-2">Brand Dashboard</h1>
-            <p className="text-sm md:text-base text-muted-foreground">Manage your creator events and bookings</p>
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <h1 className="text-xl md:text-2xl font-heading font-bold">Dashboard</h1>
+            <Button onClick={() => navigate('/influencers')} size="sm" className="gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Find Creators</span>
+            </Button>
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 md:space-y-6">
