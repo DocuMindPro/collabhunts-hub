@@ -1,85 +1,127 @@
 
-# Show Price Ranges Instead of Single Prices
 
-## Overview
-Currently, prices are displayed as a single "lowest price + " format (e.g., "$500 +"). This should change to show the actual price **range** from minimum to maximum (e.g., "$200 to $300"), providing clearer pricing expectations for brands.
+# Modernize Advanced Filters for Event-Based Platform
 
-## Changes Required
+## Current State Analysis
 
-### 1. Create New DimmedPriceRange Component
-**File: `src/components/DimmedPriceRange.tsx`** (new file)
+The Advanced Filters panel currently includes filters optimized for generic influencer marketing:
+- Age Range
+- Gender  
+- Ethnicity
+- Language
+- Followers by Platform
 
-A new component that displays price ranges with the same dimming/locking behavior as DimmedPrice:
-- Takes `minPrice` and `maxPrice` props (in cents)
-- If min equals max, shows single price: "$200"
-- If different, shows range: "$200 to $300"
-- Maintains existing locked/visible states for subscription-gated pricing
+**Problem**: These filters don't align with the new event-focused identity. Brands booking creators for live events at their venues need to find creators **by location** first and foremost.
 
-### 2. Update Find Influencers Page
-**File: `src/pages/Influencers.tsx`**
+## Proposed Changes
 
-**Add helper function:**
+### 1. Add Location Filters (Priority)
+
+Add cascading location dropdowns at the TOP of Advanced Filters:
+- **Country** dropdown (populated from existing `COUNTRY_LOCATIONS` data)
+- **Region/State** dropdown (dynamically filtered by country)
+- **City** dropdown (dynamically filtered by region)
+
+This aligns with the creator onboarding system that already collects `location_country`, `location_state`, and `location_city`.
+
+### 2. Reorder Filters by Relevance
+
+New order prioritizing event booking use case:
+1. **Location** (NEW - Country → Region → City cascade)
+2. **Language** (important for local markets like Lebanon)
+3. **Followers by Platform** (still relevant for reach)
+4. Age Range (demote - less critical for events)
+5. Gender (demote - less critical for events)
+6. Ethnicity (consider removing - sensitive data, rarely used for event booking)
+
+### 3. Remove or Simplify Low-Value Filters
+
+**Consider removing Ethnicity filter:**
+- Sensitive personal data
+- Not typically a booking criterion for live events
+- Simplifies the UI and reduces potential discrimination concerns
+
+### 4. Add Event-Specific Filters (Optional Enhancement)
+
+Consider adding:
+- **Available Packages** - Filter by creators offering specific services (Unbox & Review, Social Boost, Meet & Greet, etc.)
+- **Open to Free Invites** toggle - Quick filter for creators accepting product-only deals
+
+---
+
+## Technical Implementation
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/pages/Influencers.tsx` | Add location state, import LocationSelect, add filtering logic |
+| `src/components/LocationSelect.tsx` | Already exists, reusable for filters |
+
+### New State Variables
 ```typescript
-const getPriceRange = (services: CreatorWithDetails['services']) => {
-  if (services.length === 0) return { min: 0, max: 0 };
-  const prices = services.map(s => s.price_cents);
-  return { 
-    min: Math.min(...prices), 
-    max: Math.max(...prices) 
-  };
-};
+const [selectedCountry, setSelectedCountry] = useState("all");
+const [selectedState, setSelectedState] = useState("");
+const [selectedCity, setSelectedCity] = useState("");
 ```
 
-**Update 3 card sections** (lines ~700, ~797, ~895):
-- Replace `lowestPrice` usage with `priceRange`
-- Change display from:
-  ```
-  $500 +
-  ```
-  To:
-  ```
-  $200 - $300
-  ```
-- Remove the trailing "+" since the range already shows full spread
-
-### 3. Update Creator Profile Quick Stats
-**File: `src/pages/CreatorProfile.tsx`**
-
-**Change label** (line ~969):
-- From: "Starting Price"
-- To: "Price"
-
-**Update price display** (lines ~970-982):
-- Calculate both min and max from `creator.services`
-- If min equals max: Show single price "$200"
-- If different: Show range "$200 to $300"
-- Use the new DimmedPriceRange component
-
-## Technical Details
-
-### DimmedPriceRange Component Interface
+### Filter Logic Addition
 ```typescript
-interface DimmedPriceRangeProps {
-  minPrice: number;  // in cents
-  maxPrice: number;  // in cents
-  canViewPrice: boolean;
-  className?: string;
-  size?: "sm" | "md" | "lg";
-  onClick?: () => void;
+// Location filter
+if (selectedCountry !== "all") {
+  matchesAdvanced = matchesAdvanced && 
+    creator.location_country === selectedCountry;
+}
+if (selectedState) {
+  matchesAdvanced = matchesAdvanced && 
+    creator.location_state === selectedState;
+}
+if (selectedCity) {
+  matchesAdvanced = matchesAdvanced && 
+    creator.location_city === selectedCity;
 }
 ```
 
-### Display Logic
-| Scenario | Display |
-|----------|---------|
-| Min = Max | `$200` |
-| Min < Max | `$200 - $300` |
-| No services | `Contact` or `N/A` |
-| Not subscribed | Lock icon with `$•• - ••` |
+### UI Layout
 
-### Files to Modify/Create
-| File | Action |
-|------|--------|
-| `src/components/DimmedPriceRange.tsx` | Create new |
-| `src/pages/Influencers.tsx` | Modify price display in 3 places |
-| `src/pages/CreatorProfile.tsx` | Change label + use price range |
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ Advanced Filters                              [Clear Filters]│
+├─────────────────────────────────────────────────────────────┤
+│ LOCATION                                                     │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐             │
+│ │ Country ▼   │ │ Region ▼    │ │ City ▼      │             │
+│ └─────────────┘ └─────────────┘ └─────────────┘             │
+├─────────────────────────────────────────────────────────────┤
+│ LANGUAGE                                                     │
+│ ┌───────────────────────┐                                   │
+│ │ All Languages ▼       │                                   │
+│ └───────────────────────┘                                   │
+├─────────────────────────────────────────────────────────────┤
+│ FOLLOWERS BY PLATFORM                                        │
+│ ┌─────────────┐ ┌─────────────────────────┐                 │
+│ │ Platform ▼  │ │ Min followers           │                 │
+│ └─────────────┘ └─────────────────────────┘                 │
+├─────────────────────────────────────────────────────────────┤
+│ AGE RANGE                                    18 - 65+ years │
+│ ●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━●│
+├─────────────────────────────────────────────────────────────┤
+│ GENDER                                                       │
+│ ○ Male    ○ Female    ○ Non-binary                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Summary of Changes
+
+| Change | Reason |
+|--------|--------|
+| Add Country/Region/City filters | Core need for event-based booking |
+| Move Location to top | Most important filter for local events |
+| Keep Language filter | Important for Lebanese market |
+| Keep Followers filter | Still relevant for reach |
+| Demote Age/Gender | Less critical for events |
+| Remove Ethnicity | Sensitive, rarely used, simplifies UI |
+| Reuse LocationSelect component | Consistent UX with onboarding |
+
