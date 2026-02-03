@@ -1,208 +1,175 @@
 
-# Brand-Created Events ("Opportunity Board") Feature
+# Mobile-Friendly Audit and Improvements Plan
 
-## Overview
+## Executive Summary
 
-This feature introduces a **reverse marketplace flow** where brands can create public events/opportunities that creators can discover, apply to, attend, and get paid upon delivery confirmation.
-
-### Two Distinct Flows
-
-The platform will support both flows:
-1. **Current Flow** (Brand → Creator): Brand finds a creator and books them directly
-2. **New Flow** (Creator → Brand): Brand posts an opportunity, creators apply, brand selects creators
+After thoroughly reviewing the codebase, the platform already has a solid foundation for mobile responsiveness with Tailwind CSS responsive classes used throughout. However, there are several areas that need improvement to ensure brands can comfortably use the website on their phones, particularly in newer components and dialogs.
 
 ---
 
-## Business Logic Clarification
+## Current Mobile-Friendly Status
 
-### Paid Events Flow
-```text
-Brand Creates Opportunity → Creators Apply → Brand Accepts Creator(s)
-         ↓
-Creator Attends Event & Creates Content
-         ↓
-Creator Submits Delivery (with post links)
-         ↓
-Brand Confirms Receipt → Platform Releases Payment (15% fee)
+### Already Well-Implemented
+- **Navbar**: Has mobile hamburger menu with Sheet component for mobile navigation
+- **BrandDashboard tabs**: Uses `overflow-x-auto` and responsive text visibility (`hidden sm:inline`)
+- **CreatorDashboard**: Has dedicated MobileBottomNav for native apps
+- **Index page**: Good use of responsive grid (`md:grid-cols-2`, `lg:grid-cols-4`)
+- **Basic responsive utilities**: Container with `px-4`, responsive padding (`py-4 md:py-8`)
+
+### Issues Identified
+
+| Area | Issue | Severity |
+|------|-------|----------|
+| **CreateOpportunityDialog** | Date/time fields use `grid-cols-3` without mobile breakpoint - too cramped on small screens | High |
+| **BrandOpportunitiesTab** | Header layout can overflow on mobile | Medium |
+| **OpportunityApplicationsDialog** | Dialog content may not scroll properly on short screens | Medium |
+| **Opportunities page** | Filter switches layout breaks on narrow screens | Medium |
+| **BrandBookingsTab** | Flex layout in booking cards can cause overflow | Medium |
+| **BrandMessagesTab** | Chat view header spacing could be tighter on mobile | Low |
+| **BrandAccountTab** | OTP buttons in phone verification could stack better | Low |
+
+---
+
+## Detailed Fixes
+
+### 1. CreateOpportunityDialog.tsx - Date/Time Grid Fix
+
+**Current Problem**: 
+```tsx
+<div className="grid grid-cols-3 gap-4">
+```
+This forces 3 columns on all screen sizes, making date inputs unusable on mobile.
+
+**Fix**: Make responsive with mobile-first approach
+```tsx
+<div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
 ```
 
-### Free Invite Flow (Open to Free Invites)
-For "barter" collaborations where brands offer experiences instead of payment:
-
-```text
-Brand Creates FREE Opportunity → Only "Open to Free Invites" Creators See It
-         ↓
-Creator Applies → Brand Accepts
-         ↓
-Creator Attends & Posts Content
-         ↓
-Creator Marks as Delivered (with post links)
-         ↓
-Brand Confirms Content Posted (optional rating/review)
+Also update location grid:
+```tsx
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 ```
 
-**Key Difference**: No escrow, no platform fee—just a confirmation workflow for accountability.
+### 2. BrandOpportunitiesTab.tsx - Header Layout
+
+**Current Problem**: Header with "My Opportunities" and "Post Opportunity" button can overflow.
+
+**Fix**: Stack on mobile
+```tsx
+<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+  <div>
+    <h2 className="text-xl sm:text-2xl font-bold">My Opportunities</h2>
+    <p className="text-sm text-muted-foreground">Post opportunities for creators to apply</p>
+  </div>
+  <Button onClick={() => setCreateDialogOpen(true)} className="gap-2 w-full sm:w-auto">
+```
+
+### 3. OpportunityApplicationsDialog.tsx - Mobile Scrolling
+
+**Current Problem**: `max-h-[85vh]` may not account for mobile browser chrome.
+
+**Fix**: Use safer mobile-aware height
+```tsx
+<DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[85vh] overflow-y-auto">
+```
+
+Also improve button layout in actions section:
+```tsx
+<div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-3">
+```
+
+### 4. Opportunities.tsx - Filter Toggles
+
+**Current Problem**: Paid/Free toggle switches can break layout on narrow screens.
+
+**Fix**: Stack filters on mobile
+```tsx
+<div className="flex flex-col gap-4">
+  <div className="flex-1 relative">
+    {/* Search input */}
+  </div>
+  <div className="flex flex-col sm:flex-row gap-3">
+    <Select...> {/* Package type */}
+    <div className="flex items-center gap-4 flex-wrap">
+      {/* Toggle switches */}
+    </div>
+  </div>
+</div>
+```
+
+### 5. BrandBookingsTab.tsx - Card Layout
+
+**Current Problem**: Booking cards use `md:flex-row` which works, but price/action section can overflow.
+
+**Fix**: Improve action button wrapping
+```tsx
+<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+```
+
+### 6. BrandAccountTab.tsx - Phone Verification Buttons
+
+**Fix**: Better button stacking for OTP flow
+```tsx
+<div className="flex flex-wrap gap-2">
+  <Button...>Verify</Button>
+  <Button...>Change Number</Button>
+  <Button...>Cancel</Button>
+</div>
+```
+
+### 7. CreateOpportunityDialog.tsx - Form Field Improvements
+
+**Fix**: Add touch-friendly input sizing
+```tsx
+<Input
+  id="title"
+  placeholder="e.g., Looking for Food Creators..."
+  className="h-11" // Larger touch target
+/>
+```
+
+### 8. General Dialog Improvements
+
+All dialogs should use:
+```tsx
+<DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+```
 
 ---
 
-## Database Changes
+## Files to Modify
 
-### New Table: `brand_opportunities`
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | uuid | Primary key |
-| `brand_profile_id` | uuid | FK to brand_profiles |
-| `title` | text | e.g., "Looking for Food Creators for Restaurant Opening" |
-| `description` | text | Details about the opportunity |
-| `package_type` | text | From EVENT_PACKAGES (social_boost, meet_greet, etc.) |
-| `event_date` | date | When the event happens |
-| `start_time` / `end_time` | time | Event timing |
-| `is_paid` | boolean | true = paid booking, false = free invite |
-| `budget_cents` | integer | Budget per creator (null if free) |
-| `spots_available` | integer | How many creators needed |
-| `spots_filled` | integer | How many accepted (default 0) |
-| `requirements` | text | Creator requirements (followers, categories, etc.) |
-| `min_followers` | integer | Minimum follower requirement (optional) |
-| `required_categories` | text[] | Content niches wanted |
-| `status` | text | 'open', 'filled', 'completed', 'cancelled' |
-| `application_deadline` | timestamp | When applications close |
-| `created_at` / `updated_at` | timestamps | |
-
-### New Table: `opportunity_applications`
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | uuid | Primary key |
-| `opportunity_id` | uuid | FK to brand_opportunities |
-| `creator_profile_id` | uuid | FK to creator_profiles |
-| `message` | text | Creator's pitch/message |
-| `proposed_price_cents` | integer | Creator's asking price (null if free invite) |
-| `status` | text | 'pending', 'accepted', 'rejected', 'withdrawn' |
-| `booking_id` | uuid | FK to bookings (created when accepted, for payment flow) |
-| `delivery_links` | text[] | Links to posted content |
-| `delivered_at` | timestamp | When creator submitted delivery |
-| `confirmed_at` | timestamp | When brand confirmed receipt |
-| `created_at` | timestamps | |
-
----
-
-## New Pages & Components
-
-### 1. Opportunities Discovery Page (for Creators)
-**Route**: `/opportunities`
-
-- List of open brand opportunities
-- Filters: Location, Package Type, Paid/Free, Categories
-- Shows: Brand name/venue, date, budget, spots left
-- "Apply" button → Opens application modal
-
-### 2. Create Opportunity Form (for Brands)
-**Location**: Brand Dashboard → New "Post Opportunity" tab or button
-
-- Form fields matching the database schema
-- Toggle between "Paid Event" and "Free Invite"
-- If free invite, only creators with `open_to_invitations = true` can apply
-
-### 3. Manage Applications (for Brands)
-**Location**: Brand Dashboard → New "Applications" section
-
-- View all applications per opportunity
-- Accept/Reject creators
-- Message applicants
-- Track delivery status
-
-### 4. My Applications (for Creators)
-**Location**: Creator Dashboard → New "Opportunities" tab
-
-- List of opportunities they've applied to
-- Application status tracking
-- Submit delivery (upload links to posts)
-- See confirmation status
-
----
-
-## Delivery Confirmation Flow
-
-### For Paid Events
-1. Creator completes event and posts content
-2. Creator submits delivery with links to posts
-3. Brand reviews links and confirms
-4. Platform releases payment (after 15% fee)
-5. If brand doesn't confirm within 72 hours, auto-release
-
-### For Free Invites
-1. Creator attends and posts content
-2. Creator submits post links
-3. Brand confirms receipt (no payment involved)
-4. Both parties can leave reviews
-5. Builds creator's "completed collaborations" count
-
----
-
-## UI/UX Additions
-
-### Brand Dashboard Changes
-- Add "Post Opportunity" button in Overview
-- Add "My Opportunities" tab showing posted opportunities and applications
-- Add "Pending Confirmations" section for delivery reviews
-
-### Creator Dashboard Changes
-- Add "Opportunities" tab to browse and manage applications
-- Add delivery submission flow with link inputs
-- Show application statuses
-
-### Discovery Integration
-- Add "Opportunities" link in main navigation
-- Filter for "Open to Free Invites" creators matches free opportunities
-
----
-
-## Summary of Files to Create/Modify
-
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/pages/Opportunities.tsx` | Creator-facing opportunity discovery |
-| `src/components/brand-dashboard/BrandOpportunitiesTab.tsx` | Brand's posted opportunities |
-| `src/components/brand-dashboard/CreateOpportunityDialog.tsx` | Form to create opportunity |
-| `src/components/brand-dashboard/OpportunityApplicationsDialog.tsx` | View/manage applications |
-| `src/components/creator-dashboard/OpportunitiesTab.tsx` | Creator's applications |
-| `src/components/creator-dashboard/SubmitDeliveryDialog.tsx` | Submit post links |
-
-### Modified Files
 | File | Changes |
 |------|---------|
-| `src/pages/BrandDashboard.tsx` | Add Opportunities tab |
-| `src/pages/CreatorDashboard.tsx` | Add Opportunities tab |
-| `src/App.tsx` | Add /opportunities route |
-| `src/components/Navbar.tsx` | Add Opportunities link |
-
-### Database Migration
-- Create `brand_opportunities` table with RLS
-- Create `opportunity_applications` table with RLS
-- Policies for brands to manage their opportunities
-- Policies for creators to view opportunities and manage their applications
+| `src/components/brand-dashboard/CreateOpportunityDialog.tsx` | Responsive date/time grid, location grid, larger touch targets |
+| `src/components/brand-dashboard/BrandOpportunitiesTab.tsx` | Stack header on mobile, full-width button |
+| `src/components/brand-dashboard/OpportunityApplicationsDialog.tsx` | Mobile-safe height, button wrapping |
+| `src/pages/Opportunities.tsx` | Stack filters vertically on mobile |
+| `src/components/brand-dashboard/BrandBookingsTab.tsx` | Improve action section wrapping |
+| `src/components/brand-dashboard/BrandAccountTab.tsx` | Better button layout in OTP flow |
 
 ---
 
-## Technical Notes
+## Summary of Changes
 
-### RLS Policies
-- Brands can CRUD their own opportunities
-- Creators can view all 'open' opportunities (with visibility rules for free vs paid)
-- For free opportunities, only show to creators with `open_to_invitations = true`
-- Creators can CRUD their own applications
-- Brands can view/update applications on their opportunities
+1. **Grid layouts**: Change fixed column counts to responsive (`grid-cols-1 sm:grid-cols-3`)
+2. **Flex layouts**: Add `flex-col sm:flex-row` for stacking on mobile
+3. **Touch targets**: Increase input heights for better touch usability
+4. **Dialog widths**: Use `w-[95vw]` on mobile for edge-to-edge dialogs
+5. **Button widths**: Add `w-full sm:w-auto` for full-width mobile buttons
+6. **Text sizing**: Use responsive text (`text-xl sm:text-2xl`)
+7. **Spacing**: Reduce gaps on mobile (`gap-3 sm:gap-4`)
 
-### Escrow Integration
-When a brand accepts a creator for a **paid** opportunity:
-1. Create a `bookings` record with the agreed price
-2. Trigger the existing escrow flow (50% deposit)
-3. Link the application to the booking via `booking_id`
-4. Use existing `releasePayment()` when brand confirms delivery
+---
 
-### Free Invites
-- No booking record created
-- Just track delivery and confirmation in the application record
-- Build creator reputation through completed free collaborations
+## Testing Recommendations
+
+After implementing these changes:
+1. Test on actual mobile devices (iOS Safari, Android Chrome)
+2. Use browser DevTools device emulation at common sizes:
+   - iPhone SE (375px)
+   - iPhone 12/13 (390px)
+   - Samsung Galaxy (360px)
+3. Verify all forms are usable with virtual keyboards
+4. Confirm dialogs don't get cut off by mobile browser chrome
+5. Test touch targets are at least 44px for accessibility
