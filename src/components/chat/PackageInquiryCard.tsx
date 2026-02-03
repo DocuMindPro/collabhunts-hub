@@ -1,6 +1,7 @@
-import { X, Send, Instagram, Youtube, Facebook, Video, Package } from "lucide-react";
+import { X, Send, Package, MapPin, Zap, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { EVENT_PACKAGES, type PackageType } from "@/config/packages";
 
 interface PackageData {
   service_type: string;
@@ -14,28 +15,41 @@ interface PackageInquiryCardProps {
   onDismiss: () => void;
 }
 
+// Package type icons based on our event model
 const getServiceIcon = (serviceType: string) => {
-  const type = serviceType.toLowerCase();
-  if (type.includes('instagram')) return Instagram;
-  if (type.includes('youtube')) return Youtube;
-  if (type.includes('facebook')) return Facebook;
-  if (type.includes('tiktok') || type.includes('video') || type.includes('reel')) return Video;
-  return Package;
-};
-
-const formatServiceType = (serviceType: string) => {
-  return serviceType
-    .replace(/_/g, ' ')
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  switch (serviceType) {
+    case 'unbox_review':
+      return Gift;
+    case 'social_boost':
+    case 'meet_greet':
+      return MapPin;
+    case 'competition':
+    case 'custom':
+      return Zap;
+    default:
+      return Package;
+  }
 };
 
 const PackageInquiryCard = ({ packageData, onSend, onDismiss }: PackageInquiryCardProps) => {
   const Icon = getServiceIcon(packageData.service_type);
-  const price = (packageData.price_cents / 100).toFixed(2);
-  const deliveryDays = packageData.delivery_days;
-  const serviceName = formatServiceType(packageData.service_type);
+  const packageConfig = EVENT_PACKAGES[packageData.service_type as PackageType];
+  const serviceName = packageConfig?.name || packageData.service_type.replace(/_/g, ' ');
+  const price = (packageData.price_cents / 100).toFixed(0);
+  
+  // Determine what secondary info to show
+  const isHomePackage = packageData.service_type === 'unbox_review';
+  const isEventPackage = ['social_boost', 'meet_greet'].includes(packageData.service_type);
+  const isConsultation = ['competition', 'custom'].includes(packageData.service_type);
+  
+  let secondaryInfo = '';
+  if (isConsultation) {
+    secondaryInfo = 'Managed Event';
+  } else if (isEventPackage && packageConfig?.durationRange) {
+    secondaryInfo = `${packageConfig.durationRange.min}-${packageConfig.durationRange.max} hrs`;
+  } else if (isHomePackage && packageData.delivery_days > 0) {
+    secondaryInfo = `${packageData.delivery_days} day delivery`;
+  }
 
   return (
     <Card className="mx-4 mb-2 border-primary/20 bg-primary/5 overflow-hidden">
@@ -57,7 +71,8 @@ const PackageInquiryCard = ({ packageData, onSend, onDismiss }: PackageInquiryCa
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate">{serviceName}</p>
           <p className="text-xs text-muted-foreground">
-            ${price} • {deliveryDays} day{deliveryDays !== 1 ? 's' : ''} delivery
+            {isConsultation ? 'Contact for quote' : `$${price}`}
+            {secondaryInfo && ` • ${secondaryInfo}`}
           </p>
         </div>
         <Button 
