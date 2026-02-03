@@ -1,11 +1,56 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Users, Target, Sparkles, Heart, MapPin, Calendar, Star } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { safeNativeAsync } from "@/lib/supabase-native";
 
 const AboutUs = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    const checkUserProfiles = async () => {
+      const session = await safeNativeAsync(
+        async () => {
+          const { data } = await supabase.auth.getSession();
+          return data.session;
+        },
+        null
+      );
+      
+      if (!session?.user) {
+        setIsLoggedIn(false);
+        return;
+      }
+
+      setIsLoggedIn(true);
+
+      const [brandData, creatorData] = await Promise.all([
+        safeNativeAsync(
+          async () => {
+            const { data } = await supabase.from("brand_profiles").select("id").eq("user_id", session.user.id).maybeSingle();
+            return data;
+          },
+          null
+        ),
+        safeNativeAsync(
+          async () => {
+            const { data } = await supabase.from("creator_profiles").select("id").eq("user_id", session.user.id).maybeSingle();
+            return data;
+          },
+          null
+        )
+      ]);
+
+      setHasBrandProfile(!!brandData);
+      setHasCreatorProfile(!!creatorData);
+    };
+
+    checkUserProfiles();
   }, []);
 
   return (
@@ -130,20 +175,52 @@ const AboutUs = () => {
           </div>
         </section>
 
-        {/* CTA */}
+        {/* CTA - Role-aware */}
         <section className="text-center">
           <div className="bg-card border border-border rounded-xl p-8 md:p-12 max-w-3xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-heading font-bold mb-4">Ready to Get Started?</h2>
             <p className="text-muted-foreground mb-6">
-              Join Lebanon's premier platform for creator events and live experiences.
+              {isLoggedIn 
+                ? "Explore what CollabHunts has to offer."
+                : "Join Lebanon's premier platform for creator events and live experiences."
+              }
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="/creator" className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors">
-                Join as Creator
-              </a>
-              <a href="/brand" className="inline-flex items-center justify-center px-6 py-3 bg-secondary text-secondary-foreground rounded-lg font-medium hover:bg-secondary/80 transition-colors">
-                Register Your Brand
-              </a>
+              {/* For prospects (not logged in) */}
+              {!isLoggedIn && (
+                <>
+                  <a href="/creator" className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                    Join as Creator
+                  </a>
+                  <a href="/brand" className="inline-flex items-center justify-center px-6 py-3 bg-secondary text-secondary-foreground rounded-lg font-medium hover:bg-secondary/80 transition-colors">
+                    Register Your Brand
+                  </a>
+                </>
+              )}
+              
+              {/* For logged-in brands */}
+              {hasBrandProfile && (
+                <>
+                  <a href="/influencers" className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                    Find Creators
+                  </a>
+                  <a href="/brand-dashboard" className="inline-flex items-center justify-center px-6 py-3 bg-secondary text-secondary-foreground rounded-lg font-medium hover:bg-secondary/80 transition-colors">
+                    Go to Dashboard
+                  </a>
+                </>
+              )}
+              
+              {/* For logged-in creators (without brand profile) */}
+              {hasCreatorProfile && !hasBrandProfile && (
+                <>
+                  <a href="/opportunities" className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                    Browse Opportunities
+                  </a>
+                  <a href="/creator-dashboard" className="inline-flex items-center justify-center px-6 py-3 bg-secondary text-secondary-foreground rounded-lg font-medium hover:bg-secondary/80 transition-colors">
+                    Go to Dashboard
+                  </a>
+                </>
+              )}
             </div>
           </div>
         </section>
