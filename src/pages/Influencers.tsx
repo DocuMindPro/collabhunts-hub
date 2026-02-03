@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { Search, Star, Instagram, Youtube, Play, Filter, X, ChevronDown, ChevronUp, MapPin, Calendar } from "lucide-react";
+import { Search, Star, Instagram, Youtube, Play, Filter, X, ChevronDown, ChevronUp, Calendar } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -20,14 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import UpgradePrompt from "@/components/UpgradePrompt";
-import UpgradeBanner from "@/components/UpgradeBanner";
-import { userHasAdvancedFilters, getBrandSubscription } from "@/lib/subscription-utils";
 import AdPlacement from "@/components/AdPlacement";
 import DimmedPriceRange from "@/components/DimmedPriceRange";
-import UpgradeModal from "@/components/UpgradeModal";
-import { canViewCreatorPricing, type PlanType } from "@/lib/stripe-mock";
-import LebaneseCitySelect from "@/components/LebaneseCitySelect";
 
 interface CreatorWithDetails {
   id: string;
@@ -72,17 +66,13 @@ const Influencers = () => {
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   
-  // Advanced filters state
+  // Advanced filters state - now FREE for all users
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [hasAdvancedFilters, setHasAdvancedFilters] = useState(false);
-  const [checkingSubscription, setCheckingSubscription] = useState(true);
   const [ageRange, setAgeRange] = useState([18, 65]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   const [selectedEthnicities, setSelectedEthnicities] = useState<string[]>([]);
-  const [currentPlan, setCurrentPlan] = useState<PlanType>("none");
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const navigate = useNavigate();
   const [selectedLanguage, setSelectedLanguage] = useState("all");
   const [followerPlatform, setFollowerPlatform] = useState("all");
@@ -104,19 +94,14 @@ const Influencers = () => {
 
   useEffect(() => {
     fetchCreators();
-    checkSubscription();
+    checkUserStatus();
   }, []);
 
-  const checkSubscription = async () => {
-    setCheckingSubscription(true);
+  const checkUserStatus = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       setIsLoggedIn(!!user);
       if (user) {
-        const canUseFilters = await userHasAdvancedFilters(user.id);
-        setHasAdvancedFilters(canUseFilters);
-        
-        // Check brand profile and subscription
         const { data: brandProfile } = await supabase
           .from("brand_profiles")
           .select("id")
@@ -124,30 +109,12 @@ const Influencers = () => {
           .maybeSingle();
         
         setHasBrandProfile(!!brandProfile);
-        
-        if (brandProfile) {
-          const subscription = await getBrandSubscription(user.id);
-          setCurrentPlan((subscription?.plan_type || "none") as PlanType);
-        }
       } else {
-        setHasAdvancedFilters(false);
         setHasBrandProfile(false);
-        setCurrentPlan("none");
       }
     } catch (error) {
-      console.error("Error checking subscription:", error);
-      setHasAdvancedFilters(false);
-    } finally {
-      setCheckingSubscription(false);
+      console.error("Error checking user status:", error);
     }
-  };
-
-  // Check if user can view a creator's pricing
-  const canViewPrice = (creator: CreatorWithDetails): boolean => {
-    // If creator allows public pricing, everyone can see
-    if (creator.show_pricing_to_public !== false) return true;
-    // Otherwise, only subscribed users can see
-    return canViewCreatorPricing(currentPlan);
   };
 
   // Pre-validate images when creators change
@@ -272,9 +239,9 @@ const Influencers = () => {
     const matchesCategory = selectedCategory === "all" ||
       creator.categories.some(cat => cat.toLowerCase() === selectedCategory.toLowerCase().replace(" categories", ""));
 
-    // Advanced filters (only apply if user has access)
+    // Advanced filters - now available to everyone
     let matchesAdvanced = true;
-    if (hasAdvancedFilters && hasActiveAdvancedFilters) {
+    if (hasActiveAdvancedFilters) {
       // Age filter
       if (ageRange[0] > 18 || ageRange[1] < 65) {
         const age = calculateAge(creator.birth_date);
@@ -345,6 +312,98 @@ const Influencers = () => {
     }
   };
 
+  const renderCreatorCard = (creator: CreatorWithDetails) => {
+    const mainPlatform = getMainPlatform(creator.social_accounts);
+    const priceRange = getPriceRange(creator.services);
+    const PlatformIcon = getPlatformIcon(mainPlatform.platform);
+
+    return (
+      <Link
+        key={creator.id}
+        to={`/creator/${creator.id}`}
+        className="group block"
+      >
+        <div className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-all duration-300 hover:-translate-y-1">
+          {/* Taller Image Container - 4:5 aspect ratio */}
+          <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+            {/* Skeleton shown while image is loading */}
+            {!failedImages.has(creator.id) && !loadedImages.has(creator.id) && (
+              <Skeleton className="absolute inset-0 w-full h-full" />
+            )}
+            
+            {!failedImages.has(creator.id) && loadedImages.has(creator.id) ? (
+              <img 
+                src={creator.profile_image_url!} 
+                alt={creator.display_name}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
+              />
+            ) : failedImages.has(creator.id) ? (
+              <div className="absolute inset-0 bg-gradient-accent flex items-center justify-center">
+                <span className="text-7xl font-heading font-bold text-white/30">
+                  {creator.display_name.charAt(0)}
+                </span>
+              </div>
+            ) : null}
+            
+            {/* Overlay badges on image */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            
+            {/* Platform & Followers Badge - Top Left */}
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+              <PlatformIcon className="h-3.5 w-3.5" />
+              <span>{formatFollowers(mainPlatform.followers)}</span>
+            </div>
+            
+            {/* Open to Invitations Banner */}
+            {creator.open_to_invitations && (
+              <div className="absolute bottom-[72px] left-0 z-10">
+                <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
+                  <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
+                  Open to Free Invites
+                </div>
+              </div>
+            )}
+
+            {/* Rating Badge - Top Right */}
+            <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium">
+              <Star className="h-3 w-3 fill-primary text-primary" />
+              <span>5.0</span>
+            </div>
+
+            {/* Creator Info - Bottom Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <h3 className="font-heading font-semibold text-lg text-white mb-0.5 line-clamp-1">
+                {creator.display_name}
+              </h3>
+              <p className="text-sm text-white/80 line-clamp-1">
+                {creator.categories[0] || "Content Creator"}
+              </p>
+            </div>
+          </div>
+
+          {/* Price & Location Bar - All prices visible now */}
+          <div className="p-4 flex items-center justify-between">
+            <div>
+              {priceRange.min > 0 ? (
+                <DimmedPriceRange 
+                  minPrice={priceRange.min}
+                  maxPrice={priceRange.max}
+                  canViewPrice={true} 
+                  size="md"
+                />
+              ) : (
+                <span className="text-sm text-muted-foreground">Contact</span>
+              )}
+            </div>
+            <span className="text-xs text-muted-foreground truncate max-w-[100px]">
+              {creator.location_country || "—"}
+            </span>
+          </div>
+        </div>
+      </Link>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -413,7 +472,7 @@ const Influencers = () => {
               >
                 <Filter className="h-4 w-4" />
                 Advanced Filters
-                {hasActiveAdvancedFilters && hasAdvancedFilters && (
+                {hasActiveAdvancedFilters && (
                   <Badge variant="secondary" className="ml-1 rounded-full h-5 w-5 p-0 flex items-center justify-center">
                     !
                   </Badge>
@@ -423,13 +482,13 @@ const Influencers = () => {
             </div>
           </div>
 
-          {/* Advanced Filters Panel */}
+          {/* Advanced Filters Panel - Now FREE for everyone */}
           {showAdvancedFilters && (
             <Card className="mb-8">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">Advanced Filters</CardTitle>
-                  {hasAdvancedFilters && hasActiveAdvancedFilters && (
+                  {hasActiveAdvancedFilters && (
                     <Button variant="ghost" size="sm" onClick={clearAdvancedFilters} className="gap-2">
                       <X className="h-4 w-4" />
                       Clear Filters
@@ -438,147 +497,139 @@ const Influencers = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {!hasAdvancedFilters && !checkingSubscription ? (
-                  <UpgradePrompt feature="filters" inline />
-                ) : checkingSubscription ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                <div className="space-y-6">
+                  {/* Age Range */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-semibold">Age Range</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {ageRange[0]} - {ageRange[1]}+ years
+                      </span>
+                    </div>
+                    <Slider
+                      min={18}
+                      max={65}
+                      step={1}
+                      value={ageRange}
+                      onValueChange={setAgeRange}
+                      className="w-full"
+                    />
                   </div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Age Range */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-base font-semibold">Age Range</Label>
-                        <span className="text-sm text-muted-foreground">
-                          {ageRange[0]} - {ageRange[1]}+ years
-                        </span>
-                      </div>
-                      <Slider
-                        min={18}
-                        max={65}
-                        step={1}
-                        value={ageRange}
-                        onValueChange={setAgeRange}
-                        className="w-full"
-                      />
+
+                  <Separator />
+
+                  {/* Gender */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-semibold">Gender</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {GENDERS.map((gender) => (
+                        <div key={gender} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`gender-${gender}`}
+                            checked={selectedGenders.includes(gender)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedGenders([...selectedGenders, gender]);
+                              } else {
+                                setSelectedGenders(selectedGenders.filter(g => g !== gender));
+                              }
+                            }}
+                          />
+                          <label htmlFor={`gender-${gender}`} className="text-sm cursor-pointer">
+                            {gender}
+                          </label>
+                        </div>
+                      ))}
                     </div>
+                  </div>
 
-                    <Separator />
+                  <Separator />
 
-                    {/* Gender */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Gender</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {GENDERS.map((gender) => (
-                          <div key={gender} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`gender-${gender}`}
-                              checked={selectedGenders.includes(gender)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedGenders([...selectedGenders, gender]);
-                                } else {
-                                  setSelectedGenders(selectedGenders.filter(g => g !== gender));
-                                }
-                              }}
-                            />
-                            <label htmlFor={`gender-${gender}`} className="text-sm cursor-pointer">
-                              {gender}
-                            </label>
-                          </div>
+                  {/* Ethnicity */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-semibold">Ethnicity</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {ETHNICITIES.map((ethnicity) => (
+                        <div key={ethnicity} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`ethnicity-${ethnicity}`}
+                            checked={selectedEthnicities.includes(ethnicity)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedEthnicities([...selectedEthnicities, ethnicity]);
+                              } else {
+                                setSelectedEthnicities(selectedEthnicities.filter(e => e !== ethnicity));
+                              }
+                            }}
+                          />
+                          <label htmlFor={`ethnicity-${ethnicity}`} className="text-sm cursor-pointer">
+                            {ethnicity}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Language */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-semibold">Language</Label>
+                    <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                      <SelectTrigger className="w-full md:w-[300px]">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Languages</SelectItem>
+                        {LANGUAGES.map((lang) => (
+                          <SelectItem key={lang} value={lang}>{lang}</SelectItem>
                         ))}
-                      </div>
-                    </div>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                    <Separator />
+                  <Separator />
 
-                    {/* Ethnicity */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Ethnicity</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {ETHNICITIES.map((ethnicity) => (
-                          <div key={ethnicity} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`ethnicity-${ethnicity}`}
-                              checked={selectedEthnicities.includes(ethnicity)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedEthnicities([...selectedEthnicities, ethnicity]);
-                                } else {
-                                  setSelectedEthnicities(selectedEthnicities.filter(e => e !== ethnicity));
-                                }
-                              }}
-                            />
-                            <label htmlFor={`ethnicity-${ethnicity}`} className="text-sm cursor-pointer">
-                              {ethnicity}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Language */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Language</Label>
-                      <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                        <SelectTrigger className="w-full md:w-[300px]">
-                          <SelectValue placeholder="Select language" />
+                  {/* Platform-Specific Followers */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-semibold">Followers by Platform</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Filter creators by minimum followers on a specific platform
+                    </p>
+                    <div className="flex flex-col md:flex-row gap-3">
+                      <Select value={followerPlatform} onValueChange={(value) => {
+                        setFollowerPlatform(value);
+                        if (value === "all") setMinPlatformFollowers("");
+                      }}>
+                        <SelectTrigger className="w-full md:w-[200px]">
+                          <SelectValue placeholder="Select platform" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Languages</SelectItem>
-                          {LANGUAGES.map((lang) => (
-                            <SelectItem key={lang} value={lang}>{lang}</SelectItem>
-                          ))}
+                          <SelectItem value="all">All Platforms</SelectItem>
+                          <SelectItem value="instagram">Instagram</SelectItem>
+                          <SelectItem value="tiktok">TikTok</SelectItem>
+                          <SelectItem value="youtube">YouTube</SelectItem>
+                          <SelectItem value="twitter">Twitter</SelectItem>
+                          <SelectItem value="twitch">Twitch</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-
-                    <Separator />
-
-                    {/* Platform-Specific Followers */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Followers by Platform</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Filter creators by minimum followers on a specific platform
-                      </p>
-                      <div className="flex flex-col md:flex-row gap-3">
-                        <Select value={followerPlatform} onValueChange={(value) => {
-                          setFollowerPlatform(value);
-                          if (value === "all") setMinPlatformFollowers("");
-                        }}>
-                          <SelectTrigger className="w-full md:w-[200px]">
-                            <SelectValue placeholder="Select platform" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Platforms</SelectItem>
-                            <SelectItem value="instagram">Instagram</SelectItem>
-                            <SelectItem value="tiktok">TikTok</SelectItem>
-                            <SelectItem value="youtube">YouTube</SelectItem>
-                            <SelectItem value="twitter">Twitter</SelectItem>
-                            <SelectItem value="twitch">Twitch</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="number"
-                          placeholder="Min followers (e.g., 10000)"
-                          value={minPlatformFollowers}
-                          onChange={(e) => setMinPlatformFollowers(e.target.value)}
-                          disabled={followerPlatform === "all"}
-                          className="w-full md:w-[200px]"
-                        />
-                      </div>
+                      <Input
+                        type="number"
+                        placeholder="Min followers (e.g., 10000)"
+                        value={minPlatformFollowers}
+                        onChange={(e) => setMinPlatformFollowers(e.target.value)}
+                        disabled={followerPlatform === "all"}
+                        className="w-full md:w-[200px]"
+                      />
                     </div>
                   </div>
-                )}
+                </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Top Upsell Banner for brands on free/basic plans */}
-          {hasBrandProfile && (currentPlan === "none" || currentPlan === "basic") && (
+          {/* Call to action for non-registered brands */}
+          {!hasBrandProfile && isLoggedIn && (
             <div className="mb-6">
               <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/5 p-4 md:p-6">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
@@ -588,13 +639,9 @@ const Influencers = () => {
                       <Star className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-semibold">
-                        {currentPlan === "none" ? "Register your brand to book creators" : "Upgrade for more features"}
-                      </p>
+                      <p className="font-semibold">Register your brand to book creators</p>
                       <p className="text-sm text-muted-foreground">
-                        {currentPlan === "none" 
-                          ? "Free to register - Only pay 15% platform fee when you book events" 
-                          : "Filter by age, ethnicity, language + save favorites"}
+                        Free to register - Only pay 15% platform fee when you book events
                       </p>
                     </div>
                   </div>
@@ -603,7 +650,7 @@ const Influencers = () => {
                     className="gap-2 bg-primary hover:bg-primary/90 whitespace-nowrap"
                   >
                     <Calendar className="h-4 w-4" />
-                    {currentPlan === "none" ? "Register Your Brand" : "See Plans"}
+                    Register Your Brand
                   </Button>
                 </div>
               </div>
@@ -627,100 +674,9 @@ const Influencers = () => {
                 <AdPlacement placementId="influencers_sidebar" className="h-48" />
               </div>
 
-              {/* Collabstr-style Grid - 4 columns, taller cards */}
+              {/* Creator Grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {filteredCreators.slice(0, 8).map((creator) => {
-                  const mainPlatform = getMainPlatform(creator.social_accounts);
-                  const priceRange = getPriceRange(creator.services);
-                  const PlatformIcon = getPlatformIcon(mainPlatform.platform);
-
-                  return (
-                    <Link
-                      key={creator.id}
-                      to={`/creator/${creator.id}`}
-                      className="group block"
-                    >
-                      <div className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-all duration-300 hover:-translate-y-1">
-                        {/* Taller Image Container - 4:5 aspect ratio like Collabstr */}
-                        <div className="relative aspect-[4/5] overflow-hidden bg-muted">
-                          {/* Skeleton shown while image is loading */}
-                          {!failedImages.has(creator.id) && !loadedImages.has(creator.id) && (
-                            <Skeleton className="absolute inset-0 w-full h-full" />
-                          )}
-                          
-                          {!failedImages.has(creator.id) && loadedImages.has(creator.id) ? (
-                            <img 
-                              src={creator.profile_image_url!} 
-                              alt={creator.display_name}
-                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
-                            />
-                          ) : failedImages.has(creator.id) ? (
-                            <div className="absolute inset-0 bg-gradient-accent flex items-center justify-center">
-                              <span className="text-7xl font-heading font-bold text-white/30">
-                                {creator.display_name.charAt(0)}
-                              </span>
-                            </div>
-                          ) : null}
-                          
-                          {/* Overlay badges on image */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                          
-                          {/* Platform & Followers Badge - Top Left */}
-                          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
-                            <PlatformIcon className="h-3.5 w-3.5" />
-                            <span>{formatFollowers(mainPlatform.followers)}</span>
-                          </div>
-                          
-                          {/* Open to Invitations Banner - LinkedIn-style tab at bottom-left */}
-                          {creator.open_to_invitations && (
-                            <div className="absolute bottom-[72px] left-0 z-10">
-                              <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
-                                <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
-                                Open to Free Invites
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Rating Badge - Top Right */}
-                          <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium">
-                            <Star className="h-3 w-3 fill-primary text-primary" />
-                            <span>5.0</span>
-                          </div>
-
-                          {/* Creator Info - Bottom Overlay */}
-                          <div className="absolute bottom-0 left-0 right-0 p-4">
-                            <h3 className="font-heading font-semibold text-lg text-white mb-0.5 line-clamp-1">
-                              {creator.display_name}
-                            </h3>
-                            <p className="text-sm text-white/80 line-clamp-1">
-                              {creator.categories[0] || "Content Creator"}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Price & Location Bar */}
-                        <div className="p-4 flex items-center justify-between">
-                          <div>
-                            {priceRange.min > 0 ? (
-                              <DimmedPriceRange 
-                                minPrice={priceRange.min}
-                                maxPrice={priceRange.max}
-                                canViewPrice={canViewPrice(creator)} 
-                                size="md"
-                                onClick={() => setIsPricingModalOpen(true)}
-                              />
-                            ) : (
-                              <span className="text-sm text-muted-foreground">Contact</span>
-                            )}
-                          </div>
-                          <span className="text-xs text-muted-foreground truncate max-w-[100px]">
-                            {creator.location_country || "—"}
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
+                {filteredCreators.slice(0, 8).map(renderCreatorCard)}
 
                 {/* Inline Ad 1 - After first 8 cards */}
                 {filteredCreators.length > 8 && (
@@ -729,93 +685,7 @@ const Influencers = () => {
                   </div>
                 )}
 
-                {/* Rest of the creators */}
-                {filteredCreators.slice(8, 16).map((creator) => {
-                  const mainPlatform = getMainPlatform(creator.social_accounts);
-                  const priceRange = getPriceRange(creator.services);
-                  const PlatformIcon = getPlatformIcon(mainPlatform.platform);
-
-                  return (
-                    <Link
-                      key={creator.id}
-                      to={`/creator/${creator.id}`}
-                      className="group block"
-                    >
-                      <div className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-all duration-300 hover:-translate-y-1">
-                        <div className="relative aspect-[4/5] overflow-hidden bg-muted">
-                          {!failedImages.has(creator.id) && !loadedImages.has(creator.id) && (
-                            <Skeleton className="absolute inset-0 w-full h-full" />
-                          )}
-                          
-                          {!failedImages.has(creator.id) && loadedImages.has(creator.id) ? (
-                            <img 
-                              src={creator.profile_image_url!} 
-                              alt={creator.display_name}
-                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
-                            />
-                          ) : failedImages.has(creator.id) ? (
-                            <div className="absolute inset-0 bg-gradient-accent flex items-center justify-center">
-                              <span className="text-7xl font-heading font-bold text-white/30">
-                                {creator.display_name.charAt(0)}
-                              </span>
-                            </div>
-                          ) : null}
-                          
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                          
-                          {/* Platform & Followers Badge - Top Left */}
-                          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
-                            <PlatformIcon className="h-3.5 w-3.5" />
-                            <span>{formatFollowers(mainPlatform.followers)}</span>
-                          </div>
-                          
-                          {/* Open to Invitations Banner - LinkedIn-style tab at bottom-left */}
-                          {creator.open_to_invitations && (
-                            <div className="absolute bottom-[72px] left-0 z-10">
-                              <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
-                                <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
-                                Open to Free Invites
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium">
-                            <Star className="h-3 w-3 fill-primary text-primary" />
-                            <span>5.0</span>
-                          </div>
-
-                          <div className="absolute bottom-0 left-0 right-0 p-4">
-                            <h3 className="font-heading font-semibold text-lg text-white mb-0.5 line-clamp-1">
-                              {creator.display_name}
-                            </h3>
-                            <p className="text-sm text-white/80 line-clamp-1">
-                              {creator.categories[0] || "Content Creator"}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="p-4 flex items-center justify-between">
-                          <div>
-                            {priceRange.min > 0 ? (
-                              <DimmedPriceRange 
-                                minPrice={priceRange.min}
-                                maxPrice={priceRange.max}
-                                canViewPrice={canViewPrice(creator)} 
-                                size="md"
-                                onClick={() => setIsPricingModalOpen(true)}
-                              />
-                            ) : (
-                              <span className="text-sm text-muted-foreground">Contact</span>
-                            )}
-                          </div>
-                          <span className="text-xs text-muted-foreground truncate max-w-[100px]">
-                            {creator.location_country || "—"}
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
+                {filteredCreators.slice(8, 16).map(renderCreatorCard)}
 
                 {/* Inline Ad 2 - After 16 cards */}
                 {filteredCreators.length > 16 && (
@@ -824,93 +694,7 @@ const Influencers = () => {
                   </div>
                 )}
 
-                {/* Remaining creators */}
-                {filteredCreators.slice(16).map((creator) => {
-                  const mainPlatform = getMainPlatform(creator.social_accounts);
-                  const priceRange = getPriceRange(creator.services);
-                  const PlatformIcon = getPlatformIcon(mainPlatform.platform);
-
-                  return (
-                    <Link
-                      key={creator.id}
-                      to={`/creator/${creator.id}`}
-                      className="group block"
-                    >
-                      <div className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-all duration-300 hover:-translate-y-1">
-                        <div className="relative aspect-[4/5] overflow-hidden bg-muted">
-                          {!failedImages.has(creator.id) && !loadedImages.has(creator.id) && (
-                            <Skeleton className="absolute inset-0 w-full h-full" />
-                          )}
-                          
-                          {!failedImages.has(creator.id) && loadedImages.has(creator.id) ? (
-                            <img 
-                              src={creator.profile_image_url!} 
-                              alt={creator.display_name}
-                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
-                            />
-                          ) : failedImages.has(creator.id) ? (
-                            <div className="absolute inset-0 bg-gradient-accent flex items-center justify-center">
-                              <span className="text-7xl font-heading font-bold text-white/30">
-                                {creator.display_name.charAt(0)}
-                              </span>
-                            </div>
-                          ) : null}
-                          
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                          
-                          {/* Platform & Followers Badge - Top Left */}
-                          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
-                            <PlatformIcon className="h-3.5 w-3.5" />
-                            <span>{formatFollowers(mainPlatform.followers)}</span>
-                          </div>
-                          
-                          {/* Open to Invitations Banner - LinkedIn-style tab at bottom-left */}
-                          {creator.open_to_invitations && (
-                            <div className="absolute bottom-[72px] left-0 z-10">
-                              <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
-                                <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
-                                Open to Free Invites
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium">
-                            <Star className="h-3 w-3 fill-primary text-primary" />
-                            <span>5.0</span>
-                          </div>
-
-                          <div className="absolute bottom-0 left-0 right-0 p-4">
-                            <h3 className="font-heading font-semibold text-lg text-white mb-0.5 line-clamp-1">
-                              {creator.display_name}
-                            </h3>
-                            <p className="text-sm text-white/80 line-clamp-1">
-                              {creator.categories[0] || "Content Creator"}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="p-4 flex items-center justify-between">
-                          <div>
-                            {priceRange.min > 0 ? (
-                              <DimmedPriceRange 
-                                minPrice={priceRange.min}
-                                maxPrice={priceRange.max}
-                                canViewPrice={canViewPrice(creator)} 
-                                size="md"
-                                onClick={() => setIsPricingModalOpen(true)}
-                              />
-                            ) : (
-                              <span className="text-sm text-muted-foreground">Contact</span>
-                            )}
-                          </div>
-                          <span className="text-xs text-muted-foreground truncate max-w-[100px]">
-                            {creator.location_country || "—"}
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
+                {filteredCreators.slice(16).map(renderCreatorCard)}
               </div>
 
               <div className="text-center mt-8">
@@ -924,12 +708,6 @@ const Influencers = () => {
       </main>
 
       <Footer />
-
-      <UpgradeModal
-        isOpen={isPricingModalOpen}
-        onClose={() => setIsPricingModalOpen(false)}
-        feature="pricing"
-      />
     </div>
   );
 };
