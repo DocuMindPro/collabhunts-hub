@@ -6,11 +6,14 @@ import BrandOverviewTab from "@/components/brand-dashboard/BrandOverviewTab";
 import BrandBookingsTab from "@/components/brand-dashboard/BrandBookingsTab";
 import BrandMessagesTab from "@/components/brand-dashboard/BrandMessagesTab";
 import BrandAccountTab from "@/components/brand-dashboard/BrandAccountTab";
-import { BarChart3, Calendar, MessageSquare, User } from "lucide-react";
+import BrandOpportunitiesTab from "@/components/brand-dashboard/BrandOpportunitiesTab";
+import { supabase } from "@/integrations/supabase/client";
+import { BarChart3, Calendar, MessageSquare, User, Briefcase } from "lucide-react";
 
 const BrandDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
+  const [brandProfileId, setBrandProfileId] = useState<string | null>(null);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -18,6 +21,24 @@ const BrandDashboard = () => {
       setActiveTab(tab);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    const fetchBrandProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from("brand_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (data) {
+        setBrandProfileId(data.id);
+      }
+    };
+    fetchBrandProfile();
+  }, []);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -41,6 +62,10 @@ const BrandDashboard = () => {
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Dashboard</span>
               </TabsTrigger>
+              <TabsTrigger value="opportunities" className="gap-2 shrink-0">
+                <Briefcase className="h-4 w-4" />
+                <span className="hidden sm:inline">Opportunities</span>
+              </TabsTrigger>
               <TabsTrigger value="bookings" className="gap-2 shrink-0">
                 <Calendar className="h-4 w-4" />
                 <span className="hidden sm:inline">Events</span>
@@ -57,6 +82,10 @@ const BrandDashboard = () => {
 
             <TabsContent value="overview" className="space-y-6">
               <BrandOverviewTab />
+            </TabsContent>
+
+            <TabsContent value="opportunities" className="space-y-6">
+              {brandProfileId && <BrandOpportunitiesTab brandProfileId={brandProfileId} />}
             </TabsContent>
 
             <TabsContent value="bookings" className="space-y-6">

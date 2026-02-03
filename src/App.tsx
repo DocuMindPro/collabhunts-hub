@@ -42,6 +42,7 @@ import Debug from "./pages/Debug";
 import NotFound from "./pages/NotFound";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
+import Opportunities from "./pages/Opportunities";
 
 // Protected route components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -99,6 +100,7 @@ const WebAppRoutes = () => (
     <Route path="/creator" element={<Creator />} />
     <Route path="/events" element={<Events />} />
     <Route path="/event/:id" element={<EventDetail />} />
+    <Route path="/opportunities" element={<Opportunities />} />
     <Route path="/brand-signup" element={<BrandSignup />} />
     <Route path="/brand-onboarding" element={<BrandOnboarding />} />
     <Route path="/brand-welcome" element={<BrandWelcome />} />
