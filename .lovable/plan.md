@@ -1,222 +1,109 @@
 
 
-# Redesign Package Inquiry Dialog for Event-Based Identity
+# Redirect Logged-in Users from Homepage to Dashboard
 
-## The Problem
+## The Industry Standard
 
-The current "Inquire About This Package" dialog shows the same content for all packages, but the packages have fundamentally different natures:
+Professional SaaS platforms (Slack, Notion, Figma, Linear) follow a simple rule:
 
-| Package | Type | Relevant Info | Booking Flow |
-|---------|------|---------------|--------------|
-| **Unbox & Review** | At-home content | Delivery timeline (days) | Direct message |
-| **Social Boost** | Event (1-2 hours) | Duration at venue | Direct message |
-| **Meet & Greet** | Event (2-4 hours) | Duration, upsells | Direct message |
-| **Live PK Battle** | Managed event | Contact CollabHunts | Consultation only |
-| **Custom** | Consultation | Contact CollabHunts | Consultation only |
+**Marketing pages are for prospects. Logged-in users go to their workspace.**
 
-**Issues in Current Dialog:**
-1. "Est. Delivery: 7 days" shown for events where it's meaningless
-2. "Your Plan Includes This" badge references removed subscription model - messaging is now FREE
-3. "How Managed Service Works" steps are content-focused, not event-focused
-4. No differentiation between packages that can be booked directly vs. those requiring consultation
+When a logged-in user visits the homepage (`/`), they should be automatically redirected to their dashboard.
 
 ---
 
-## Solution: Package-Aware Booking Dialog
+## Current State vs. Desired State
 
-### New Dialog Behavior by Package Type
-
-**Group A: Direct Booking Packages** (Unbox & Review, Social Boost, Meet & Greet)
-- Show relevant package details (delivery days OR event duration)
-- Single "Message Creator" CTA (messaging is free for all brands)
-- Clean, simple dialog without subscription references
-
-**Group B: Consultation Packages** (Live PK Battle, Custom)
-- Show "This package requires consultation"
-- "Contact CollabHunts" as primary CTA
-- Brief explanation of the managed service
+| User Type | Current Homepage Behavior | Proposed Behavior |
+|-----------|---------------------------|-------------------|
+| Not logged in | Full marketing page | No change |
+| Logged in (no profile) | Marketing page with CTAs | Marketing page (encourage signup) |
+| Brand (logged in) | Marketing page with "Go to Dashboard" button | **Auto-redirect to brand dashboard** |
+| Creator (logged in) | Marketing page with "Go to Dashboard" button | **Auto-redirect to creator dashboard** |
+| Both profiles | Marketing page | **Auto-redirect to preferred dashboard** |
 
 ---
 
-## Visual Mockup
+## Implementation Plan
 
-### For Unbox & Review (At-Home Package)
-```
-┌─────────────────────────────────────────┐
-│ Book Unbox & Review               [X]   │
-├─────────────────────────────────────────┤
-│ ┌─────────────────────────────────────┐ │
-│ │ Package:        Unbox & Review      │ │
-│ │ Creator Price:  $200                │ │
-│ │ Est. Delivery:  7 days              │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ [📦 Message Creator to Book]            │
-│ (primary button, full width)            │
-│                                         │
-│ "Discuss product details, shipping      │
-│  info, and content requirements"        │
-└─────────────────────────────────────────┘
-```
+### Update Index.tsx - Add Automatic Redirect
 
-### For Social Boost / Meet & Greet (Event Packages)
-```
-┌─────────────────────────────────────────┐
-│ Book Social Boost                 [X]   │
-├─────────────────────────────────────────┤
-│ ┌─────────────────────────────────────┐ │
-│ │ Package:        Social Boost        │ │
-│ │ Creator Price:  $500                │ │
-│ │ Event Duration: 1-2 hours           │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ [📍 Message Creator to Book]            │
-│ (primary button, full width)            │
-│                                         │
-│ "Coordinate event date, venue details,  │
-│  and content requirements"              │
-└─────────────────────────────────────────┘
+Add redirect logic after profile check:
+
+```typescript
+const navigate = useNavigate();
+
+useEffect(() => {
+  const checkUserProfiles = async (userId: string) => {
+    const brandProfile = await safeNativeAsync(/* ... */);
+    const creatorProfile = await safeNativeAsync(/* ... */);
+    
+    setHasBrandProfile(!!brandProfile);
+    setHasCreatorProfile(!!creatorProfile);
+    
+    // NEW: Auto-redirect logged-in users to their dashboard
+    if (brandProfile) {
+      navigate("/brand-dashboard");
+      return;
+    }
+    if (creatorProfile) {
+      navigate("/creator-dashboard");
+      return;
+    }
+    
+    setAuthLoading(false);
+  };
+  // ...
+}, [navigate]);
 ```
 
-### For Live PK Battle / Custom (Consultation Required)
-```
-┌─────────────────────────────────────────┐
-│ Live PK Battle Inquiry            [X]   │
-├─────────────────────────────────────────┤
-│ ┌─────────────────────────────────────┐ │
-│ │ Package:        Live PK Battle      │ │
-│ │ Pricing:        Contact for quote   │ │
-│ │ Type:           Managed Event       │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ ⚡ This is a Managed Event              │
-│ CollabHunts handles all coordination,   │
-│ creator booking, and event management.  │
-│                                         │
-│ [📧 Contact CollabHunts]                │
-│ [📝 Use Contact Form]                   │
-│                                         │
-│ ℹ️ We typically respond within 24 hours │
-└─────────────────────────────────────────┘
+### Add Loading State
+
+Prevent flash of marketing content while checking auth:
+
+```typescript
+const [authLoading, setAuthLoading] = useState(true);
+
+// Show spinner while checking
+if (authLoading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+    </div>
+  );
+}
+
+// Show marketing page only for non-logged-in or no-profile users
+return (
+  <div className="min-h-screen flex flex-col">
+    <Navbar />
+    {/* ... rest of marketing content */}
+  </div>
+);
 ```
 
 ---
 
-## Implementation Details
+## Redirect Priority Logic
 
-### 1. Update BookingDialog.tsx Structure
+When a user has both profiles (rare but possible), they need a priority:
 
-Remove:
-- Subscription check logic (`isSubscribed`, `getCurrentPlanType`)
-- "Your Plan Includes This" badge
-- "Subscribe to Unlock" button
-- Dual "Direct" vs "Managed" options for simple packages
+1. **Brand takes priority** - Brands are the paying customers driving bookings
+2. **Creator second** - If they're a creator but not a brand, go to creator dashboard
 
-Add:
-- Package type detection using `service.service_type`
-- Conditional rendering based on package category
-- Dynamic subtitle text based on package type
+This can be customized based on your business priorities.
 
-### 2. Package Type Classification
+---
 
-```typescript
-const CONSULTATION_PACKAGES = ['competition', 'custom'];
-const EVENT_PACKAGES = ['social_boost', 'meet_greet'];
-const HOME_PACKAGES = ['unbox_review'];
+## Edge Cases
 
-const requiresConsultation = CONSULTATION_PACKAGES.includes(service.service_type);
-const isEventPackage = EVENT_PACKAGES.includes(service.service_type);
-const isHomePackage = HOME_PACKAGES.includes(service.service_type);
-```
+### User Logged In But No Profile
+- Show the marketing homepage so they can choose to sign up as brand or creator
+- This is their first visit after account creation, they need to complete signup
 
-### 3. Dynamic Details Section
-
-```typescript
-// Show delivery days only for at-home packages
-{isHomePackage && (
-  <div className="flex justify-between">
-    <span>Est. Delivery:</span>
-    <span>{service.delivery_days} days</span>
-  </div>
-)}
-
-// Show event duration for event packages
-{isEventPackage && packageInfo.durationRange && (
-  <div className="flex justify-between">
-    <span>Event Duration:</span>
-    <span>{packageInfo.durationRange.min}-{packageInfo.durationRange.max} hours</span>
-  </div>
-)}
-
-// Show "Managed Event" for consultation packages
-{requiresConsultation && (
-  <div className="flex justify-between">
-    <span>Type:</span>
-    <span>Managed Event</span>
-  </div>
-)}
-```
-
-### 4. Conditional CTA Rendering
-
-```typescript
-{requiresConsultation ? (
-  // Consultation flow - contact CollabHunts
-  <>
-    <Card className="border-primary/20 bg-primary/5">
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <Zap className="h-5 w-5 text-primary mt-0.5" />
-          <div>
-            <h4 className="font-semibold">This is a Managed Event</h4>
-            <p className="text-sm text-muted-foreground">
-              CollabHunts handles creator coordination, event setup, 
-              and all logistics. We'll provide a custom quote.
-            </p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-    <Button onClick={handleManagedBooking} className="w-full">
-      <Mail className="h-4 w-4 mr-2" />
-      Contact CollabHunts
-    </Button>
-    <Button variant="ghost" onClick={handleContactPage} className="w-full">
-      <Phone className="h-4 w-4 mr-2" />
-      Use Contact Form
-    </Button>
-  </>
-) : (
-  // Direct booking flow - message creator
-  <>
-    <Button onClick={handleDirectMessage} className="w-full gradient-hero">
-      <MessageSquare className="h-4 w-4 mr-2" />
-      Message Creator to Book
-    </Button>
-    <p className="text-xs text-center text-muted-foreground">
-      {isHomePackage 
-        ? "Discuss product details, shipping, and content requirements"
-        : "Coordinate event date, venue details, and content requirements"}
-    </p>
-  </>
-)}
-```
-
-### 5. Update CreatorProfile.tsx
-
-Pass additional package info to the dialog:
-
-```typescript
-// Import package config
-import { EVENT_PACKAGES, type PackageType } from "@/config/packages";
-
-// In BookingDialog component usage
-<BookingDialog
-  service={selectedService}
-  packageConfig={selectedService ? EVENT_PACKAGES[selectedService.service_type as PackageType] : null}
-  // ...other props
-/>
-```
+### Native App (Capacitor)
+- The native app already uses `NativeAppGate` which handles this differently
+- These changes only affect the web platform
 
 ---
 
@@ -224,28 +111,33 @@ import { EVENT_PACKAGES, type PackageType } from "@/config/packages";
 
 | File | Changes |
 |------|---------|
-| `src/components/BookingDialog.tsx` | Complete redesign with package-aware rendering |
-| `src/pages/CreatorProfile.tsx` | Pass package config to dialog |
+| `src/pages/Index.tsx` | Add useNavigate, authLoading state, and redirect logic |
 
 ---
 
-## Summary of Changes
+## Benefits
 
-1. **Remove subscription logic** - Messaging is now free for all brands
-2. **Add package type detection** - Different flows for different package types
-3. **Show relevant details** - Delivery days for at-home, duration for events, "Managed" for consultation
-4. **Simplify direct booking** - Single "Message Creator to Book" CTA for most packages
-5. **Clear consultation flow** - Contact CollabHunts for PK Battle and Custom packages
-6. **Contextual helper text** - Different guidance based on package type
+1. **Professional experience** - Matches expectations from other SaaS tools
+2. **Faster access** - Users get to their workspace immediately 
+3. **Less confusion** - No more "How It Works" or "Sign Up" prompts for existing users
+4. **Consistent with other pages** - Brand.tsx and Creator.tsx already redirect, homepage should too
 
 ---
 
-## Testing Recommendations
+## User Experience After Changes
 
-After implementation:
-1. Test "Inquire About This Package" for each package type
-2. Verify Unbox & Review shows "Est. Delivery"
-3. Verify Social Boost/Meet & Greet shows "Event Duration"
-4. Verify Live PK Battle/Custom shows "Contact CollabHunts" flow
-5. Confirm no subscription badges or "upgrade" prompts appear
+### For Prospects (not logged in)
+- See full marketing homepage with all sections
+- CTAs to sign up as Brand or Creator
+- No change in experience
+
+### For Logged-in Users with Profile
+- Instant redirect to their dashboard
+- Brief loading spinner during auth check
+- Never see irrelevant marketing content
+
+### For Logged-in Users without Profile
+- Still see marketing homepage
+- Can choose to create Brand or Creator profile
+- Clear path to complete registration
 
