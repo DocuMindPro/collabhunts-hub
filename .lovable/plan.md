@@ -1,127 +1,208 @@
 
+# Brand-Created Events ("Opportunity Board") Feature
 
-# Modernize Advanced Filters for Event-Based Platform
+## Overview
 
-## Current State Analysis
+This feature introduces a **reverse marketplace flow** where brands can create public events/opportunities that creators can discover, apply to, attend, and get paid upon delivery confirmation.
 
-The Advanced Filters panel currently includes filters optimized for generic influencer marketing:
-- Age Range
-- Gender  
-- Ethnicity
-- Language
-- Followers by Platform
+### Two Distinct Flows
 
-**Problem**: These filters don't align with the new event-focused identity. Brands booking creators for live events at their venues need to find creators **by location** first and foremost.
-
-## Proposed Changes
-
-### 1. Add Location Filters (Priority)
-
-Add cascading location dropdowns at the TOP of Advanced Filters:
-- **Country** dropdown (populated from existing `COUNTRY_LOCATIONS` data)
-- **Region/State** dropdown (dynamically filtered by country)
-- **City** dropdown (dynamically filtered by region)
-
-This aligns with the creator onboarding system that already collects `location_country`, `location_state`, and `location_city`.
-
-### 2. Reorder Filters by Relevance
-
-New order prioritizing event booking use case:
-1. **Location** (NEW - Country → Region → City cascade)
-2. **Language** (important for local markets like Lebanon)
-3. **Followers by Platform** (still relevant for reach)
-4. Age Range (demote - less critical for events)
-5. Gender (demote - less critical for events)
-6. Ethnicity (consider removing - sensitive data, rarely used for event booking)
-
-### 3. Remove or Simplify Low-Value Filters
-
-**Consider removing Ethnicity filter:**
-- Sensitive personal data
-- Not typically a booking criterion for live events
-- Simplifies the UI and reduces potential discrimination concerns
-
-### 4. Add Event-Specific Filters (Optional Enhancement)
-
-Consider adding:
-- **Available Packages** - Filter by creators offering specific services (Unbox & Review, Social Boost, Meet & Greet, etc.)
-- **Open to Free Invites** toggle - Quick filter for creators accepting product-only deals
+The platform will support both flows:
+1. **Current Flow** (Brand → Creator): Brand finds a creator and books them directly
+2. **New Flow** (Creator → Brand): Brand posts an opportunity, creators apply, brand selects creators
 
 ---
 
-## Technical Implementation
+## Business Logic Clarification
 
-### Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/pages/Influencers.tsx` | Add location state, import LocationSelect, add filtering logic |
-| `src/components/LocationSelect.tsx` | Already exists, reusable for filters |
-
-### New State Variables
-```typescript
-const [selectedCountry, setSelectedCountry] = useState("all");
-const [selectedState, setSelectedState] = useState("");
-const [selectedCity, setSelectedCity] = useState("");
+### Paid Events Flow
+```text
+Brand Creates Opportunity → Creators Apply → Brand Accepts Creator(s)
+         ↓
+Creator Attends Event & Creates Content
+         ↓
+Creator Submits Delivery (with post links)
+         ↓
+Brand Confirms Receipt → Platform Releases Payment (15% fee)
 ```
 
-### Filter Logic Addition
-```typescript
-// Location filter
-if (selectedCountry !== "all") {
-  matchesAdvanced = matchesAdvanced && 
-    creator.location_country === selectedCountry;
-}
-if (selectedState) {
-  matchesAdvanced = matchesAdvanced && 
-    creator.location_state === selectedState;
-}
-if (selectedCity) {
-  matchesAdvanced = matchesAdvanced && 
-    creator.location_city === selectedCity;
-}
-```
-
-### UI Layout
+### Free Invite Flow (Open to Free Invites)
+For "barter" collaborations where brands offer experiences instead of payment:
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│ Advanced Filters                              [Clear Filters]│
-├─────────────────────────────────────────────────────────────┤
-│ LOCATION                                                     │
-│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐             │
-│ │ Country ▼   │ │ Region ▼    │ │ City ▼      │             │
-│ └─────────────┘ └─────────────┘ └─────────────┘             │
-├─────────────────────────────────────────────────────────────┤
-│ LANGUAGE                                                     │
-│ ┌───────────────────────┐                                   │
-│ │ All Languages ▼       │                                   │
-│ └───────────────────────┘                                   │
-├─────────────────────────────────────────────────────────────┤
-│ FOLLOWERS BY PLATFORM                                        │
-│ ┌─────────────┐ ┌─────────────────────────┐                 │
-│ │ Platform ▼  │ │ Min followers           │                 │
-│ └─────────────┘ └─────────────────────────┘                 │
-├─────────────────────────────────────────────────────────────┤
-│ AGE RANGE                                    18 - 65+ years │
-│ ●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━●│
-├─────────────────────────────────────────────────────────────┤
-│ GENDER                                                       │
-│ ○ Male    ○ Female    ○ Non-binary                          │
-└─────────────────────────────────────────────────────────────┘
+Brand Creates FREE Opportunity → Only "Open to Free Invites" Creators See It
+         ↓
+Creator Applies → Brand Accepts
+         ↓
+Creator Attends & Posts Content
+         ↓
+Creator Marks as Delivered (with post links)
+         ↓
+Brand Confirms Content Posted (optional rating/review)
 ```
+
+**Key Difference**: No escrow, no platform fee—just a confirmation workflow for accountability.
 
 ---
 
-## Summary of Changes
+## Database Changes
 
-| Change | Reason |
-|--------|--------|
-| Add Country/Region/City filters | Core need for event-based booking |
-| Move Location to top | Most important filter for local events |
-| Keep Language filter | Important for Lebanese market |
-| Keep Followers filter | Still relevant for reach |
-| Demote Age/Gender | Less critical for events |
-| Remove Ethnicity | Sensitive, rarely used, simplifies UI |
-| Reuse LocationSelect component | Consistent UX with onboarding |
+### New Table: `brand_opportunities`
 
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `brand_profile_id` | uuid | FK to brand_profiles |
+| `title` | text | e.g., "Looking for Food Creators for Restaurant Opening" |
+| `description` | text | Details about the opportunity |
+| `package_type` | text | From EVENT_PACKAGES (social_boost, meet_greet, etc.) |
+| `event_date` | date | When the event happens |
+| `start_time` / `end_time` | time | Event timing |
+| `is_paid` | boolean | true = paid booking, false = free invite |
+| `budget_cents` | integer | Budget per creator (null if free) |
+| `spots_available` | integer | How many creators needed |
+| `spots_filled` | integer | How many accepted (default 0) |
+| `requirements` | text | Creator requirements (followers, categories, etc.) |
+| `min_followers` | integer | Minimum follower requirement (optional) |
+| `required_categories` | text[] | Content niches wanted |
+| `status` | text | 'open', 'filled', 'completed', 'cancelled' |
+| `application_deadline` | timestamp | When applications close |
+| `created_at` / `updated_at` | timestamps | |
+
+### New Table: `opportunity_applications`
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `opportunity_id` | uuid | FK to brand_opportunities |
+| `creator_profile_id` | uuid | FK to creator_profiles |
+| `message` | text | Creator's pitch/message |
+| `proposed_price_cents` | integer | Creator's asking price (null if free invite) |
+| `status` | text | 'pending', 'accepted', 'rejected', 'withdrawn' |
+| `booking_id` | uuid | FK to bookings (created when accepted, for payment flow) |
+| `delivery_links` | text[] | Links to posted content |
+| `delivered_at` | timestamp | When creator submitted delivery |
+| `confirmed_at` | timestamp | When brand confirmed receipt |
+| `created_at` | timestamps | |
+
+---
+
+## New Pages & Components
+
+### 1. Opportunities Discovery Page (for Creators)
+**Route**: `/opportunities`
+
+- List of open brand opportunities
+- Filters: Location, Package Type, Paid/Free, Categories
+- Shows: Brand name/venue, date, budget, spots left
+- "Apply" button → Opens application modal
+
+### 2. Create Opportunity Form (for Brands)
+**Location**: Brand Dashboard → New "Post Opportunity" tab or button
+
+- Form fields matching the database schema
+- Toggle between "Paid Event" and "Free Invite"
+- If free invite, only creators with `open_to_invitations = true` can apply
+
+### 3. Manage Applications (for Brands)
+**Location**: Brand Dashboard → New "Applications" section
+
+- View all applications per opportunity
+- Accept/Reject creators
+- Message applicants
+- Track delivery status
+
+### 4. My Applications (for Creators)
+**Location**: Creator Dashboard → New "Opportunities" tab
+
+- List of opportunities they've applied to
+- Application status tracking
+- Submit delivery (upload links to posts)
+- See confirmation status
+
+---
+
+## Delivery Confirmation Flow
+
+### For Paid Events
+1. Creator completes event and posts content
+2. Creator submits delivery with links to posts
+3. Brand reviews links and confirms
+4. Platform releases payment (after 15% fee)
+5. If brand doesn't confirm within 72 hours, auto-release
+
+### For Free Invites
+1. Creator attends and posts content
+2. Creator submits post links
+3. Brand confirms receipt (no payment involved)
+4. Both parties can leave reviews
+5. Builds creator's "completed collaborations" count
+
+---
+
+## UI/UX Additions
+
+### Brand Dashboard Changes
+- Add "Post Opportunity" button in Overview
+- Add "My Opportunities" tab showing posted opportunities and applications
+- Add "Pending Confirmations" section for delivery reviews
+
+### Creator Dashboard Changes
+- Add "Opportunities" tab to browse and manage applications
+- Add delivery submission flow with link inputs
+- Show application statuses
+
+### Discovery Integration
+- Add "Opportunities" link in main navigation
+- Filter for "Open to Free Invites" creators matches free opportunities
+
+---
+
+## Summary of Files to Create/Modify
+
+### New Files
+| File | Purpose |
+|------|---------|
+| `src/pages/Opportunities.tsx` | Creator-facing opportunity discovery |
+| `src/components/brand-dashboard/BrandOpportunitiesTab.tsx` | Brand's posted opportunities |
+| `src/components/brand-dashboard/CreateOpportunityDialog.tsx` | Form to create opportunity |
+| `src/components/brand-dashboard/OpportunityApplicationsDialog.tsx` | View/manage applications |
+| `src/components/creator-dashboard/OpportunitiesTab.tsx` | Creator's applications |
+| `src/components/creator-dashboard/SubmitDeliveryDialog.tsx` | Submit post links |
+
+### Modified Files
+| File | Changes |
+|------|---------|
+| `src/pages/BrandDashboard.tsx` | Add Opportunities tab |
+| `src/pages/CreatorDashboard.tsx` | Add Opportunities tab |
+| `src/App.tsx` | Add /opportunities route |
+| `src/components/Navbar.tsx` | Add Opportunities link |
+
+### Database Migration
+- Create `brand_opportunities` table with RLS
+- Create `opportunity_applications` table with RLS
+- Policies for brands to manage their opportunities
+- Policies for creators to view opportunities and manage their applications
+
+---
+
+## Technical Notes
+
+### RLS Policies
+- Brands can CRUD their own opportunities
+- Creators can view all 'open' opportunities (with visibility rules for free vs paid)
+- For free opportunities, only show to creators with `open_to_invitations = true`
+- Creators can CRUD their own applications
+- Brands can view/update applications on their opportunities
+
+### Escrow Integration
+When a brand accepts a creator for a **paid** opportunity:
+1. Create a `bookings` record with the agreed price
+2. Trigger the existing escrow flow (50% deposit)
+3. Link the application to the booking via `booking_id`
+4. Use existing `releasePayment()` when brand confirms delivery
+
+### Free Invites
+- No booking record created
+- Just track delivery and confirmation in the application record
+- Build creator reputation through completed free collaborations
