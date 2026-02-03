@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { Search, Star, Instagram, Youtube, Play, Filter, X, ChevronDown, ChevronUp, Calendar } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Search, Star, Instagram, Youtube, Play, Filter, X, ChevronDown, ChevronUp, Calendar, Gift } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,8 @@ import {
 } from "@/components/ui/select";
 import AdPlacement from "@/components/AdPlacement";
 import DimmedPriceRange from "@/components/DimmedPriceRange";
+import CountrySelect from "@/components/CountrySelect";
+import LocationSelect from "@/components/LocationSelect";
 
 interface CreatorWithDetails {
   id: string;
@@ -29,9 +32,10 @@ interface CreatorWithDetails {
   profile_image_url: string | null;
   categories: string[];
   location_country: string | null;
+  location_state: string | null;
+  location_city: string | null;
   birth_date: string | null;
   gender: string | null;
-  ethnicity: string | null;
   primary_language: string | null;
   secondary_languages: string[] | null;
   show_pricing_to_public: boolean | null;
@@ -45,11 +49,9 @@ interface CreatorWithDetails {
     service_type: string;
     price_cents: number;
   }>;
-  location_city: string | null;
 }
 
 const GENDERS = ["Male", "Female", "Non-binary"];
-const ETHNICITIES = ["African American", "Asian", "Caucasian", "Hispanic/Latino", "Middle Eastern", "Mixed/Other"];
 const LANGUAGES = ["English", "Spanish", "French", "German", "Portuguese", "Arabic", "Hindi", "Chinese", "Japanese", "Korean"];
 
 const Influencers = () => {
@@ -68,15 +70,23 @@ const Influencers = () => {
   
   // Advanced filters state - now FREE for all users
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [ageRange, setAgeRange] = useState([18, 65]);
-  const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
-  const [selectedEthnicities, setSelectedEthnicities] = useState<string[]>([]);
-  const [hasBrandProfile, setHasBrandProfile] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const navigate = useNavigate();
+  
+  // Location filters (priority for event-based platform)
+  const [selectedCountry, setSelectedCountry] = useState("all");
+  const [selectedState, setSelectedState] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [openToFreeInvites, setOpenToFreeInvites] = useState(false);
+  
+  // Other filters
   const [selectedLanguage, setSelectedLanguage] = useState("all");
   const [followerPlatform, setFollowerPlatform] = useState("all");
   const [minPlatformFollowers, setMinPlatformFollowers] = useState("");
+  const [ageRange, setAgeRange] = useState([18, 65]);
+  const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
+  
+  const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
 
   const platforms = ["All", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch"];
   const categories = [
@@ -161,10 +171,10 @@ const Influencers = () => {
           profile_image_url,
           categories,
           location_country,
+          location_state,
           location_city,
           birth_date,
           gender,
-          ethnicity,
           primary_language,
           secondary_languages,
           show_pricing_to_public,
@@ -183,10 +193,10 @@ const Influencers = () => {
         profile_image_url: creator.profile_image_url,
         categories: creator.categories,
         location_country: creator.location_country,
+        location_state: creator.location_state,
         location_city: creator.location_city,
         birth_date: creator.birth_date,
         gender: creator.gender,
-        ethnicity: creator.ethnicity,
         primary_language: creator.primary_language,
         secondary_languages: creator.secondary_languages,
         show_pricing_to_public: creator.show_pricing_to_public,
@@ -215,17 +225,21 @@ const Influencers = () => {
     return age;
   };
 
-  const hasActiveAdvancedFilters = ageRange[0] > 18 || ageRange[1] < 65 || 
-    selectedGenders.length > 0 || selectedEthnicities.length > 0 || selectedLanguage !== "all" ||
-    (followerPlatform !== "all" && minPlatformFollowers !== "");
+  const hasActiveAdvancedFilters = selectedCountry !== "all" || selectedState !== "" || 
+    selectedCity !== "" || openToFreeInvites || selectedLanguage !== "all" ||
+    (followerPlatform !== "all" && minPlatformFollowers !== "") ||
+    ageRange[0] > 18 || ageRange[1] < 65 || selectedGenders.length > 0;
 
   const clearAdvancedFilters = () => {
-    setAgeRange([18, 65]);
-    setSelectedGenders([]);
-    setSelectedEthnicities([]);
+    setSelectedCountry("all");
+    setSelectedState("");
+    setSelectedCity("");
+    setOpenToFreeInvites(false);
     setSelectedLanguage("all");
     setFollowerPlatform("all");
     setMinPlatformFollowers("");
+    setAgeRange([18, 65]);
+    setSelectedGenders([]);
   };
 
   const filteredCreators = creators.filter((creator) => {
@@ -242,22 +256,20 @@ const Influencers = () => {
     // Advanced filters - now available to everyone
     let matchesAdvanced = true;
     if (hasActiveAdvancedFilters) {
-      // Age filter
-      if (ageRange[0] > 18 || ageRange[1] < 65) {
-        const age = calculateAge(creator.birth_date);
-        if (age !== null) {
-          matchesAdvanced = matchesAdvanced && age >= ageRange[0] && age <= ageRange[1];
-        }
+      // Location filters (priority for event booking)
+      if (selectedCountry !== "all") {
+        matchesAdvanced = matchesAdvanced && creator.location_country === selectedCountry;
+      }
+      if (selectedState) {
+        matchesAdvanced = matchesAdvanced && creator.location_state === selectedState;
+      }
+      if (selectedCity) {
+        matchesAdvanced = matchesAdvanced && creator.location_city === selectedCity;
       }
 
-      // Gender filter
-      if (selectedGenders.length > 0) {
-        matchesAdvanced = matchesAdvanced && (creator.gender ? selectedGenders.includes(creator.gender) : false);
-      }
-
-      // Ethnicity filter
-      if (selectedEthnicities.length > 0) {
-        matchesAdvanced = matchesAdvanced && (creator.ethnicity ? selectedEthnicities.includes(creator.ethnicity) : false);
+      // Open to Free Invites filter
+      if (openToFreeInvites) {
+        matchesAdvanced = matchesAdvanced && creator.open_to_invitations === true;
       }
 
       // Language filter
@@ -276,6 +288,19 @@ const Influencers = () => {
           );
           matchesAdvanced = matchesAdvanced && !!platformAccount && platformAccount.follower_count >= minCount;
         }
+      }
+
+      // Age filter
+      if (ageRange[0] > 18 || ageRange[1] < 65) {
+        const age = calculateAge(creator.birth_date);
+        if (age !== null) {
+          matchesAdvanced = matchesAdvanced && age >= ageRange[0] && age <= ageRange[1];
+        }
+      }
+
+      // Gender filter
+      if (selectedGenders.length > 0) {
+        matchesAdvanced = matchesAdvanced && (creator.gender ? selectedGenders.includes(creator.gender) : false);
       }
     }
 
@@ -498,76 +523,86 @@ const Influencers = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {/* Age Range */}
+                  {/* LOCATION - Priority filter for event-based platform */}
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-base font-semibold">Age Range</Label>
-                      <span className="text-sm text-muted-foreground">
-                        {ageRange[0]} - {ageRange[1]}+ years
-                      </span>
+                    <Label className="text-base font-semibold">Location</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Find creators near your venue
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">Country</Label>
+                        <Select 
+                          value={selectedCountry} 
+                          onValueChange={(value) => {
+                            setSelectedCountry(value);
+                            setSelectedState("");
+                            setSelectedCity("");
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All Countries" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Countries</SelectItem>
+                            <SelectItem value="LB">Lebanon</SelectItem>
+                            <SelectItem value="AE">UAE</SelectItem>
+                            <SelectItem value="SA">Saudi Arabia</SelectItem>
+                            <SelectItem value="KW">Kuwait</SelectItem>
+                            <SelectItem value="QA">Qatar</SelectItem>
+                            <SelectItem value="BH">Bahrain</SelectItem>
+                            <SelectItem value="OM">Oman</SelectItem>
+                            <SelectItem value="JO">Jordan</SelectItem>
+                            <SelectItem value="EG">Egypt</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">Region</Label>
+                        <LocationSelect
+                          type="state"
+                          countryCode={selectedCountry === "all" ? "" : selectedCountry}
+                          value={selectedState}
+                          onChange={(value) => {
+                            setSelectedState(value);
+                            setSelectedCity("");
+                          }}
+                          disabled={selectedCountry === "all"}
+                          placeholder="Select region"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">City</Label>
+                        <LocationSelect
+                          type="city"
+                          countryCode={selectedCountry === "all" ? "" : selectedCountry}
+                          stateFilter={selectedState}
+                          value={selectedCity}
+                          onChange={setSelectedCity}
+                          disabled={selectedCountry === "all" || !selectedState}
+                          placeholder="Select city"
+                        />
+                      </div>
                     </div>
-                    <Slider
-                      min={18}
-                      max={65}
-                      step={1}
-                      value={ageRange}
-                      onValueChange={setAgeRange}
-                      className="w-full"
+                  </div>
+
+                  <Separator />
+
+                  {/* Open to Free Invites Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base font-semibold flex items-center gap-2">
+                        <Gift className="h-4 w-4 text-green-500" />
+                        Open to Free Invites
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Show only creators accepting product-only or experience-based deals
+                      </p>
+                    </div>
+                    <Switch
+                      checked={openToFreeInvites}
+                      onCheckedChange={setOpenToFreeInvites}
                     />
-                  </div>
-
-                  <Separator />
-
-                  {/* Gender */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-semibold">Gender</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {GENDERS.map((gender) => (
-                        <div key={gender} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`gender-${gender}`}
-                            checked={selectedGenders.includes(gender)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedGenders([...selectedGenders, gender]);
-                              } else {
-                                setSelectedGenders(selectedGenders.filter(g => g !== gender));
-                              }
-                            }}
-                          />
-                          <label htmlFor={`gender-${gender}`} className="text-sm cursor-pointer">
-                            {gender}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Ethnicity */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-semibold">Ethnicity</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {ETHNICITIES.map((ethnicity) => (
-                        <div key={ethnicity} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`ethnicity-${ethnicity}`}
-                            checked={selectedEthnicities.includes(ethnicity)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedEthnicities([...selectedEthnicities, ethnicity]);
-                              } else {
-                                setSelectedEthnicities(selectedEthnicities.filter(e => e !== ethnicity));
-                              }
-                            }}
-                          />
-                          <label htmlFor={`ethnicity-${ethnicity}`} className="text-sm cursor-pointer">
-                            {ethnicity}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
                   </div>
 
                   <Separator />
@@ -621,6 +656,53 @@ const Influencers = () => {
                         disabled={followerPlatform === "all"}
                         className="w-full md:w-[200px]"
                       />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Age Range - Demoted */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-semibold">Age Range</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {ageRange[0]} - {ageRange[1]}+ years
+                      </span>
+                    </div>
+                    <Slider
+                      min={18}
+                      max={65}
+                      step={1}
+                      value={ageRange}
+                      onValueChange={setAgeRange}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <Separator />
+
+                  {/* Gender - Demoted */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-semibold">Gender</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {GENDERS.map((gender) => (
+                        <div key={gender} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`gender-${gender}`}
+                            checked={selectedGenders.includes(gender)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedGenders([...selectedGenders, gender]);
+                              } else {
+                                setSelectedGenders(selectedGenders.filter(g => g !== gender));
+                              }
+                            }}
+                          />
+                          <label htmlFor={`gender-${gender}`} className="text-sm cursor-pointer">
+                            {gender}
+                          </label>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
