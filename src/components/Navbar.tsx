@@ -56,12 +56,16 @@ const Navbar = () => {
   const getNavLinks = (): NavLink[] => {
     const links: NavLink[] = [
       { to: "/influencers", label: "Find Creators" },
-      { to: "/brand", label: "For Brands" },
     ];
     
     // Only show Opportunities link to users with a creator profile
     if (hasCreatorProfile) {
-      links.splice(1, 0, { to: "/opportunities", label: "Opportunities" });
+      links.push({ to: "/opportunities", label: "Opportunities" });
+    }
+    
+    // Only show "For Brands" to non-brand users (prospects)
+    if (!hasBrandProfile) {
+      links.push({ to: "/brand", label: "For Brands" });
     }
     
     if (user) {
@@ -287,12 +291,12 @@ const Navbar = () => {
                     Login
                   </Button>
                 </Link>
-                <Link to="/brand">
+                <Link to="/brand-signup">
                   <Button variant="outline" size="sm">
                     Register Your Brand
                   </Button>
                 </Link>
-                <Link to="/creator">
+                <Link to="/creator-signup">
                   <Button size="sm" className="bg-accent hover:bg-accent-hover">
                     Join as a Creator
                   </Button>
@@ -430,12 +434,12 @@ const Navbar = () => {
                           Login
                         </Button>
                       </Link>
-                      <Link to="/brand" onClick={() => setIsOpen(false)}>
+                      <Link to="/brand-signup" onClick={() => setIsOpen(false)}>
                         <Button variant="outline" className="w-full">
                           Register Your Brand
                         </Button>
                       </Link>
-                      <Link to="/creator" onClick={() => setIsOpen(false)}>
+                      <Link to="/creator-signup" onClick={() => setIsOpen(false)}>
                         <Button className="w-full bg-accent hover:bg-accent-hover">
                           Join as a Creator
                         </Button>

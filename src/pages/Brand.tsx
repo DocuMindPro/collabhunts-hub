@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   MapPin, Shield, Users, DollarSign, CheckCircle, 
@@ -21,9 +21,11 @@ import {
 } from "@/components/ui/accordion";
 
 const Brand = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -41,6 +43,12 @@ const Brand = () => {
           .eq('user_id', session.user.id)
           .maybeSingle();
         
+        // If user has a brand profile, redirect to dashboard
+        if (brandProfile) {
+          navigate("/brand-dashboard");
+          return;
+        }
+        
         const { data: creatorProfile } = await supabase
           .from('creator_profiles')
           .select('id')
@@ -50,6 +58,7 @@ const Brand = () => {
         setHasBrandProfile(!!brandProfile);
         setHasCreatorProfile(!!creatorProfile);
       }
+      setAuthLoading(false);
     };
 
     checkUserProfiles();
@@ -64,6 +73,12 @@ const Brand = () => {
             .eq('user_id', session.user.id)
             .maybeSingle();
           
+          // If user has a brand profile, redirect to dashboard
+          if (brandProfile) {
+            navigate("/brand-dashboard");
+            return;
+          }
+          
           const { data: creatorProfile } = await supabase
             .from('creator_profiles')
             .select('id')
@@ -72,16 +87,18 @@ const Brand = () => {
           
           setHasBrandProfile(!!brandProfile);
           setHasCreatorProfile(!!creatorProfile);
+          setAuthLoading(false);
         }, 0);
       } else {
         setUser(null);
         setHasBrandProfile(false);
         setHasCreatorProfile(false);
+        setAuthLoading(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const renderCTA = (size: "default" | "lg" = "lg", className: string = "") => {
     if (hasBrandProfile) {
@@ -170,6 +187,15 @@ const Brand = () => {
       answer: "Yes, but cancellation policies apply. Canceling more than 7 days before gets a full refund. Less than 7 days may forfeit the deposit. See our Refund Policy for details."
     },
   ];
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
