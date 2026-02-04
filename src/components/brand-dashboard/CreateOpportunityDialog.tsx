@@ -6,10 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { EVENT_PACKAGES, PackageType } from "@/config/packages";
-import { DollarSign, Gift, Lock, Check } from "lucide-react";
+import { FOLLOWER_RANGES, FOLLOWER_RANGE_ORDER } from "@/config/follower-ranges";
+import { DollarSign, Gift, Lock, Check, Users } from "lucide-react";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
 import CountrySelect from "@/components/CountrySelect";
 import LocationSelect from "@/components/LocationSelect";
@@ -41,11 +43,20 @@ const CreateOpportunityDialog = ({
     budget: "",
     spots_available: "1",
     requirements: "",
-    min_followers: "",
+    follower_ranges: [] as string[],
     location_city: "",
     location_state: "",
     location_country: "LB",
   });
+
+  const handleFollowerRangeToggle = (rangeKey: string) => {
+    setFormData(prev => ({
+      ...prev,
+      follower_ranges: prev.follower_ranges.includes(rangeKey)
+        ? prev.follower_ranges.filter(r => r !== rangeKey)
+        : [...prev.follower_ranges, rangeKey]
+    }));
+  };
 
   const countryHasLocationData = hasLocationData(formData.location_country);
   const countryHasStates = getStatesForCountry(formData.location_country).length > 0;
@@ -122,7 +133,7 @@ const CreateOpportunityDialog = ({
           : null,
         spots_available: parseInt(formData.spots_available) || 1,
         requirements: formData.requirements || null,
-        min_followers: formData.min_followers ? parseInt(formData.min_followers) : null,
+        follower_ranges: formData.follower_ranges.length > 0 ? formData.follower_ranges : null,
         location_city: formData.location_city || null,
         location_country: selectedCountryName || null,
       });
@@ -150,7 +161,7 @@ const CreateOpportunityDialog = ({
         budget: "",
         spots_available: "1",
         requirements: "",
-        min_followers: "",
+        follower_ranges: [],
         location_city: "",
         location_state: "",
         location_country: "LB",
@@ -412,16 +423,47 @@ const CreateOpportunityDialog = ({
             />
           </div>
 
-          {/* Min Followers */}
-          <div className="space-y-2">
-            <Label htmlFor="min_followers">Minimum Followers (optional)</Label>
-            <Input
-              id="min_followers"
-              type="number"
-              placeholder="e.g., 5000"
-              value={formData.min_followers}
-              onChange={(e) => setFormData(prev => ({ ...prev, min_followers: e.target.value }))}
-            />
+          {/* Follower Ranges */}
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                Follower Range (Optional)
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Select which creator sizes you're looking for. Leave all unchecked to accept all sizes.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {FOLLOWER_RANGE_ORDER.map((rangeKey) => {
+                const range = FOLLOWER_RANGES[rangeKey];
+                const isSelected = formData.follower_ranges.includes(rangeKey);
+                return (
+                  <div
+                    key={rangeKey}
+                    className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                      isSelected ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                    }`}
+                    onClick={() => handleFollowerRangeToggle(rangeKey)}
+                  >
+                    <Checkbox
+                      id={`range-${rangeKey}`}
+                      checked={isSelected}
+                      onCheckedChange={() => handleFollowerRangeToggle(rangeKey)}
+                    />
+                    <div className="flex-1">
+                      <label
+                        htmlFor={`range-${rangeKey}`}
+                        className="text-sm font-medium cursor-pointer"
+                      >
+                        {range.label}
+                      </label>
+                      <p className="text-xs text-muted-foreground">{range.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
