@@ -45,7 +45,7 @@ const BrandSignup = () => {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [industry, setIndustry] = useState("");
   const [companySize, setCompanySize] = useState("");
-  const [locationCountry, setLocationCountry] = useState("");
+  const [locationCountry, setLocationCountry] = useState("LB");
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Phone verification
@@ -202,6 +202,15 @@ const BrandSignup = () => {
       toast({
         title: "Terms Required",
         description: "Please accept the Terms of Service to continue",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!locationCountry) {
+      toast({
+        title: "Country Required",
+        description: "Please select your country",
         variant: "destructive"
       });
       return;

@@ -11,6 +11,10 @@ import { toast } from "@/hooks/use-toast";
 import { EVENT_PACKAGES } from "@/config/packages";
 import { DollarSign, Gift } from "lucide-react";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
+import CountrySelect from "@/components/CountrySelect";
+import LocationSelect from "@/components/LocationSelect";
+import { hasLocationData, getStatesForCountry } from "@/config/country-locations";
+import { COUNTRIES } from "@/components/PhoneInput";
 
 interface CreateOpportunityDialogProps {
   brandProfileId: string;
@@ -39,8 +43,30 @@ const CreateOpportunityDialog = ({
     requirements: "",
     min_followers: "",
     location_city: "",
-    location_country: "",
+    location_state: "",
+    location_country: "LB",
   });
+
+  const countryHasLocationData = hasLocationData(formData.location_country);
+  const countryHasStates = getStatesForCountry(formData.location_country).length > 0;
+  const selectedCountryName = COUNTRIES.find(c => c.code === formData.location_country)?.name || "";
+
+  const handleCountryChange = (countryCode: string) => {
+    setFormData(prev => ({
+      ...prev,
+      location_country: countryCode,
+      location_state: "",
+      location_city: ""
+    }));
+  };
+
+  const handleStateChange = (state: string) => {
+    setFormData(prev => ({
+      ...prev,
+      location_state: state,
+      location_city: ""
+    }));
+  };
 
   const handleSubmit = async () => {
     if (!formData.title || !formData.event_date) {
@@ -72,7 +98,7 @@ const CreateOpportunityDialog = ({
         requirements: formData.requirements || null,
         min_followers: formData.min_followers ? parseInt(formData.min_followers) : null,
         location_city: formData.location_city || null,
-        location_country: formData.location_country || null,
+        location_country: selectedCountryName || null,
       });
 
     if (error) {
@@ -100,7 +126,8 @@ const CreateOpportunityDialog = ({
         requirements: "",
         min_followers: "",
         location_city: "",
-        location_country: "",
+        location_state: "",
+        location_country: "LB",
       });
       onSuccess();
     }
@@ -268,27 +295,49 @@ const CreateOpportunityDialog = ({
             />
           </div>
 
-          {/* Location - Responsive Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          {/* Location - Cascading Selection */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                placeholder="e.g., Beirut"
-                value={formData.location_city}
-                onChange={(e) => setFormData(prev => ({ ...prev, location_city: e.target.value }))}
-                className="h-11"
+              <Label>Country *</Label>
+              <CountrySelect
+                value={formData.location_country}
+                onChange={handleCountryChange}
+                placeholder="Select country"
               />
             </div>
+            
+            {countryHasLocationData && countryHasStates && (
+              <div className="space-y-2">
+                <Label>Region</Label>
+                <LocationSelect
+                  type="state"
+                  countryCode={formData.location_country}
+                  value={formData.location_state}
+                  onChange={handleStateChange}
+                  placeholder="Select region"
+                />
+              </div>
+            )}
+            
             <div className="space-y-2">
-              <Label htmlFor="country">Country</Label>
-              <Input
-                id="country"
-                placeholder="e.g., Lebanon"
-                value={formData.location_country}
-                onChange={(e) => setFormData(prev => ({ ...prev, location_country: e.target.value }))}
-                className="h-11"
-              />
+              <Label>City</Label>
+              {countryHasLocationData ? (
+                <LocationSelect
+                  type="city"
+                  countryCode={formData.location_country}
+                  value={formData.location_city}
+                  onChange={(city) => setFormData(prev => ({ ...prev, location_city: city }))}
+                  stateFilter={formData.location_state}
+                  placeholder="Select city"
+                />
+              ) : (
+                <Input
+                  placeholder="Enter city"
+                  value={formData.location_city}
+                  onChange={(e) => setFormData(prev => ({ ...prev, location_city: e.target.value }))}
+                  className="h-10"
+                />
+              )}
             </div>
           </div>
 
