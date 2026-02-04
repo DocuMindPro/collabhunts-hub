@@ -168,9 +168,11 @@ const CreateOpportunityDialog = ({
                 <SelectValue placeholder="Select a package type" />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(EVENT_PACKAGES).map(([key, pkg]) => (
-                  <SelectItem key={key} value={key}>{pkg.name}</SelectItem>
-                ))}
+                {Object.entries(EVENT_PACKAGES)
+                  .filter(([key]) => key !== 'competition')
+                  .map(([key, pkg]) => (
+                    <SelectItem key={key} value={key}>{pkg.name}</SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
