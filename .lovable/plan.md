@@ -1,29 +1,77 @@
 
 
-# Make Instagram Stories an Upsell Add-On
+# Replace Minimum Followers with Multi-Select Follower Ranges
 
-## Summary
+## Overview
 
-Remove specific story counts from standard packages and turn Instagram Stories into an optional upsell that brands can add when booking. Creators will set their story upsell price during onboarding.
+Replace the single "Minimum Followers" number input in opportunity creation with a multi-select follower range system. When creators try to apply, automatically check their highest follower count against the selected ranges and block them with a clear explanation if they don't qualify.
 
 ---
 
-## Package Changes
+## Current State vs New Behavior
 
-### Current vs New Deliverables
+| Aspect | Current | New |
+|--------|---------|-----|
+| **Opportunity Creation** | Single number input (e.g., 5000) | Multi-select checkboxes for follower ranges |
+| **Application Check** | No validation - anyone can apply | Automatic check against creator's max followers |
+| **User Feedback** | None | Clear message explaining why they can't apply |
+| **Database Storage** | `min_followers` (integer) | `follower_ranges` (text array) |
 
-| Package | Current | New |
-|---------|---------|-----|
-| **Unbox & Review** | 1 Reel/TikTok + 2-3 Stories + Brand tag | 1 Reel/TikTok + Brand tag |
-| **Social Boost** | 1 Reel + 1 TikTok + 3 Stories + Tag & location | 1 Reel + 1 TikTok + Tag & location |
-| **Meet & Greet** | Announcement + 3 countdown stories + Recap + 3 highlight stories | Pre-event announcement + Recap video + Brand tag |
+---
 
-### Universal Upsell (Added to All Standard Packages)
+## Follower Range Options
 
 ```
-Instagram Stories
-Add story coverage for additional reach
-Creator's price: $[creator_set_price]
+[ ] Nano (1K - 10K)
+[ ] Micro (10K - 50K)
+[ ] Mid-tier (50K - 100K)
+[ ] Macro (100K - 500K)
+[ ] Mega (500K+)
+```
+
+Brands can select multiple ranges (e.g., both "Nano" and "Micro" to accept creators with 1K-50K followers).
+
+---
+
+## Visual Mockup
+
+### Opportunity Creation
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Follower Range (Optional)                              │
+│  Select which creator sizes you're looking for          │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │  [ ] Nano (1K - 10K)                            │    │
+│  │  [x] Micro (10K - 50K)                          │    │
+│  │  [x] Mid-tier (50K - 100K)                      │    │
+│  │  [ ] Macro (100K - 500K)                        │    │
+│  │  [ ] Mega (500K+)                               │    │
+│  └─────────────────────────────────────────────────┘    │
+│                                                         │
+│  💡 Leave all unchecked to accept all creator sizes     │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Opportunity Display (for creators)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  📊 Micro, Mid-tier creators                            │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Ineligible Creator View
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  [Apply Now] ← Button disabled                          │
+│                                                         │
+│  ⚠️ Your highest follower count (2,500) doesn't meet    │
+│     this opportunity's requirements (10K-100K).         │
+│     Build your audience to qualify for similar roles!   │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -32,12 +80,9 @@ Creator's price: $[creator_set_price]
 
 | File | Changes |
 |------|---------|
-| `src/config/packages.ts` | Remove story counts from includes/phases, add standard upsell option |
-| `src/components/creator-onboarding/PackageStep.tsx` | Add story upsell price input during onboarding |
-| `src/components/creator-dashboard/ServiceEditDialog.tsx` | Add story upsell price field for editing |
-| `src/components/brand-dashboard/CreateOpportunityDialog.tsx` | Update locked deliverables to reflect new package contents |
-| `src/components/BookingDialog.tsx` | Show upsell option when booking |
-| Database migration | Add `story_upsell_price_cents` column to `creator_services` table |
+| `src/components/brand-dashboard/CreateOpportunityDialog.tsx` | Replace min_followers input with multi-select checkboxes |
+| `src/pages/Opportunities.tsx` | Add follower validation logic, show eligibility status |
+| Database migration | Add `follower_ranges` column (text array), keep `min_followers` for backward compatibility |
 
 ---
 
@@ -45,159 +90,114 @@ Creator's price: $[creator_set_price]
 
 ### 1. Database Migration
 
-Add a new column to store creator's story upsell price:
-
 ```sql
-ALTER TABLE public.creator_services 
-ADD COLUMN story_upsell_price_cents INTEGER DEFAULT NULL;
+-- Add new column for follower ranges
+ALTER TABLE public.brand_opportunities 
+ADD COLUMN follower_ranges TEXT[] DEFAULT NULL;
+
+-- Column stores array like ['nano', 'micro', 'mid_tier']
 ```
 
-### 2. Update Package Configuration (`packages.ts`)
+### 2. Follower Range Configuration
 
-**Unbox & Review includes:**
+Create a config object for reuse:
+
 ```typescript
-includes: [
-  'Product shipped to creator',
-  '1 Instagram Reel or TikTok video',
-  'Honest review with product highlights',
-  'Brand tagged in all posts',
-],
+const FOLLOWER_RANGES = {
+  nano: { label: 'Nano', min: 1000, max: 10000 },
+  micro: { label: 'Micro', min: 10000, max: 50000 },
+  mid_tier: { label: 'Mid-tier', min: 50000, max: 100000 },
+  macro: { label: 'Macro', min: 100000, max: 500000 },
+  mega: { label: 'Mega', min: 500000, max: Infinity },
+};
 ```
 
-**Social Boost includes:**
+### 3. Create Opportunity Dialog Changes
+
+Replace the min_followers input section with:
+- Multi-select checkboxes for each follower range
+- Form state changes from `min_followers: string` to `follower_ranges: string[]`
+- Submit logic stores array to database
+
+### 4. Opportunities Page Changes
+
+When loading opportunities:
+1. Fetch creator's social accounts with follower counts
+2. Get the highest follower count across all platforms
+3. For each opportunity with `follower_ranges`:
+   - Check if creator's max followers falls within any selected range
+   - If not eligible: disable Apply button, show explanation message
+4. Display the required ranges on opportunity cards
+
+### 5. Eligibility Check Logic
+
 ```typescript
-includes: [
-  '1-2 hour venue visit',
-  '1 Instagram Reel (permanent)',
-  '1 TikTok video',
-  'Tag & location in all posts',
-  'Honest review with CTA',
-],
+const checkEligibility = (maxFollowers: number, ranges: string[]) => {
+  if (!ranges || ranges.length === 0) return true; // No restriction
+  
+  return ranges.some(rangeKey => {
+    const range = FOLLOWER_RANGES[rangeKey];
+    return maxFollowers >= range.min && maxFollowers < range.max;
+  });
+};
 ```
-
-**Meet & Greet includes:**
-```typescript
-includes: [
-  '1-week pre-event promotion',
-  '3 hours at venue',
-  'Live fan interaction & photos',
-  'Recap video',
-],
-```
-
-**Add universal upsell to all standard packages:**
-```typescript
-upsells: [
-  { 
-    id: 'instagram_stories', 
-    name: 'Instagram Stories', 
-    description: 'Add story coverage for additional reach',
-    priceCents: 0 // Will be set per-creator
-  }
-]
-```
-
-### 3. Creator Onboarding Changes
-
-After a creator says "Yes" to a package and sets their price, add:
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  Story Upsell Price (Optional)                          │
-│                                                         │
-│  Brands can add Instagram Stories as an extra.          │
-│  Set your price for this add-on.                        │
-│                                                         │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │  $  [ 15 ]                                      │    │
-│  └─────────────────────────────────────────────────┘    │
-│                                                         │
-│  💡 Suggested: $10-30 (low-effort upsell)               │
-│     Leave empty if you don't offer this                 │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 4. Service Edit Dialog Changes
-
-Add a section for story upsell pricing:
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  📸 Instagram Stories Upsell                            │
-│                                                         │
-│  Story Add-On Price (USD)                               │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │  $  [ 20 ]                                      │    │
-│  └─────────────────────────────────────────────────┘    │
-│                                                         │
-│  Brands can add Stories to their booking for this extra │
-│  fee. Leave empty to not offer this option.             │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 5. Booking Flow Changes
-
-When a brand clicks to book, show upsell option:
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  Package: Social Boost                                  │
-│  Base Price: $200                                       │
-│                                                         │
-│  ╭─────────────────────────────────────────────────────╮│
-│  │ ➕ Add Instagram Stories            + $20           ││
-│  │    Add story coverage for additional reach          ││
-│  │                                 [ ] Add to booking  ││
-│  ╰─────────────────────────────────────────────────────╯│
-│                                                         │
-│  Total: $200                                            │
-│                 or $220 with stories                    │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 6. Opportunity Creation Changes
-
-Update the locked deliverables display to show the new package contents (without story counts).
 
 ---
 
 ## User Experience Flow
 
-### Creator Onboarding
-1. "Do you offer Unbox & Review?" → Yes
-2. "Set your price for this package" → $150
-3. "Set your Instagram Stories upsell price (optional)" → $15
+### Brand Creating Opportunity
+1. Fills out opportunity form
+2. Optionally selects one or more follower ranges
+3. If none selected, all creator sizes are accepted
+4. Posts opportunity
 
-### Brand Booking
-1. Views creator profile
-2. Clicks "Book" on Social Boost ($200)
-3. Sees upsell: "Add Instagram Stories +$20"
-4. Checks the box if they want it
-5. Proceeds to message creator with total ($220)
-
-### Opportunity Posting
-1. Brand selects "Social Boost" package
-2. Locked deliverables show: 1 Reel, 1 TikTok, Tag & location
-3. No mention of Stories (brands can discuss with creators)
-
----
-
-## Why This Works
-
-1. **Lower Base Prices** - Creators can price the core video lower, looking more competitive
-2. **Fair Compensation** - Extra Stories = extra pay
-3. **Brand Flexibility** - Not everyone needs Stories
-4. **Simple Upsell** - One optional add-on, not complex tiers
-5. **Low Friction** - Creators set it once, applies to all packages
+### Creator Viewing Opportunities
+1. Opens Opportunities page
+2. System fetches their social accounts and calculates max followers
+3. For each opportunity:
+   - If no follower range restriction: normal "Apply Now" button
+   - If ranges specified and creator qualifies: normal "Apply Now" button
+   - If ranges specified and creator doesn't qualify:
+     - Button shows "Not Eligible" (disabled)
+     - Helper text explains: "Your highest follower count (X) doesn't meet requirements (Y-Z range)"
 
 ---
 
-## Implementation Order
+## Data Flow
 
-1. Database migration (add `story_upsell_price_cents`)
-2. Update `packages.ts` with new includes/phases text
-3. Update creator onboarding to collect story upsell price
-4. Update service edit dialog with story upsell field
-5. Update booking dialog to show upsell option
-6. Update opportunity creation locked deliverables
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Opportunities Page                       │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. Fetch opportunities                                     │
+│  2. Fetch creator's social accounts                         │
+│  3. Calculate: maxFollowers = max(all platform followers)   │
+│                                                             │
+│  For each opportunity:                                      │
+│     │                                                       │
+│     ├── Has follower_ranges?                                │
+│     │      │                                                │
+│     │      ├── NO → Show "Apply Now"                        │
+│     │      │                                                │
+│     │      └── YES → Check maxFollowers vs ranges           │
+│     │              │                                        │
+│     │              ├── ELIGIBLE → Show "Apply Now"          │
+│     │              │                                        │
+│     │              └── NOT ELIGIBLE → Show disabled button  │
+│     │                   + explanation message               │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Benefits
+
+1. **Better Targeting** - Brands can target specific creator tiers
+2. **Multi-tier Flexibility** - Accept multiple ranges, not just a minimum
+3. **Clear Expectations** - Creators know immediately if they qualify
+4. **Helpful Feedback** - Non-eligible creators understand why and what to work toward
+5. **Reduced Noise** - Brands don't receive applications from mismatched creators
 
