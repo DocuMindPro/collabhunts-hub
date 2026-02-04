@@ -1,142 +1,30 @@
 
 
-# Auto-Populate Package Features in Opportunity Creation
+# Make Instagram Stories an Upsell Add-On
 
-## Overview
+## Summary
 
-When a brand selects a package type (other than Custom Experience), the form should:
-1. Auto-display the locked package deliverables from `EVENT_PACKAGES`
-2. Only allow brands to add special requirements in a separate field
-3. For "Custom Experience" only, enable full description customization
+Remove specific story counts from standard packages and turn Instagram Stories into an optional upsell that brands can add when booking. Creators will set their story upsell price during onboarding.
 
 ---
 
-## Current vs New Behavior
+## Package Changes
 
-| Scenario | Current | New |
-|----------|---------|-----|
-| Package selected (not custom) | Empty description textarea, brand writes anything | Auto-display package `includes` items as locked/read-only, rename field to "What's Included" |
-| Custom Experience selected | Empty description textarea | Show editable description textarea with AI assist |
-| No package selected | Empty description textarea | Show nothing or prompt to select package first |
+### Current vs New Deliverables
 
----
+| Package | Current | New |
+|---------|---------|-----|
+| **Unbox & Review** | 1 Reel/TikTok + 2-3 Stories + Brand tag | 1 Reel/TikTok + Brand tag |
+| **Social Boost** | 1 Reel + 1 TikTok + 3 Stories + Tag & location | 1 Reel + 1 TikTok + Tag & location |
+| **Meet & Greet** | Announcement + 3 countdown stories + Recap + 3 highlight stories | Pre-event announcement + Recap video + Brand tag |
 
-## Visual Mockup
-
-**When "Social Boost" is selected:**
-```
-┌─────────────────────────────────────────────────────────┐
-│  Package Type                                           │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ Social Boost                               ▼    │    │
-│  └─────────────────────────────────────────────────┘    │
-│                                                         │
-│  What's Included (Standard Package)                     │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ ✓ 1-2 hour venue visit                          │    │
-│  │ ✓ 1 Instagram Reel (permanent)                  │    │
-│  │ ✓ 1 TikTok video                                │    │
-│  │ ✓ 3 Instagram Stories                           │    │
-│  │ ✓ Tag & location in all posts                   │    │
-│  │ ✓ Honest review with CTA                        │    │
-│  └─────────────────────────────────────────────────┘    │
-│  🔒 These deliverables are fixed for this package       │
-│                                                         │
-│  Special Requirements (Optional)                        │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ Must mention our new summer menu. Wear casual   │    │
-│  │ clothing, no competitor logos...                │    │
-│  └─────────────────────────────────────────────────┘    │
-│  [✨ Improve with AI]                                   │
-└─────────────────────────────────────────────────────────┘
-```
-
-**When "Custom Experience" is selected:**
-```
-┌─────────────────────────────────────────────────────────┐
-│  Package Type                                           │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ Custom Experience                          ▼    │    │
-│  └─────────────────────────────────────────────────┘    │
-│                                                         │
-│  Description *                                          │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ Describe your custom collaboration needs,       │    │
-│  │ deliverables expected, timeline...              │    │
-│  └─────────────────────────────────────────────────┘    │
-│  [✨ Improve with AI]                                   │
-│                                                         │
-│  Special Requirements (Optional)                        │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ Any specific requirements for creators...       │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## Implementation Details
-
-### File: `CreateOpportunityDialog.tsx`
-
-**1. Derive package features dynamically**
-
-```typescript
-const selectedPackage = formData.package_type 
-  ? EVENT_PACKAGES[formData.package_type as keyof typeof EVENT_PACKAGES] 
-  : null;
-const isCustomPackage = formData.package_type === 'custom';
-```
-
-**2. Replace Description section with conditional rendering**
-
-When a standard package is selected:
-- Display a styled, read-only list of deliverables from `selectedPackage.includes`
-- Add a lock icon and helper text explaining these are fixed
-- Remove the AI suggestions for description (not needed - content is locked)
-
-When Custom Experience is selected:
-- Show the existing editable description textarea with AI assist
-- Make it required for custom packages
-
-**3. Update "Requirements" to "Special Requirements"**
-
-- Keep the requirements textarea for all package types
-- Update label to "Special Requirements (Optional)"
-- Update placeholder to clarify this is for additional notes beyond the standard package
-
-**4. Move Package Type selector before the description section**
-
-The package selection should come first so the form can react to it.
-
----
-
-## Form Flow After Changes
+### Universal Upsell (Added to All Standard Packages)
 
 ```
-1. Title *
-2. Package Type (dropdown) ← Moved up
-3. IF standard package → "What's Included" (read-only list)
-   IF custom → "Description *" (editable textarea)
-4. Event Date, Time
-5. Paid/Free toggle, Budget
-6. Spots Available
-7. Location (Country/Region/City)
-8. Special Requirements (editable textarea - all packages)
-9. Minimum Followers
+Instagram Stories
+Add story coverage for additional reach
+Creator's price: $[creator_set_price]
 ```
-
----
-
-## Code Changes Summary
-
-| Section | Change |
-|---------|--------|
-| Form state | No changes needed - `description` still used, auto-populated for standard packages |
-| Package Type | Move selector above description section |
-| Description | Replace with conditional: locked list OR editable textarea |
-| Requirements | Update label to "Special Requirements (Optional)" |
-| Submit logic | For standard packages, auto-generate description from `includes` array |
 
 ---
 
@@ -144,26 +32,172 @@ The package selection should come first so the form can react to it.
 
 | File | Changes |
 |------|---------|
-| `src/components/brand-dashboard/CreateOpportunityDialog.tsx` | Conditional description rendering, locked deliverables display, reorder form fields |
+| `src/config/packages.ts` | Remove story counts from includes/phases, add standard upsell option |
+| `src/components/creator-onboarding/PackageStep.tsx` | Add story upsell price input during onboarding |
+| `src/components/creator-dashboard/ServiceEditDialog.tsx` | Add story upsell price field for editing |
+| `src/components/brand-dashboard/CreateOpportunityDialog.tsx` | Update locked deliverables to reflect new package contents |
+| `src/components/BookingDialog.tsx` | Show upsell option when booking |
+| Database migration | Add `story_upsell_price_cents` column to `creator_services` table |
 
 ---
 
-## Database Storage
+## Technical Implementation
 
-For standard packages:
-- `description` column will store the auto-generated deliverables list (for display in opportunity listings)
-- `requirements` column stores brand's special requirements
+### 1. Database Migration
 
-For custom packages:
-- `description` stores the brand's custom description
-- `requirements` stores additional requirements as before
+Add a new column to store creator's story upsell price:
+
+```sql
+ALTER TABLE public.creator_services 
+ADD COLUMN story_upsell_price_cents INTEGER DEFAULT NULL;
+```
+
+### 2. Update Package Configuration (`packages.ts`)
+
+**Unbox & Review includes:**
+```typescript
+includes: [
+  'Product shipped to creator',
+  '1 Instagram Reel or TikTok video',
+  'Honest review with product highlights',
+  'Brand tagged in all posts',
+],
+```
+
+**Social Boost includes:**
+```typescript
+includes: [
+  '1-2 hour venue visit',
+  '1 Instagram Reel (permanent)',
+  '1 TikTok video',
+  'Tag & location in all posts',
+  'Honest review with CTA',
+],
+```
+
+**Meet & Greet includes:**
+```typescript
+includes: [
+  '1-week pre-event promotion',
+  '3 hours at venue',
+  'Live fan interaction & photos',
+  'Recap video',
+],
+```
+
+**Add universal upsell to all standard packages:**
+```typescript
+upsells: [
+  { 
+    id: 'instagram_stories', 
+    name: 'Instagram Stories', 
+    description: 'Add story coverage for additional reach',
+    priceCents: 0 // Will be set per-creator
+  }
+]
+```
+
+### 3. Creator Onboarding Changes
+
+After a creator says "Yes" to a package and sets their price, add:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Story Upsell Price (Optional)                          │
+│                                                         │
+│  Brands can add Instagram Stories as an extra.          │
+│  Set your price for this add-on.                        │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │  $  [ 15 ]                                      │    │
+│  └─────────────────────────────────────────────────┘    │
+│                                                         │
+│  💡 Suggested: $10-30 (low-effort upsell)               │
+│     Leave empty if you don't offer this                 │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 4. Service Edit Dialog Changes
+
+Add a section for story upsell pricing:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  📸 Instagram Stories Upsell                            │
+│                                                         │
+│  Story Add-On Price (USD)                               │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │  $  [ 20 ]                                      │    │
+│  └─────────────────────────────────────────────────┘    │
+│                                                         │
+│  Brands can add Stories to their booking for this extra │
+│  fee. Leave empty to not offer this option.             │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 5. Booking Flow Changes
+
+When a brand clicks to book, show upsell option:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Package: Social Boost                                  │
+│  Base Price: $200                                       │
+│                                                         │
+│  ╭─────────────────────────────────────────────────────╮│
+│  │ ➕ Add Instagram Stories            + $20           ││
+│  │    Add story coverage for additional reach          ││
+│  │                                 [ ] Add to booking  ││
+│  ╰─────────────────────────────────────────────────────╯│
+│                                                         │
+│  Total: $200                                            │
+│                 or $220 with stories                    │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 6. Opportunity Creation Changes
+
+Update the locked deliverables display to show the new package contents (without story counts).
 
 ---
 
-## Benefits
+## User Experience Flow
 
-- **Clarity for brands**: They know exactly what they're getting with each package
-- **Consistency for creators**: Standard packages have predictable deliverables
-- **Flexibility where needed**: Custom Experience allows full customization
-- **Reduced errors**: Brands can't accidentally remove standard deliverables
+### Creator Onboarding
+1. "Do you offer Unbox & Review?" → Yes
+2. "Set your price for this package" → $150
+3. "Set your Instagram Stories upsell price (optional)" → $15
+
+### Brand Booking
+1. Views creator profile
+2. Clicks "Book" on Social Boost ($200)
+3. Sees upsell: "Add Instagram Stories +$20"
+4. Checks the box if they want it
+5. Proceeds to message creator with total ($220)
+
+### Opportunity Posting
+1. Brand selects "Social Boost" package
+2. Locked deliverables show: 1 Reel, 1 TikTok, Tag & location
+3. No mention of Stories (brands can discuss with creators)
+
+---
+
+## Why This Works
+
+1. **Lower Base Prices** - Creators can price the core video lower, looking more competitive
+2. **Fair Compensation** - Extra Stories = extra pay
+3. **Brand Flexibility** - Not everyone needs Stories
+4. **Simple Upsell** - One optional add-on, not complex tiers
+5. **Low Friction** - Creators set it once, applies to all packages
+
+---
+
+## Implementation Order
+
+1. Database migration (add `story_upsell_price_cents`)
+2. Update `packages.ts` with new includes/phases text
+3. Update creator onboarding to collect story upsell price
+4. Update service edit dialog with story upsell field
+5. Update booking dialog to show upsell option
+6. Update opportunity creation locked deliverables
 
