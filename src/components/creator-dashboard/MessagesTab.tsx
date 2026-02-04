@@ -47,6 +47,10 @@ interface OnlineStatus {
 const MessagesTab = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showOfferDialog, setShowOfferDialog] = useState(false);
+  const [prefillPackageData, setPrefillPackageData] = useState<{
+    serviceType: string;
+    priceCents: number;
+  } | null>(null);
   const [creatorProfileId, setCreatorProfileId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -61,11 +65,16 @@ const MessagesTab = () => {
   const isNative = Capacitor.isNativePlatform();
   const { keyboardHeight } = useKeyboardHeight();
 
-  const handlePackageReply = (type: "quote" | "accept") => {
+  const handlePackageReply = (type: "quote" | "accept", packageData?: { serviceType: string; price: string }) => {
     if (type === "quote") {
       setNewMessage("Thank you for your interest! For this package, I can offer you a great deal. Let me know if you'd like to proceed or have any questions.");
-    } else {
-      setNewMessage("I'd be happy to work with you on this! Let's discuss the details and get started.");
+    } else if (type === "accept" && packageData) {
+      // Pre-fill and open the SendOfferDialog
+      setPrefillPackageData({
+        serviceType: packageData.serviceType,
+        priceCents: Math.round(parseFloat(packageData.price) * 100),
+      });
+      setShowOfferDialog(true);
     }
   };
 
@@ -524,11 +533,16 @@ const MessagesTab = () => {
         {creatorProfileId && (
           <SendOfferDialog
             open={showOfferDialog}
-            onOpenChange={setShowOfferDialog}
+            onOpenChange={(open) => {
+              setShowOfferDialog(open);
+              if (!open) setPrefillPackageData(null);
+            }}
             conversationId={selectedConversation || ""}
             creatorProfileId={creatorProfileId}
             brandProfileId={selectedConvo.brand_profile_id}
             onOfferSent={() => fetchMessages(selectedConversation || "")}
+            prefillServiceType={prefillPackageData?.serviceType}
+            prefillPriceCents={prefillPackageData?.priceCents}
           />
         )}
       </div>

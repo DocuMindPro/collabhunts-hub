@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 interface PackageInquiryMessageProps {
   content: string;
   isOwn: boolean;
-  onReply?: (type: "quote" | "accept") => void;
+  onReply?: (type: "quote" | "accept", packageData?: { serviceType: string; price: string }) => void;
   showReplyActions?: boolean;
 }
 
@@ -80,19 +80,18 @@ const PackageInquiryMessage = ({ content, isOwn, onReply, showReplyActions = fal
             size="sm" 
             variant="outline" 
             className="h-7 text-xs gap-1.5"
-            onClick={() => onReply("quote")}
+            onClick={() => onReply?.("quote")}
           >
             <MessageCircle className="h-3 w-3" />
-            Send Quote
+            Reply with Quote
           </Button>
           <Button 
             size="sm" 
-            variant="outline"
             className="h-7 text-xs gap-1.5"
-            onClick={() => onReply("accept")}
+            onClick={() => onReply?.("accept", packageData ? { serviceType: packageData.serviceType, price: packageData.price } : undefined)}
           >
             <CheckCircle className="h-3 w-3" />
-            Accept
+            Send Offer
           </Button>
         </div>
       )}
