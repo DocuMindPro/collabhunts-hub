@@ -7,7 +7,7 @@ import { EVENT_PACKAGES, type PackageType } from "@/config/packages";
 
 interface PackageStepProps {
   packageType: PackageType;
-  onComplete: (data: { interested: boolean; price?: number }) => void;
+  onComplete: (data: { interested: boolean; price?: number; storyUpsellPrice?: number }) => void;
   onBack: () => void;
   currentStep: number;
   totalSteps: number;
@@ -24,9 +24,12 @@ const PACKAGE_ICONS: Record<PackageType, React.ReactNode> = {
 const PackageStep = ({ packageType, onComplete, onBack, currentStep, totalSteps }: PackageStepProps) => {
   const [interested, setInterested] = useState<boolean | null>(null);
   const [price, setPrice] = useState<string>("");
+  const [storyUpsellPrice, setStoryUpsellPrice] = useState<string>("");
 
   const pkg = EVENT_PACKAGES[packageType];
   const isPKBattle = packageType === "competition";
+  const isCustom = packageType === "custom";
+  const hasStoryUpsell = pkg.upsells?.some(u => u.id === 'instagram_stories');
 
   const handleContinue = () => {
     if (interested === false) {
@@ -34,7 +37,7 @@ const PackageStep = ({ packageType, onComplete, onBack, currentStep, totalSteps 
       return;
     }
     
-    if (isPKBattle) {
+    if (isPKBattle || isCustom) {
       onComplete({ interested: true });
       return;
     }
@@ -43,7 +46,9 @@ const PackageStep = ({ packageType, onComplete, onBack, currentStep, totalSteps 
     if (!priceValue || priceValue < 10) {
       return; // Validation will show via input state
     }
-    onComplete({ interested: true, price: priceValue });
+    
+    const storyPrice = storyUpsellPrice ? parseInt(storyUpsellPrice) : undefined;
+    onComplete({ interested: true, price: priceValue, storyUpsellPrice: storyPrice });
   };
 
   // Get key deliverables from package phases
@@ -143,10 +148,10 @@ const PackageStep = ({ packageType, onComplete, onBack, currentStep, totalSteps 
         </div>
       )}
 
-      {/* Price Input (only if interested and not PK Battle) */}
-      {interested === true && !isPKBattle && (
+      {/* Price Input (only if interested and not PK Battle/Custom) */}
+      {interested === true && !isPKBattle && !isCustom && (
         <div className="space-y-4">
-          <div className="p-4 border rounded-lg bg-background space-y-3">
+          <div className="p-4 border rounded-lg bg-background space-y-4">
             <div className="flex items-center gap-2 text-primary">
               <Check className="h-5 w-5" />
               <span className="font-medium">Great! Now set your price</span>
@@ -169,12 +174,37 @@ const PackageStep = ({ packageType, onComplete, onBack, currentStep, totalSteps 
                 <p className="text-xs text-destructive">Minimum price is $10</p>
               )}
             </div>
+            
+            {/* Story Upsell Price */}
+            {hasStoryUpsell && price && parseInt(price) >= 10 && (
+              <div className="space-y-2 pt-3 border-t">
+                <Label htmlFor="storyUpsell">Instagram Stories Upsell (Optional)</Label>
+                <p className="text-xs text-muted-foreground">
+                  Brands can add stories as an extra. Set your price for this add-on.
+                </p>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    id="storyUpsell"
+                    type="number"
+                    min="5"
+                    placeholder="e.g., 15"
+                    value={storyUpsellPrice}
+                    onChange={(e) => setStoryUpsellPrice(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  💡 Suggested: $10-30 (low-effort upsell). Leave empty if you don't offer this.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Continue after price entered OR for PK Battle */}
-      {interested === true && (isPKBattle || (price && parseInt(price) >= 10)) && (
+      {/* Continue after price entered OR for PK Battle/Custom */}
+      {interested === true && (isPKBattle || isCustom || (price && parseInt(price) >= 10)) && (
         <Button 
           className="w-full h-12 gradient-hero hover:opacity-90"
           onClick={handleContinue}

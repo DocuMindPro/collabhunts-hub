@@ -28,6 +28,7 @@ interface Service {
   delivery_days: number;
   is_active: boolean;
   creator_profile_id: string;
+  story_upsell_price_cents?: number | null;
 }
 
 interface ServiceEditDialogProps {
@@ -62,8 +63,12 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
   const [isSaving, setIsSaving] = useState(false);
   const [serviceType, setServiceType] = useState<string>("");
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
+  const [storyUpsellPrice, setStoryUpsellPrice] = useState("");
 
   const isPKBattle = serviceType === "competition";
+  const isCustom = serviceType === "custom";
+  const packageConfig = serviceType ? EVENT_PACKAGES[serviceType as PackageType] : null;
+  const hasStoryUpsell = packageConfig?.upsells?.some(u => u.id === 'instagram_stories');
 
   // Fetch available package types
   useEffect(() => {
@@ -92,12 +97,14 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
       setDescription(service.description || "");
       setDeliveryDays(service.delivery_days?.toString() || "7");
       setIsActive(service.is_active);
+      setStoryUpsellPrice(service.story_upsell_price_cents ? ((service.story_upsell_price_cents) / 100).toString() : "");
     } else {
       setServiceType("");
       setPrice("");
       setDescription("");
       setDeliveryDays("7");
       setIsActive(true);
+      setStoryUpsellPrice("");
     }
   }, [service, isOpen]);
 
@@ -112,9 +119,9 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
       return;
     }
 
-    // Validate price (except for PK Battle)
+    // Validate price (except for PK Battle and Custom)
     const priceValue = parseFloat(price);
-    if (!isPKBattle && (!priceValue || priceValue < 10)) {
+    if (!isPKBattle && !isCustom && (!priceValue || priceValue < 10)) {
       toast.error("Please enter a valid price (minimum $10)");
       return;
     }
@@ -122,7 +129,8 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
     setIsSaving(true);
 
     try {
-      const priceCents = isPKBattle ? 0 : Math.round(priceValue * 100);
+      const priceCents = (isPKBattle || isCustom) ? 0 : Math.round(priceValue * 100);
+      const storyUpsellCents = storyUpsellPrice ? Math.round(parseFloat(storyUpsellPrice) * 100) : null;
       
       const updateData = {
         service_type: serviceType,
@@ -132,7 +140,8 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
         price_tier_id: null, // No longer using tiers
         description: description || null,
         delivery_days: parseInt(deliveryDays) || 7,
-        is_active: isActive
+        is_active: isActive,
+        story_upsell_price_cents: storyUpsellCents
       };
 
       if (service) {
@@ -212,8 +221,8 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
             </div>
           )}
 
-          {/* Price (hidden for PK Battle) */}
-          {serviceType && !isPKBattle && (
+          {/* Price (hidden for PK Battle and Custom) */}
+          {serviceType && !isPKBattle && !isCustom && (
             <div className="space-y-2">
               <Label htmlFor="price">Your Price (USD)</Label>
               <div className="relative">
@@ -234,13 +243,41 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
               </p>
             </div>
           )}
+          
+          {/* Story Upsell Price */}
+          {serviceType && hasStoryUpsell && !isPKBattle && !isCustom && (
+            <div className="space-y-2 p-3 bg-muted/50 rounded-lg">
+              <Label htmlFor="storyUpsell" className="flex items-center gap-2">
+                📸 Instagram Stories Upsell
+              </Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                <Input
+                  id="storyUpsell"
+                  type="number"
+                  min="5"
+                  step="1"
+                  placeholder="e.g., 20"
+                  value={storyUpsellPrice}
+                  onChange={(e) => setStoryUpsellPrice(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Brands can add Stories to their booking for this extra fee. Leave empty to not offer this option.
+              </p>
+            </div>
+          )}
 
-          {/* PK Battle Notice */}
-          {isPKBattle && (
+          {/* PK Battle / Custom Notice */}
+          {(isPKBattle || isCustom) && (
             <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-sm">
               <p className="font-medium mb-1">💡 Pricing handled by CollabHunts</p>
               <p className="text-muted-foreground">
-                We'll discuss pricing with you when brands are interested in booking PK battles.
+                {isPKBattle 
+                  ? "We'll discuss pricing with you when brands are interested in booking PK battles."
+                  : "Custom experiences are discussed directly with brands to agree on deliverables and pricing."
+                }
               </p>
             </div>
           )}

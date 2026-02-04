@@ -1367,6 +1367,7 @@ export type Database = {
           price_cents: number
           price_tier_id: string | null
           service_type: string
+          story_upsell_price_cents: number | null
         }
         Insert: {
           created_at?: string | null
@@ -1384,6 +1385,7 @@ export type Database = {
           price_cents: number
           price_tier_id?: string | null
           service_type: string
+          story_upsell_price_cents?: number | null
         }
         Update: {
           created_at?: string | null
@@ -1401,6 +1403,7 @@ export type Database = {
           price_cents?: number
           price_tier_id?: string | null
           service_type?: string
+          story_upsell_price_cents?: number | null
         }
         Relationships: [
           {

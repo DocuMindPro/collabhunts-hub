@@ -43,7 +43,6 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     includes: [
       'Product shipped to creator',
       '1 Instagram Reel or TikTok video',
-      '2-3 Instagram Stories',
       'Honest review with product highlights',
       'Brand tagged in all posts',
     ],
@@ -67,10 +66,12 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
         title: 'Content Posted',
         items: [
           '1 Reel/TikTok (permanent post)',
-          '2-3 Stories showcasing product',
           'Brand tagged in all posts',
         ],
       },
+    ],
+    upsells: [
+      { id: 'instagram_stories', name: 'Instagram Stories', description: 'Add story coverage for additional reach', priceCents: 0 },
     ],
     idealFor: ['E-commerce', 'Product launches', 'Beauty brands', 'Tech gadgets', 'Fashion'],
   },
@@ -83,7 +84,6 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
       '1-2 hour venue visit',
       '1 Instagram Reel (permanent)',
       '1 TikTok video',
-      '3 Instagram Stories',
       'Tag & location in all posts',
       'Honest review with CTA',
     ],
@@ -101,7 +101,6 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
         items: [
           '1 Instagram Reel (permanent post)',
           '1 TikTok video (same content)',
-          '3 Instagram Stories (during/post visit)',
           'Tag & location in all posts',
         ],
       },
@@ -112,6 +111,9 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
           '"You should check this place out!" CTA',
         ],
       },
+    ],
+    upsells: [
+      { id: 'instagram_stories', name: 'Instagram Stories', description: 'Add story coverage for additional reach', priceCents: 0 },
     ],
     idealFor: ['Restaurants', 'Cafes', 'New openings', 'Boutiques'],
   },
@@ -124,14 +126,13 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
       '1-week pre-event promotion',
       '3 hours at venue',
       'Live fan interaction & photos',
-      'Recap video & stories',
+      'Recap video',
     ],
     phases: [
       {
         title: 'Pre-Event (1 week before)',
         items: [
           '1 announcement video',
-          '3 countdown stories',
         ],
       },
       {
@@ -147,12 +148,12 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
         title: 'Post-Event',
         items: [
           '1 recap video',
-          '3 highlight stories',
-          'Attendee testimonials collected',
+          'Brand tagged in all posts',
         ],
       },
     ],
     upsells: [
+      { id: 'instagram_stories', name: 'Instagram Stories', description: 'Add story coverage for additional reach', priceCents: 0 },
       { id: 'photographer', name: 'Professional Photographer', description: 'Pro photos of the event', priceCents: 15000 },
       { id: 'extra_hour', name: 'Extra Hour', description: '+1 hour venue time', priceCents: 20000 },
       { id: 'discount_codes', name: 'Custom Discount Codes', description: 'Trackable promo codes', priceCents: 10000 },
