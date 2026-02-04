@@ -21,6 +21,8 @@ interface SendOfferDialogProps {
   creatorProfileId: string;
   brandProfileId: string;
   onOfferSent: () => void;
+  prefillServiceType?: string;
+  prefillPriceCents?: number;
 }
 
 interface CreatorService {
@@ -38,6 +40,8 @@ const SendOfferDialog = ({
   creatorProfileId,
   brandProfileId,
   onOfferSent,
+  prefillServiceType,
+  prefillPriceCents,
 }: SendOfferDialogProps) => {
   const [services, setServices] = useState<CreatorService[]>([]);
   const [selectedServiceType, setSelectedServiceType] = useState<string>("");
@@ -54,6 +58,22 @@ const SendOfferDialog = ({
       fetchServices();
     }
   }, [open, creatorProfileId]);
+
+  // Handle prefill when services are loaded
+  useEffect(() => {
+    if (prefillServiceType && services.length > 0) {
+      // Try to match by service type (case-insensitive partial match)
+      const service = services.find(s => 
+        s.service_type.toLowerCase().includes(prefillServiceType.toLowerCase()) ||
+        prefillServiceType.toLowerCase().includes(s.service_type.toLowerCase())
+      );
+      if (service) {
+        setSelectedServiceType(service.service_type);
+        setPriceCents(prefillPriceCents || service.price_cents);
+        setDurationHours(service.duration_hours || 2);
+      }
+    }
+  }, [prefillServiceType, prefillPriceCents, services]);
 
   const fetchServices = async () => {
     try {
