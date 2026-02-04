@@ -8,8 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { EVENT_PACKAGES } from "@/config/packages";
-import { DollarSign, Gift } from "lucide-react";
+import { EVENT_PACKAGES, PackageType } from "@/config/packages";
+import { DollarSign, Gift, Lock, Check } from "lucide-react";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
 import CountrySelect from "@/components/CountrySelect";
 import LocationSelect from "@/components/LocationSelect";
@@ -51,6 +51,13 @@ const CreateOpportunityDialog = ({
   const countryHasStates = getStatesForCountry(formData.location_country).length > 0;
   const selectedCountryName = COUNTRIES.find(c => c.code === formData.location_country)?.name || "";
 
+  // Derive selected package info
+  const selectedPackage = formData.package_type 
+    ? EVENT_PACKAGES[formData.package_type as PackageType] 
+    : null;
+  const isCustomPackage = formData.package_type === 'custom';
+  const isStandardPackage = formData.package_type && !isCustomPackage;
+
   const handleCountryChange = (countryCode: string) => {
     setFormData(prev => ({
       ...prev,
@@ -78,14 +85,33 @@ const CreateOpportunityDialog = ({
       return;
     }
 
+    // For custom package, description is required
+    if (isCustomPackage && !formData.description) {
+      toast({
+        title: "Missing Description",
+        description: "Please describe your custom collaboration needs.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSubmitting(true);
+
+    // For standard packages, auto-generate description from package includes
+    let finalDescription = formData.description;
+    if (isStandardPackage && selectedPackage) {
+      finalDescription = selectedPackage.includes.join('\n• ');
+      if (finalDescription) {
+        finalDescription = '• ' + finalDescription;
+      }
+    }
 
     const { error } = await supabase
       .from("brand_opportunities")
       .insert({
         brand_profile_id: brandProfileId,
         title: formData.title,
-        description: formData.description || null,
+        description: finalDescription || null,
         package_type: formData.package_type || null,
         event_date: formData.event_date,
         start_time: formData.start_time || null,
@@ -165,31 +191,12 @@ const CreateOpportunityDialog = ({
             />
           </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Describe the opportunity, what you're looking for, and what creators can expect..."
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              rows={3}
-            />
-            <AiBioSuggestions
-              text={formData.description}
-              onSelect={(text) => setFormData(prev => ({ ...prev, description: text }))}
-              type="campaign_description"
-              minLength={50}
-              label="description"
-            />
-          </div>
-
-          {/* Package Type */}
+          {/* Package Type - Moved up */}
           <div className="space-y-2">
             <Label>Package Type</Label>
             <Select 
               value={formData.package_type} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, package_type: value }))}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, package_type: value, description: "" }))}
             >
               <SelectTrigger className="h-11">
                 <SelectValue placeholder="Select a package type" />
@@ -203,6 +210,48 @@ const CreateOpportunityDialog = ({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Conditional: Locked Deliverables OR Custom Description */}
+          {isStandardPackage && selectedPackage && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                What's Included (Standard Package)
+              </Label>
+              <div className="bg-muted/50 border rounded-lg p-4 space-y-2">
+                {selectedPackage.includes.map((item, index) => (
+                  <div key={index} className="flex items-start gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Lock className="h-3 w-3" />
+                These deliverables are fixed for this package type
+              </p>
+            </div>
+          )}
+
+          {isCustomPackage && (
+            <div className="space-y-2">
+              <Label htmlFor="description">Description *</Label>
+              <Textarea
+                id="description"
+                placeholder="Describe your custom collaboration needs, deliverables expected, timeline..."
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                rows={4}
+              />
+              <AiBioSuggestions
+                text={formData.description}
+                onSelect={(text) => setFormData(prev => ({ ...prev, description: text }))}
+                type="campaign_description"
+                minLength={50}
+                label="description"
+              />
+            </div>
+          )}
 
           {/* Date and Time - Responsive Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
@@ -341,15 +390,25 @@ const CreateOpportunityDialog = ({
             </div>
           </div>
 
-          {/* Requirements */}
+          {/* Special Requirements */}
           <div className="space-y-2">
-            <Label htmlFor="requirements">Requirements</Label>
+            <Label htmlFor="requirements">Special Requirements (Optional)</Label>
             <Textarea
               id="requirements"
-              placeholder="Any specific requirements for creators (content style, niche, etc.)"
+              placeholder={isStandardPackage 
+                ? "Any additional requirements beyond the standard package (dress code, specific mentions, etc.)"
+                : "Any specific requirements for creators (content style, niche, etc.)"
+              }
               value={formData.requirements}
               onChange={(e) => setFormData(prev => ({ ...prev, requirements: e.target.value }))}
               rows={2}
+            />
+            <AiBioSuggestions
+              text={formData.requirements}
+              onSelect={(text) => setFormData(prev => ({ ...prev, requirements: text }))}
+              type="campaign_description"
+              minLength={30}
+              label="requirements"
             />
           </div>
 
