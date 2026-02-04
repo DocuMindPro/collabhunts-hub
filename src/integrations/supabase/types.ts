@@ -428,6 +428,102 @@ export type Database = {
           },
         ]
       }
+      booking_offers: {
+        Row: {
+          accepted_at: string | null
+          booking_id: string | null
+          brand_profile_id: string
+          conversation_id: string
+          created_at: string
+          creator_profile_id: string
+          declined_at: string | null
+          duration_hours: number | null
+          event_date: string | null
+          event_time_start: string | null
+          expires_at: string | null
+          id: string
+          message_id: string | null
+          notes: string | null
+          package_type: string
+          price_cents: number
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          booking_id?: string | null
+          brand_profile_id: string
+          conversation_id: string
+          created_at?: string
+          creator_profile_id: string
+          declined_at?: string | null
+          duration_hours?: number | null
+          event_date?: string | null
+          event_time_start?: string | null
+          expires_at?: string | null
+          id?: string
+          message_id?: string | null
+          notes?: string | null
+          package_type: string
+          price_cents: number
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          booking_id?: string | null
+          brand_profile_id?: string
+          conversation_id?: string
+          created_at?: string
+          creator_profile_id?: string
+          declined_at?: string | null
+          duration_hours?: number | null
+          event_date?: string | null
+          event_time_start?: string | null
+          expires_at?: string | null
+          id?: string
+          message_id?: string | null
+          notes?: string | null
+          package_type?: string
+          price_cents?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_offers_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_offers_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_offers_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_offers_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_offers_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           attendance_count: number | null
@@ -2019,6 +2115,8 @@ export type Database = {
           created_at: string | null
           id: string
           is_read: boolean | null
+          message_type: string | null
+          offer_id: string | null
           sender_id: string
         }
         Insert: {
@@ -2027,6 +2125,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_read?: boolean | null
+          message_type?: string | null
+          offer_id?: string | null
           sender_id: string
         }
         Update: {
@@ -2035,6 +2135,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_read?: boolean | null
+          message_type?: string | null
+          offer_id?: string | null
           sender_id?: string
         }
         Relationships: [
@@ -2043,6 +2145,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "booking_offers"
             referencedColumns: ["id"]
           },
         ]

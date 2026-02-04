@@ -14,6 +14,7 @@ import TypingIndicator from "@/components/chat/TypingIndicator";
 import MessageReadReceipt from "@/components/chat/MessageReadReceipt";
 import PackageInquiryCard from "@/components/chat/PackageInquiryCard";
 import PackageInquiryMessage, { isPackageInquiry } from "@/components/chat/PackageInquiryMessage";
+import OfferMessage, { isOfferMessage } from "@/components/chat/OfferMessage";
 
 interface Conversation {
   id: string;
@@ -34,6 +35,8 @@ interface Message {
   content: string;
   created_at: string;
   is_read: boolean;
+  message_type?: string;
+  offer_id?: string;
 }
 
 interface OnlineStatus {
@@ -495,6 +498,7 @@ const BrandMessagesTab = () => {
                   const isOwn = msg.sender_id === userId;
                   const showAvatar = !isOwn && (msgIndex === 0 || group.messages[msgIndex - 1]?.sender_id !== msg.sender_id);
                   const isPackageInquiryMsg = isPackageInquiry(msg.content);
+                  const isOffer = isOfferMessage(msg.content);
                   
                   return (
                     <div
@@ -513,23 +517,32 @@ const BrandMessagesTab = () => {
                           )}
                         </div>
                       )}
-                      <div className={`max-w-[70%] ${!isPackageInquiryMsg ? 'px-4 py-2 rounded-2xl' : ''} ${
-                        isOwn
-                          ? isPackageInquiryMsg ? '' : "bg-primary text-primary-foreground rounded-br-md"
-                          : isPackageInquiryMsg ? '' : "bg-card border rounded-bl-md shadow-sm"
-                      }`}>
-                        {isPackageInquiryMsg ? (
-                          <PackageInquiryMessage content={msg.content} isOwn={isOwn} />
-                        ) : (
-                          <p className="break-words text-sm">{msg.content}</p>
-                        )}
-                        <p className={`text-[10px] mt-1 flex items-center gap-1 ${
-                          isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                        } ${isPackageInquiryMsg ? 'px-3 pb-1' : ''}`}>
-                          {format(new Date(msg.created_at), "HH:mm")}
-                          <MessageReadReceipt isOwn={isOwn} isRead={msg.is_read} />
-                        </p>
-                      </div>
+                      {isOffer ? (
+                        <OfferMessage 
+                          content={msg.content} 
+                          isOwn={isOwn} 
+                          conversationId={selectedConversation || ""}
+                          onOfferAccepted={() => fetchMessages(selectedConversation || "")}
+                        />
+                      ) : (
+                        <div className={`max-w-[70%] ${!isPackageInquiryMsg ? 'px-4 py-2 rounded-2xl' : ''} ${
+                          isOwn
+                            ? isPackageInquiryMsg ? '' : "bg-primary text-primary-foreground rounded-br-md"
+                            : isPackageInquiryMsg ? '' : "bg-card border rounded-bl-md shadow-sm"
+                        }`}>
+                          {isPackageInquiryMsg ? (
+                            <PackageInquiryMessage content={msg.content} isOwn={isOwn} />
+                          ) : (
+                            <p className="break-words text-sm">{msg.content}</p>
+                          )}
+                          <p className={`text-[10px] mt-1 flex items-center gap-1 ${
+                            isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                          } ${isPackageInquiryMsg ? 'px-3 pb-1' : ''}`}>
+                            {format(new Date(msg.created_at), "HH:mm")}
+                            <MessageReadReceipt isOwn={isOwn} isRead={msg.is_read} />
+                          </p>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Send, MessageSquare, ArrowLeft, Circle } from "lucide-react";
+import { Send, MessageSquare, ArrowLeft, Circle, FileText } from "lucide-react";
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 import MessageReadReceipt from "@/components/chat/MessageReadReceipt";
 import PackageInquiryMessage, { isPackageInquiry } from "@/components/chat/PackageInquiryMessage";
+import OfferMessage, { isOfferMessage } from "@/components/chat/OfferMessage";
+import SendOfferDialog from "@/components/chat/SendOfferDialog";
 import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 
 interface Conversation {
@@ -34,6 +36,8 @@ interface Message {
   content: string;
   created_at: string;
   is_read: boolean;
+  message_type?: string;
+  offer_id?: string;
 }
 
 interface OnlineStatus {
@@ -42,6 +46,8 @@ interface OnlineStatus {
 
 const MessagesTab = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [showOfferDialog, setShowOfferDialog] = useState(false);
+  const [creatorProfileId, setCreatorProfileId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -123,7 +129,7 @@ const MessagesTab = () => {
     const result = await safeNativeAsync(
       async () => {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return { conversations: [], userId: null };
+        if (!user) return { conversations: [], userId: null, creatorId: null };
         
         const { data: profile } = await supabase
           .from("creator_profiles")
@@ -131,7 +137,7 @@ const MessagesTab = () => {
           .eq("user_id", user.id)
           .single();
 
-        if (!profile) return { conversations: [], userId: user.id };
+        if (!profile) return { conversations: [], userId: user.id, creatorId: null };
 
         const { data, error } = await supabase
           .from("conversations")
@@ -169,14 +175,17 @@ const MessagesTab = () => {
           })
         );
 
-        return { conversations: conversationsWithDetails, userId: user.id };
+        return { conversations: conversationsWithDetails, userId: user.id, creatorId: profile.id };
       },
-      { conversations: [], userId: null },
+      { conversations: [], userId: null, creatorId: null },
       8000 // 8 second timeout
     );
 
     if (result.userId) {
       setUserId(result.userId);
+    }
+    if (result.creatorId) {
+      setCreatorProfileId(result.creatorId);
     }
     setConversations(result.conversations);
     setLoading(false);
@@ -426,6 +435,7 @@ const MessagesTab = () => {
                   const isOwn = msg.sender_id === userId;
                   const showAvatar = !isOwn && (msgIndex === 0 || group.messages[msgIndex - 1]?.sender_id !== msg.sender_id);
                   const isPackageInquiryMsg = isPackageInquiry(msg.content);
+                  const isOffer = isOfferMessage(msg.content);
                   
                   return (
                     <div
@@ -444,28 +454,37 @@ const MessagesTab = () => {
                           )}
                         </div>
                       )}
-                      <div className={`max-w-[70%] ${!isPackageInquiryMsg ? 'px-4 py-2 rounded-2xl' : ''} ${
-                        isOwn
-                          ? isPackageInquiryMsg ? '' : "bg-primary text-primary-foreground rounded-br-md"
-                          : isPackageInquiryMsg ? '' : "bg-card border rounded-bl-md shadow-sm"
-                      }`}>
-                        {isPackageInquiryMsg ? (
-                          <PackageInquiryMessage 
-                            content={msg.content} 
-                            isOwn={isOwn} 
-                            onReply={handlePackageReply}
-                            showReplyActions={!isOwn}
-                          />
-                        ) : (
-                          <p className="break-words text-sm">{msg.content}</p>
-                        )}
-                        <p className={`text-[10px] mt-1 flex items-center gap-1 ${
-                          isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                        } ${isPackageInquiryMsg ? 'px-3 pb-1' : ''}`}>
-                          {format(new Date(msg.created_at), "HH:mm")}
-                          <MessageReadReceipt isOwn={isOwn} isRead={msg.is_read} />
-                        </p>
-                      </div>
+                      {isOffer ? (
+                        <OfferMessage 
+                          content={msg.content} 
+                          isOwn={isOwn} 
+                          conversationId={selectedConversation || ""}
+                          onOfferAccepted={fetchMessages.bind(null, selectedConversation || "")}
+                        />
+                      ) : (
+                        <div className={`max-w-[70%] ${!isPackageInquiryMsg ? 'px-4 py-2 rounded-2xl' : ''} ${
+                          isOwn
+                            ? isPackageInquiryMsg ? '' : "bg-primary text-primary-foreground rounded-br-md"
+                            : isPackageInquiryMsg ? '' : "bg-card border rounded-bl-md shadow-sm"
+                        }`}>
+                          {isPackageInquiryMsg ? (
+                            <PackageInquiryMessage 
+                              content={msg.content} 
+                              isOwn={isOwn} 
+                              onReply={handlePackageReply}
+                              showReplyActions={!isOwn}
+                            />
+                          ) : (
+                            <p className="break-words text-sm">{msg.content}</p>
+                          )}
+                          <p className={`text-[10px] mt-1 flex items-center gap-1 ${
+                            isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                          } ${isPackageInquiryMsg ? 'px-3 pb-1' : ''}`}>
+                            {format(new Date(msg.created_at), "HH:mm")}
+                            <MessageReadReceipt isOwn={isOwn} isRead={msg.is_read} />
+                          </p>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -479,6 +498,15 @@ const MessagesTab = () => {
 
         <div className="p-4 border-t bg-card">
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowOfferDialog(true)}
+              title="Send Offer"
+              className="shrink-0"
+            >
+              <FileText className="h-4 w-4" />
+            </Button>
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
@@ -491,6 +519,18 @@ const MessagesTab = () => {
             </Button>
           </div>
         </div>
+
+        {/* Send Offer Dialog */}
+        {creatorProfileId && (
+          <SendOfferDialog
+            open={showOfferDialog}
+            onOpenChange={setShowOfferDialog}
+            conversationId={selectedConversation || ""}
+            creatorProfileId={creatorProfileId}
+            brandProfileId={selectedConvo.brand_profile_id}
+            onOfferSent={() => fetchMessages(selectedConversation || "")}
+          />
+        )}
       </div>
     );
   };
