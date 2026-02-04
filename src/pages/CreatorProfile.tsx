@@ -599,11 +599,11 @@ const CreatorProfile = () => {
                 )}
               </div>
             ) : (
-              /* Desktop: Original layout with avatar */
+              /* Desktop: Compact layout with avatar */
               <div className="flex flex-row items-start gap-4 text-left">
                 {/* Avatar with Open to Invitations ring */}
                 <div className="relative flex-shrink-0">
-                  <Avatar className={`h-28 w-28 border-4 border-background shadow-lg ${creator.open_to_invitations ? 'ring-[3px] ring-green-500 ring-offset-2 ring-offset-background' : ''}`}>
+                  <Avatar className={`h-20 w-20 border-[3px] border-background shadow-lg ${creator.open_to_invitations ? 'ring-[3px] ring-green-500 ring-offset-2 ring-offset-background' : ''}`}>
                     {creator.profile_image_url && !avatarFailed ? (
                       <AvatarImage 
                         src={creator.profile_image_url} 
@@ -611,32 +611,32 @@ const CreatorProfile = () => {
                         onError={() => setAvatarFailed(true)}
                       />
                     ) : null}
-                    <AvatarFallback className="text-3xl bg-gradient-accent text-white">
+                    <AvatarFallback className="text-2xl bg-gradient-accent text-white">
                       {creator.display_name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   {/* Open to Invitations badge */}
                   {creator.open_to_invitations && (
-                    <Badge className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-green-500 hover:bg-green-500 text-white text-[9px] px-2 py-0.5 whitespace-nowrap border-2 border-background">
-                      Open to Free Invites
+                    <Badge className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-green-500 hover:bg-green-500 text-white text-[8px] px-1.5 py-0.5 whitespace-nowrap border-2 border-background">
+                      Open to Invites
                     </Badge>
                   )}
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-start gap-3 flex-wrap mb-2">
-                    <h1 className="text-3xl font-heading font-bold">
+                  <div className="flex items-center justify-start gap-2 flex-wrap mb-1">
+                    <h1 className="text-2xl font-heading font-bold">
                       {creator.display_name}
                     </h1>
-                    <div className="flex items-center gap-1 bg-primary/10 px-2.5 py-1 rounded-full">
-                      <Star className="h-4 w-4 fill-primary text-primary" />
+                    <div className="flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded-full">
+                      <Star className="h-3.5 w-3.5 fill-primary text-primary" />
                       <span className="font-semibold text-sm">{creator.avgRating.toFixed(1)}</span>
                       <span className="text-xs text-muted-foreground">({creator.totalReviews})</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-start gap-2 text-muted-foreground mb-3">
-                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <div className="flex items-center justify-start gap-1.5 text-muted-foreground mb-2">
+                    <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                     <span className="text-sm">
                       {[creator.location_city, creator.location_state, creator.location_country]
                         .filter(Boolean)
@@ -644,49 +644,68 @@ const CreatorProfile = () => {
                     </span>
                   </div>
 
-                  <div className="flex flex-wrap justify-start gap-2 mb-4">
+                  <div className="flex flex-wrap justify-start gap-1.5 mb-2">
                     {creator.categories.map((category) => (
-                      <Badge key={category} variant="secondary">
+                      <Badge key={category} variant="secondary" className="text-xs">
                         {category}
                       </Badge>
                     ))}
                   </div>
 
                   {creator.bio && (
-                    <p className="text-muted-foreground max-w-2xl">{creator.bio}</p>
+                    <p className="text-muted-foreground text-sm max-w-2xl line-clamp-2">{creator.bio}</p>
                   )}
 
-                  {/* Message Creator Button - Under bio, above Social Media (hide on own profile) */}
-                  <div className="mt-4">
+                  {/* Inline Social Media Icons */}
+                  {creator.social_accounts.length > 0 && (
+                    <div className="flex items-center gap-4 mt-3">
+                      {creator.social_accounts.map((account, index) => {
+                        const Icon = getPlatformIcon(account.platform);
+                        return (
+                          <a
+                            key={index}
+                            href={account.profile_url || '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors group"
+                            title={`${account.platform}: @${account.username}`}
+                          >
+                            <Icon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                            <span className="font-medium">{formatFollowers(account.follower_count)}</span>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Message Creator Button - Under bio */}
+                  <div className="mt-3">
                     {isOwnProfile ? (
                       <Button 
-                        size="lg"
                         variant="outline"
                         onClick={() => navigate('/creator-dashboard?tab=profile')}
                       >
                         Edit Profile
                       </Button>
                     ) : (
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <Button 
-                          size="lg"
                           className="gradient-hero hover:opacity-90"
                           onClick={() => handleContactCreator()}
                         >
-                          <MessageCircle className="h-5 w-5 mr-2" />
+                          <MessageCircle className="h-4 w-4 mr-2" />
                           Message Creator
                         </Button>
                         {hasBrandProfile && (
                           <Button
-                            size="lg"
                             variant="outline"
                             onClick={toggleSave}
                             disabled={saveLoading}
-                            className="px-4"
+                            className="px-3"
                             title={canUseCRM ? (isSaved ? "Remove from saved" : "Save creator") : "Upgrade to Pro to save creators"}
                           >
                             <Heart 
-                              className={`h-5 w-5 ${isSaved ? 'fill-primary text-primary' : ''}`} 
+                              className={`h-4 w-4 ${isSaved ? 'fill-primary text-primary' : ''}`} 
                             />
                           </Button>
                         )}
@@ -698,57 +717,9 @@ const CreatorProfile = () => {
             )}
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             {/* Main Content */}
-            <div className="md:col-span-2 space-y-8">
-              {/* Social Accounts */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Social Media Presence</CardTitle>
-                  <CardDescription>Connect with me on these platforms</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {creator.social_accounts.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-4">
-                      No social accounts linked yet
-                    </p>
-                  ) : (
-                    <div className="grid gap-4">
-                      {creator.social_accounts.map((account, index) => {
-                        const Icon = getPlatformIcon(account.platform);
-                        return (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-4 bg-muted rounded-lg"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-background rounded-lg">
-                                <Icon className="h-6 w-6 text-primary" />
-                              </div>
-                              <div>
-                                <p className="font-medium capitalize">{account.platform}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  @{account.username} • {formatFollowers(account.follower_count)} followers
-                                </p>
-                              </div>
-                            </div>
-                            {account.profile_url && (
-                              <a
-                                href={account.profile_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline text-sm"
-                              >
-                                Visit Profile
-                              </a>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+            <div className="md:col-span-2 space-y-6">
 
               {/* Reviews */}
               {creator.reviews.length > 0 && (
@@ -803,7 +774,7 @@ const CreatorProfile = () => {
                       No packages available yet
                     </p>
                   ) : (
-                    <div className="grid gap-4">
+                    <div className="grid gap-3">
                       {creator.services.map((service, index) => {
                         const packageType = service.service_type as any;
                         const packageInfo = getPackageInfo(packageType);
@@ -811,67 +782,48 @@ const CreatorProfile = () => {
                         return (
                           <div
                             key={index}
-                            className="border rounded-lg p-5 hover:shadow-md transition-shadow"
+                            className="border rounded-lg p-4 hover:shadow-md transition-shadow"
                           >
-                            <div className="flex items-start gap-4 mb-4">
-                              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <div className="flex items-start gap-3 mb-3">
+                              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                                 {getPackageIcon(packageType)}
                               </div>
-                              <div className="flex-1">
-                                <h3 className="font-heading font-semibold text-lg">
-                                  {packageInfo.name}
-                                </h3>
-                                <p className="text-sm text-muted-foreground mt-1">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <h3 className="font-heading font-semibold">
+                                    {packageInfo.name}
+                                  </h3>
+                                  <div className="flex-shrink-0 text-right">
+                                    {packageType === 'competition' ? (
+                                      <p className="text-sm font-medium text-muted-foreground">Contact</p>
+                                    ) : (
+                                      <DimmedPrice 
+                                        price={service.price_cents} 
+                                        canViewPrice={canViewPrice} 
+                                        size="md"
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                                <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">
                                   {packageInfo.description}
                                 </p>
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                {packageType === 'competition' ? (
-                                  <p className="text-lg font-semibold text-muted-foreground">Contact for pricing</p>
-                                ) : (
-                                  <DimmedPrice 
-                                    price={service.price_cents} 
-                                    canViewPrice={canViewPrice} 
-                                    size="lg"
-                                  />
-                                )}
                                 {packageInfo.duration && (
-                                  <Badge variant="outline" className="mt-1 text-xs">
+                                  <Badge variant="outline" className="mt-1.5 text-xs">
                                     {packageInfo.duration}
                                   </Badge>
                                 )}
                               </div>
                             </div>
 
-                            {/* Show package phases/deliverables */}
-                            {packageInfo.phases && packageInfo.phases.length > 0 && (
-                              <div className="bg-muted/50 rounded-lg p-3 mb-4">
-                                <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">What's Included</p>
-                                <div className="space-y-2">
-                                  {packageInfo.phases.slice(0, 2).map((phase: any, phaseIdx: number) => (
-                                    <div key={phaseIdx}>
-                                      <p className="text-xs font-medium text-foreground">{phase.title}</p>
-                                      <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                                        {phase.items.slice(0, 3).map((item: string, itemIdx: number) => (
-                                          <li key={itemIdx} className="flex items-center gap-1.5">
-                                            <span className="h-1 w-1 rounded-full bg-primary flex-shrink-0" />
-                                            {item}
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
                             {!isOwnProfile && (
                               <Button 
                                 className="w-full gradient-hero hover:opacity-90"
+                                size="sm"
                                 onClick={() => handleBookService(service)}
                               >
-                                <MessageCircle className="h-4 w-4 mr-2" />
-                                Inquire About This Package
+                                <MessageCircle className="h-4 w-4 mr-1.5" />
+                                Inquire
                               </Button>
                             )}
                           </div>
@@ -884,7 +836,7 @@ const CreatorProfile = () => {
             </div>
 
             {/* Sidebar */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle>Quick Stats</CardTitle>
