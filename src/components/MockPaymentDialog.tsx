@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { CreditCard, Lock, CheckCircle, AlertCircle } from "lucide-react";
 import { confirmMockPayment, type MockCardDetails } from "@/lib/stripe-mock";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface BookingOrderSummary {
   type: 'booking';
@@ -50,6 +51,12 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
   const isBooking = orderSummary.type === 'booking';
   const isSubscription = orderSummary.type === 'subscription';
 
+  // Field-level validation helpers
+  const isCardholderValid = cardholderName.trim().length > 0;
+  const isCardNumberValid = cardNumber.replace(/\s/g, "").length === 16;
+  const isExpiryValid = expiry.length === 5 && expiry.includes("/");
+  const isCvvValid = cvv.length >= 3;
+
   const formatCardNumber = (value: string) => {
     const numbers = value.replace(/\D/g, "");
     const groups = numbers.match(/.{1,4}/g);
@@ -79,8 +86,16 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
   const totalCents = orderSummary.priceCents;
 
   const handlePayment = async () => {
-    if (!cardNumber || !expiry || !cvv || !cardholderName) {
-      setErrorMessage("Please fill in all card details");
+    // Better validation with specific field errors
+    const errors: string[] = [];
+    
+    if (!cardholderName.trim()) errors.push("Cardholder name");
+    if (cardNumber.replace(/\s/g, "").length !== 16) errors.push("Card number (16 digits)");
+    if (expiry.length !== 5 || !expiry.includes("/")) errors.push("Expiry date (MM/YY)");
+    if (cvv.length < 3) errors.push("CVV (3 digits)");
+    
+    if (errors.length > 0) {
+      setErrorMessage(`Missing or invalid: ${errors.join(", ")}`);
       return;
     }
 
@@ -207,13 +222,25 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
             <div className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="cardholderName">Cardholder Name</Label>
-                <Input
-                  id="cardholderName"
-                  placeholder="John Doe"
-                  value={cardholderName}
-                  onChange={(e) => setCardholderName(e.target.value)}
-                  disabled={processing}
-                />
+                <div className="relative">
+                  <Input
+                    id="cardholderName"
+                    placeholder="John Doe"
+                    value={cardholderName}
+                    onChange={(e) => setCardholderName(e.target.value)}
+                    disabled={processing}
+                    className={cn("pr-8", cardholderName && (isCardholderValid ? "border-green-500" : "border-destructive"))}
+                  />
+                  {cardholderName && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {isCardholderValid ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-destructive" />
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -225,35 +252,67 @@ const MockPaymentDialog = ({ isOpen, onClose, onSuccess, orderSummary }: MockPay
                     value={cardNumber}
                     onChange={handleCardNumberChange}
                     disabled={processing}
-                    className="pl-10"
+                    className={cn("pl-10 pr-8", cardNumber && (isCardNumberValid ? "border-green-500" : "border-destructive"))}
                   />
                   <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  {cardNumber && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {isCardNumberValid ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-destructive" />
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="expiry">Expiry Date</Label>
-                  <Input
-                    id="expiry"
-                    placeholder="MM/YY"
-                    value={expiry}
-                    onChange={handleExpiryChange}
-                    disabled={processing}
-                    maxLength={5}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="expiry"
+                      placeholder="MM/YY"
+                      value={expiry}
+                      onChange={handleExpiryChange}
+                      disabled={processing}
+                      maxLength={5}
+                      className={cn("pr-8", expiry && (isExpiryValid ? "border-green-500" : "border-destructive"))}
+                    />
+                    {expiry && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {isExpiryValid ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cvv">CVV</Label>
-                  <Input
-                    id="cvv"
-                    placeholder="123"
-                    value={cvv}
-                    onChange={handleCvvChange}
-                    disabled={processing}
-                    maxLength={3}
-                    type="password"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="cvv"
+                      placeholder="123"
+                      value={cvv}
+                      onChange={handleCvvChange}
+                      disabled={processing}
+                      maxLength={3}
+                      className={cn("pr-8", cvv && (isCvvValid ? "border-green-500" : "border-destructive"))}
+                    />
+                    {cvv && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {isCvvValid ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
