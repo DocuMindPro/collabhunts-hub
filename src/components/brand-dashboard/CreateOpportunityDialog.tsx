@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { EVENT_PACKAGES } from "@/config/packages";
 import { DollarSign, Gift } from "lucide-react";
+import AiBioSuggestions from "@/components/AiBioSuggestions";
 
 interface CreateOpportunityDialogProps {
   brandProfileId: string;
@@ -128,6 +129,13 @@ const CreateOpportunityDialog = ({
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               className="h-11"
             />
+            <AiBioSuggestions
+              text={formData.title}
+              onSelect={(text) => setFormData(prev => ({ ...prev, title: text }))}
+              type="campaign_title"
+              minLength={10}
+              label="title"
+            />
           </div>
 
           {/* Description */}
@@ -139,6 +147,13 @@ const CreateOpportunityDialog = ({
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               rows={3}
+            />
+            <AiBioSuggestions
+              text={formData.description}
+              onSelect={(text) => setFormData(prev => ({ ...prev, description: text }))}
+              type="campaign_description"
+              minLength={50}
+              label="description"
             />
           </div>
 

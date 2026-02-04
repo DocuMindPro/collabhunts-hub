@@ -19,7 +19,7 @@ serve(async (req) => {
       bio: 20,
       description: 20,
       campaign_title: 10,
-      campaign_description: 20,
+      campaign_description: 50,
       display_name: 5,
       title: 5
     };
