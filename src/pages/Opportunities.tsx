@@ -8,10 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Calendar, MapPin, Users, DollarSign, Clock, Search, Gift, Briefcase, Building2 } from "lucide-react";
+import { Calendar, MapPin, Users, DollarSign, Clock, Search, Gift, Briefcase, Building2, AlertCircle, BarChart3 } from "lucide-react";
 import { EVENT_PACKAGES, PackageType } from "@/config/packages";
+import { FOLLOWER_RANGES, checkFollowerEligibility, formatFollowerRanges, formatFollowerCount, getCombinedRange } from "@/config/follower-ranges";
 import ApplyOpportunityDialog from "@/components/opportunities/ApplyOpportunityDialog";
 import { toast } from "@/hooks/use-toast";
 
@@ -30,6 +32,7 @@ interface BrandOpportunity {
   spots_filled: number;
   requirements: string | null;
   min_followers: number | null;
+  follower_ranges: string[] | null;
   required_categories: string[] | null;
   status: string;
   application_deadline: string | null;
@@ -57,6 +60,7 @@ const Opportunities = () => {
   const [appliedOpportunities, setAppliedOpportunities] = useState<string[]>([]);
   const [isCreator, setIsCreator] = useState<boolean | null>(null);
   const [isBrand, setIsBrand] = useState<boolean | null>(null);
+  const [creatorMaxFollowers, setCreatorMaxFollowers] = useState<number>(0);
 
   useEffect(() => {
     checkUserAccess();
@@ -90,6 +94,20 @@ const Opportunities = () => {
 
     if (creatorProfile) {
       setCreatorProfileId(creatorProfile.id);
+      
+      // Fetch creator's social accounts to get max follower count
+      const { data: socialAccounts } = await supabase
+        .from("creator_social_accounts")
+        .select("follower_count")
+        .eq("creator_profile_id", creatorProfile.id);
+      
+      if (socialAccounts && socialAccounts.length > 0) {
+        const maxFollowers = Math.max(
+          ...socialAccounts.map(a => Number(a.follower_count) || 0)
+        );
+        setCreatorMaxFollowers(maxFollowers);
+      }
+      
       // Fetch applied opportunities
       const { data: applications } = await supabase
         .from("opportunity_applications")
@@ -338,6 +356,11 @@ const Opportunities = () => {
                 const packageInfo = opportunity.package_type 
                   ? EVENT_PACKAGES[opportunity.package_type as PackageType] 
                   : null;
+                
+                // Check follower eligibility
+                const isEligible = checkFollowerEligibility(creatorMaxFollowers, opportunity.follower_ranges);
+                const hasFollowerRequirement = opportunity.follower_ranges && opportunity.follower_ranges.length > 0;
+                const combinedRange = getCombinedRange(opportunity.follower_ranges);
 
                 return (
                   <Card key={opportunity.id} className="flex flex-col hover:shadow-md transition-shadow">
@@ -434,11 +457,23 @@ const Opportunities = () => {
                         )}
                       </div>
 
-                      {/* Requirements */}
-                      {opportunity.min_followers && (
-                        <p className="text-xs text-muted-foreground mb-4">
-                          Min. {opportunity.min_followers.toLocaleString()} followers required
-                        </p>
+                      {/* Follower Range Requirement */}
+                      {hasFollowerRequirement && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
+                          <BarChart3 className="h-3 w-3 shrink-0" />
+                          <span>{formatFollowerRanges(opportunity.follower_ranges)}</span>
+                        </div>
+                      )}
+
+                      {/* Eligibility Warning */}
+                      {!isEligible && hasFollowerRequirement && (
+                        <Alert variant="destructive" className="mb-4 py-2">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription className="text-xs">
+                            Your highest follower count ({formatFollowerCount(creatorMaxFollowers)}) doesn't meet this opportunity's requirements
+                            {combinedRange && ` (${formatFollowerCount(combinedRange.min)} - ${combinedRange.max === Infinity ? '500K+' : formatFollowerCount(combinedRange.max)})`}.
+                          </AlertDescription>
+                        </Alert>
                       )}
 
                       {/* Apply Button */}
@@ -450,6 +485,10 @@ const Opportunities = () => {
                         ) : spotsLeft === 0 ? (
                           <Button variant="outline" className="w-full" disabled>
                             Filled
+                          </Button>
+                        ) : !isEligible ? (
+                          <Button variant="outline" className="w-full" disabled>
+                            Not Eligible
                           </Button>
                         ) : (
                           <Button 
