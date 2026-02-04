@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mail, Phone, Clock, MessageSquare, Zap, Package, MapPin, Users } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Mail, Phone, Clock, MessageSquare, Zap, Package, MapPin, Users, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +23,7 @@ interface BookingDialogProps {
     service_type: string;
     price_cents: number;
     delivery_days: number;
+    story_upsell_price_cents?: number | null;
   } | null;
   creatorProfileId: string;
   creatorName?: string;
@@ -37,6 +39,7 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId, creatorName
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [includeStories, setIncludeStories] = useState(false);
 
   useEffect(() => {
     const checkBrandProfile = async () => {
@@ -59,6 +62,7 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId, creatorName
 
     if (isOpen) {
       checkBrandProfile();
+      setIncludeStories(false); // Reset on open
     }
   }, [isOpen]);
 
@@ -73,8 +77,16 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId, creatorName
   // Get package config from our central config
   const packageConfig = EVENT_PACKAGES[serviceType as PackageType];
   
+  // Check if stories upsell is available
+  const hasStoriesUpsell = service.story_upsell_price_cents && service.story_upsell_price_cents > 0;
+  const storiesPrice = hasStoriesUpsell ? (service.story_upsell_price_cents! / 100).toFixed(0) : "0";
+  
   const serviceName = packageConfig?.name || service.service_type.replace(/_/g, " ");
-  const price = (service.price_cents / 100).toFixed(0);
+  const basePrice = service.price_cents / 100;
+  const totalPrice = includeStories && hasStoriesUpsell 
+    ? basePrice + (service.story_upsell_price_cents! / 100) 
+    : basePrice;
+  const price = totalPrice.toFixed(0);
   
   // Email content for managed events
   const emailSubject = encodeURIComponent(`Managed Event Inquiry: ${serviceName}`);
@@ -135,7 +147,10 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId, creatorName
         service_type: service.service_type,
         price_cents: service.price_cents,
         delivery_days: service.delivery_days,
-        creator_name: creatorName
+        creator_name: creatorName,
+        include_stories: includeStories,
+        story_upsell_price_cents: includeStories ? service.story_upsell_price_cents : null,
+        total_price_cents: Math.round(totalPrice * 100)
       }));
 
       // Check if conversation exists
@@ -217,12 +232,28 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId, creatorName
             {/* Pricing - different display for consultation vs direct */}
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">
-                {requiresConsultation ? "Pricing:" : "Creator Price:"}
+                {requiresConsultation ? "Pricing:" : "Base Price:"}
               </span>
               <span className="font-medium">
-                {requiresConsultation ? "Contact for quote" : `$${price}`}
+                {requiresConsultation ? "Contact for quote" : `$${basePrice.toFixed(0)}`}
               </span>
             </div>
+            
+            {/* Stories upsell included indicator */}
+            {includeStories && hasStoriesUpsell && (
+              <div className="flex justify-between text-primary">
+                <span className="text-sm">+ Instagram Stories:</span>
+                <span className="font-medium">+${storiesPrice}</span>
+              </div>
+            )}
+            
+            {/* Total if different from base */}
+            {includeStories && hasStoriesUpsell && (
+              <div className="flex justify-between border-t pt-2">
+                <span className="text-sm font-medium">Total:</span>
+                <span className="font-bold">${price}</span>
+              </div>
+            )}
             
             {/* Delivery days - only for at-home packages */}
             {isHomePackage && service.delivery_days > 0 && (
@@ -250,6 +281,32 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId, creatorName
               </div>
             )}
           </div>
+          
+          {/* Stories Upsell Option */}
+          {!requiresConsultation && hasStoriesUpsell && (
+            <Card className="border-dashed">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Camera className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium text-sm">Add Instagram Stories</p>
+                      <p className="text-xs text-muted-foreground">
+                        Extra story coverage for more reach
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-primary">+${storiesPrice}</span>
+                    <Checkbox
+                      checked={includeStories}
+                      onCheckedChange={(checked) => setIncludeStories(!!checked)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Conditional CTA based on package type */}
           {requiresConsultation ? (
