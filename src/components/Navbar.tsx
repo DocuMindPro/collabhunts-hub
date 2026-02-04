@@ -23,6 +23,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Logo from "@/components/Logo";
 import { isNativePlatform, safeNativeAsync } from "@/lib/supabase-native";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,7 +34,7 @@ const Navbar = () => {
   const [creatorMenuOpen, setCreatorMenuOpen] = useState(false);
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   const [hasNewUpdates, setHasNewUpdates] = useState(false);
-
+  const { unreadCount: unreadMessages, getMessagesLink } = useUnreadMessages();
   const creatorTabs = [
     { value: "overview", label: "Overview", icon: BarChart3 },
     { value: "availability", label: "Availability", icon: Calendar },
@@ -234,6 +235,18 @@ const Navbar = () => {
                 >
                   <BookOpen className="h-4 w-4" />
                 </Link>
+                <Link 
+                  to={getMessagesLink()} 
+                  className="relative text-foreground/80 hover:text-primary transition-colors"
+                  title="Messages"
+                >
+                  <MessageSquare className="h-5 w-5" />
+                  {unreadMessages > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-4 min-w-[16px] flex items-center justify-center px-1">
+                      {unreadMessages > 99 ? "99+" : unreadMessages}
+                    </span>
+                  )}
+                </Link>
                 <Notifications />
                 {isAdmin && (
                   <Link to="/admin">
@@ -326,8 +339,19 @@ const Navbar = () => {
                     </Link>
                   ))}
                   
-                  {user ? (
+                    {user ? (
                     <>
+                      <Link to={getMessagesLink()} onClick={() => setIsOpen(false)}>
+                        <Button variant="ghost" className="w-full gap-2 justify-start relative">
+                          <MessageSquare className="h-4 w-4" />
+                          Messages
+                          {unreadMessages > 0 && (
+                            <span className="ml-auto bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1.5">
+                              {unreadMessages > 99 ? "99+" : unreadMessages}
+                            </span>
+                          )}
+                        </Button>
+                      </Link>
                       <Link to="/knowledge-base" onClick={() => setIsOpen(false)}>
                         <Button variant="ghost" className="w-full gap-2 justify-start">
                           <BookOpen className="h-4 w-4" />
