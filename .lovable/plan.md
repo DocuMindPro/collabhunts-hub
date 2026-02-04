@@ -1,118 +1,142 @@
 
 
-# Add Cascading Location Selection to Opportunity Creation
+# Auto-Populate Package Features in Opportunity Creation
 
 ## Overview
 
-Implement a cascading country/city dropdown in the "Post an Opportunity" dialog that reuses the existing location data system, and make country a required field during brand signup.
+When a brand selects a package type (other than Custom Experience), the form should:
+1. Auto-display the locked package deliverables from `EVENT_PACKAGES`
+2. Only allow brands to add special requirements in a separate field
+3. For "Custom Experience" only, enable full description customization
 
 ---
 
-## Changes Summary
+## Current vs New Behavior
 
-| Component | Change |
-|-----------|--------|
-| `CreateOpportunityDialog.tsx` | Replace text inputs with CountrySelect and LocationSelect components, default to Lebanon |
-| `BrandSignup.tsx` | Default country to Lebanon ("LB") and make it required for form submission |
+| Scenario | Current | New |
+|----------|---------|-----|
+| Package selected (not custom) | Empty description textarea, brand writes anything | Auto-display package `includes` items as locked/read-only, rename field to "What's Included" |
+| Custom Experience selected | Empty description textarea | Show editable description textarea with AI assist |
+| No package selected | Empty description textarea | Show nothing or prompt to select package first |
 
 ---
 
-## 1. Update Create Opportunity Dialog
+## Visual Mockup
 
-### Current State (Lines 271-293)
-The location section uses plain text inputs for City and Country:
-```typescript
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-  <Input placeholder="e.g., Beirut" ... />  // City
-  <Input placeholder="e.g., Lebanon" ... /> // Country
-</div>
-```
-
-### New Behavior
-1. **Country Dropdown** - Use existing `CountrySelect` component, defaulting to "LB" (Lebanon)
-2. **City Dropdown** - Use existing `LocationSelect` component, filtered by selected country
-3. **State Selection** - For countries with state/region data (like Lebanon), add a region selector that filters cities
-4. **Fallback** - If country has no predefined location data, city remains a text input
-
-### Form Data Changes
-```typescript
-const [formData, setFormData] = useState({
-  // ... existing fields
-  location_city: "",
-  location_country: "LB",        // Default to Lebanon
-  location_state: "",            // NEW: For region selection
-});
-```
-
-### Visual Layout (3 columns on desktop)
+**When "Social Boost" is selected:**
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  Country *              Region              City        │
-│  ┌──────────────┐      ┌──────────────┐   ┌───────────┐ │
-│  │ 🇱🇧 Lebanon ▼│      │ Mount Leb ▼ │   │ Jounieh ▼ │ │
-│  └──────────────┘      └──────────────┘   └───────────┘ │
+│  Package Type                                           │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │ Social Boost                               ▼    │    │
+│  └─────────────────────────────────────────────────┘    │
+│                                                         │
+│  What's Included (Standard Package)                     │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │ ✓ 1-2 hour venue visit                          │    │
+│  │ ✓ 1 Instagram Reel (permanent)                  │    │
+│  │ ✓ 1 TikTok video                                │    │
+│  │ ✓ 3 Instagram Stories                           │    │
+│  │ ✓ Tag & location in all posts                   │    │
+│  │ ✓ Honest review with CTA                        │    │
+│  └─────────────────────────────────────────────────┘    │
+│  🔒 These deliverables are fixed for this package       │
+│                                                         │
+│  Special Requirements (Optional)                        │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │ Must mention our new summer menu. Wear casual   │    │
+│  │ clothing, no competitor logos...                │    │
+│  └─────────────────────────────────────────────────┘    │
+│  [✨ Improve with AI]                                   │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### Implementation Details
-
-**Imports to add:**
-```typescript
-import CountrySelect from "@/components/CountrySelect";
-import LocationSelect from "@/components/LocationSelect";
-import { hasLocationData } from "@/config/country-locations";
+**When "Custom Experience" is selected:**
 ```
-
-**Updated form state:**
-- Add `location_state` field
-- Default `location_country` to "LB"
-
-**Reset logic:**
-- When country changes, reset state and city
-- When state changes, reset city
-
-**Location section replacement:**
-- 3-column grid: Country | State/Region | City
-- State selector only shows for countries with location data
-- City selector cascades from country and state
+┌─────────────────────────────────────────────────────────┐
+│  Package Type                                           │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │ Custom Experience                          ▼    │    │
+│  └─────────────────────────────────────────────────┘    │
+│                                                         │
+│  Description *                                          │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │ Describe your custom collaboration needs,       │    │
+│  │ deliverables expected, timeline...              │    │
+│  └─────────────────────────────────────────────────┘    │
+│  [✨ Improve with AI]                                   │
+│                                                         │
+│  Special Requirements (Optional)                        │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │ Any specific requirements for creators...       │    │
+│  └─────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 2. Update Brand Signup
+## Implementation Details
 
-### Current State (Line 48)
+### File: `CreateOpportunityDialog.tsx`
+
+**1. Derive package features dynamically**
+
 ```typescript
-const [locationCountry, setLocationCountry] = useState("");
+const selectedPackage = formData.package_type 
+  ? EVENT_PACKAGES[formData.package_type as keyof typeof EVENT_PACKAGES] 
+  : null;
+const isCustomPackage = formData.package_type === 'custom';
 ```
 
-Country is optional - no validation in handleSubmit.
+**2. Replace Description section with conditional rendering**
 
-### Changes
+When a standard package is selected:
+- Display a styled, read-only list of deliverables from `selectedPackage.includes`
+- Add a lock icon and helper text explaining these are fixed
+- Remove the AI suggestions for description (not needed - content is locked)
 
-1. **Default to Lebanon:**
-```typescript
-const [locationCountry, setLocationCountry] = useState("LB");
+When Custom Experience is selected:
+- Show the existing editable description textarea with AI assist
+- Make it required for custom packages
+
+**3. Update "Requirements" to "Special Requirements"**
+
+- Keep the requirements textarea for all package types
+- Update label to "Special Requirements (Optional)"
+- Update placeholder to clarify this is for additional notes beyond the standard package
+
+**4. Move Package Type selector before the description section**
+
+The package selection should come first so the form can react to it.
+
+---
+
+## Form Flow After Changes
+
+```
+1. Title *
+2. Package Type (dropdown) ← Moved up
+3. IF standard package → "What's Included" (read-only list)
+   IF custom → "Description *" (editable textarea)
+4. Event Date, Time
+5. Paid/Free toggle, Budget
+6. Spots Available
+7. Location (Country/Region/City)
+8. Special Requirements (editable textarea - all packages)
+9. Minimum Followers
 ```
 
-2. **Add Required Validation in handleSubmit:**
-```typescript
-if (!locationCountry) {
-  toast({
-    title: "Country Required",
-    description: "Please select your country",
-    variant: "destructive"
-  });
-  return;
-}
-```
+---
 
-3. **Update Label to show required indicator:**
-```typescript
-<Label htmlFor="country">Country *</Label>
-```
+## Code Changes Summary
 
-4. **Update button disabled logic** (optional, for UX):
-The form already blocks submission if required fields are missing via the early return.
+| Section | Change |
+|---------|--------|
+| Form state | No changes needed - `description` still used, auto-populated for standard packages |
+| Package Type | Move selector above description section |
+| Description | Replace with conditional: locked list OR editable textarea |
+| Requirements | Update label to "Special Requirements (Optional)" |
+| Submit logic | For standard packages, auto-generate description from `includes` array |
 
 ---
 
@@ -120,41 +144,26 @@ The form already blocks submission if required fields are missing via the early 
 
 | File | Changes |
 |------|---------|
-| `src/components/brand-dashboard/CreateOpportunityDialog.tsx` | Add CountrySelect + LocationSelect with cascading logic, default to Lebanon |
-| `src/pages/BrandSignup.tsx` | Default country to "LB", add required validation |
+| `src/components/brand-dashboard/CreateOpportunityDialog.tsx` | Conditional description rendering, locked deliverables display, reorder form fields |
 
 ---
 
-## Data Flow Diagram
+## Database Storage
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                Create Opportunity Dialog                    │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  Country: "LB" (default)                                    │
-│      │                                                      │
-│      ├── Has location data? (check COUNTRY_LOCATIONS)       │
-│      │       │                                              │
-│      │       ├── YES → Show Region dropdown                 │
-│      │       │              │                               │
-│      │       │              └── Filter cities by region     │
-│      │       │                       │                      │
-│      │       │                       └── City dropdown      │
-│      │       │                                              │
-│      │       └── NO → Show City text input (fallback)       │
-│      │                                                      │
-│      └── On change → Reset region & city                    │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
+For standard packages:
+- `description` column will store the auto-generated deliverables list (for display in opportunity listings)
+- `requirements` column stores brand's special requirements
+
+For custom packages:
+- `description` stores the brand's custom description
+- `requirements` stores additional requirements as before
 
 ---
 
 ## Benefits
 
-- **Consistent UX**: Reuses the same location selection system from creator onboarding
-- **Better Data Quality**: Standardized city names instead of free-text variations
-- **Lebanon-first**: Defaults to Lebanon as the primary market
-- **Flexible**: Falls back to text input for unsupported countries
+- **Clarity for brands**: They know exactly what they're getting with each package
+- **Consistency for creators**: Standard packages have predictable deliverables
+- **Flexibility where needed**: Custom Experience allows full customization
+- **Reduced errors**: Brands can't accidentally remove standard deliverables
 
