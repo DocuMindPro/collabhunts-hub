@@ -618,6 +618,52 @@ export const knowledgeBaseCategories: KBCategory[] = [
         order: 2
       },
       {
+        slug: "creator-badge-system",
+        title: "Creator Badge System: Vetted & Pro",
+        content: `
+          <h2>Two-Tier Trust Badges for Creators</h2>
+          <p>CollabHunts uses a two-tier badge system to help brands quickly identify trusted creators. Every approved creator receives badges that signal their trust level.</p>
+          
+          <h3>🛡️ Vetted Badge (Free)</h3>
+          <p>The green shield badge appears on every approved creator profile.</p>
+          <ul>
+            <li><strong>What it means:</strong> CollabHunts has reviewed and approved this creator's profile</li>
+            <li><strong>How to get it:</strong> Automatically applied when your profile is approved</li>
+            <li><strong>Cost:</strong> Free - included with platform membership</li>
+          </ul>
+          
+          <h3>👑 Pro Creator Badge ($99/year)</h3>
+          <p>The gold crown badge signals premium, verified creators who have invested in their professional presence.</p>
+          <ul>
+            <li><strong>What it means:</strong> A premium creator committed to quality and professionalism</li>
+            <li><strong>How to get it:</strong> Purchase from Dashboard > Profile tab</li>
+            <li><strong>Cost:</strong> $99/year</li>
+          </ul>
+          
+          <h3>Pro Creator Benefits</h3>
+          <ul>
+            <li>Gold crown badge displayed on your profile and in search results</li>
+            <li>Higher visibility in brand searches</li>
+            <li>Premium positioning in the marketplace</li>
+            <li>Increased trust signal to potential brand partners</li>
+          </ul>
+          
+          <h3>How Badges Appear</h3>
+          <p>Badges appear next to your name throughout the platform:</p>
+          <ul>
+            <li>In marketplace search results</li>
+            <li>On your profile page header</li>
+            <li>In brand dashboards and conversations</li>
+          </ul>
+          
+          <div class="alert alert-info">
+            <strong>Pro Tip:</strong> Combine Pro Creator status with Boost packages for maximum visibility and the highest chance of landing premium collaborations!
+          </div>
+        `,
+        roles: ['creator'],
+        order: 3
+      },
+      {
         slug: "best-campaign-applications",
         title: "Applying to Brand Opportunities",
         content: `

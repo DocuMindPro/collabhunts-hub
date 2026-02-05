@@ -25,6 +25,9 @@ import AdPlacement from "@/components/AdPlacement";
 import DimmedPriceRange from "@/components/DimmedPriceRange";
 import CountrySelect from "@/components/CountrySelect";
 import LocationSelect from "@/components/LocationSelect";
+import VettedBadge from "@/components/VettedBadge";
+import ProCreatorBadge from "@/components/ProCreatorBadge";
+import { isPast } from "date-fns";
 
 interface CreatorWithDetails {
   id: string;
@@ -41,6 +44,8 @@ interface CreatorWithDetails {
   show_pricing_to_public: boolean | null;
   open_to_invitations: boolean | null;
   is_featured: boolean;
+  verification_payment_status: string | null;
+  verification_expires_at: string | null;
   social_accounts: Array<{
     platform: string;
     username: string;
@@ -51,6 +56,13 @@ interface CreatorWithDetails {
     price_cents: number;
   }>;
 }
+
+// Helper to check if creator has active Pro status
+const isCreatorPro = (creator: CreatorWithDetails) => {
+  if (creator.verification_payment_status !== 'paid') return false;
+  if (!creator.verification_expires_at) return false;
+  return !isPast(new Date(creator.verification_expires_at));
+};
 
 const GENDERS = ["Male", "Female", "Non-binary"];
 const LANGUAGES = ["English", "Spanish", "French", "German", "Portuguese", "Arabic", "Hindi", "Chinese", "Japanese", "Korean"];
@@ -202,6 +214,8 @@ const Influencers = () => {
           secondary_languages,
           show_pricing_to_public,
           open_to_invitations,
+          verification_payment_status,
+          verification_expires_at,
           creator_social_accounts(platform, username, follower_count),
           creator_services(service_type, price_cents)
         `)
@@ -237,12 +251,18 @@ const Influencers = () => {
         show_pricing_to_public: creator.show_pricing_to_public,
         open_to_invitations: creator.open_to_invitations,
         is_featured: featuredCreatorIds.has(creator.id),
+        verification_payment_status: creator.verification_payment_status,
+        verification_expires_at: creator.verification_expires_at,
         social_accounts: creator.creator_social_accounts || [],
         services: creator.creator_services || []
       }));
 
-      // Sort: featured creators first, then by created_at
+      // Sort: Pro creators first, then featured, then rest
       formattedCreators.sort((a, b) => {
+        const aIsPro = isCreatorPro(a);
+        const bIsPro = isCreatorPro(b);
+        if (aIsPro && !bIsPro) return -1;
+        if (!aIsPro && bIsPro) return 1;
         if (a.is_featured && !b.is_featured) return -1;
         if (!a.is_featured && b.is_featured) return 1;
         return 0;
@@ -449,9 +469,13 @@ const Influencers = () => {
 
             {/* Creator Info - Bottom Overlay */}
             <div className="absolute bottom-0 left-0 right-0 p-4">
-              <h3 className="font-heading font-semibold text-lg text-white mb-0.5 line-clamp-1">
-                {creator.display_name}
-              </h3>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <h3 className="font-heading font-semibold text-lg text-white line-clamp-1">
+                  {creator.display_name}
+                </h3>
+                <VettedBadge size="sm" className="text-green-400" showTooltip={false} />
+                {isCreatorPro(creator) && <ProCreatorBadge size="sm" className="text-amber-400" showTooltip={false} />}
+              </div>
               <p className="text-sm text-white/80 line-clamp-1">
                 {creator.categories[0] || "Content Creator"}
               </p>
