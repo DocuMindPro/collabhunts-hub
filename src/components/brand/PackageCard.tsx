@@ -1,4 +1,4 @@
-import { Clock, CheckCircle, Sparkles, MessageSquare } from "lucide-react";
+import { Clock, CheckCircle, Sparkles, MessageSquare, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -13,11 +13,15 @@ interface PackageCardProps {
   pkg: EventPackage;
 }
 
+// Standard packages that should show "Find Creators" button
+const STANDARD_PACKAGES: PackageType[] = ['unbox_review', 'social_boost', 'meet_greet'];
+
 const PackageCard = ({ pkgType, pkg }: PackageCardProps) => {
   const hasUpsells = pkg.upsells && pkg.upsells.length > 0;
   const hasVariants = pkg.variants && pkg.variants.length > 0;
   const hasPhases = pkg.phases && pkg.phases.length > 0;
   const isCustomPricing = pkg.priceRange === null;
+  const isStandardPackage = STANDARD_PACKAGES.includes(pkgType);
 
   // Generate contact subject based on package name
   const contactSubject = encodeURIComponent(`${pkg.name} Inquiry`);
@@ -114,15 +118,24 @@ const PackageCard = ({ pkgType, pkg }: PackageCardProps) => {
         </div>
       )}
 
-      {/* Contact Us button for custom pricing packages */}
+      {/* Action button based on package type */}
       {isCustomPricing && (
         <div className="mt-auto pt-4 border-t border-border">
-          <Button asChild className="w-full" variant="default">
-            <Link to={`/contact?subject=${contactSubject}`}>
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Contact Us
-            </Link>
-          </Button>
+          {isStandardPackage ? (
+            <Button asChild className="w-full" variant="default">
+              <Link to="/influencers">
+                <Search className="h-4 w-4 mr-2" />
+                Find Creators
+              </Link>
+            </Button>
+          ) : (
+            <Button asChild className="w-full" variant="default">
+              <Link to={`/contact?subject=${contactSubject}`}>
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Contact Us
+              </Link>
+            </Button>
+          )}
         </div>
       )}
 
