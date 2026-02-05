@@ -5,10 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { format, addYears, isPast } from "date-fns";
-import { Shield, CheckCircle, Clock, Sparkles } from "lucide-react";
+import { Crown, CheckCircle, Clock, Sparkles } from "lucide-react";
 import MockPaymentDialog from "@/components/payments/MockPaymentDialog";
 
-const VERIFICATION_FEE_CENTS = 9900; // $99/year
+const PRO_FEE_CENTS = 9900; // $99/year
 
 interface VerificationBadgeCardProps {
   creatorProfileId: string;
@@ -99,24 +99,24 @@ const VerificationBadgeCard = ({ creatorProfileId }: VerificationBadgeCardProps)
 
   return (
     <>
-      <Card className={isActive ? "border-primary/50 bg-primary/5" : ""}>
+      <Card className={isActive ? "border-amber-500/50 bg-amber-500/5" : ""}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary" />
-            Verification Badge
+            <Crown className="h-5 w-5 text-amber-500" />
+            Pro Creator Badge
           </CardTitle>
           <CardDescription>
-            Stand out with a verified badge on your profile
+            Stand out with a premium Pro badge on your profile
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {isActive ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-green-600" />
+              <div className="flex items-center gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <CheckCircle className="h-6 w-6 text-amber-600" />
                 <div>
-                  <p className="font-medium text-green-700 dark:text-green-400">
-                    Verified Badge Active
+                  <p className="font-medium text-amber-700 dark:text-amber-400">
+                    Pro Creator Active
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Expires on {format(new Date(verificationStatus.expires_at!), "MMMM d, yyyy")}
@@ -143,54 +143,54 @@ const VerificationBadgeCard = ({ creatorProfileId }: VerificationBadgeCardProps)
                 <Clock className="h-6 w-6 text-amber-600" />
                 <div>
                   <p className="font-medium text-amber-700 dark:text-amber-400">
-                    Verification Expired
+                    Pro Status Expired
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Renew to restore your verified badge
+                    Renew to restore your Pro Creator badge
                   </p>
                 </div>
               </div>
-              <Button onClick={() => setShowPaymentDialog(true)} className="w-full">
-                <Shield className="h-4 w-4 mr-2" />
-                Renew Verification - $99/year
+              <Button onClick={() => setShowPaymentDialog(true)} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+                <Crown className="h-4 w-4 mr-2" />
+                Renew Pro - $99/year
               </Button>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <Sparkles className="h-5 w-5 text-primary mt-0.5" />
+                  <Sparkles className="h-5 w-5 text-amber-500 mt-0.5" />
                   <div>
-                    <p className="font-medium">Boost Your Credibility</p>
+                    <p className="font-medium">Premium Visibility</p>
                     <p className="text-sm text-muted-foreground">
-                      A verified badge shows brands you're a trusted creator
+                      A gold Pro badge shows brands you're a top-tier creator
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                  <CheckCircle className="h-5 w-5 text-amber-500 mt-0.5" />
                   <div>
                     <p className="font-medium">Stand Out in Search</p>
                     <p className="text-sm text-muted-foreground">
-                      Verified creators appear higher in brand searches
+                      Pro creators appear higher in brand searches
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg">
                 <div>
-                  <p className="font-semibold">Annual Verification</p>
+                  <p className="font-semibold">Pro Creator Badge</p>
                   <p className="text-sm text-muted-foreground">One-time yearly payment</p>
                 </div>
-                <Badge variant="secondary" className="text-lg px-3 py-1">
+                <Badge className="text-lg px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
                   $99/year
                 </Badge>
               </div>
 
-              <Button onClick={() => setShowPaymentDialog(true)} className="w-full">
-                <Shield className="h-4 w-4 mr-2" />
-                Get Verified
+              <Button onClick={() => setShowPaymentDialog(true)} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+                <Crown className="h-4 w-4 mr-2" />
+                Become Pro
               </Button>
             </div>
           )}
@@ -200,12 +200,12 @@ const VerificationBadgeCard = ({ creatorProfileId }: VerificationBadgeCardProps)
       <MockPaymentDialog
         open={showPaymentDialog}
         onOpenChange={setShowPaymentDialog}
-        title="Verification Badge"
-        description="Get verified to boost your credibility with brands"
+        title="Pro Creator Badge"
+        description="Become a Pro Creator to boost your visibility with brands"
         lineItems={[
           {
-            label: "Annual Verification Badge",
-            amountCents: VERIFICATION_FEE_CENTS,
+            label: "Annual Pro Creator Badge",
+            amountCents: PRO_FEE_CENTS,
           },
         ]}
         onSuccess={handlePaymentSuccess}
