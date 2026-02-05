@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import SocialAccountsSection from "./SocialAccountsSection";
 import PortfolioUploadSection from "./PortfolioUploadSection";
+import VerificationBadgeCard from "./VerificationBadgeCard";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
 import PhoneInput from "@/components/PhoneInput";
 
@@ -970,6 +971,9 @@ const ProfileTab = () => {
 
 
       <SocialAccountsSection creatorProfileId={profile.id} />
+
+      {/* Verification Badge Section */}
+      <VerificationBadgeCard creatorProfileId={profile.id} />
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving}>

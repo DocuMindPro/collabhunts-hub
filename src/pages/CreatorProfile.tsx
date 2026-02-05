@@ -18,6 +18,8 @@ import MobilePortfolioCarousel from "@/components/MobilePortfolioCarousel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import DimmedPrice from "@/components/DimmedPrice";
 import DimmedPriceRange from "@/components/DimmedPriceRange";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { isPast } from "date-fns";
 
 interface CreatorData {
   id: string;
@@ -34,6 +36,8 @@ interface CreatorData {
   categories: string[];
   show_pricing_to_public: boolean;
   open_to_invitations: boolean;
+  verification_payment_status: string | null;
+  verification_expires_at: string | null;
   social_accounts: Array<{
     platform: string;
     username: string;
@@ -65,6 +69,13 @@ interface CreatorData {
     thumbnail_url: string | null;
   }>;
 }
+
+// Helper to check if creator has active verification
+const isVerified = (creator: CreatorData) => {
+  if (creator.verification_payment_status !== 'paid') return false;
+  if (!creator.verification_expires_at) return false;
+  return !isPast(new Date(creator.verification_expires_at));
+};
 
 const CreatorProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -352,6 +363,8 @@ const CreatorProfile = () => {
         categories: profileData.categories,
         show_pricing_to_public: profileData.show_pricing_to_public !== false,
         open_to_invitations: profileData.open_to_invitations ?? false,
+        verification_payment_status: profileData.verification_payment_status,
+        verification_expires_at: profileData.verification_expires_at,
         social_accounts: socialData || [],
         services: servicesData || [],
         reviews,
@@ -557,9 +570,12 @@ const CreatorProfile = () => {
             {isMobile ? (
               <div className="text-center space-y-3">
                 <div className="flex items-center justify-center gap-3 flex-wrap">
-                  <h1 className="text-2xl font-heading font-bold">
-                    {creator.display_name}
-                  </h1>
+                  <div className="flex items-center gap-1.5">
+                    <h1 className="text-2xl font-heading font-bold">
+                      {creator.display_name}
+                    </h1>
+                    {isVerified(creator) && <VerifiedBadge size="md" />}
+                  </div>
                   <div className="flex items-center gap-1 bg-primary/10 px-2.5 py-1 rounded-full">
                     <Star className="h-4 w-4 fill-primary text-primary" />
                     <span className="font-semibold text-sm">{creator.avgRating.toFixed(1)}</span>
@@ -625,9 +641,12 @@ const CreatorProfile = () => {
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-start gap-2 flex-wrap mb-1">
-                    <h1 className="text-2xl font-heading font-bold">
-                      {creator.display_name}
-                    </h1>
+                    <div className="flex items-center gap-1.5">
+                      <h1 className="text-2xl font-heading font-bold">
+                        {creator.display_name}
+                      </h1>
+                      {isVerified(creator) && <VerifiedBadge size="md" />}
+                    </div>
                     <div className="flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded-full">
                       <Star className="h-3.5 w-3.5 fill-primary text-primary" />
                       <span className="font-semibold text-sm">{creator.avgRating.toFixed(1)}</span>
