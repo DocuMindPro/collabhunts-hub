@@ -1217,6 +1217,98 @@ export type Database = {
           },
         ]
       }
+      creator_agreements: {
+        Row: {
+          brand_profile_id: string
+          completed_at: string | null
+          confirmed_at: string | null
+          content: string
+          conversation_id: string | null
+          created_at: string
+          creator_profile_id: string
+          declined_at: string | null
+          deliverables: Json | null
+          duration_hours: number | null
+          event_date: string | null
+          event_time: string | null
+          id: string
+          message_id: string | null
+          proposed_price_cents: number
+          status: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          brand_profile_id: string
+          completed_at?: string | null
+          confirmed_at?: string | null
+          content: string
+          conversation_id?: string | null
+          created_at?: string
+          creator_profile_id: string
+          declined_at?: string | null
+          deliverables?: Json | null
+          duration_hours?: number | null
+          event_date?: string | null
+          event_time?: string | null
+          id?: string
+          message_id?: string | null
+          proposed_price_cents: number
+          status?: string
+          template_type: string
+          updated_at?: string
+        }
+        Update: {
+          brand_profile_id?: string
+          completed_at?: string | null
+          confirmed_at?: string | null
+          content?: string
+          conversation_id?: string | null
+          created_at?: string
+          creator_profile_id?: string
+          declined_at?: string | null
+          deliverables?: Json | null
+          duration_hours?: number | null
+          event_date?: string | null
+          event_time?: string | null
+          id?: string
+          message_id?: string | null
+          proposed_price_cents?: number
+          status?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_agreements_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_agreements_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_agreements_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_agreements_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_notes: {
         Row: {
           brand_profile_id: string

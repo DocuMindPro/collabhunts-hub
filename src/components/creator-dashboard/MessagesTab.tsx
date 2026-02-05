@@ -7,14 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Send, MessageSquare, ArrowLeft, Circle, FileText } from "lucide-react";
+import { Send, MessageSquare, ArrowLeft, Circle, FileText, ScrollText } from "lucide-react";
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 import MessageReadReceipt from "@/components/chat/MessageReadReceipt";
 import PackageInquiryMessage, { isPackageInquiry } from "@/components/chat/PackageInquiryMessage";
 import OfferMessage, { isOfferMessage } from "@/components/chat/OfferMessage";
+import AgreementMessage from "@/components/chat/AgreementMessage";
 import SendOfferDialog from "@/components/chat/SendOfferDialog";
+import SendAgreementDialog from "@/components/agreements/SendAgreementDialog";
 import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 
 interface Conversation {
@@ -47,6 +49,7 @@ interface OnlineStatus {
 const MessagesTab = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showOfferDialog, setShowOfferDialog] = useState(false);
+  const [showAgreementDialog, setShowAgreementDialog] = useState(false);
   const [prefillPackageData, setPrefillPackageData] = useState<{
     serviceType: string;
     priceCents: number;
@@ -445,6 +448,17 @@ const MessagesTab = () => {
                   const showAvatar = !isOwn && (msgIndex === 0 || group.messages[msgIndex - 1]?.sender_id !== msg.sender_id);
                   const isPackageInquiryMsg = isPackageInquiry(msg.content);
                   const isOffer = isOfferMessage(msg.content);
+                  const isAgreement = msg.message_type === "agreement";
+                  
+                  // Parse agreement content if it's an agreement message
+                  let agreementContent = null;
+                  if (isAgreement) {
+                    try {
+                      agreementContent = JSON.parse(msg.content);
+                    } catch (e) {
+                      console.error("Failed to parse agreement content:", e);
+                    }
+                  }
                   
                   return (
                     <div
@@ -463,7 +477,13 @@ const MessagesTab = () => {
                           )}
                         </div>
                       )}
-                      {isOffer ? (
+                      {isAgreement && agreementContent ? (
+                        <AgreementMessage 
+                          messageContent={agreementContent}
+                          isOwnMessage={isOwn}
+                          onAgreementUpdated={() => fetchMessages(selectedConversation || "")}
+                        />
+                      ) : isOffer ? (
                         <OfferMessage 
                           content={msg.content} 
                           isOwn={isOwn} 
@@ -510,6 +530,15 @@ const MessagesTab = () => {
             <Button
               variant="outline"
               size="icon"
+              onClick={() => setShowAgreementDialog(true)}
+              title="Send Agreement"
+              className="shrink-0"
+            >
+              <ScrollText className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
               onClick={() => setShowOfferDialog(true)}
               title="Send Offer"
               className="shrink-0"
@@ -528,6 +557,18 @@ const MessagesTab = () => {
             </Button>
           </div>
         </div>
+
+        {/* Send Agreement Dialog */}
+        {creatorProfileId && (
+          <SendAgreementDialog
+            open={showAgreementDialog}
+            onOpenChange={setShowAgreementDialog}
+            conversationId={selectedConversation || ""}
+            creatorProfileId={creatorProfileId}
+            brandProfileId={selectedConvo.brand_profile_id}
+            onAgreementSent={() => fetchMessages(selectedConversation || "")}
+          />
+        )}
 
         {/* Send Offer Dialog */}
         {creatorProfileId && (
