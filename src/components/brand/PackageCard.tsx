@@ -49,6 +49,7 @@ const PackageCard = ({ pkgType, pkg }: PackageCardProps) => {
       {/* Phases (for meet_greet) */}
       {hasPhases && (
         <div className="space-y-3 mb-4 flex-1">
+          <p className="text-xs text-muted-foreground italic">Typical deliverables may include:</p>
           {pkg.phases!.map((phase, phaseIndex) => (
             <div key={phaseIndex}>
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">
@@ -64,6 +65,7 @@ const PackageCard = ({ pkgType, pkg }: PackageCardProps) => {
               </ul>
             </div>
           ))}
+          <p className="text-xs text-muted-foreground/70 italic mt-2">*Exact deliverables finalized in agreement</p>
         </div>
       )}
 
