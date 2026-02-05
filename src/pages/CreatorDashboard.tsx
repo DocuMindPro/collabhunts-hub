@@ -10,9 +10,10 @@ import BookingsTab from "@/components/creator-dashboard/BookingsTab";
 import MessagesTab from "@/components/creator-dashboard/MessagesTab";
 import OpportunitiesTab from "@/components/creator-dashboard/OpportunitiesTab";
 import FeaturingTab from "@/components/creator-dashboard/FeaturingTab";
+import { CalendarTab } from "@/components/calendar/CalendarTab";
 import MobileBottomNav from "@/components/mobile/MobileBottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, User, Package, Calendar, MessageSquare, Briefcase, Rocket } from "lucide-react";
+import { BarChart3, User, Package, Calendar, CalendarDays, MessageSquare, Briefcase, Rocket } from "lucide-react";
 
 const CreatorDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -82,23 +83,27 @@ const CreatorDashboard = () => {
                   <Package className="h-4 w-4" />
                   <span className="hidden sm:inline">Event Packages</span>
                 </TabsTrigger>
-                <TabsTrigger value="bookings" className="gap-2 shrink-0">
-                  <Calendar className="h-4 w-4" />
-                  <span className="hidden sm:inline">Agreements</span>
-                </TabsTrigger>
-                <TabsTrigger value="opportunities" className="gap-2 shrink-0">
-                  <Briefcase className="h-4 w-4" />
-                  <span className="hidden sm:inline">Opportunities</span>
-                </TabsTrigger>
-                <TabsTrigger value="boost" className="gap-2 shrink-0">
-                  <Rocket className="h-4 w-4" />
-                  <span className="hidden sm:inline">Boost</span>
-                </TabsTrigger>
-                <TabsTrigger value="messages" className="gap-2 shrink-0">
-                  <MessageSquare className="h-4 w-4" />
-                  <span className="hidden sm:inline">Messages</span>
-                </TabsTrigger>
-              </TabsList>
+              <TabsTrigger value="bookings" className="gap-2 shrink-0">
+                <Calendar className="h-4 w-4" />
+                <span className="hidden sm:inline">Agreements</span>
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className="gap-2 shrink-0">
+                <CalendarDays className="h-4 w-4" />
+                <span className="hidden sm:inline">Calendar</span>
+              </TabsTrigger>
+              <TabsTrigger value="opportunities" className="gap-2 shrink-0">
+                <Briefcase className="h-4 w-4" />
+                <span className="hidden sm:inline">Opportunities</span>
+              </TabsTrigger>
+              <TabsTrigger value="boost" className="gap-2 shrink-0">
+                <Rocket className="h-4 w-4" />
+                <span className="hidden sm:inline">Boost</span>
+              </TabsTrigger>
+              <TabsTrigger value="messages" className="gap-2 shrink-0">
+                <MessageSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">Messages</span>
+              </TabsTrigger>
+            </TabsList>
             )}
 
             <TabsContent value="overview" className="space-y-6">
@@ -115,6 +120,10 @@ const CreatorDashboard = () => {
 
             <TabsContent value="bookings" className="space-y-6">
               <BookingsTab />
+            </TabsContent>
+
+            <TabsContent value="calendar" className="space-y-6">
+              <CalendarTab userType="creator" />
             </TabsContent>
 
             <TabsContent value="opportunities" className="space-y-6">

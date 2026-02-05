@@ -8,8 +8,9 @@ import BrandBookingsTab from "@/components/brand-dashboard/BrandBookingsTab";
 import BrandMessagesTab from "@/components/brand-dashboard/BrandMessagesTab";
 import BrandAccountTab from "@/components/brand-dashboard/BrandAccountTab";
 import BrandOpportunitiesTab from "@/components/brand-dashboard/BrandOpportunitiesTab";
+import { CalendarTab } from "@/components/calendar/CalendarTab";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, Calendar, MessageSquare, User, Briefcase, Users } from "lucide-react";
+import { BarChart3, Calendar, CalendarDays, MessageSquare, User, Briefcase, Users } from "lucide-react";
 
 const BrandDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -75,6 +76,10 @@ const BrandDashboard = () => {
                 <Calendar className="h-4 w-4" />
                 <span className="hidden sm:inline">Events</span>
               </TabsTrigger>
+              <TabsTrigger value="calendar" className="gap-2 shrink-0">
+                <CalendarDays className="h-4 w-4" />
+                <span className="hidden sm:inline">Calendar</span>
+              </TabsTrigger>
               <TabsTrigger value="messages" className="gap-2 shrink-0">
                 <MessageSquare className="h-4 w-4" />
                 <span className="hidden sm:inline">Messages</span>
@@ -95,6 +100,10 @@ const BrandDashboard = () => {
 
             <TabsContent value="bookings" className="space-y-6">
               <BrandBookingsTab />
+            </TabsContent>
+
+            <TabsContent value="calendar" className="space-y-6">
+              <CalendarTab userType="brand" />
             </TabsContent>
 
             <TabsContent value="messages" className="space-y-6">
