@@ -1,72 +1,79 @@
 
-# Fix Mobile Tab Navigation Overlap
+# Fix "Register Your Brand" Banner Showing to Creators
 
 ## Problem
-The tab navigation labels are overlapping because:
-1. `TabsList` has a fixed `h-10` height (40px)
-2. With `flex-col` layout, icon (16px) + text (10px) + gap exceeds this height
-3. The vertical content is being clipped/overlapping
+The "Register your brand to book creators" banner on the Influencers page (`/influencers`) is incorrectly displayed to logged-in creators like elias@gmail.com.
+
+**Current logic (line 749):**
+```tsx
+{authCheckComplete && !hasBrandProfile && isLoggedIn && (
+```
+
+This shows the banner to ANY logged-in user who doesn't have a brand profile, including creators.
 
 ## Solution
-Adjust the height and styling to properly accommodate the stacked icon + label layout on mobile.
+Add a check for creator profiles. The banner should only appear for logged-in users who have NEITHER a brand profile NOR a creator profile (i.e., new users exploring the platform).
 
-## Changes
+## Changes Required
 
-### 1. Update TabsList height
-Make the list auto-height on mobile to fit the stacked content:
+### File: `src/pages/Influencers.tsx`
 
-**Current:**
+**1. Add state for creator profile check:**
 ```tsx
-<TabsList className="flex w-full overflow-x-auto gap-1 lg:w-auto lg:inline-flex">
+const [hasBrandProfile, setHasBrandProfile] = useState(false);
+const [hasCreatorProfile, setHasCreatorProfile] = useState(false);  // NEW
+const [isLoggedIn, setIsLoggedIn] = useState(false);
 ```
 
-**Proposed:**
+**2. Update `checkUserStatus` function to also check for creator profile:**
 ```tsx
-<TabsList className="flex w-full h-auto overflow-x-auto gap-0.5 p-1 sm:h-10 lg:w-auto lg:inline-flex">
+const checkUserStatus = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      // Check for brand profile
+      const { data: brandProfile } = await supabase
+        .from("brand_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      // Check for creator profile (NEW)
+      const { data: creatorProfile } = await supabase
+        .from("creator_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      setHasBrandProfile(!!brandProfile);
+      setHasCreatorProfile(!!creatorProfile);  // NEW
+      setIsLoggedIn(true);
+    } else {
+      setHasBrandProfile(false);
+      setHasCreatorProfile(false);  // NEW
+      setIsLoggedIn(false);
+    }
+  } catch (error) {
+    console.error("Error checking user status:", error);
+  } finally {
+    setAuthCheckComplete(true);
+  }
+};
 ```
 
-### 2. Refine TabsTrigger styling
-Optimize the individual tab buttons for mobile:
-
-**Current:**
+**3. Update the banner condition to exclude creators:**
 ```tsx
-<TabsTrigger value="overview" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
-  <BarChart3 className="h-4 w-4" />
-  <span className="text-[10px] sm:text-sm">Overview</span>
-</TabsTrigger>
+{/* Call to action for non-registered brands - hide from creators */}
+{authCheckComplete && !hasBrandProfile && !hasCreatorProfile && isLoggedIn && (
 ```
 
-**Proposed:**
-```tsx
-<TabsTrigger value="overview" className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 shrink-0 min-w-[52px] px-1.5 py-1.5 sm:min-w-0 sm:px-3">
-  <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-  <span className="text-[9px] leading-tight sm:text-sm truncate">Overview</span>
-</TabsTrigger>
-```
+## Summary
 
-Key refinements:
-- `h-auto` on list to allow flexible height on mobile
-- `min-w-[52px]` ensures consistent tab width on mobile
-- `py-1.5` gives vertical padding for the stacked layout
-- Smaller icons (`h-3.5`) and text (`text-[9px]`) on mobile
-- `leading-tight` reduces line height
-- `truncate` prevents text overflow
+| Current Behavior | New Behavior |
+|-----------------|--------------|
+| Banner shown to all logged-in non-brand users | Banner only shown to logged-in users with NO profile at all |
+| Creators see "Register Your Brand" ❌ | Creators don't see the banner ✓ |
+| Brands don't see it ✓ | Brands don't see it ✓ |
+| Non-logged-in users don't see it ✓ | Non-logged-in users don't see it ✓ |
 
-### 3. Files to modify
-
-| File | Changes |
-|------|---------|
-| `src/pages/CreatorDashboard.tsx` | Update TabsList and all 8 TabsTrigger styling |
-| `src/pages/BrandDashboard.tsx` | Apply same updates for consistency |
-
-## Visual Result
-
-**Before:**
-- Text overlaps with content below
-- Icons and labels cramped
-
-**After:**
-- Clean vertical stacking (icon above label)
-- Each tab has proper breathing room
-- Smooth horizontal scroll for all 8 tabs
-- No overlap with page content
+This is a quick fix requiring only ~10 lines of changes.
