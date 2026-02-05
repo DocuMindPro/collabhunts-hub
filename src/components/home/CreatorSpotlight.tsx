@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Instagram, Youtube } from "lucide-react";
 import AnimatedSection from "@/components/AnimatedSection";
 import VettedBadge from "@/components/VettedBadge";
 import VIPCreatorBadge from "@/components/VIPCreatorBadge";
+import BrandRegistrationPrompt from "@/components/BrandRegistrationPrompt";
+import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 
 interface Creator {
   id: string;
@@ -39,8 +41,49 @@ const getPlatformIcon = (platform: string) => {
 };
 
 const CreatorSpotlight = () => {
+  const navigate = useNavigate();
   const [creators, setCreators] = useState<CreatorWithSocial[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [showRegistrationPrompt, setShowRegistrationPrompt] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const session = await safeNativeAsync(
+        async () => {
+          const { data } = await supabase.auth.getSession();
+          return data.session;
+        },
+        null,
+        3000
+      );
+      
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        const brandProfile = await safeNativeAsync(
+          async () => {
+            const { data } = await supabase
+              .from('brand_profiles')
+              .select('id')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+            return data;
+          },
+          null,
+          3000
+        );
+        setHasBrandProfile(!!brandProfile);
+      }
+    };
+
+    if (isNativePlatform()) {
+      setTimeout(checkAuth, 200);
+    } else {
+      checkAuth();
+    }
+  }, []);
 
   useEffect(() => {
     const fetchCreators = async () => {
@@ -178,14 +221,28 @@ const CreatorSpotlight = () => {
         </div>
 
         <AnimatedSection animation="fade-up" delay={600} className="text-center">
-          <Link to="/influencers">
-            <Button variant="outline" size="lg" className="group">
-              Browse All Creators
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
-          </Link>
+          <Button 
+            variant="outline" 
+            size="lg" 
+            className="group"
+            onClick={() => {
+              if (hasBrandProfile) {
+                navigate('/influencers');
+              } else {
+                setShowRegistrationPrompt(true);
+              }
+            }}
+          >
+            Browse All Creators
+            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Button>
         </AnimatedSection>
       </div>
+
+      <BrandRegistrationPrompt 
+        open={showRegistrationPrompt} 
+        onOpenChange={setShowRegistrationPrompt} 
+      />
     </section>
   );
 };

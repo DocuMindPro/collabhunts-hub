@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -24,8 +24,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Logo from "@/components/Logo";
 import { isNativePlatform, safeNativeAsync } from "@/lib/supabase-native";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import BrandRegistrationPrompt from "@/components/BrandRegistrationPrompt";
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -34,6 +36,7 @@ const Navbar = () => {
   const [creatorMenuOpen, setCreatorMenuOpen] = useState(false);
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   const [hasNewUpdates, setHasNewUpdates] = useState(false);
+  const [showRegistrationPrompt, setShowRegistrationPrompt] = useState(false);
   const { unreadCount: unreadMessages, getMessagesLink } = useUnreadMessages();
   const creatorTabs = [
     { value: "overview", label: "Overview", icon: BarChart3 },
@@ -54,6 +57,13 @@ const Navbar = () => {
 
   type NavLink = { to: string; label: string; icon?: typeof Sparkles };
   
+  const handleFindCreatorsClick = (e: React.MouseEvent) => {
+    if (!hasBrandProfile) {
+      e.preventDefault();
+      setShowRegistrationPrompt(true);
+    }
+  };
+
   const getNavLinks = (): NavLink[] => {
     const links: NavLink[] = [];
     
@@ -213,7 +223,10 @@ const Navbar = () => {
                 key={link.to}
                 to={link.to}
                 className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors flex items-center gap-1"
-                onClick={() => {
+                onClick={(e) => {
+                  if (link.to === "/influencers") {
+                    handleFindCreatorsClick(e);
+                  }
                   if (link.to === "/whats-new") {
                     setHasNewUpdates(false);
                   }
@@ -335,7 +348,15 @@ const Navbar = () => {
                     <Link
                       key={link.to}
                       to={link.to}
-                      onClick={() => setIsOpen(false)}
+                      onClick={(e) => {
+                        if (link.to === "/influencers" && !hasBrandProfile) {
+                          e.preventDefault();
+                          setIsOpen(false);
+                          setShowRegistrationPrompt(true);
+                        } else {
+                          setIsOpen(false);
+                        }
+                      }}
                       className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
                     >
                       {link.label}
@@ -479,6 +500,11 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      <BrandRegistrationPrompt 
+        open={showRegistrationPrompt} 
+        onOpenChange={setShowRegistrationPrompt} 
+      />
     </nav>
   );
 };
