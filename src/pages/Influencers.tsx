@@ -122,6 +122,13 @@ const Influencers = () => {
     checkUserStatus();
   }, []);
 
+  // Redirect non-brand users away from this page
+  useEffect(() => {
+    if (authCheckComplete && !hasBrandProfile) {
+      navigate('/', { replace: true });
+    }
+  }, [authCheckComplete, hasBrandProfile, navigate]);
+
   const checkUserStatus = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -146,16 +153,23 @@ const Influencers = () => {
           return;
         }
         
+        // Redirect non-brand users to homepage
+        if (!brandProfile) {
+          navigate('/', { replace: true });
+          return;
+        }
+        
         setHasBrandProfile(!!brandProfile);
         setHasCreatorProfile(!!creatorProfile);
         setIsLoggedIn(true);
       } else {
-        setHasBrandProfile(false);
-        setHasCreatorProfile(false);
-        setIsLoggedIn(false);
+        // Not logged in - redirect to homepage
+        navigate('/', { replace: true });
+        return;
       }
     } catch (error) {
       console.error("Error checking user status:", error);
+      navigate('/', { replace: true });
     } finally {
       setAuthCheckComplete(true);
     }

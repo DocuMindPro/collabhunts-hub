@@ -18,6 +18,7 @@ import GlowCard from "@/components/home/GlowCard";
 import CreatorSpotlight from "@/components/home/CreatorSpotlight";
 import TestimonialCarousel from "@/components/home/TestimonialCarousel";
 import BentoGrid from "@/components/home/BentoGrid";
+import BrandRegistrationPrompt from "@/components/BrandRegistrationPrompt";
 import { cn } from "@/lib/utils";
 
 const Index = () => {
@@ -27,6 +28,7 @@ const Index = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
+  const [showRegistrationPrompt, setShowRegistrationPrompt] = useState(false);
 
   useEffect(() => {
     const checkUserProfiles = async (userId: string) => {
@@ -171,12 +173,20 @@ const Index = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1 h-12"
                   />
-                  <Link to={`/influencers${searchQuery ? `?q=${searchQuery}` : ''}`}>
-                    <Button size="lg" className="h-12 gradient-hero search-btn-glow">
-                      <Search className="h-5 w-5 mr-2" />
-                      Search
-                    </Button>
-                  </Link>
+                  <Button 
+                    size="lg" 
+                    className="h-12 gradient-hero search-btn-glow"
+                    onClick={() => {
+                      if (hasBrandProfile) {
+                        navigate(`/influencers${searchQuery ? `?q=${searchQuery}` : ''}`);
+                      } else {
+                        setShowRegistrationPrompt(true);
+                      }
+                    }}
+                  >
+                    <Search className="h-5 w-5 mr-2" />
+                    Search
+                  </Button>
                 </div>
               </AnimatedSection>
 
@@ -184,13 +194,19 @@ const Index = () => {
               <AnimatedSection animation="fade-up" delay={300}>
                 <div className="flex flex-wrap gap-2 stagger-fade-in">
                   {eventTypes.map((eventType) => (
-                    <Link
+                    <button
                       key={eventType}
-                      to={`/influencers?event_type=${eventType}`}
+                      onClick={() => {
+                        if (hasBrandProfile) {
+                          navigate(`/influencers?event_type=${eventType}`);
+                        } else {
+                          setShowRegistrationPrompt(true);
+                        }
+                      }}
                       className="category-badge text-sm px-4 py-2 rounded-full bg-card border border-border/50 hover:border-primary hover:bg-primary/5 transition-all duration-300"
                     >
                       {eventType}
-                    </Link>
+                    </button>
                   ))}
                 </div>
               </AnimatedSection>
@@ -378,6 +394,11 @@ const Index = () => {
       </section>
 
       <Footer />
+
+      <BrandRegistrationPrompt 
+        open={showRegistrationPrompt} 
+        onOpenChange={setShowRegistrationPrompt} 
+      />
     </div>
   );
 };
