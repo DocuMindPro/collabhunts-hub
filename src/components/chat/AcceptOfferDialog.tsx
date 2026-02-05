@@ -71,7 +71,7 @@ const AcceptOfferDialog = ({
           event_date: offerData.event_date,
           event_time_start: offerData.event_time,
           message: offerData.notes,
-          status: "confirmed", // Directly confirmed - no payment required
+          status: "accepted", // Accepted by brand - creator can confirm later
           payment_status: "pending", // Payment happens off-platform
         })
         .select()
