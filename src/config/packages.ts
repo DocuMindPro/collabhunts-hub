@@ -217,21 +217,6 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
   },
 };
 
-// Platform fee configuration
-export const PLATFORM_FEE_PERCENT = 15;
-export const DEPOSIT_PERCENT = 50;
-
-// Escrow statuses
-export type EscrowStatus = 'pending_deposit' | 'deposit_paid' | 'completed' | 'refunded' | 'disputed';
-
-export const ESCROW_STATUSES: Record<EscrowStatus, { label: string; color: string }> = {
-  pending_deposit: { label: 'Awaiting Deposit', color: 'yellow' },
-  deposit_paid: { label: 'Deposit Received', color: 'blue' },
-  completed: { label: 'Payment Released', color: 'green' },
-  refunded: { label: 'Refunded', color: 'red' },
-  disputed: { label: 'Under Dispute', color: 'orange' },
-};
-
 // Event types
 export type EventType = 'appearance' | 'workshop' | 'competition' | 'brand_activation' | 'private';
 
@@ -267,15 +252,6 @@ export const formatPriceRange = (priceRange: { min: number; max: number } | null
   if (!priceRange) return 'Custom pricing';
   return `${formatPrice(priceRange.min)} - ${formatPrice(priceRange.max)}`;
 };
-
-export const calculatePlatformFee = (totalCents: number): number => 
-  Math.round(totalCents * (PLATFORM_FEE_PERCENT / 100));
-
-export const calculateCreatorEarnings = (totalCents: number): number => 
-  totalCents - calculatePlatformFee(totalCents);
-
-export const calculateDeposit = (totalCents: number): number => 
-  Math.round(totalCents * (DEPOSIT_PERCENT / 100));
 
 export const calculateUpsellsTotal = (selectedUpsellIds: string[], packageType: PackageType): number => {
   const pkg = EVENT_PACKAGES[packageType];

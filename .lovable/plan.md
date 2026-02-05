@@ -52,18 +52,28 @@ The existing `AdPlacement` component can display paid ads on:
 
 ## Implementation Phases
 
-### Phase 1: Remove Payment System (Simplify)
-**Files to modify:**
+### ✅ Phase 1: Remove Payment System (COMPLETED)
 
-| File | Changes |
-|------|---------|
-| `src/config/packages.ts` | Remove `PLATFORM_FEE_PERCENT`, `DEPOSIT_PERCENT`, escrow functions |
-| `src/lib/escrow-utils.ts` | Delete entirely |
-| `src/components/MockPaymentDialog.tsx` | Delete - no longer needed |
-| `src/components/chat/AcceptOfferDialog.tsx` | Remove payment flow, simplify to just "Accept Agreement" |
-| `src/components/chat/SendOfferDialog.tsx` | Rename to "Send Agreement" - no escrow references |
+**Files deleted:**
+- `src/lib/escrow-utils.ts` - Removed escrow utilities
+- `src/components/MockPaymentDialog.tsx` - Removed mock payment dialog
 
-### Phase 2: Agreement System (New Feature)
+**Files modified:**
+- `src/config/packages.ts` - Removed PLATFORM_FEE_PERCENT, DEPOSIT_PERCENT, escrow types and functions
+- `src/components/chat/AcceptOfferDialog.tsx` - Converted from payment flow to simple agreement confirmation
+- `src/components/chat/SendOfferDialog.tsx` - Removed fee/deposit calculations and display
+- `src/components/chat/OfferMessage.tsx` - Removed deposit display, updated button text
+- `src/components/EventBookingDialog.tsx` - Removed escrow/deposit logic
+- `src/components/brand-dashboard/BrandBookingsTab.tsx` - Removed escrow status display
+- `src/components/creator-dashboard/BookingsTab.tsx` - Removed escrow status display
+
+**Changes made:**
+- "Accept & Pay Deposit" → "Confirm Agreement"
+- Booking creation no longer requires payment
+- No platform fees displayed
+- Agreement confirmation sends a message indicating payment should be arranged directly
+
+### 🔲 Phase 2: Agreement System (NEXT)
 Create an AI-powered agreement drafting system:
 
 **New Components:**
