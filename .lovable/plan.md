@@ -1,199 +1,208 @@
 
-
-# Mobile Featured Creators Grid - Compact 4x4 Layout
+# Brand Registration Gate for Creator Browsing
 
 ## Overview
 
-Transform the Featured Creators section on mobile from a 2-column layout showing 6 creators into a dense 4-column grid showing 16 creators in 4 rows. This gives visitors a fuller preview of the creator community while encouraging brand registration to unlock full browsing.
+Implement a registration gate that requires prospects to register as a brand before they can browse all creators. The featured creators on the homepage remain visible as a teaser, but clicking "Browse All Creators" or "Find Creators" will prompt registration instead of navigating directly.
 
 ---
 
-## Current vs. Proposed (Mobile)
+## User Flow
 
 ```text
-CURRENT (Mobile):
-+-------+-------+
-|   1   |   2   |  <- 2 columns, 6 total
-+-------+-------+
-|   3   |   4   |
-+-------+-------+
-|   5   |   6   |
-+-------+-------+
-[Browse All Creators]
+PROSPECT (Not Logged In):
+┌─────────────────────────────────────────────────────────┐
+│  Homepage                                                │
+│  ┌─────────────────────────────────────────────────────┐ │
+│  │  Featured Creators (4x4 grid - 16 creators)         │ │
+│  │  [Click on any creator] → Individual profile ✓      │ │
+│  └─────────────────────────────────────────────────────┘ │
+│                                                          │
+│  [Browse All Creators] → Registration Dialog             │
+│  [Find Creators nav]   → Registration Dialog             │
+│  [Search button]       → Registration Dialog             │
+└─────────────────────────────────────────────────────────┘
 
-PROPOSED (Mobile):
-+----+----+----+----+
-| 1  | 2  | 3  | 4  |  <- 4 columns, 16 total
-+----+----+----+----+
-| 5  | 6  | 7  | 8  |
-+----+----+----+----+
-| 9  | 10 | 11 | 12 |
-+----+----+----+----+
-| 13 | 14 | 15 | 16 |
-+----+----+----+----+
-[Browse All Creators]
+REGISTERED BRAND (Logged In with Brand Profile):
+┌─────────────────────────────────────────────────────────┐
+│  [Browse All Creators] → /influencers ✓                 │
+│  [Find Creators nav]   → /influencers ✓                 │
+│  [Search button]       → /influencers ✓                 │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Design Changes
+## Implementation Details
 
-### 1. Grid Layout Update
+### 1. New Component: `BrandRegistrationPrompt.tsx`
 
-| Breakpoint | Current | Proposed |
-|------------|---------|----------|
-| Mobile (<768px) | 2 columns | 4 columns |
-| Tablet (md) | 3 columns | 4 columns |
-| Desktop (lg) | 6 columns | 6 columns |
+**Location**: `src/components/BrandRegistrationPrompt.tsx`
 
-### 2. Card Size Adjustments (Mobile)
-
-Since we're fitting 4 cards per row on mobile, each card needs to be more compact:
-
-| Element | Current | Proposed |
-|---------|---------|----------|
-| Card padding | p-3 | p-1.5 (mobile) |
-| Name font | text-sm | text-xs (mobile) |
-| Gap between cards | gap-4 | gap-2 (mobile) |
-| Badges | Full pill | Smaller on mobile |
-| Follower/category text | Visible | Hidden on mobile (space) |
-
-### 3. Creator Count
-
-| Current | Proposed |
-|---------|----------|
-| 6 creators fetched | 16 creators fetched |
-
----
-
-## File to Modify
-
-### `src/components/home/CreatorSpotlight.tsx`
-
-#### Change 1: Increase fetch limit (line 53)
-```tsx
-// Before
-.limit(6);
-
-// After
-.limit(16);
-```
-
-#### Change 2: Update grid classes (line 108)
-```tsx
-// Before
-<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 mb-10">
-
-// After
-<div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4 lg:gap-6 mb-10">
-```
-
-#### Change 3: Make cards more compact on mobile
-
-Update the card container to be smaller on mobile:
-```tsx
-<div className="relative rounded-lg md:rounded-xl overflow-hidden ...">
-```
-
-Update info section padding:
-```tsx
-<div className="absolute bottom-0 left-0 right-0 p-1.5 md:p-3 text-primary-foreground">
-```
-
-Update name text size:
-```tsx
-<p className="font-semibold text-[10px] md:text-sm truncate">
-  {creator.display_name}
-</p>
-```
-
-#### Change 4: Hide follower/category on mobile
-
-Only show on larger screens to save space:
-```tsx
-<div className="hidden md:flex items-center gap-2 text-xs opacity-80 mt-1">
-  {/* follower count and category */}
-</div>
-```
-
-#### Change 5: Adjust badges for mobile
-
-Use smaller badges or hide text on mobile:
-```tsx
-{(isVip || isVetted) && (
-  <div className="absolute top-1 left-1 md:top-2 md:left-2 flex items-center gap-1">
-    {isVetted && <VettedBadge variant="pill" size="sm" showTooltip={false} className="scale-75 md:scale-100" />}
-    {isVip && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} className="scale-75 md:scale-100" />}
-  </div>
-)}
-```
-
-#### Change 6: Reduce animation stagger on mobile
-
-With 16 cards, staggering all of them would take too long:
-```tsx
-delay={Math.min(index * 50, 400)}  // Cap delay at 400ms
-```
-
----
-
-## Visual Result (Mobile)
+A reusable AlertDialog component that prompts users to register their brand before accessing creator browsing.
 
 ```text
-+----------------------------------------+
-|         Featured Creators              |
-|   See who's already on CollabHunts     |
-|                                        |
-| +----+ +----+ +----+ +----+           |
-| |VIP | |    | |    | |Vttd|           |
-| |    | |    | |    | |    |           |
-| |Sara| |Ali | |Nour| |Maya|           |
-| +----+ +----+ +----+ +----+           |
-| +----+ +----+ +----+ +----+           |
-| |    | |    | |VIP | |    |           |
-| |    | |    | |    | |    |           |
-| |Zein| |Lina| |Fadi| |Rima|           |
-| +----+ +----+ +----+ +----+           |
-| +----+ +----+ +----+ +----+           |
-| |    | |    | |    | |    |           |
-| |    | |    | |    | |    |           |
-| |Joe | |Sam | |Mia | |Leo |           |
-| +----+ +----+ +----+ +----+           |
-| +----+ +----+ +----+ +----+           |
-| |Vttd| |    | |    | |VIP |           |
-| |    | |    | |    | |    |           |
-| |Aya | |Omar| |Tia | |Jad |           |
-| +----+ +----+ +----+ +----+           |
-|                                        |
-|     [ Browse All Creators → ]          |
-|                                        |
-+----------------------------------------+
+┌────────────────────────────────────────┐
+│  🏢 Register Your Brand                │
+│                                        │
+│  To browse all creators, you need      │
+│  to register your brand first.         │
+│                                        │
+│  Registration is free and takes        │
+│  less than 2 minutes.                  │
+│                                        │
+│  [Cancel]  [Register Now →]            │
+└────────────────────────────────────────┘
 ```
 
-- Compact cards with just image + name
-- Badges scaled down but visible
-- Follower counts hidden on mobile (shown on tablet/desktop)
-- 16 creators give a good preview of the community
+**Props**:
+- `open: boolean` - Dialog visibility
+- `onOpenChange: (open: boolean) => void` - Close handler
 
 ---
 
-## Future Enhancement (Brand Registration Gate)
+### 2. Update `src/components/home/CreatorSpotlight.tsx`
 
-After this change, the "Browse All Creators" button can later be updated to:
-1. Check if user is logged in as a brand
-2. If not, show a registration prompt instead of navigating to /influencers
-3. This encourages brands to register to see the full creator roster
+**Changes**:
+1. Add auth check for brand profile
+2. Replace `<Link>` with a button that either navigates or shows dialog
+3. Add `BrandRegistrationPrompt` dialog
+
+**Logic**:
+```typescript
+const handleBrowseAll = () => {
+  if (!user) {
+    // Not logged in - show registration prompt
+    setShowRegistrationPrompt(true);
+  } else if (hasBrandProfile) {
+    // Has brand profile - navigate directly
+    navigate('/influencers');
+  } else {
+    // Logged in but no brand profile - show registration prompt
+    setShowRegistrationPrompt(true);
+  }
+};
+```
 
 ---
 
-## Summary
+### 3. Update `src/pages/Index.tsx`
 
-| Change | Description |
-|--------|-------------|
-| Grid columns | 2 -> 4 on mobile |
-| Creator count | 6 -> 16 |
-| Card size | Smaller padding, text, gaps |
-| Meta info | Hidden on mobile |
-| Badges | Scaled down 75% on mobile |
-| Animation | Faster stagger (50ms vs 100ms, capped) |
+**Changes**:
+1. Add registration gate to the search button in hero section
+2. Add registration gate to event type badges (category links)
+3. Pass auth state to CreatorSpotlight component OR handle at component level
 
+**Gated Elements**:
+- Search button click → registration prompt (if no brand)
+- Category badge clicks → registration prompt (if no brand)
+
+---
+
+### 4. Update `src/components/Navbar.tsx`
+
+**Changes**:
+1. Add registration gate to "Find Creators" link for non-brand users
+2. For prospects: clicking "Find Creators" shows registration prompt
+3. For logged-in brands: normal navigation to /influencers
+
+**Logic**:
+```typescript
+// Instead of direct Link for "Find Creators":
+const handleFindCreatorsClick = (e: React.MouseEvent) => {
+  if (!user || !hasBrandProfile) {
+    e.preventDefault();
+    setShowRegistrationPrompt(true);
+  }
+  // else: allow normal navigation
+};
+```
+
+---
+
+### 5. Update `src/pages/Influencers.tsx`
+
+**Changes**:
+Add a check at the top level that redirects non-brand users away:
+
+```typescript
+useEffect(() => {
+  if (authCheckComplete && !hasBrandProfile && !isLoggedIn) {
+    // Redirect prospects back to homepage
+    navigate('/', { replace: true });
+  }
+}, [authCheckComplete, hasBrandProfile, isLoggedIn]);
+```
+
+This ensures even direct URL access requires brand registration.
+
+---
+
+## Files to Create/Modify
+
+| File | Action | Description |
+|------|--------|-------------|
+| `src/components/BrandRegistrationPrompt.tsx` | CREATE | Reusable registration prompt dialog |
+| `src/components/home/CreatorSpotlight.tsx` | MODIFY | Add gate to "Browse All Creators" button |
+| `src/pages/Index.tsx` | MODIFY | Add gate to search bar and category links |
+| `src/components/Navbar.tsx` | MODIFY | Add gate to "Find Creators" nav link |
+| `src/pages/Influencers.tsx` | MODIFY | Add redirect for non-brand users |
+
+---
+
+## Visual Design
+
+### Registration Prompt Dialog
+
+```text
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│            🏢  Register Your Brand                  │
+│                                                     │
+│     To browse and connect with creators,            │
+│     you need to register your brand first.          │
+│                                                     │
+│     ✓ Free registration                             │
+│     ✓ Takes less than 2 minutes                     │
+│     ✓ Direct access to all creators                 │
+│                                                     │
+│   ┌─────────────┐    ┌─────────────────────┐       │
+│   │   Cancel    │    │   Register Now →    │       │
+│   └─────────────┘    └─────────────────────┘       │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## What Remains Accessible Without Registration
+
+| Element | Accessible? | Notes |
+|---------|-------------|-------|
+| Featured creators grid (16 on homepage) | ✓ | Teaser to encourage registration |
+| Individual creator profiles (/creator/:id) | ✓ | Can view but gate booking |
+| Homepage content | ✓ | All marketing content visible |
+| "Register Your Brand" CTA | ✓ | Always visible to prospects |
+| "Join as Creator" CTA | ✓ | Creator signup unaffected |
+
+## What Requires Brand Registration
+
+| Element | Requires Registration |
+|---------|----------------------|
+| "Browse All Creators" button | ✓ |
+| "Find Creators" nav link | ✓ |
+| Search button in hero | ✓ |
+| Category badge clicks | ✓ |
+| Direct /influencers URL access | ✓ |
+
+---
+
+## Technical Notes
+
+1. **Shared State**: The `BrandRegistrationPrompt` component will be self-contained with its own navigation logic
+
+2. **Auth Check**: Each component already has access to user and brand profile state from existing patterns
+
+3. **UX Consideration**: Individual creator profiles remain accessible to allow prospects to see creator quality before registering
+
+4. **No Breaking Changes**: Logged-in brand users experience no change in behavior
