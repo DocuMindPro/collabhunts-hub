@@ -1,39 +1,34 @@
 
-
-# Add Labels to Mobile Tab Navigation
+# Fix Mobile Tab Navigation Overlap
 
 ## Problem
-The Creator Dashboard's tab navigation shows **only icons** on mobile web view (screens < 640px). The labels are hidden using `hidden sm:inline`, making it difficult for users to understand what each tab does.
+The tab navigation labels are overlapping because:
+1. `TabsList` has a fixed `h-10` height (40px)
+2. With `flex-col` layout, icon (16px) + text (10px) + gap exceeds this height
+3. The vertical content is being clipped/overlapping
 
 ## Solution
-Make the labels always visible on mobile, but use a smaller font size to fit the limited space. This matches the pattern already used in `MobileBottomNav` which shows labels in 10px text.
+Adjust the height and styling to properly accommodate the stacked icon + label layout on mobile.
 
-## Changes Required
+## Changes
 
-### 1. Update `CreatorDashboard.tsx`
-Modify the TabsList to show labels on all screen sizes:
+### 1. Update TabsList height
+Make the list auto-height on mobile to fit the stacked content:
 
 **Current:**
 ```tsx
-<span className="hidden sm:inline">Overview</span>
+<TabsList className="flex w-full overflow-x-auto gap-1 lg:w-auto lg:inline-flex">
 ```
 
 **Proposed:**
 ```tsx
-<span className="text-[10px] sm:text-sm">Overview</span>
+<TabsList className="flex w-full h-auto overflow-x-auto gap-0.5 p-1 sm:h-10 lg:w-auto lg:inline-flex">
 ```
 
-This makes labels:
-- Always visible (remove `hidden`)
-- Very small (10px) on mobile for space efficiency
-- Normal size on larger screens
+### 2. Refine TabsTrigger styling
+Optimize the individual tab buttons for mobile:
 
-### 2. Adjust Tab Styling
-The tabs also need layout adjustments for mobile:
-- Change from horizontal inline layout to vertical stacking (icon above label) on mobile
-- Use `flex-col` on mobile, horizontal on larger screens
-
-**Proposed tab trigger structure:**
+**Current:**
 ```tsx
 <TabsTrigger value="overview" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
   <BarChart3 className="h-4 w-4" />
@@ -41,29 +36,37 @@ The tabs also need layout adjustments for mobile:
 </TabsTrigger>
 ```
 
-## Files to Modify
+**Proposed:**
+```tsx
+<TabsTrigger value="overview" className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 shrink-0 min-w-[52px] px-1.5 py-1.5 sm:min-w-0 sm:px-3">
+  <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+  <span className="text-[9px] leading-tight sm:text-sm truncate">Overview</span>
+</TabsTrigger>
+```
+
+Key refinements:
+- `h-auto` on list to allow flexible height on mobile
+- `min-w-[52px]` ensures consistent tab width on mobile
+- `py-1.5` gives vertical padding for the stacked layout
+- Smaller icons (`h-3.5`) and text (`text-[9px]`) on mobile
+- `leading-tight` reduces line height
+- `truncate` prevents text overflow
+
+### 3. Files to modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/CreatorDashboard.tsx` | Update all 8 TabsTrigger components to show labels on mobile |
-| `src/pages/BrandDashboard.tsx` | Apply same pattern for consistency |
+| `src/pages/CreatorDashboard.tsx` | Update TabsList and all 8 TabsTrigger styling |
+| `src/pages/BrandDashboard.tsx` | Apply same updates for consistency |
 
 ## Visual Result
 
-**Before (mobile):**
-```
-[📊] [👤] [📦] [📅] [🗓] [💼] [🚀] [💬]
-```
+**Before:**
+- Text overlaps with content below
+- Icons and labels cramped
 
-**After (mobile):**
-```
- 📊    👤    📦    📅    🗓    💼    🚀    💬
-Over  Prof  Pack  Agr  Cal  Opp  Boo  Msg
-```
-
-## Technical Notes
-- Uses existing Tailwind responsive classes (`sm:` prefix for 640px+)
-- Consistent with `MobileBottomNav` which uses 10px text
-- No database changes required
-- Quick implementation - just class name updates
-
+**After:**
+- Clean vertical stacking (icon above label)
+- Each tab has proper breathing room
+- Smooth horizontal scroll for all 8 tabs
+- No overlap with page content
