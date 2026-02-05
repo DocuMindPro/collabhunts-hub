@@ -70,38 +70,38 @@ const CreatorDashboard = () => {
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 md:space-y-6">
             {!isNative && (
-              <TabsList className="flex w-full overflow-x-auto gap-1 lg:w-auto lg:inline-flex">
-                <TabsTrigger value="overview" className="gap-2 shrink-0">
+            <TabsList className="flex w-full overflow-x-auto gap-1 lg:w-auto lg:inline-flex">
+                <TabsTrigger value="overview" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
                   <BarChart3 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Overview</span>
+                  <span className="text-[10px] sm:text-sm">Overview</span>
                 </TabsTrigger>
-                <TabsTrigger value="profile" className="gap-2 shrink-0">
+                <TabsTrigger value="profile" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
                   <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">Profile</span>
+                  <span className="text-[10px] sm:text-sm">Profile</span>
                 </TabsTrigger>
-                <TabsTrigger value="services" className="gap-2 shrink-0">
+                <TabsTrigger value="services" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
                   <Package className="h-4 w-4" />
-                  <span className="hidden sm:inline">Event Packages</span>
+                  <span className="text-[10px] sm:text-sm">Packages</span>
                 </TabsTrigger>
-              <TabsTrigger value="bookings" className="gap-2 shrink-0">
+              <TabsTrigger value="bookings" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
                 <Calendar className="h-4 w-4" />
-                <span className="hidden sm:inline">Agreements</span>
+                <span className="text-[10px] sm:text-sm">Agreements</span>
               </TabsTrigger>
-              <TabsTrigger value="calendar" className="gap-2 shrink-0">
+              <TabsTrigger value="calendar" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
                 <CalendarDays className="h-4 w-4" />
-                <span className="hidden sm:inline">Calendar</span>
+                <span className="text-[10px] sm:text-sm">Calendar</span>
               </TabsTrigger>
-              <TabsTrigger value="opportunities" className="gap-2 shrink-0">
+              <TabsTrigger value="opportunities" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
                 <Briefcase className="h-4 w-4" />
-                <span className="hidden sm:inline">Opportunities</span>
+                <span className="text-[10px] sm:text-sm">Opps</span>
               </TabsTrigger>
-              <TabsTrigger value="boost" className="gap-2 shrink-0">
+              <TabsTrigger value="boost" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
                 <Rocket className="h-4 w-4" />
-                <span className="hidden sm:inline">Boost</span>
+                <span className="text-[10px] sm:text-sm">Boost</span>
               </TabsTrigger>
-              <TabsTrigger value="messages" className="gap-2 shrink-0">
+              <TabsTrigger value="messages" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
                 <MessageSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">Messages</span>
+                <span className="text-[10px] sm:text-sm">Messages</span>
               </TabsTrigger>
             </TabsList>
             )}
