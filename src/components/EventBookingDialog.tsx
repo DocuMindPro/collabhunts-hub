@@ -34,11 +34,7 @@ import {
   type PackageType,
   formatPriceRange,
   formatPrice,
-  calculatePlatformFee,
-  calculateDeposit,
   calculateUpsellsTotal,
-  PLATFORM_FEE_PERCENT,
-  DEPOSIT_PERCENT,
 } from "@/config/packages";
 import PaymentMethodSelector from "@/components/PaymentMethodSelector";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -174,8 +170,6 @@ const EventBookingDialog = ({
 
     try {
       const estimatedPrice = getEstimatedPrice();
-      const depositAmount = calculateDeposit(estimatedPrice);
-      const platformFee = calculatePlatformFee(estimatedPrice);
 
       const { data: booking, error } = await supabase
         .from("bookings")
@@ -188,11 +182,8 @@ const EventBookingDialog = ({
           event_time_end: endTime || null,
           message: eventMessage,
           total_price_cents: estimatedPrice,
-          deposit_amount_cents: depositAmount,
-          platform_fee_cents: platformFee,
           max_capacity: expectedAttendees ? parseInt(expectedAttendees) : null,
           status: "pending",
-          escrow_status: "pending_deposit",
           payment_status: "pending",
           venue_id: venueProfile.id,
           event_type: selectedPackage,
@@ -236,7 +227,6 @@ const EventBookingDialog = ({
   };
 
   const estimatedPrice = getEstimatedPrice();
-  const depositAmount = calculateDeposit(estimatedPrice);
   const currentPackage = selectedPackage ? EVENT_PACKAGES[selectedPackage] : null;
   const upsellsTotal = selectedPackage ? calculateUpsellsTotal(selectedUpsells, selectedPackage) : 0;
 
@@ -533,21 +523,17 @@ const EventBookingDialog = ({
                     </div>
                   </div>
                 )}
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Platform Fee ({PLATFORM_FEE_PERCENT}%)</span>
-                  <span>Included</span>
-                </div>
                 <div className="border-t pt-2 flex justify-between font-semibold">
-                  <span>Deposit ({DEPOSIT_PERCENT}%)</span>
+                  <span>Total</span>
                   <div className="text-right">
-                    <span>${(depositAmount / 100).toFixed(0)}</span>
+                    <span>${(estimatedPrice / 100).toFixed(0)}</span>
                     <span className="text-xs text-muted-foreground ml-2">
-                      (~{formatDualCurrency(depositAmount).lbp})
+                      (~{formatDualCurrency(estimatedPrice).lbp})
                     </span>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Deposit held in escrow until event completion
+                  Payment arranged directly with creator
                 </p>
               </div>
             )}

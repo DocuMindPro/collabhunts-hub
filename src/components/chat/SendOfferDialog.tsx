@@ -12,7 +12,7 @@ import { format, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { EVENT_PACKAGES, type PackageType, calculateDeposit, PLATFORM_FEE_PERCENT } from "@/config/packages";
+import { EVENT_PACKAGES, type PackageType } from "@/config/packages";
 
 interface SendOfferDialogProps {
   open: boolean;
@@ -147,7 +147,6 @@ const SendOfferDialog = ({
 
       // Create a message linking to the offer
       const packageName = EVENT_PACKAGES[selectedServiceType as PackageType]?.name || selectedServiceType;
-      const depositAmount = calculateDeposit(priceCents);
       
       const messageContent = JSON.stringify({
         type: "offer",
@@ -155,7 +154,6 @@ const SendOfferDialog = ({
         package_type: selectedServiceType,
         package_name: packageName,
         price_cents: priceCents,
-        deposit_cents: depositAmount,
         event_date: eventDate ? format(eventDate, "yyyy-MM-dd") : null,
         event_time: isEventPackage ? eventTime : null,
         duration_hours: isEventPackage ? durationHours : null,
@@ -197,9 +195,6 @@ const SendOfferDialog = ({
 
   const isEventPackage = selectedServiceType && 
     ['social_boost', 'meet_greet', 'competition'].includes(selectedServiceType);
-
-  const depositAmount = calculateDeposit(priceCents);
-  const creatorEarnings = priceCents - Math.round(priceCents * (PLATFORM_FEE_PERCENT / 100));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -258,11 +253,6 @@ const SendOfferDialog = ({
                   placeholder="0.00"
                 />
               </div>
-              {priceCents > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Your earnings: ${(creatorEarnings / 100).toFixed(2)} (after {PLATFORM_FEE_PERCENT}% fee)
-                </p>
-              )}
             </div>
 
             {/* Event Date (for event packages) */}
@@ -342,12 +332,8 @@ const SendOfferDialog = ({
                     <span>Total Price:</span>
                     <span className="font-medium text-foreground">${(priceCents / 100).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Deposit (50%):</span>
-                    <span>${(depositAmount / 100).toFixed(2)}</span>
-                  </div>
                   <div className="flex justify-between text-xs">
-                    <span>Brand pays deposit to accept</span>
+                    <span>Payment arranged directly with brand</span>
                   </div>
                 </div>
               </div>

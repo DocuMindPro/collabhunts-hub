@@ -17,7 +17,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { EVENT_PACKAGES, ESCROW_STATUSES, type EscrowStatus } from "@/config/packages";
+import { EVENT_PACKAGES } from "@/config/packages";
 
 interface Booking {
   id: string;
@@ -116,24 +116,14 @@ const BrandBookingsTab = () => {
     }
   };
 
-  const getEscrowBadge = (escrowStatus: string | null) => {
-    if (!escrowStatus) return null;
-    const status = ESCROW_STATUSES[escrowStatus as EscrowStatus];
-    if (!status) return null;
-
-    const colorClasses: Record<string, string> = {
-      yellow: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-      blue: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-      green: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-      red: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-      orange: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
-    };
-
-    return (
-      <Badge variant="outline" className={colorClasses[status.color]}>
-        {status.label}
-      </Badge>
-    );
+  const getStatusLabel = (status: string | null) => {
+    switch (status) {
+      case "pending": return "Pending";
+      case "confirmed": return "Confirmed";
+      case "completed": return "Completed";
+      case "cancelled": return "Cancelled";
+      default: return status || "Unknown";
+    }
   };
 
   const formatEventTime = (start: string | null, end: string | null) => {
@@ -232,7 +222,6 @@ const BrandBookingsTab = () => {
                     <div className="flex-1 p-4 md:p-6">
                       <div className="flex flex-wrap gap-2 mb-3">
                         {getStatusBadge(booking.status)}
-                        {getEscrowBadge(booking.escrow_status)}
                       </div>
 
                       <div className="grid sm:grid-cols-2 gap-3 text-sm">

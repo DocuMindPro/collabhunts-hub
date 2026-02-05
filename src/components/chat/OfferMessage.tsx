@@ -13,7 +13,7 @@ import {
   FileText
 } from "lucide-react";
 import { format } from "date-fns";
-import { EVENT_PACKAGES, type PackageType, calculateDeposit } from "@/config/packages";
+import { EVENT_PACKAGES, type PackageType } from "@/config/packages";
 import AcceptOfferDialog from "./AcceptOfferDialog";
 
 export interface OfferData {
@@ -22,7 +22,7 @@ export interface OfferData {
   package_type: string;
   package_name: string;
   price_cents: number;
-  deposit_cents: number;
+  deposit_cents?: number; // Legacy - no longer used
   event_date: string | null;
   event_time: string | null;
   duration_hours: number | null;
@@ -126,9 +126,6 @@ const OfferMessage = ({
             <DollarSign className="h-5 w-5 text-green-600" />
             <div>
               <p className="font-bold text-lg">${(offerData.price_cents / 100).toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground">
-                Deposit: ${(offerData.deposit_cents / 100).toFixed(2)} (50%)
-              </p>
             </div>
           </div>
 
@@ -168,7 +165,7 @@ const OfferMessage = ({
                 onClick={() => setShowAcceptDialog(true)}
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Accept & Pay Deposit (${(offerData.deposit_cents / 100).toFixed(2)})
+                Accept Agreement
               </Button>
             </div>
           )}
