@@ -86,6 +86,7 @@ const Influencers = () => {
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
   const navigate = useNavigate();
@@ -113,16 +114,26 @@ const Influencers = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Check for brand profile
         const { data: brandProfile } = await supabase
           .from("brand_profiles")
           .select("id")
           .eq("user_id", user.id)
           .maybeSingle();
         
+        // Check for creator profile
+        const { data: creatorProfile } = await supabase
+          .from("creator_profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
         setHasBrandProfile(!!brandProfile);
+        setHasCreatorProfile(!!creatorProfile);
         setIsLoggedIn(true);
       } else {
         setHasBrandProfile(false);
+        setHasCreatorProfile(false);
         setIsLoggedIn(false);
       }
     } catch (error) {
@@ -745,8 +756,8 @@ const Influencers = () => {
             </Card>
           )}
 
-          {/* Call to action for non-registered brands */}
-          {authCheckComplete && !hasBrandProfile && isLoggedIn && (
+          {/* Call to action for non-registered brands - hide from creators */}
+          {authCheckComplete && !hasBrandProfile && !hasCreatorProfile && isLoggedIn && (
             <div className="mb-6">
               <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/5 p-4 md:p-6">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
