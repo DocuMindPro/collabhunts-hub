@@ -19,7 +19,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import DimmedPrice from "@/components/DimmedPrice";
 import DimmedPriceRange from "@/components/DimmedPriceRange";
 import VettedBadge from "@/components/VettedBadge";
-import ProCreatorBadge from "@/components/ProCreatorBadge";
+import VIPCreatorBadge from "@/components/VIPCreatorBadge";
 import { isPast } from "date-fns";
 
 interface CreatorData {
@@ -71,8 +71,8 @@ interface CreatorData {
   }>;
 }
 
-// Helper to check if creator has active Pro status
-const isPro = (creator: CreatorData) => {
+// Helper to check if creator has active VIP status
+const isVIP = (creator: CreatorData) => {
   if (creator.verification_payment_status !== 'paid') return false;
   if (!creator.verification_expires_at) return false;
   return !isPast(new Date(creator.verification_expires_at));
@@ -576,7 +576,7 @@ const CreatorProfile = () => {
                       {creator.display_name}
                     </h1>
                     <VettedBadge size="md" />
-                    {isPro(creator) && <ProCreatorBadge size="md" />}
+                    {isVIP(creator) && <VIPCreatorBadge size="md" />}
                   </div>
                   <div className="flex items-center gap-1 bg-primary/10 px-2.5 py-1 rounded-full">
                     <Star className="h-4 w-4 fill-primary text-primary" />
@@ -648,7 +648,7 @@ const CreatorProfile = () => {
                         {creator.display_name}
                       </h1>
                       <VettedBadge size="md" />
-                      {isPro(creator) && <ProCreatorBadge size="md" />}
+                      {isVIP(creator) && <VIPCreatorBadge size="md" />}
                     </div>
                     <div className="flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded-full">
                       <Star className="h-3.5 w-3.5 fill-primary text-primary" />

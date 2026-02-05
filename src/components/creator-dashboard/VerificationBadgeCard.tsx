@@ -8,7 +8,7 @@ import { format, addYears, isPast } from "date-fns";
 import { Crown, CheckCircle, Clock, Sparkles } from "lucide-react";
 import MockPaymentDialog from "@/components/payments/MockPaymentDialog";
 
-const PRO_FEE_CENTS = 9900; // $99/year
+const VIP_FEE_CENTS = 9900; // $99/year
 
 interface VerificationBadgeCardProps {
   creatorProfileId: string;
@@ -72,8 +72,8 @@ const VerificationBadgeCard = ({ creatorProfileId }: VerificationBadgeCardProps)
       });
     } else {
       toast({
-        title: "Verification Badge Activated!",
-        description: "Your verified badge is now active for 1 year.",
+        title: "VIP Badge Activated!",
+        description: "Your VIP badge is now active for 1 year.",
       });
       fetchVerificationStatus();
     }
@@ -103,10 +103,10 @@ const VerificationBadgeCard = ({ creatorProfileId }: VerificationBadgeCardProps)
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Crown className="h-5 w-5 text-amber-500" />
-            Pro Creator Badge
+            VIP Creator Badge
           </CardTitle>
           <CardDescription>
-            Stand out with a premium Pro badge on your profile
+            Stand out with a premium VIP badge on your profile
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -116,7 +116,7 @@ const VerificationBadgeCard = ({ creatorProfileId }: VerificationBadgeCardProps)
                 <CheckCircle className="h-6 w-6 text-amber-600" />
                 <div>
                   <p className="font-medium text-amber-700 dark:text-amber-400">
-                    Pro Creator Active
+                    VIP Creator Active
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Expires on {format(new Date(verificationStatus.expires_at!), "MMMM d, yyyy")}
@@ -143,16 +143,16 @@ const VerificationBadgeCard = ({ creatorProfileId }: VerificationBadgeCardProps)
                 <Clock className="h-6 w-6 text-amber-600" />
                 <div>
                   <p className="font-medium text-amber-700 dark:text-amber-400">
-                    Pro Status Expired
+                    VIP Status Expired
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Renew to restore your Pro Creator badge
+                    Renew to restore your VIP Creator badge
                   </p>
                 </div>
               </div>
               <Button onClick={() => setShowPaymentDialog(true)} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
                 <Crown className="h-4 w-4 mr-2" />
-                Renew Pro - $99/year
+                Renew VIP - $99/year
               </Button>
             </div>
           ) : (
@@ -163,7 +163,7 @@ const VerificationBadgeCard = ({ creatorProfileId }: VerificationBadgeCardProps)
                   <div>
                     <p className="font-medium">Premium Visibility</p>
                     <p className="text-sm text-muted-foreground">
-                      A gold Pro badge shows brands you're a top-tier creator
+                      A gold VIP badge shows brands you're a top-tier creator
                     </p>
                   </div>
                 </div>
@@ -172,7 +172,7 @@ const VerificationBadgeCard = ({ creatorProfileId }: VerificationBadgeCardProps)
                   <div>
                     <p className="font-medium">Stand Out in Search</p>
                     <p className="text-sm text-muted-foreground">
-                      Pro creators appear higher in brand searches
+                      VIP creators appear higher in brand searches
                     </p>
                   </div>
                 </div>
@@ -180,7 +180,7 @@ const VerificationBadgeCard = ({ creatorProfileId }: VerificationBadgeCardProps)
 
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg">
                 <div>
-                  <p className="font-semibold">Pro Creator Badge</p>
+                  <p className="font-semibold">VIP Creator Badge</p>
                   <p className="text-sm text-muted-foreground">One-time yearly payment</p>
                 </div>
                 <Badge className="text-lg px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
@@ -190,7 +190,7 @@ const VerificationBadgeCard = ({ creatorProfileId }: VerificationBadgeCardProps)
 
               <Button onClick={() => setShowPaymentDialog(true)} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
                 <Crown className="h-4 w-4 mr-2" />
-                Become Pro
+                Become VIP
               </Button>
             </div>
           )}
@@ -200,12 +200,12 @@ const VerificationBadgeCard = ({ creatorProfileId }: VerificationBadgeCardProps)
       <MockPaymentDialog
         open={showPaymentDialog}
         onOpenChange={setShowPaymentDialog}
-        title="Pro Creator Badge"
-        description="Become a Pro Creator to boost your visibility with brands"
+        title="VIP Creator Badge"
+        description="Become a VIP Creator to boost your visibility with brands"
         lineItems={[
           {
-            label: "Annual Pro Creator Badge",
-            amountCents: PRO_FEE_CENTS,
+            label: "Annual VIP Creator Badge",
+            amountCents: VIP_FEE_CENTS,
           },
         ]}
         onSuccess={handlePaymentSuccess}

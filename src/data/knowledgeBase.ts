@@ -619,7 +619,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
       },
       {
         slug: "creator-badge-system",
-        title: "Creator Badge System: Vetted & Pro",
+        title: "Creator Badge System: Vetted & VIP",
         content: `
           <h2>Two-Tier Trust Badges for Creators</h2>
           <p>CollabHunts uses a two-tier badge system to help brands quickly identify trusted creators. Every approved creator receives badges that signal their trust level.</p>
@@ -632,7 +632,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
             <li><strong>Cost:</strong> Free - included with platform membership</li>
           </ul>
           
-          <h3>👑 Pro Creator Badge ($99/year)</h3>
+          <h3>👑 VIP Creator Badge ($99/year)</h3>
           <p>The gold crown badge signals premium, verified creators who have invested in their professional presence.</p>
           <ul>
             <li><strong>What it means:</strong> A premium creator committed to quality and professionalism</li>
@@ -640,7 +640,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
             <li><strong>Cost:</strong> $99/year</li>
           </ul>
           
-          <h3>Pro Creator Benefits</h3>
+          <h3>VIP Creator Benefits</h3>
           <ul>
             <li>Gold crown badge displayed on your profile and in search results</li>
             <li>Higher visibility in brand searches</li>
@@ -657,7 +657,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
           </ul>
           
           <div class="alert alert-info">
-            <strong>Pro Tip:</strong> Combine Pro Creator status with Boost packages for maximum visibility and the highest chance of landing premium collaborations!
+            <strong>VIP Tip:</strong> Combine VIP Creator status with Boost packages for maximum visibility and the highest chance of landing premium collaborations!
           </div>
         `,
         roles: ['creator'],

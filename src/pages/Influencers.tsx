@@ -26,7 +26,7 @@ import DimmedPriceRange from "@/components/DimmedPriceRange";
 import CountrySelect from "@/components/CountrySelect";
 import LocationSelect from "@/components/LocationSelect";
 import VettedBadge from "@/components/VettedBadge";
-import ProCreatorBadge from "@/components/ProCreatorBadge";
+import VIPCreatorBadge from "@/components/VIPCreatorBadge";
 import { isPast } from "date-fns";
 
 interface CreatorWithDetails {
@@ -57,8 +57,8 @@ interface CreatorWithDetails {
   }>;
 }
 
-// Helper to check if creator has active Pro status
-const isCreatorPro = (creator: CreatorWithDetails) => {
+// Helper to check if creator has active VIP status
+const isCreatorVIP = (creator: CreatorWithDetails) => {
   if (creator.verification_payment_status !== 'paid') return false;
   if (!creator.verification_expires_at) return false;
   return !isPast(new Date(creator.verification_expires_at));
@@ -257,12 +257,12 @@ const Influencers = () => {
         services: creator.creator_services || []
       }));
 
-      // Sort: Pro creators first, then featured, then rest
+      // Sort: VIP creators first, then featured, then rest
       formattedCreators.sort((a, b) => {
-        const aIsPro = isCreatorPro(a);
-        const bIsPro = isCreatorPro(b);
-        if (aIsPro && !bIsPro) return -1;
-        if (!aIsPro && bIsPro) return 1;
+        const aIsVIP = isCreatorVIP(a);
+        const bIsVIP = isCreatorVIP(b);
+        if (aIsVIP && !bIsVIP) return -1;
+        if (!aIsVIP && bIsVIP) return 1;
         if (a.is_featured && !b.is_featured) return -1;
         if (!a.is_featured && b.is_featured) return 1;
         return 0;
@@ -474,7 +474,7 @@ const Influencers = () => {
                   {creator.display_name}
                 </h3>
                 <VettedBadge size="sm" className="text-green-400" showTooltip={false} />
-                {isCreatorPro(creator) && <ProCreatorBadge size="sm" className="text-amber-400" showTooltip={false} />}
+                {isCreatorVIP(creator) && <VIPCreatorBadge size="sm" className="text-amber-400" showTooltip={false} />}
               </div>
               <p className="text-sm text-white/80 line-clamp-1">
                 {creator.categories[0] || "Content Creator"}

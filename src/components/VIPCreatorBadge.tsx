@@ -7,13 +7,13 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-interface ProCreatorBadgeProps {
+interface VIPCreatorBadgeProps {
   className?: string;
   size?: "sm" | "md" | "lg";
   showTooltip?: boolean;
 }
 
-const ProCreatorBadge = ({ className, size = "md", showTooltip = true }: ProCreatorBadgeProps) => {
+const VIPCreatorBadge = ({ className, size = "md", showTooltip = true }: VIPCreatorBadgeProps) => {
   const sizeClasses = {
     sm: "h-3.5 w-3.5",
     md: "h-4 w-4",
@@ -43,11 +43,11 @@ const ProCreatorBadge = ({ className, size = "md", showTooltip = true }: ProCrea
           </span>
         </TooltipTrigger>
         <TooltipContent>
-          <p className="text-xs">Pro Creator - Premium verified creator</p>
+          <p className="text-xs">VIP Creator - Premium verified creator</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
 };
 
-export default ProCreatorBadge;
+export default VIPCreatorBadge;
