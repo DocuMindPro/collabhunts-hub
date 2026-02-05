@@ -762,7 +762,11 @@ export type Database = {
           venue_name: string | null
           venue_type: string | null
           verification_completed_at: string | null
+          verification_expires_at: string | null
           verification_notes: string | null
+          verification_paid_at: string | null
+          verification_payment_id: string | null
+          verification_payment_status: string | null
           verification_rejection_reason: string | null
           verification_status: string | null
           verification_submitted_at: string | null
@@ -798,7 +802,11 @@ export type Database = {
           venue_name?: string | null
           venue_type?: string | null
           verification_completed_at?: string | null
+          verification_expires_at?: string | null
           verification_notes?: string | null
+          verification_paid_at?: string | null
+          verification_payment_id?: string | null
+          verification_payment_status?: string | null
           verification_rejection_reason?: string | null
           verification_status?: string | null
           verification_submitted_at?: string | null
@@ -834,7 +842,11 @@ export type Database = {
           venue_name?: string | null
           venue_type?: string | null
           verification_completed_at?: string | null
+          verification_expires_at?: string | null
           verification_notes?: string | null
+          verification_paid_at?: string | null
+          verification_payment_id?: string | null
+          verification_payment_status?: string | null
           verification_rejection_reason?: string | null
           verification_status?: string | null
           verification_submitted_at?: string | null
