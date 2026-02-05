@@ -931,6 +931,63 @@ export type Database = {
           },
         ]
       }
+      calendar_events: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          end_time: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          reminder_0d_sent: boolean | null
+          reminder_1d_sent: boolean | null
+          reminder_7d_sent: boolean | null
+          source_id: string
+          source_table: string
+          start_date: string
+          start_time: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          reminder_0d_sent?: boolean | null
+          reminder_1d_sent?: boolean | null
+          reminder_7d_sent?: boolean | null
+          source_id: string
+          source_table: string
+          start_date: string
+          start_time?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          reminder_0d_sent?: boolean | null
+          reminder_1d_sent?: boolean | null
+          reminder_7d_sent?: boolean | null
+          source_id?: string
+          source_table?: string
+          start_date?: string
+          start_time?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       campaign_applications: {
         Row: {
           campaign_id: string
