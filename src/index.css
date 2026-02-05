@@ -413,6 +413,119 @@ All colors MUST be HSL.
   }
 }
 
+/* Glassmorphism Card */
+.glass-card {
+  background: hsla(var(--card) / 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsla(var(--border) / 0.5);
+}
+
+/* Glow border animation */
+.glow-border {
+  position: relative;
+}
+
+.glow-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary)),
+    hsl(var(--secondary)),
+    hsl(var(--primary))
+  );
+  background-size: 200% 100%;
+  animation: glow-border-rotate 3s linear infinite;
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.glow-border:hover::before {
+  opacity: 1;
+}
+
+@keyframes glow-border-rotate {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+/* Glow pulse for stats */
+@keyframes glow-pulse-soft {
+  0%, 100% {
+    text-shadow: 0 0 8px hsla(var(--primary) / 0.3);
+  }
+  50% {
+    text-shadow: 0 0 20px hsla(var(--primary) / 0.5);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse-soft 2s ease-in-out infinite;
+}
+
+/* Staggered fade in for list items */
+@keyframes stagger-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-fade-in > * {
+  animation: stagger-fade-in 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.stagger-fade-in > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger-fade-in > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger-fade-in > *:nth-child(3) { animation-delay: 0.3s; }
+.stagger-fade-in > *:nth-child(4) { animation-delay: 0.4s; }
+.stagger-fade-in > *:nth-child(5) { animation-delay: 0.5s; }
+.stagger-fade-in > *:nth-child(6) { animation-delay: 0.6s; }
+
+/* Search button pulse glow */
+.search-btn-glow {
+  position: relative;
+  overflow: visible;
+}
+
+.search-btn-glow::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  filter: blur(12px);
+  transition: opacity 0.3s ease;
+}
+
+.search-btn-glow:hover::after {
+  opacity: 0.5;
+  animation: glow-pulse-soft 1.5s ease-in-out infinite;
+}
+
 /* Mobile Safe Area Utilities */
 .safe-area-top {
   padding-top: env(safe-area-inset-top, 0px);
