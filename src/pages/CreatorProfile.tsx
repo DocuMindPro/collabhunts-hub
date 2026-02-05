@@ -570,14 +570,15 @@ const CreatorProfile = () => {
             {/* Mobile: Simplified info (no duplicate avatar) */}
             {isMobile ? (
               <div className="text-center space-y-3">
+                {/* Badge row - Collabstr style */}
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <VettedBadge variant="pill" size="sm" />
+                  {isVIP(creator) && <VIPCreatorBadge variant="pill" size="sm" />}
+                </div>
                 <div className="flex items-center justify-center gap-3 flex-wrap">
-                  <div className="flex items-center gap-1.5">
-                    <h1 className="text-2xl font-heading font-bold">
-                      {creator.display_name}
-                    </h1>
-                    <VettedBadge size="md" />
-                    {isVIP(creator) && <VIPCreatorBadge size="md" />}
-                  </div>
+                  <h1 className="text-2xl font-heading font-bold">
+                    {creator.display_name}
+                  </h1>
                   <div className="flex items-center gap-1 bg-primary/10 px-2.5 py-1 rounded-full">
                     <Star className="h-4 w-4 fill-primary text-primary" />
                     <span className="font-semibold text-sm">{creator.avgRating.toFixed(1)}</span>
@@ -642,14 +643,15 @@ const CreatorProfile = () => {
                 </div>
                 
                 <div className="flex-1 min-w-0">
+                  {/* Badge row - Collabstr style */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <VettedBadge variant="pill" size="sm" />
+                    {isVIP(creator) && <VIPCreatorBadge variant="pill" size="sm" />}
+                  </div>
                   <div className="flex items-center justify-start gap-2 flex-wrap mb-1">
-                    <div className="flex items-center gap-1.5">
-                      <h1 className="text-2xl font-heading font-bold">
-                        {creator.display_name}
-                      </h1>
-                      <VettedBadge size="md" />
-                      {isVIP(creator) && <VIPCreatorBadge size="md" />}
-                    </div>
+                    <h1 className="text-2xl font-heading font-bold">
+                      {creator.display_name}
+                    </h1>
                     <div className="flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded-full">
                       <Star className="h-3.5 w-3.5 fill-primary text-primary" />
                       <span className="font-semibold text-sm">{creator.avgRating.toFixed(1)}</span>

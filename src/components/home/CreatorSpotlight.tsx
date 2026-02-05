@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Instagram, Youtube, Star, Sparkles } from "lucide-react";
+import { ArrowRight, Instagram, Youtube } from "lucide-react";
 import AnimatedSection from "@/components/AnimatedSection";
-import { cn } from "@/lib/utils";
+import VettedBadge from "@/components/VettedBadge";
+import VIPCreatorBadge from "@/components/VIPCreatorBadge";
 
 interface Creator {
   id: string;
@@ -139,25 +140,11 @@ const CreatorSpotlight = () => {
                         </div>
                       )}
                       
-                      {/* VIP/Vetted Badge */}
+                      {/* VIP/Vetted Badges - Collabstr style */}
                       {(isVip || isVetted) && (
-                        <div className={cn(
-                          "absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1",
-                          isVip 
-                            ? "bg-gradient-to-r from-primary to-secondary text-primary-foreground" 
-                            : "bg-primary text-primary-foreground"
-                        )}>
-                          {isVip ? (
-                            <>
-                              <Sparkles className="h-3 w-3" />
-                              VIP
-                            </>
-                          ) : (
-                            <>
-                              <Star className="h-3 w-3" />
-                              Vetted
-                            </>
-                          )}
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                          {isVetted && <VettedBadge variant="pill" size="sm" showTooltip={false} />}
+                          {isVip && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} />}
                         </div>
                       )}
 

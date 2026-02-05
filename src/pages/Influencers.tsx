@@ -469,13 +469,14 @@ const Influencers = () => {
 
             {/* Creator Info - Bottom Overlay */}
             <div className="absolute bottom-0 left-0 right-0 p-4">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <h3 className="font-heading font-semibold text-lg text-white line-clamp-1">
-                  {creator.display_name}
-                </h3>
-                <VettedBadge size="sm" className="text-green-400" showTooltip={false} />
-                {isCreatorVIP(creator) && <VIPCreatorBadge size="sm" className="text-amber-400" showTooltip={false} />}
+              {/* Badge row - Collabstr style */}
+              <div className="flex items-center gap-1.5 mb-2">
+                <VettedBadge variant="pill" size="sm" showTooltip={false} />
+                {isCreatorVIP(creator) && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} />}
               </div>
+              <h3 className="font-heading font-semibold text-lg text-white line-clamp-1">
+                {creator.display_name}
+              </h3>
               <p className="text-sm text-white/80 line-clamp-1">
                 {creator.categories[0] || "Content Creator"}
               </p>
