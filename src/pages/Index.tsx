@@ -108,34 +108,34 @@ const Index = () => {
   }, [navigate]);
 
   const eventTypes = [
-    "Meet & Greet", "Workshop", "Competition", "Brand Activation", "Private Event"
+    "Unbox & Review", "Social Boost", "Meet & Greet", "Brand Activation", "Custom Experience"
   ];
 
-  const rotatingWords = ["Made Easy", "In Real Life", "At Your Venue", "That Drive Traffic"];
+  const rotatingWords = ["Made Simple", "Zero Fees", "Near You", "That Convert"];
 
   const steps = [
     {
       icon: Search,
-      title: "Find Creators",
-      description: "Browse creators available for live events in your area"
+      title: "Discover Creators",
+      description: "Browse vetted creators by location, niche, and availability"
     },
     {
       icon: Calendar,
-      title: "Book an Event",
-      description: "Select a date, choose a package, and secure with 50% deposit"
+      title: "Connect Directly",
+      description: "Message creators, discuss terms, and finalize with an AI-drafted agreement"
     },
     {
       icon: MapPin,
-      title: "Host & Grow",
-      description: "Creators bring their fans to your venue, you get foot traffic and content"
+      title: "Collab & Grow",
+      description: "Execute your event or campaign and watch your brand grow"
     }
   ];
 
   const benefits = [
     { icon: Users, title: "Drive Foot Traffic", description: "Creators bring their followers directly to your venue" },
-    { icon: Star, title: "Verified Creators", description: "All creators are vetted for professionalism and reliability" },
-    { icon: MapPin, title: "Local Focus", description: "Find creators in your city ready for in-person events" },
-    { icon: Sparkles, title: "Payment Protection", description: "50% escrow system protects both parties" },
+    { icon: Star, title: "Vetted & VIP Creators", description: "All creators are reviewed; VIP creators go the extra mile" },
+    { icon: MapPin, title: "Local Focus", description: "Find creators in your city ready for in-person collabs" },
+    { icon: Sparkles, title: "Zero Platform Fees", description: "Negotiate and pay creators directly — no middleman" },
   ];
 
   // Show loading spinner while checking auth
@@ -160,7 +160,7 @@ const Index = () => {
             <div className="space-y-6">
               <AnimatedSection animation="fade-up">
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight">
-                  Creator Events{" "}
+                  Find Your Creator{" "}
                   <span className="bg-gradient-accent bg-clip-text text-transparent">
                     <RotatingText words={rotatingWords} />
                   </span>
@@ -169,8 +169,8 @@ const Index = () => {
               
               <AnimatedSection animation="fade-up" delay={100}>
                 <p className="text-xl text-muted-foreground">
-                  Book creators for live fan experiences at your venue. 
-                  Drive foot traffic, create buzz, and get professional content.
+                  Discover vetted creators for brand events, content, and collaborations. 
+                  Connect directly, negotiate your own terms — zero platform fees.
                 </p>
               </AnimatedSection>
               
@@ -214,15 +214,15 @@ const Index = () => {
                 <div className="flex items-center gap-6 pt-4">
                   <div className="text-center">
                     <p className="text-2xl font-bold text-primary">100%</p>
-                    <p className="text-xs text-muted-foreground">Verified Creators</p>
+                    <p className="text-xs text-muted-foreground">Vetted Creators</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-primary">15%</p>
-                    <p className="text-xs text-muted-foreground">Platform Fee Only</p>
+                    <p className="text-2xl font-bold text-primary">$0</p>
+                    <p className="text-xs text-muted-foreground">Transaction Fees</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-primary">50%</p>
-                    <p className="text-xs text-muted-foreground">Escrow Protection</p>
+                    <p className="text-2xl font-bold text-primary">VIP</p>
+                    <p className="text-xs text-muted-foreground">Creator Options</p>
                   </div>
                 </div>
               </AnimatedSection>
