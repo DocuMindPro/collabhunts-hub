@@ -47,7 +47,7 @@ export const platformManual: ManualSection[] = [
 
 ### Edge Function Location
 \`supabase/functions/send-notification-email/index.ts\``,
-        lastUpdated: "2024-12-10",
+        lastUpdated: "2025-02-01",
         tags: ["email", "sendgrid", "notifications"]
       },
       {
@@ -98,7 +98,7 @@ export const platformManual: ManualSection[] = [
 - ✅ Profile/Cover Images: R2 (new uploads)
 - ✅ Portfolio Media: R2 (new uploads)
 - ⚠️ Legacy Supabase Storage: ~52 MB pending migration`,
-        lastUpdated: "2024-12-10",
+        lastUpdated: "2025-02-01",
         tags: ["storage", "r2", "cloudflare", "files"]
       },
       {
@@ -123,7 +123,7 @@ export const platformManual: ManualSection[] = [
 ### Requirements
 - Phone verification required for both creators AND brands
 - Cannot complete signup without verified phone`,
-        lastUpdated: "2024-12-10",
+        lastUpdated: "2025-02-01",
         tags: ["phone", "twilio", "verification", "sms"]
       },
       {
@@ -136,21 +136,10 @@ export const platformManual: ManualSection[] = [
 **Retention:** Indefinite
 
 ### Backup Contents
-- All 31 database tables (JSON format)
+- All database tables (JSON format)
 - Complete schema (DDL, enums, functions, triggers)
 - RLS policies
-- 17 Edge function descriptions
-
-### Tables Backed Up (31 total)
-**User Management:** profiles, user_roles, brand_profiles, creator_profiles
-**Creator Data:** creator_services, creator_social_accounts, creator_portfolio_media, creator_payout_settings, creator_notes
-**Brand Data:** brand_subscriptions, brand_storage_usage, saved_creators, storage_purchases
-**Transactions:** bookings, booking_deliverables, booking_disputes, payouts, reviews
-**Campaigns:** campaigns, campaign_applications
-**Messaging:** conversations, messages, notifications, mass_message_templates, mass_messages_log
-**Content:** content_library, content_folders
-**Analytics:** profile_views, backup_history, platform_changelog
-**Advertising:** ad_placements
+- Edge function descriptions
 
 ### Edge Functions
 - \`database-backup\` - Performs the backup
@@ -167,7 +156,7 @@ Admins can trigger manual backups from:
 
 ### Disaster Recovery
 Full recovery guide: \`public/DISASTER_RECOVERY.md\``,
-        lastUpdated: "2024-12-10",
+        lastUpdated: "2025-02-01",
         tags: ["backup", "disaster-recovery", "cron", "s3"]
       }
     ]
@@ -181,7 +170,7 @@ Full recovery guide: \`public/DISASTER_RECOVERY.md\``,
       {
         id: "edge-functions-list",
         title: "All Edge Functions",
-        content: `## Edge Functions Overview (19 total)
+        content: `## Edge Functions Overview
 
 | Function | Purpose |
 |----------|---------|
@@ -192,11 +181,12 @@ Full recovery guide: \`public/DISASTER_RECOVERY.md\``,
 | \`verify-backup\` | Validate backup file integrity |
 | \`get-cron-status\` | Return scheduled job status |
 | \`get-storage-stats\` | Return storage bucket statistics |
-| \`check-dispute-deadlines\` | Monitor and auto-escalate disputes |
+| \`check-dispute-deadlines\` | Monitor and escalate disputes |
 | \`check-content-expiration\` | Send content rights expiration reminders |
 | \`check-ad-expiration\` | Auto-expire ad placements |
 | \`admin-reset-password\` | Allow admins to reset user passwords |
 | \`improve-bio\` | AI-powered text improvement suggestions |
+| \`draft-agreement\` | AI-assisted agreement drafting |
 | \`optimize-image\` | Image optimization for uploads |
 | \`upload-profile-image\` | Profile & cover image uploads to R2 |
 | \`upload-portfolio-media\` | Portfolio images & videos to R2 |
@@ -204,10 +194,13 @@ Full recovery guide: \`public/DISASTER_RECOVERY.md\``,
 | \`upload-deliverable\` | Handle booking deliverable uploads to R2 |
 | \`upload-ad-image\` | Ad placement image uploads |
 | \`delete-content\` | Remove content from R2 and database |
+| \`send-calendar-reminders\` | Send reminders for upcoming calendar events |
+| \`send-push-notification\` | Send push notifications to mobile apps |
+| \`check-subscription-renewal\` | Monitor subscription expiration |
 
 ### Deployment
 Edge functions are automatically deployed when code changes are pushed.`,
-        lastUpdated: "2024-12-10",
+        lastUpdated: "2025-02-01",
         tags: ["edge-functions", "serverless", "api"]
       }
     ]
@@ -221,57 +214,72 @@ Edge functions are automatically deployed when code changes are pushed.`,
       {
         id: "core-tables",
         title: "Core Database Tables",
-        content: `## Database Tables (31 total)
+        content: `## Database Tables
 
-### User Management (4 tables)
+### User Management
 - \`profiles\` - Base user accounts (auto-created on signup)
 - \`user_roles\` - Role assignments (admin, brand, creator)
 - \`creator_profiles\` - Creator-specific data
 - \`brand_profiles\` - Brand-specific data
 
-### Creator Data (5 tables)
+### Creator Data
 - \`creator_services\` - Service offerings with pricing
 - \`creator_social_accounts\` - Social media accounts
 - \`creator_portfolio_media\` - Portfolio images/videos
-- \`creator_payout_settings\` - Stripe payout configuration
+- \`creator_payout_settings\` - Payout configuration
 - \`creator_notes\` - Brand's private notes about creators
+- \`creator_featuring\` - Boost/featuring purchases
+- \`creator_agreements\` - AI-drafted collaboration agreements
 
-### Brand Data (4 tables)
+### Brand Data
 - \`brand_subscriptions\` - Subscription tier tracking
 - \`brand_storage_usage\` - Content Library storage limits
 - \`saved_creators\` - Saved/favorited creators
 - \`storage_purchases\` - Extra storage purchases
+- \`brand_opportunities\` - Posted opportunities
 
-### Transactions (5 tables)
-- \`bookings\` - Service bookings
+### Transactions
+- \`bookings\` - Collaboration bookings (for tracking only)
 - \`booking_deliverables\` - Uploaded deliverable files
 - \`booking_disputes\` - Dispute cases
-- \`payouts\` - Creator payout records
+- \`booking_offers\` - Offer/counter-offer messages
 - \`reviews\` - Brand reviews of creators
 
-### Campaigns (2 tables)
+### Campaigns/Opportunities
 - \`campaigns\` - Brand campaign postings
 - \`campaign_applications\` - Creator applications
 
-### Messaging (5 tables)
+### Messaging
 - \`conversations\` - Chat threads
 - \`messages\` - Individual messages
 - \`notifications\` - In-app notifications
 - \`mass_message_templates\` - Saved bulk message templates
 - \`mass_messages_log\` - Mass message history
 
-### Content Management (2 tables)
+### Content Management
 - \`content_library\` - Stored UGC content
 - \`content_folders\` - Folder organization
 
-### Analytics & System (3 tables)
+### Calendar
+- \`calendar_events\` - User calendar entries (from confirmed agreements)
+
+### Analytics & System
 - \`profile_views\` - Creator profile view tracking
 - \`backup_history\` - Backup operation logs
-- \`platform_changelog\` - Platform update announcements
 
-### Advertising (1 table)
-- \`ad_placements\` - Ad placement configurations`,
-        lastUpdated: "2024-12-10",
+### Advertising
+- \`ad_placements\` - Ad placement configurations
+
+### Partners
+- \`affiliates\` - Affiliate partner profiles
+- \`referrals\` - Tracked referral signups
+- \`affiliate_earnings\` - Commission records
+- \`affiliate_payout_requests\` - Payout management
+- \`franchise_owners\` - Franchise partner profiles
+- \`franchise_countries\` - Country assignments
+- \`franchise_earnings\` - Franchise commission records
+- \`franchise_payout_requests\` - Franchise payout management`,
+        lastUpdated: "2025-02-01",
         tags: ["database", "tables", "schema"]
       }
     ]
@@ -291,7 +299,6 @@ All secrets are stored securely and accessible only in edge functions.
 
 ### Email & Notifications
 - \`SENDGRID_API_KEY\` - SendGrid email service
-- \`RESEND_API_KEY\` - Resend email (backup)
 - \`ADMIN_EMAIL\` - Admin notification recipient
 
 ### Storage (Cloudflare R2)
@@ -317,7 +324,7 @@ All secrets are stored securely and accessible only in edge functions.
 ### Other
 - \`BACKUP_CRON_SECRET\` - Cron job authentication
 - \`LOVABLE_API_KEY\` - Lovable AI integration`,
-        lastUpdated: "2024-12-10",
+        lastUpdated: "2025-02-01",
         tags: ["secrets", "api-keys", "configuration"]
       }
     ]
@@ -338,29 +345,78 @@ All secrets are stored securely and accessible only in edge functions.
 - **Function:** \`database-backup\`
 - **Cron Expression:** \`0 0 * * *\`
 
-### 2. Dispute Deadline Checker
-- **Schedule:** Every hour
-- **Function:** \`check-dispute-deadlines\`
-- **Actions:**
-  - Send 48h/24h/1h reminders before auto-release
-  - Auto-release payment after 72 hours
-  - Escalate disputes after 3 days no response
-  - Warn admins of resolution deadlines
-
-### 3. Content Expiration Checker
+### 2. Content Expiration Checker
 - **Schedule:** Daily at 08:00 UTC
 - **Function:** \`check-content-expiration\`
 - **Actions:**
   - Check content with usage_rights_end approaching
   - Send email reminders for 7/3/1 days before expiry
-  - Group notifications by brand`,
-        lastUpdated: "2024-12-10",
+  - Group notifications by brand
+
+### 3. Calendar Reminders
+- **Schedule:** Daily at 08:00 UTC
+- **Function:** \`send-calendar-reminders\`
+- **Actions:**
+  - Send reminders for events 7 days out
+  - Send reminders for events 1 day out
+  - Send reminders for events on the day
+
+### 4. Subscription Renewal Checker
+- **Schedule:** Daily at 09:00 UTC
+- **Function:** \`check-subscription-renewal\`
+- **Actions:**
+  - Check expiring subscriptions
+  - Send renewal reminders`,
+        lastUpdated: "2025-02-01",
         tags: ["cron", "scheduled", "automation"]
       }
     ]
   },
 
   // ==================== OPERATIONAL DOCUMENTATION ====================
+  {
+    id: "business-model",
+    title: "Business Model",
+    icon: "DollarSign",
+    category: "operational",
+    articles: [
+      {
+        id: "marketplace-model",
+        title: "Marketplace Model Overview",
+        content: `## Zero-Fee Marketplace Model
+
+CollabHunts operates as a classifieds-style marketplace similar to OLX/Dubizzle, but for creator-brand collaborations.
+
+### Key Principles
+- **No Transaction Fees:** We don't process payments between parties
+- **Direct Relationships:** Brands and creators communicate directly
+- **Agreement Records:** AI-drafted agreements document terms
+- **Payment Freedom:** Parties arrange payment however they prefer
+
+### Revenue Streams
+
+| Revenue Source | Price | Target |
+|----------------|-------|--------|
+| Brand Basic Subscription | $10/mo | Brands wanting to contact creators |
+| Brand Pro Subscription | $49/mo | Brands needing CRM & campaigns |
+| Brand Premium Subscription | $99/mo | Large brands with multiple campaigns |
+| Creator Featured Badge | $29/week | Creators wanting visibility |
+| Creator Spotlight | $49/week | Featured homepage placement |
+| Creator Category Boost | $79/week | Top category positioning |
+| Verified Business Badge | $99/year | Brand credibility |
+| Standard Opportunity | $15 | Posting opportunity listings |
+| Featured Opportunity | +$25 | Premium opportunity placement |
+
+### What We Don't Do
+- Process payments between parties
+- Take percentage of deals
+- Guarantee delivery or payment
+- Escrow funds`,
+        lastUpdated: "2025-02-01",
+        tags: ["business-model", "pricing", "revenue"]
+      }
+    ]
+  },
   {
     id: "email-triggers",
     title: "Automatic Email Triggers",
@@ -374,18 +430,15 @@ All secrets are stored securely and accessible only in edge functions.
 
 | Trigger | Email Type | When Sent |
 |---------|------------|-----------|
-| New booking request | \`creator_new_booking\` | Brand books their service |
-| Booking accepted | \`brand_booking_accepted\` | Brand notified (creator sees dashboard) |
-| Revision requested | \`creator_revision_requested\` | Brand requests changes |
-| Delivery confirmed | \`creator_delivery_confirmed\` | Brand approves work |
-| Payment auto-released | \`creator_payment_auto_released\` | 72h passed, auto-released |
 | Profile approved | \`creator_profile_approved\` | Admin approves profile |
 | Profile rejected | \`creator_profile_rejected\` | Admin rejects profile |
+| New message | \`creator_new_message\` | Brand sends message |
+| Agreement received | \`creator_agreement_received\` | Brand confirms agreement |
 | Campaign app accepted | \`creator_application_accepted\` | Brand accepts application |
 | Campaign app rejected | \`creator_application_rejected\` | Brand rejects application |
-| Dispute opened against | \`creator_dispute_opened\` | Brand opens dispute |
-| Dispute resolved | \`creator_dispute_resolved\` | Admin resolves dispute |`,
-        lastUpdated: "2024-12-10",
+| Boost expiring | \`creator_boost_expiring\` | Featuring about to expire |
+| Calendar reminder | \`calendar_reminder\` | Upcoming event reminder |`,
+        lastUpdated: "2025-02-01",
         tags: ["email", "creators", "notifications"]
       },
       {
@@ -395,17 +448,15 @@ All secrets are stored securely and accessible only in edge functions.
 
 | Trigger | Email Type | When Sent |
 |---------|------------|-----------|
-| Booking accepted | \`brand_booking_accepted\` | Creator accepts booking |
-| Booking declined | \`brand_booking_declined\` | Creator declines booking |
-| Deliverables submitted | \`brand_deliverables_submitted\` | Creator uploads work |
-| Payment auto-released | \`brand_payment_auto_released\` | 72h passed, auto-released |
-| New campaign application | \`brand_new_application\` | Creator applies to campaign |
-| Campaign approved | \`brand_campaign_approved\` | Admin approves campaign |
-| Campaign rejected | \`brand_campaign_rejected\` | Admin rejects campaign |
-| Dispute opened against | \`brand_dispute_opened\` | Creator opens dispute |
-| Dispute resolved | \`brand_dispute_resolved\` | Admin resolves dispute |
-| Content expiring | \`content_expiring\` | Usage rights ending soon |`,
-        lastUpdated: "2024-12-10",
+| New message | \`brand_new_message\` | Creator responds |
+| Agreement sent | \`brand_agreement_received\` | Creator sends agreement |
+| New opportunity application | \`brand_new_application\` | Creator applies to opportunity |
+| Opportunity approved | \`brand_opportunity_approved\` | Admin approves opportunity |
+| Opportunity rejected | \`brand_opportunity_rejected\` | Admin rejects opportunity |
+| Content expiring | \`content_expiring\` | Usage rights ending soon |
+| Subscription expiring | \`subscription_expiring\` | Plan about to expire |
+| Calendar reminder | \`calendar_reminder\` | Upcoming event reminder |`,
+        lastUpdated: "2025-02-01",
         tags: ["email", "brands", "notifications"]
       },
       {
@@ -418,91 +469,11 @@ All secrets are stored securely and accessible only in edge functions.
 | Trigger | Email Type | When Sent |
 |---------|------------|-----------|
 | New creator pending | \`admin_new_creator_pending\` | Creator submits profile |
-| New campaign pending | \`admin_new_campaign_pending\` | Brand creates campaign |
-| New dispute filed | \`admin_new_dispute\` | Any party opens dispute |
-| Dispute auto-escalated | \`admin_dispute_escalated\` | No response in 3 days |
-| Backup failed | \`backup_failed\` | Backup job errors |`,
-        lastUpdated: "2024-12-10",
+| New opportunity pending | \`admin_new_opportunity_pending\` | Brand creates opportunity |
+| Backup failed | \`backup_failed\` | Backup job errors |
+| Verification request | \`admin_verification_request\` | Brand requests verified badge |`,
+        lastUpdated: "2025-02-01",
         tags: ["email", "admin", "notifications"]
-      }
-    ]
-  },
-  {
-    id: "timelines",
-    title: "Critical Timelines & Deadlines",
-    icon: "Timer",
-    category: "operational",
-    articles: [
-      {
-        id: "delivery-timeline",
-        title: "Delivery & Payment Timeline",
-        content: `## Booking Delivery Timeline
-
-### After Creator Delivers Work:
-| Time | Action |
-|------|--------|
-| 0h | Creator uploads deliverables, \`delivered_at\` timestamp set |
-| 24h | Reminder email to brand (24h left to review) |
-| 71h | Final reminder (1 hour before auto-release) |
-| **72h** | **AUTO-RELEASE: Payment automatically released to creator** |
-
-### Key Rules:
-- Brand has 72 hours to review and either approve OR open dispute
-- If brand does nothing, payment auto-releases to creator
-- Opening a dispute pauses the auto-release timer
-- Brand can approve early at any time`,
-        lastUpdated: "2024-12-10",
-        tags: ["timeline", "delivery", "payment", "72-hours"]
-      },
-      {
-        id: "dispute-timeline",
-        title: "Dispute Resolution Timeline",
-        content: `## Dispute Timeline
-
-### When Dispute is Opened:
-| Time | Action |
-|------|--------|
-| 0h | Dispute created, \`response_deadline\` = 72h from now |
-| 24h | Reminder to respondent (48h left) |
-| 48h | Reminder to respondent (24h left) |
-| **72h** | **AUTO-ESCALATE: Dispute goes to admin review** |
-
-### After Escalation to Admin:
-| Time | Action |
-|------|--------|
-| 0h | Admin notified, \`resolution_deadline\` = 48h from now |
-| 24h | Warning if admin hasn't resolved yet |
-| **48h** | Resolution expected by this time |
-
-### Resolution Options:
-1. **Full Refund** - 100% refund to brand
-2. **Full Release** - 100% payment to creator  
-3. **Partial Split** - Custom % split between parties`,
-        lastUpdated: "2024-12-10",
-        tags: ["timeline", "dispute", "escalation", "resolution"]
-      },
-      {
-        id: "subscription-timeline",
-        title: "Subscription Expiration",
-        content: `## Subscription Validity
-
-### Plan Durations:
-- **Basic ($10/mo):** 1 month validity
-- **Pro ($49/mo):** 1 month validity
-- **Premium ($99/mo):** 1 month validity
-
-### On Expiration:
-1. Subscription status changes to "expired"
-2. System auto-creates new Basic subscription (1 year)
-3. Brand loses Pro/Premium features immediately
-4. Content Library access may be restricted
-
-### Renewal Process:
-- Manual renewal required for Pro/Premium
-- Admin can manually extend subscriptions
-- No automatic recurring billing (yet)`,
-        lastUpdated: "2024-12-10",
-        tags: ["subscription", "expiration", "billing"]
       }
     ]
   },
@@ -519,17 +490,22 @@ All secrets are stored securely and accessible only in edge functions.
 
 | Feature | No Package | Basic ($10/mo) | Pro ($49/mo) | Premium ($99/mo) |
 |---------|------------|----------------|--------------|-------------------|
+| Browse Creators | ✅ | ✅ | ✅ | ✅ |
 | Message Creators | ❌ | ✅ | ✅ | ✅ |
 | View Creator Pricing | ❌ | ✅ | ✅ | ✅ |
-| Create Campaigns | ❌ | ❌ | 1/month | Unlimited |
+| Post Opportunities | ❌ | ❌ | 1/month | Unlimited |
 | Advanced Filters | ❌ | ❌ | ✅ | ✅ |
 | Creator CRM | ❌ | ❌ | ✅ | ✅ |
+| Mass Messaging | ❌ | ❌ | 50/day | 100/day |
 | Content Library | ❌ | 10 GB | 10 GB | 50 GB |
 | Extra Storage | ❌ | $10/100GB | $10/100GB | $10/100GB |
+| Verified Badge Eligible | ❌ | ❌ | ✅ | ✅ |
 
-### How Bookings Work
-CollabHunts is a discovery and connection platform. All transactions, payments, and collaborations are handled directly between brands and creators offline. We facilitate the connection, not the transaction.`,
-        lastUpdated: "2024-12-20",
+### Important Notes
+- CollabHunts is a discovery platform with **zero transaction fees**
+- All payments between brands and creators happen directly
+- Subscriptions unlock platform features, not payment processing`,
+        lastUpdated: "2025-02-01",
         tags: ["subscription", "pricing", "features"]
       }
     ]
@@ -555,7 +531,7 @@ pending → approved
 - Creator can access dashboard
 - Creator can edit profile and services
 - Profile NOT visible in public search
-- Profile NOT bookable by brands
+- Profile NOT discoverable by brands
 
 ### Approval Criteria (Suggested):
 1. Complete profile information
@@ -566,15 +542,15 @@ pending → approved
 
 ### After Approval:
 - Profile visible in /influencers search
-- Profile bookable by brands
+- Profile discoverable by brands
 - Creator receives email notification`,
-        lastUpdated: "2024-12-10",
+        lastUpdated: "2025-02-01",
         tags: ["approval", "creator", "workflow"]
       },
       {
-        id: "campaign-approval",
-        title: "Campaign Approval",
-        content: `## Campaign Approval Process
+        id: "opportunity-approval",
+        title: "Opportunity Approval",
+        content: `## Opportunity Approval Process
 
 ### Status Flow:
 \`\`\`
@@ -583,83 +559,159 @@ pending → active (approved)
 \`\`\`
 
 ### Pending State:
-- Campaign visible only to brand owner
-- Not visible in public /campaigns page
+- Opportunity visible only to brand owner
+- Not visible in public /opportunities page
 - Creators cannot apply
 
 ### Approval Criteria (Suggested):
 1. Clear, descriptive title (10+ chars)
 2. Detailed description (50+ chars)
 3. Reasonable budget
-4. Valid deadline (future date)
+4. Valid event date (future date)
 5. No prohibited content
 
 ### After Approval:
-- Campaign visible in /campaigns
-- Campaign visible in creator dashboard
+- Opportunity visible in /opportunities
+- Opportunity visible to matching creators
 - Creators can submit applications`,
-        lastUpdated: "2024-12-10",
-        tags: ["approval", "campaign", "workflow"]
+        lastUpdated: "2025-02-01",
+        tags: ["approval", "opportunity", "workflow"]
+      },
+      {
+        id: "verification-approval",
+        title: "Verified Badge Approval",
+        content: `## Verified Business Badge Process
+
+### Status Flow:
+\`\`\`
+none → pending_payment → pending_review → verified
+                                        → rejected (with reason)
+\`\`\`
+
+### Requirements:
+1. Pro or Premium subscription
+2. Verified phone number
+3. $99/year payment
+4. Admin review
+
+### Review Criteria:
+1. Legitimate business (website check)
+2. Professional profile
+3. Complete company information
+4. No policy violations
+
+### After Approval:
+- Verified badge on profile
+- Badge visible in search results
+- Enhanced credibility with creators
+- Valid for 1 year from approval`,
+        lastUpdated: "2025-02-01",
+        tags: ["approval", "verification", "badge"]
       }
     ]
   },
   {
-    id: "dispute-resolution",
-    title: "Dispute Resolution Policy",
-    icon: "Gavel",
+    id: "agreements-system",
+    title: "Agreement System",
+    icon: "FileText",
     category: "operational",
     articles: [
       {
-        id: "dispute-process",
-        title: "Dispute Process",
-        content: `## Opening a Dispute
+        id: "agreement-overview",
+        title: "AI-Drafted Agreements",
+        content: `## Agreement System Overview
 
-### Who Can Open:
-- Brand (within 72h of delivery)
-- Creator (for non-payment issues)
+### Purpose
+Agreements document collaboration terms between creators and brands for professional record-keeping.
 
-### Required Information:
-- Reason for dispute (text)
-- Evidence description (optional)
+### Agreement Flow:
+\`\`\`
+negotiation (chat) → creator sends agreement → brand confirms → calendar entry created
+\`\`\`
 
-### Dispute Statuses:
-| Status | Meaning |
-|--------|---------|
-| \`pending_response\` | Waiting for other party's response |
-| \`pending_admin_review\` | Escalated, awaiting admin decision |
-| \`resolved_refund\` | Resolved with full refund |
-| \`resolved_release\` | Resolved with full payment release |
-| \`resolved_partial\` | Resolved with split payment |`,
-        lastUpdated: "2024-12-10",
-        tags: ["dispute", "resolution", "policy"]
-      },
+### Agreement Types:
+| Type | Use Case |
+|------|----------|
+| Unbox & Review | Product content collaborations |
+| Social Boost | Promotional content packages |
+| Meet & Greet | Event appearances |
+| Custom Experience | Tailored collaborations |
+
+### Agreement Contents:
+- Both parties' details
+- Agreed deliverables (specific items)
+- Timeline and event date
+- Pricing (negotiated amount)
+- Content usage rights
+- Revision expectations
+
+### Database Table:
+\`creator_agreements\`
+
+### Key Fields:
+| Field | Purpose |
+|-------|---------|
+| \`creator_profile_id\` | Creator sending agreement |
+| \`brand_profile_id\` | Brand receiving agreement |
+| \`template_type\` | Type of package |
+| \`proposed_price_cents\` | Agreed amount |
+| \`deliverables\` | JSON of specific items |
+| \`event_date\` | Collaboration date |
+| \`status\` | pending / confirmed / declined / completed |
+
+### After Confirmation:
+- Creates calendar event for both parties
+- Records are kept for reference
+- Status can be updated to "completed"`,
+        lastUpdated: "2025-02-01",
+        tags: ["agreement", "collaboration", "workflow"]
+      }
+    ]
+  },
+  {
+    id: "featuring-system",
+    title: "Creator Featuring/Boost",
+    icon: "Sparkles",
+    category: "operational",
+    articles: [
       {
-        id: "dispute-resolution-options",
-        title: "Resolution Options",
-        content: `## Admin Resolution Options
+        id: "boost-packages",
+        title: "Boost Package Details",
+        content: `## Creator Boost Packages
 
-### 1. Full Refund to Brand
-- 100% of payment returned to brand
-- Creator receives $0
-- Use when: Work not delivered, major quality issues
+### Available Packages:
 
-### 2. Full Release to Creator
-- 100% of payment goes to creator
-- Brand receives no refund
-- Use when: Work delivered as agreed, frivolous dispute
+| Package | Price | Duration | Effect |
+|---------|-------|----------|--------|
+| Featured Badge | $29 | 1 week | Eye-catching badge on profile card |
+| Spotlight | $49 | 1 week | Homepage featured section |
+| Category Boost | $79 | 1 week | Top of category search results |
 
-### 3. Partial Split
-- Custom percentage split
-- Example: 60% creator, 40% refund
-- Use when: Partial work done, minor issues
+### How It Works:
+1. Creator selects package in Dashboard > Featuring tab
+2. Completes payment (mock payment with 4242 card)
+3. Featuring activates immediately
+4. Duration starts from purchase
 
-### Decision Factors:
-- Quality of delivered work
-- Compliance with brief/requirements
-- Communication history
-- Evidence provided by both parties`,
-        lastUpdated: "2024-12-10",
-        tags: ["dispute", "resolution", "admin"]
+### Database Table:
+\`creator_featuring\`
+
+### Key Fields:
+| Field | Purpose |
+|-------|---------|
+| \`feature_type\` | featured_badge / spotlight / category_boost |
+| \`start_date\` | When featuring begins |
+| \`end_date\` | When featuring expires |
+| \`is_active\` | Currently active |
+| \`price_cents\` | Amount paid |
+| \`category\` | For category boost - which category |
+
+### Visual Indicators:
+- Featured creators have amber gradient badge
+- Sparkles icon indicates boosted status
+- Higher sort priority in relevant listings`,
+        lastUpdated: "2025-02-01",
+        tags: ["featuring", "boost", "visibility", "monetization"]
       }
     ]
   },
@@ -676,8 +728,8 @@ pending → active (approved)
 
 ### Admin Role
 - Full access to Admin Dashboard
-- Can approve/reject creators and campaigns
-- Can resolve disputes
+- Can approve/reject creators and opportunities
+- Can manage verifications
 - Can reset user passwords
 - Can manage subscriptions
 - Can trigger manual backups
@@ -685,23 +737,29 @@ pending → active (approved)
 
 ### Brand Role
 - Auto-assigned when brand profile created
-- Can browse and book creators
-- Can create campaigns (based on subscription)
-- Can manage Content Library (Pro+)
-- Can use Creator CRM (Pro+)
+- Can browse and contact creators (with subscription)
+- Can post opportunities (Pro+ only)
+- Can manage Content Library (with subscription)
+- Can use Creator CRM (Pro+ only)
 
 ### Creator Role
 - Auto-assigned when creator profile created
 - Can create services and set pricing
-- Can apply to campaigns
-- Can deliver work for bookings
+- Can apply to opportunities
+- Can send agreements to brands
 - Must be approved to appear in search
+
+### Access Restrictions:
+- Creators CANNOT access /influencers page
+- Creators CANNOT see "Find Creators" or "For Brands" nav links
+- Brands CANNOT access creator dashboard
+- Non-subscribers CANNOT message creators
 
 ### Super Admin
 - Email: elie.goole@gmail.com
 - Has all brand + admin capabilities
 - Can access all features regardless of registration type`,
-        lastUpdated: "2024-12-10",
+        lastUpdated: "2025-02-01",
         tags: ["roles", "permissions", "access"]
       }
     ]
@@ -717,8 +775,9 @@ pending → active (approved)
         title: "Content Library Overview",
         content: `## Content Library
 
-### Access:
-- Basic: ❌ No access
+### Access by Tier:
+- No Package: ❌ No access
+- Basic: 10 GB storage
 - Pro: 10 GB storage
 - Premium: 50 GB storage
 - Extra: $10 per 100 GB
@@ -742,7 +801,7 @@ pending → active (approved)
 - 3 days before: Email reminder
 - 1 day before: Email reminder
 - On expiry: Marked as expired in UI`,
-        lastUpdated: "2024-12-10",
+        lastUpdated: "2025-02-01",
         tags: ["content", "storage", "rights"]
       }
     ]
@@ -773,7 +832,7 @@ pending → active (approved)
 - Check Admin Dashboard first
 - Review edge function logs
 - Check backup history for data issues`,
-        lastUpdated: "2024-12-10",
+        lastUpdated: "2025-02-01",
         tags: ["support", "contact", "help"]
       }
     ]
@@ -799,14 +858,15 @@ Allow regional partners to own territorial rights and earn commission from platf
 - \`franchise_payout_requests\` - Payout request management
 
 ### Commission Structure
-- **Default Rate:** 70% of platform fees go to franchise owner
-- **Platform Retains:** 30% of platform fees
+- **Default Rate:** 70% of platform revenue go to franchise owner
+- **Platform Retains:** 30% of platform revenue
 - Rates are configurable per franchise in \`commission_rate\` field
 
 ### Revenue Sources
-1. **Bookings** - Commission on bookings where creator is in franchise territory
-2. **Subscriptions** - Commission on brand subscriptions where brand is in franchise territory`,
-        lastUpdated: "2024-12-13",
+1. **Subscriptions** - Commission on brand subscriptions where brand is in franchise territory
+2. **Boost Purchases** - Commission on creator boost purchases in territory
+3. **Verification Fees** - Commission on brand verification fees in territory`,
+        lastUpdated: "2025-02-01",
         tags: ["franchise", "territory", "commission", "partners"]
       },
       {
@@ -826,7 +886,7 @@ Allow regional partners to own territorial rights and earn commission from platf
 | \`user_id\` | Links to auth user |
 | \`company_name\` | Franchise company name |
 | \`contact_email\` | Primary contact email |
-| \`commission_rate\` | % of platform fees (default 0.70) |
+| \`commission_rate\` | % of platform revenue (default 0.70) |
 | \`platform_rate\` | Platform's share (default 0.30) |
 | \`status\` | pending / active / suspended |
 
@@ -836,76 +896,8 @@ Allow regional partners to own territorial rights and earn commission from platf
 | \`franchise_owner_id\` | Links to franchise owner |
 | \`country_code\` | ISO country code (e.g., "US", "LB") |
 | \`country_name\` | Full country name |`,
-        lastUpdated: "2024-12-13",
+        lastUpdated: "2025-02-01",
         tags: ["franchise", "activation", "setup"]
-      },
-      {
-        id: "franchise-earnings",
-        title: "Franchise Earnings Distribution",
-        content: `## Automatic Earnings Distribution
-
-### Trigger: Booking Payment
-When \`payment_status\` changes to "paid":
-1. Check creator's \`location_country\`
-2. Find active franchise owner for that country
-3. Calculate franchise share: \`platform_fee * commission_rate\`
-4. Insert record in \`franchise_earnings\`
-5. Update \`total_earnings_cents\` and \`available_balance_cents\`
-
-### Trigger: Brand Subscription
-When new subscription is created (not "none" tier):
-1. Check brand's \`location_country\`
-2. Find active franchise owner for that country
-3. Calculate commission on subscription amount
-4. Insert record in \`franchise_earnings\`
-
-### Earnings Record Fields
-| Field | Purpose |
-|-------|---------|
-| \`source_type\` | "booking" or "subscription" |
-| \`source_id\` | ID of the booking/subscription |
-| \`user_id\` | Creator or brand user ID |
-| \`user_type\` | "creator" or "brand" |
-| \`gross_amount_cents\` | Total transaction amount |
-| \`franchise_amount_cents\` | Franchise owner's share |
-| \`platform_amount_cents\` | Platform's share |`,
-        lastUpdated: "2024-12-13",
-        tags: ["franchise", "earnings", "distribution", "commission"]
-      },
-      {
-        id: "franchise-payouts",
-        title: "Franchise Payouts",
-        content: `## Requesting Payouts
-
-### Payout Request Process
-1. Franchise owner requests payout from dashboard
-2. Request created with status "pending"
-3. Email notification sent to admin
-4. Admin reviews and approves/rejects
-5. On approval, balance is deducted
-
-### Payout Request Fields
-| Field | Purpose |
-|-------|---------|
-| \`amount_cents\` | Requested payout amount |
-| \`payout_method\` | bank_transfer / paypal / wise / crypto |
-| \`payout_details\` | JSON with account details |
-| \`status\` | pending / approved / rejected |
-| \`admin_notes\` | Notes from admin |
-
-### Email Notifications
-| Event | Recipients |
-|-------|------------|
-| Payout requested | Admin + Franchise owner |
-| Payout approved | Franchise owner |
-| Payout rejected | Franchise owner |
-
-### Balance Management
-- \`total_earnings_cents\` - Cumulative all-time earnings
-- \`available_balance_cents\` - Current withdrawable balance
-- Balance auto-deducted when payout approved`,
-        lastUpdated: "2024-12-13",
-        tags: ["franchise", "payout", "withdrawal"]
       },
       {
         id: "franchise-dashboard",
@@ -941,7 +933,7 @@ When new subscription is created (not "none" tier):
    - Request new payouts
    - View payout history
    - Track pending requests`,
-        lastUpdated: "2024-12-13",
+        lastUpdated: "2025-02-01",
         tags: ["franchise", "dashboard", "features"]
       }
     ]
@@ -967,8 +959,8 @@ Allow partners to earn commission by referring new users (creators and brands) t
 - \`affiliate_payout_requests\` - Payout management
 
 ### Commission Structure
-- **Default Rate:** 50% of platform fees from referred users
-- **Platform Retains:** 50% of platform fees
+- **Default Rate:** 50% of platform revenue from referred users
+- **Platform Retains:** 50% of platform revenue
 - Rates configurable per affiliate in \`commission_rate\` field
 
 ### Referral Tracking
@@ -976,7 +968,7 @@ Allow partners to earn commission by referring new users (creators and brands) t
 - Code passed via URL: \`?ref=JOHN50\`
 - Stored in localStorage until signup
 - Permanent link to affiliate once user signs up`,
-        lastUpdated: "2024-12-13",
+        lastUpdated: "2025-02-01",
         tags: ["affiliate", "referral", "commission", "partners"]
       },
       {
@@ -1007,75 +999,8 @@ During creator/brand signup, code is retrieved from localStorage and linked:
 | \`referred_user_id\` | The new user |
 | \`referred_user_type\` | "creator" or "brand" |
 | \`referral_code_used\` | The code used at signup |`,
-        lastUpdated: "2024-12-13",
+        lastUpdated: "2025-02-01",
         tags: ["affiliate", "referral", "tracking", "signup"]
-      },
-      {
-        id: "affiliate-earnings",
-        title: "Affiliate Earnings Distribution",
-        content: `## Automatic Earnings Distribution
-
-### Trigger: Booking Payment
-When \`payment_status\` changes to "paid":
-1. Check if creator was referred (lookup in \`referrals\`)
-2. Check if brand was referred (lookup in \`referrals\`)
-3. For each referred party:
-   - Calculate affiliate share: \`platform_fee * commission_rate\`
-   - Insert record in \`affiliate_earnings\`
-   - Update affiliate's \`total_earnings_cents\` and \`available_balance_cents\`
-
-### Key Difference from Franchise
-- Franchise earnings based on **geography** (user's country)
-- Affiliate earnings based on **referral** (who referred the user)
-- Both can apply to the same transaction!
-
-### Earnings Record Fields
-| Field | Purpose |
-|-------|---------|
-| \`affiliate_id\` | The affiliate earning commission |
-| \`referral_id\` | Link to original referral record |
-| \`source_type\` | "booking" or "subscription" |
-| \`source_id\` | ID of the booking/subscription |
-| \`gross_revenue_cents\` | Platform fee amount |
-| \`affiliate_amount_cents\` | Affiliate's share |
-| \`platform_amount_cents\` | Platform's share |`,
-        lastUpdated: "2024-12-13",
-        tags: ["affiliate", "earnings", "distribution", "commission"]
-      },
-      {
-        id: "affiliate-payouts",
-        title: "Affiliate Payouts",
-        content: `## Requesting Payouts
-
-### Payout Request Process
-1. Affiliate requests payout from dashboard
-2. Request created with status "pending"
-3. Email notification sent to admin
-4. Admin reviews and approves/rejects
-5. On approval, balance is deducted
-
-### Payout Request Fields
-| Field | Purpose |
-|-------|---------|
-| \`amount_cents\` | Requested payout amount |
-| \`payout_method\` | bank_transfer / paypal / wise / crypto |
-| \`payout_details\` | JSON with account details |
-| \`status\` | pending / approved / rejected |
-| \`admin_notes\` | Notes from admin |
-
-### Email Notifications
-| Event | Recipients |
-|-------|------------|
-| Payout requested | Admin + Affiliate |
-| Payout approved | Affiliate |
-| Payout rejected | Affiliate |
-
-### Balance Management
-- \`total_earnings_cents\` - Cumulative all-time earnings
-- \`available_balance_cents\` - Current withdrawable balance
-- Balance auto-deducted when payout approved`,
-        lastUpdated: "2024-12-13",
-        tags: ["affiliate", "payout", "withdrawal"]
       },
       {
         id: "affiliate-dashboard",
@@ -1114,113 +1039,8 @@ When \`payment_status\` changes to "paid":
 \`https://collabhunts.com/?ref={REFERRAL_CODE}\`
 
 Example: \`https://collabhunts.com/?ref=JOHN50\``,
-        lastUpdated: "2024-12-13",
+        lastUpdated: "2025-02-01",
         tags: ["affiliate", "dashboard", "features"]
-      },
-      {
-        id: "affiliate-activation",
-        title: "Creating Affiliates",
-        content: `## Affiliate Management
-
-### Admin-Only Creation
-Currently affiliates can only be created by admins:
-1. Go to Admin Dashboard > Affiliates Tab
-2. Click "Create Affiliate"
-3. Fill in details (name, email, referral code)
-4. Set commission rate (default 50%)
-5. Activate when ready
-
-### Affiliate Profile Fields
-| Field | Purpose |
-|-------|---------|
-| \`user_id\` | Links to auth user |
-| \`display_name\` | Affiliate's name |
-| \`email\` | Contact email |
-| \`referral_code\` | Unique code (e.g., "JOHN50") |
-| \`commission_rate\` | % of platform fees (default 0.50) |
-| \`status\` | pending / active / suspended |
-
-### Activation
-- Set status to "active" to enable dashboard access
-- Referral code only works when affiliate is active
-- Suspended affiliates still receive earnings but can't get new referrals`,
-        lastUpdated: "2024-12-13",
-        tags: ["affiliate", "activation", "setup", "admin"]
-      }
-    ]
-  },
-  {
-    id: "admin-partner-management",
-    title: "Admin Partner Management",
-    icon: "Shield",
-    category: "operational",
-    articles: [
-      {
-        id: "admin-franchise-management",
-        title: "Managing Franchises (Admin)",
-        content: `## Admin Franchise Management
-
-### Admin Dashboard > Franchises Tab
-
-### Creating a Franchise
-1. Create user account for franchise owner
-2. Insert record in \`franchise_owners\` table
-3. Insert country assignments in \`franchise_countries\`
-4. Set status to "active"
-
-### Viewing Franchises
-- List all franchise owners with status
-- See assigned countries per franchise
-- View earnings and balances
-
-### Processing Payout Requests
-1. Review pending payout requests
-2. Verify amount vs available balance
-3. Approve or reject with notes
-4. Payment processed manually outside platform
-5. Update request status
-
-### Notifications Sent
-- New user in territory → Franchise owner notified
-- Earning recorded → Franchise owner notified
-- Payout requested → Admin notified
-- Payout processed → Franchise owner notified`,
-        lastUpdated: "2024-12-13",
-        tags: ["admin", "franchise", "management", "payouts"]
-      },
-      {
-        id: "admin-affiliate-management",
-        title: "Managing Affiliates (Admin)",
-        content: `## Admin Affiliate Management
-
-### Admin Dashboard > Affiliates Tab
-
-### Creating an Affiliate
-1. User ID of the affiliate
-2. Display name and email
-3. Unique referral code (must be unique)
-4. Commission rate (default 50%)
-5. Set status to "active"
-
-### Viewing Affiliates
-- List all affiliates with status
-- See referral counts and earnings
-- View referral code for each
-
-### Processing Payout Requests
-1. Review pending payout requests
-2. Verify amount vs available balance
-3. Approve or reject with notes
-4. Payment processed manually outside platform
-5. Update request status
-
-### Notifications Sent
-- New referral signup → Affiliate notified
-- Earning recorded → Affiliate notified
-- Payout requested → Admin notified
-- Payout processed → Affiliate notified`,
-        lastUpdated: "2024-12-13",
-        tags: ["admin", "affiliate", "management", "payouts"]
       }
     ]
   }

@@ -22,7 +22,9 @@ import {
   Target,
   Award,
   Clock,
-  Heart
+  Heart,
+  FileText,
+  BadgeCheck
 } from "lucide-react";
 
 export type UserRole = 'creator' | 'brand' | 'all';
@@ -61,6 +63,124 @@ export interface PlatformUpdate {
 export const platformUpdates: PlatformUpdate[] = [
   // Recent updates (add new ones at the top)
   {
+    id: "zero-fee-marketplace",
+    title: "Zero Transaction Fees Marketplace",
+    description: "CollabHunts is now a zero-fee discovery platform - all payments happen directly between you and your collaborators",
+    content: `
+      <h2>A New Way to Collaborate</h2>
+      <p>We've transformed CollabHunts into a true marketplace where creators and brands connect directly, with no transaction fees.</p>
+      
+      <h3>What's Changed</h3>
+      <ul>
+        <li><strong>No Platform Fees:</strong> Keep 100% of what you earn - all payments are arranged directly between parties</li>
+        <li><strong>AI-Drafted Agreements:</strong> Professional agreements to document your collaboration terms</li>
+        <li><strong>Direct Negotiation:</strong> Chat directly with brands/creators to finalize terms</li>
+        <li><strong>"Starting from" Pricing:</strong> Base prices are displayed; final terms are negotiated</li>
+      </ul>
+      
+      <h3>How It Works Now</h3>
+      <ol>
+        <li>Discover creators or get discovered by brands</li>
+        <li>Chat and negotiate terms directly</li>
+        <li>Send/receive AI-drafted agreements for record-keeping</li>
+        <li>Arrange payment directly between parties</li>
+        <li>Complete the collaboration</li>
+      </ol>
+    `,
+    publishedAt: new Date("2025-02-01"),
+    roles: ['all'],
+    category: 'announcement',
+    icon: Sparkles
+  },
+  {
+    id: "ai-drafted-agreements",
+    title: "AI-Drafted Collaboration Agreements",
+    description: "Professional agreements generated automatically based on your negotiated terms",
+    content: `
+      <h2>Professional Agreements Made Easy</h2>
+      <p>Once you've discussed terms in chat, creators can send AI-drafted agreements that document everything professionally.</p>
+      
+      <h3>What's Included</h3>
+      <ul>
+        <li>Deliverables and timelines</li>
+        <li>Agreed pricing</li>
+        <li>Content usage rights</li>
+        <li>Revision expectations</li>
+        <li>Both parties' details</li>
+      </ul>
+      
+      <h3>Agreement Types</h3>
+      <ul>
+        <li><strong>Unbox & Review:</strong> Product content packages</li>
+        <li><strong>Social Boost:</strong> Promotional content</li>
+        <li><strong>Meet & Greet:</strong> Event appearances</li>
+        <li><strong>Custom Experience:</strong> Tailored collaborations</li>
+      </ul>
+    `,
+    publishedAt: new Date("2025-01-28"),
+    roles: ['all'],
+    category: 'feature',
+    icon: FileText
+  },
+  {
+    id: "creator-boost-packages",
+    title: "Boost Your Profile Visibility",
+    description: "New featuring options to stand out in search results and get more brand inquiries",
+    content: `
+      <h2>Get Discovered Faster</h2>
+      <p>Creators can now purchase Boost packages to increase visibility and attract more brand collaborations.</p>
+      
+      <h3>Boost Options</h3>
+      <ul>
+        <li><strong>Featured Badge ($29/week):</strong> Stand out with a special badge in search results</li>
+        <li><strong>Spotlight ($49/week):</strong> Featured in the spotlight section on the homepage</li>
+        <li><strong>Category Boost ($79/week):</strong> Top visibility in your category searches</li>
+      </ul>
+      
+      <h3>Benefits</h3>
+      <ul>
+        <li>Appear higher in search results</li>
+        <li>Eye-catching featured badge</li>
+        <li>More profile views from interested brands</li>
+        <li>Increased booking opportunities</li>
+      </ul>
+    `,
+    publishedAt: new Date("2025-01-25"),
+    roles: ['creator'],
+    category: 'feature',
+    icon: Rocket
+  },
+  {
+    id: "verified-business-badge",
+    title: "Verified Business Badge for Brands",
+    description: "Build trust with creators by getting your business verified",
+    content: `
+      <h2>Stand Out as a Verified Brand</h2>
+      <p>Pro and Premium brands can now apply for a Verified Business Badge to build trust with creators.</p>
+      
+      <h3>What You Get</h3>
+      <ul>
+        <li>Verified checkmark on your profile</li>
+        <li>Higher trust from creators</li>
+        <li>Better response rates to inquiries</li>
+        <li>Priority in creator searches</li>
+      </ul>
+      
+      <h3>How to Get Verified</h3>
+      <ol>
+        <li>Subscribe to Pro or Premium plan</li>
+        <li>Verify your phone number</li>
+        <li>Pay the $99/year verification fee</li>
+        <li>Our team reviews your business</li>
+        <li>Badge activated upon approval</li>
+      </ol>
+    `,
+    publishedAt: new Date("2025-01-20"),
+    roles: ['brand'],
+    category: 'feature',
+    icon: BadgeCheck
+  },
+  {
     id: "knowledge-base-redesign",
     title: "Knowledge Base Redesign",
     description: "Our help center has been completely redesigned for easier navigation",
@@ -76,7 +196,7 @@ export const platformUpdates: PlatformUpdate[] = [
         <li><strong>Modern Design:</strong> Clean, easy-to-read layout optimized for all devices</li>
       </ul>
     `,
-    publishedAt: new Date("2024-12-10"),
+    publishedAt: new Date("2025-01-15"),
     roles: ['all'],
     category: 'feature',
     icon: Sparkles
@@ -97,7 +217,7 @@ export const platformUpdates: PlatformUpdate[] = [
         <li>Quick search within folders</li>
       </ul>
     `,
-    publishedAt: new Date("2024-12-05"),
+    publishedAt: new Date("2025-01-10"),
     roles: ['brand'],
     category: 'feature',
     icon: FolderOpen
@@ -119,7 +239,7 @@ export const platformUpdates: PlatformUpdate[] = [
         <li><strong>Quick Re-booking:</strong> Book again with one click</li>
       </ul>
     `,
-    publishedAt: new Date("2024-12-01"),
+    publishedAt: new Date("2025-01-05"),
     roles: ['brand'],
     category: 'feature',
     icon: Heart
@@ -141,31 +261,10 @@ export const platformUpdates: PlatformUpdate[] = [
       
       <p>This helps us ensure all users are real people and makes our marketplace safer for everyone.</p>
     `,
-    publishedAt: new Date("2024-11-25"),
+    publishedAt: new Date("2024-12-20"),
     roles: ['all'],
     category: 'improvement',
     icon: Shield
-  },
-  {
-    id: "campaign-approval-system",
-    title: "Campaign Quality Review",
-    description: "All campaigns are now reviewed before going live",
-    content: `
-      <h2>Campaign Approval Process</h2>
-      <p>To maintain marketplace quality, all brand campaigns are now reviewed by our team before becoming visible to creators.</p>
-      
-      <h3>What This Means</h3>
-      <ul>
-        <li>Campaigns are reviewed within 1-2 business days</li>
-        <li>You'll be notified when your campaign is approved</li>
-        <li>Only approved campaigns appear to creators</li>
-        <li>Higher quality campaigns for creators to apply to</li>
-      </ul>
-    `,
-    publishedAt: new Date("2024-11-20"),
-    roles: ['brand'],
-    category: 'improvement',
-    icon: Award
   },
   {
     id: "real-time-messaging",
@@ -183,7 +282,7 @@ export const platformUpdates: PlatformUpdate[] = [
         <li>Conversation history preserved</li>
       </ul>
     `,
-    publishedAt: new Date("2024-11-15"),
+    publishedAt: new Date("2024-12-15"),
     roles: ['all'],
     category: 'feature',
     icon: MessageSquare
@@ -205,107 +304,32 @@ export const platformUpdates: PlatformUpdate[] = [
         <li>Platform-specific follower counts</li>
       </ul>
     `,
-    publishedAt: new Date("2024-11-10"),
+    publishedAt: new Date("2024-12-10"),
     roles: ['brand'],
     category: 'feature',
     icon: Target
   },
   {
-    id: "creator-profile-analytics",
-    title: "Profile View Analytics",
-    description: "Creators can now see who's viewing their profile",
-    content: `
-      <h2>Track Your Profile Performance</h2>
-      <p>Creators can now see detailed analytics about profile views in their dashboard.</p>
-      
-      <h3>Analytics Include</h3>
-      <ul>
-        <li>Daily profile view counts</li>
-        <li>View trends over time</li>
-        <li>Peak viewing days</li>
-      </ul>
-      
-      <p>Use this data to optimize your profile and understand when brands are most active.</p>
-    `,
-    publishedAt: new Date("2024-11-05"),
-    roles: ['creator'],
-    category: 'feature',
-    icon: TrendingUp
-  },
-  // Older updates (will appear in changelog)
-  {
     id: "subscription-tiers-launch",
     title: "Brand Subscription Tiers",
-    description: "New subscription plans with different features and fees",
+    description: "New subscription plans with different features",
     content: `
       <h2>Choose Your Plan</h2>
-      <p>We've launched three subscription tiers for brands with different features and marketplace fees.</p>
+      <p>We've launched three subscription tiers for brands with different features.</p>
       
       <h3>Available Plans</h3>
       <ul>
         <li><strong>Basic ($10/mo):</strong> Contact creators, view pricing, 10GB storage</li>
-        <li><strong>Pro ($49/mo):</strong> Contact & book creators, CRM, advanced filters</li>
-        <li><strong>Premium ($99/mo):</strong> Unlimited campaigns, 50GB storage, mass messaging</li>
+        <li><strong>Pro ($49/mo):</strong> All Basic + CRM, advanced filters, 1 campaign/month</li>
+        <li><strong>Premium ($99/mo):</strong> All Pro + unlimited campaigns, 50GB storage</li>
       </ul>
+      
+      <p><strong>Note:</strong> CollabHunts is a discovery platform with zero transaction fees. All payments happen directly between you and creators.</p>
     `,
-    publishedAt: new Date("2024-10-15"),
+    publishedAt: new Date("2024-11-15"),
     roles: ['brand'],
     category: 'feature',
     icon: Star
-  },
-  {
-    id: "dispute-system",
-    title: "Dispute Resolution System",
-    description: "Fair and transparent process for resolving issues",
-    content: `
-      <h2>Resolving Issues Fairly</h2>
-      <p>Our dispute resolution system helps brands and creators resolve issues fairly with admin oversight when needed.</p>
-      
-      <h3>How It Works</h3>
-      <ul>
-        <li>Either party can open a dispute</li>
-        <li>3-day response window</li>
-        <li>Negotiation period</li>
-        <li>Admin review if unresolved</li>
-      </ul>
-    `,
-    publishedAt: new Date("2024-10-01"),
-    roles: ['all'],
-    category: 'feature',
-    icon: AlertTriangle
-  },
-  {
-    id: "working-with-creators",
-    title: "Working with Creators: Two Options",
-    description: "Choose between self-service or managed collaborations",
-    content: `
-      <h2>How to Work with Creators</h2>
-      <p>CollabHunts offers two ways to collaborate with creators—choose what works best for your brand.</p>
-      
-      <h3>Option 1: Self-Service (Subscription Required)</h3>
-      <p>With a Basic, Pro, or Premium subscription, you can:</p>
-      <ul>
-        <li>Message creators directly through the platform</li>
-        <li>Negotiate terms and deliverables yourself</li>
-        <li>Arrange payment between you and the creator</li>
-        <li>Manage the relationship on your own terms</li>
-      </ul>
-      <p>This option gives you full control and direct communication with creators.</p>
-      
-      <h3>Option 2: Managed Service (No Subscription Required)</h3>
-      <p>Prefer a hands-off approach? Let CollabHunts handle everything:</p>
-      <ul>
-        <li>Contact us with your project requirements</li>
-        <li>We coordinate with creators on your behalf</li>
-        <li>We handle all payments and project management</li>
-        <li>Receive your content—we manage the details</li>
-      </ul>
-      <p>A service fee applies for managed collaborations. Contact care@collabhunts.com for a quote.</p>
-    `,
-    publishedAt: new Date("2024-09-15"),
-    roles: ['all'],
-    category: 'feature',
-    icon: MessageSquare
   }
 ];
 
@@ -371,7 +395,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
   {
     slug: "getting-started-creators",
     title: "Getting Started",
-    description: "Learn how to set up your creator profile and start receiving bookings",
+    description: "Learn how to set up your creator profile and start receiving collaboration requests",
     icon: BookOpen,
     roles: ['creator'],
     order: 1,
@@ -381,21 +405,28 @@ export const knowledgeBaseCategories: KBCategory[] = [
         title: "How CollabHunts Works for Creators",
         content: `
           <h2>Welcome to CollabHunts!</h2>
-          <p>CollabHunts is a marketplace connecting content creators like you with brands looking for authentic collaborations. Here's how it works:</p>
+          <p>CollabHunts is a <strong>marketplace</strong> connecting content creators like you with brands looking for authentic collaborations. Think of it like a classifieds platform for influencer partnerships.</p>
+          
+          <h3>The Marketplace Model</h3>
+          <p>Unlike traditional influencer platforms, we don't handle payments or take transaction fees. You keep 100% of what you earn - all payments are arranged directly between you and the brand.</p>
           
           <h3>Step-by-Step Process</h3>
           <ol>
             <li><strong>Create your profile</strong> - Add your social accounts, bio, and portfolio</li>
-            <li><strong>Set up service packages</strong> - Define what you offer and your pricing</li>
+            <li><strong>Set up service packages</strong> - Define what you offer with "Starting from" prices</li>
             <li><strong>Wait for approval</strong> - Our team reviews profiles within 1-2 business days</li>
-            <li><strong>Receive collaboration requests</strong> - CollabHunts will contact you when brands want to work with you</li>
-            <li><strong>Deliver content</strong> - Complete the work within the agreed timeframe</li>
-            <li><strong>Get paid!</strong> - CollabHunts pays you after successful delivery</li>
+            <li><strong>Get discovered</strong> - Brands find you via search and filters</li>
+            <li><strong>Negotiate directly</strong> - Chat with brands to agree on terms and deliverables</li>
+            <li><strong>Send an Agreement</strong> - Use our AI-drafted agreements for professional record-keeping</li>
+            <li><strong>Deliver content & get paid</strong> - Arrange payment directly with the brand</li>
           </ol>
           
           <div class="alert alert-info">
-            <strong>Pro Tip:</strong> Complete your profile with high-quality portfolio items and accurate social metrics to increase your chances of approval and bookings.
+            <strong>Pro Tip:</strong> Complete your profile with high-quality portfolio items and accurate social metrics to increase your chances of approval and collaboration requests.
           </div>
+          
+          <h3>What "Starting from" Pricing Means</h3>
+          <p>Your package prices are displayed as "Starting from $X" to brands. This indicates your base rate - final pricing is always negotiated based on the specific requirements of each collaboration.</p>
         `,
         roles: ['creator'],
         order: 1
@@ -429,48 +460,91 @@ export const knowledgeBaseCategories: KBCategory[] = [
         title: "Setting Up Your Services",
         content: `
           <h2>Creating Service Packages</h2>
-          <p>Your services define what you offer to brands and at what price. Well-structured services lead to more bookings.</p>
+          <p>Your services define what you offer to brands. Well-structured packages with clear pricing attract more collaboration requests.</p>
           
-          <h3>Service Types Available</h3>
+          <h3>Package Types Available</h3>
           <ul>
-            <li><strong>Instagram Post</strong> - Feed posts on Instagram</li>
-            <li><strong>Instagram Story</strong> - 24-hour story content</li>
-            <li><strong>Instagram Reel</strong> - Short-form video content</li>
-            <li><strong>TikTok Video</strong> - TikTok content creation</li>
-            <li><strong>YouTube Video</strong> - Long-form YouTube content</li>
-            <li><strong>UGC Content</strong> - User-generated content for brand use</li>
+            <li><strong>Unbox & Review</strong> - Product unboxing and honest review content</li>
+            <li><strong>Social Boost</strong> - Promotional posts, Reels, TikToks</li>
+            <li><strong>Meet & Greet</strong> - In-person event appearances</li>
+            <li><strong>Custom Experience</strong> - Tailored collaborations</li>
           </ul>
+          
+          <h3>Understanding "Starting from" Pricing</h3>
+          <p>Your listed prices are shown as "Starting from $X" to brands. This is your base rate - think of it as the minimum you'd accept for a standard collaboration. Actual pricing is finalized during negotiation based on:</p>
+          <ul>
+            <li>Specific deliverables required</li>
+            <li>Timeline and complexity</li>
+            <li>Content usage rights</li>
+            <li>Exclusivity requirements</li>
+          </ul>
+          
+          <h3>Typical Deliverables</h3>
+          <p>Package cards show "Typical deliverables may include:" followed by example items. This gives brands an idea of what to expect, but exact deliverables are always finalized in your agreement.</p>
           
           <h3>Pricing Tips</h3>
           <ul>
             <li>Research what creators with similar audience sizes charge</li>
             <li>Factor in your engagement rate, not just follower count</li>
-            <li>Include time for revisions in your pricing</li>
+            <li>Consider content production time and effort</li>
             <li>Start competitive and adjust based on demand</li>
           </ul>
-          
-          <h3>Delivery Timeframes</h3>
-          <p>Set realistic delivery days. The countdown begins when you accept a booking, so make sure you can deliver within the promised timeframe.</p>
         `,
         roles: ['creator'],
         order: 3
+      },
+      {
+        slug: "understanding-agreements",
+        title: "AI-Drafted Agreements",
+        content: `
+          <h2>Professional Agreements Made Easy</h2>
+          <p>Once you've negotiated terms with a brand in chat, you can send an AI-drafted agreement that documents everything professionally.</p>
+          
+          <h3>What Agreements Include</h3>
+          <ul>
+            <li>Both parties' details (your profile, brand information)</li>
+            <li>Agreed deliverables and specifications</li>
+            <li>Timeline and deadlines</li>
+            <li>Pricing and payment terms</li>
+            <li>Content usage rights</li>
+            <li>Revision expectations</li>
+          </ul>
+          
+          <h3>How to Send an Agreement</h3>
+          <ol>
+            <li>Discuss terms with the brand in chat</li>
+            <li>Click "Send Agreement" in the conversation</li>
+            <li>Select the package type and fill in details</li>
+            <li>Our AI helps draft professional language</li>
+            <li>Review and send to the brand</li>
+          </ol>
+          
+          <h3>When Brand Confirms</h3>
+          <p>Once a brand confirms the agreement, it creates a documented record of your collaboration. The event automatically appears in your calendar for easy tracking.</p>
+          
+          <div class="alert alert-info">
+            <strong>Note:</strong> Agreements are for record-keeping and mutual understanding. Payment arrangements are made directly between you and the brand.
+          </div>
+        `,
+        roles: ['creator'],
+        order: 4
       }
     ]
   },
   {
     slug: "grow-your-business",
     title: "Grow Your Business",
-    description: "Tips and strategies to increase bookings and maximize earnings",
+    description: "Tips and strategies to increase collaboration requests and maximize earnings",
     icon: Rocket,
     roles: ['creator'],
     order: 2,
     articles: [
       {
         slug: "increase-booking-rate",
-        title: "How to Increase Your Booking Rate",
+        title: "How to Get More Collaboration Requests",
         content: `
-          <h2>Get More Bookings</h2>
-          <p>Your booking rate depends on multiple factors. Here's how to optimize each one to attract more brands.</p>
+          <h2>Get Discovered by More Brands</h2>
+          <p>Your success on CollabHunts depends on multiple factors. Here's how to optimize each one to attract more brand inquiries.</p>
           
           <h3>1. Perfect Your Profile</h3>
           <ul>
@@ -483,13 +557,13 @@ export const knowledgeBaseCategories: KBCategory[] = [
           <h3>2. Optimize Your Pricing</h3>
           <ul>
             <li><strong>Research Competitors:</strong> See what creators with similar audiences charge</li>
-            <li><strong>Start Competitive:</strong> Lower prices initially can help build reviews</li>
-            <li><strong>Offer Bundles:</strong> Create package deals for multiple pieces of content</li>
-            <li><strong>Adjust Based on Demand:</strong> Raise prices as bookings increase</li>
+            <li><strong>Start Competitive:</strong> Lower initial prices can help build your reputation</li>
+            <li><strong>Offer Value:</strong> Clearly communicate what brands get for their investment</li>
+            <li><strong>Be Flexible:</strong> Remember, prices are "Starting from" - you can negotiate up for complex projects</li>
           </ul>
           
           <h3>3. Respond Quickly</h3>
-          <p>Brands often reach out to multiple creators. The first to respond often gets the booking.</p>
+          <p>Brands often reach out to multiple creators. The first to respond often gets the collaboration.</p>
           <ul>
             <li>Enable notifications on your phone</li>
             <li>Respond within 2-4 hours during business hours</li>
@@ -498,51 +572,77 @@ export const knowledgeBaseCategories: KBCategory[] = [
           
           <h3>4. Build Your Reputation</h3>
           <ul>
-            <li><strong>Deliver Quality:</strong> Exceed expectations on every booking</li>
+            <li><strong>Deliver Quality:</strong> Exceed expectations on every collaboration</li>
             <li><strong>Meet Deadlines:</strong> Late delivery kills repeat business</li>
             <li><strong>Request Reviews:</strong> Politely ask satisfied brands to leave reviews</li>
           </ul>
-          
-          <div class="alert alert-info">
-            <strong>Pro Tip:</strong> Creators with 5+ positive reviews get 3x more booking requests than those with no reviews.
-          </div>
         `,
         roles: ['creator'],
         order: 1
       },
       {
-        slug: "best-campaign-applications",
-        title: "Best Practices for Campaign Applications",
+        slug: "boost-your-profile",
+        title: "Boost Your Profile Visibility",
         content: `
-          <h2>Stand Out in Campaign Applications</h2>
-          <p>With many creators applying to campaigns, here's how to make your application stand out.</p>
+          <h2>Stand Out with Boost Packages</h2>
+          <p>Want to get discovered faster? Our Boost packages increase your visibility in search results and attract more brand attention.</p>
+          
+          <h3>Available Boost Options</h3>
+          <ul>
+            <li><strong>Featured Badge ($29/week):</strong> Eye-catching badge that makes you stand out in search results</li>
+            <li><strong>Spotlight ($49/week):</strong> Appear in the featured creators section on the homepage</li>
+            <li><strong>Category Boost ($79/week):</strong> Top positioning when brands search your category</li>
+          </ul>
+          
+          <h3>How Boost Works</h3>
+          <ol>
+            <li>Go to your Dashboard > Featuring tab</li>
+            <li>Select the Boost package you want</li>
+            <li>Complete payment</li>
+            <li>Your boost activates immediately for the selected duration</li>
+          </ol>
+          
+          <h3>What You'll See</h3>
+          <ul>
+            <li>Special amber gradient badge on your profile card</li>
+            <li>Higher placement in search results</li>
+            <li>Sparkle icon indicating featured status</li>
+            <li>Increased visibility to browsing brands</li>
+          </ul>
+          
+          <div class="alert alert-info">
+            <strong>Tip:</strong> Boost works best when combined with a complete, high-quality profile. Make sure your portfolio and bio are polished before boosting!
+          </div>
+        `,
+        roles: ['creator'],
+        order: 2
+      },
+      {
+        slug: "best-campaign-applications",
+        title: "Applying to Brand Opportunities",
+        content: `
+          <h2>Stand Out in Opportunity Applications</h2>
+          <p>Brands post opportunities looking for specific creators. Here's how to make your application stand out.</p>
           
           <h3>Before You Apply</h3>
           <ul>
             <li><strong>Read the Brief Carefully:</strong> Understand exactly what the brand wants</li>
-            <li><strong>Check Brand Fit:</strong> Only apply to campaigns that align with your content style</li>
+            <li><strong>Check Brand Fit:</strong> Only apply to opportunities that align with your content style</li>
             <li><strong>Review Requirements:</strong> Make sure you can meet all requirements</li>
           </ul>
           
           <h3>Writing Your Application</h3>
           <ol>
-            <li><strong>Personalize It:</strong> Reference the specific campaign and brand by name</li>
+            <li><strong>Personalize It:</strong> Reference the specific opportunity and brand by name</li>
             <li><strong>Show Understanding:</strong> Demonstrate you understand their goals</li>
-            <li><strong>Highlight Relevance:</strong> Explain why YOU are perfect for this campaign</li>
+            <li><strong>Highlight Relevance:</strong> Explain why YOU are perfect for this collaboration</li>
             <li><strong>Share Ideas:</strong> Briefly pitch 1-2 content concepts</li>
             <li><strong>Include Metrics:</strong> Mention relevant engagement rates or past results</li>
           </ol>
           
-          <h3>Example Application</h3>
-          <div class="example-box">
-            <p>"Hi [Brand]! I'm excited about your [Campaign Name] campaign. As a [niche] creator with [X]k engaged followers, I've worked with similar brands like [examples] with great results.</p>
-            <p>For this campaign, I'm thinking a [specific content idea] would resonate with my audience because [reason]. My average engagement rate is [X]% and I typically see [results].</p>
-            <p>I'd love to bring [unique value] to this collaboration!"</p>
-          </div>
-          
           <h3>Pricing Your Application</h3>
           <ul>
-            <li>Stay within the campaign's stated budget range</li>
+            <li>Stay within the opportunity's stated budget range</li>
             <li>Don't undervalue yourself just to win</li>
             <li>Consider the work involved vs. your normal rates</li>
             <li>Be prepared to negotiate slightly</li>
@@ -551,45 +651,6 @@ export const knowledgeBaseCategories: KBCategory[] = [
           <div class="alert alert-warning">
             <strong>Avoid:</strong> Generic copy-paste applications. Brands can tell immediately and will skip to the next applicant.
           </div>
-        `,
-        roles: ['creator'],
-        order: 2
-      },
-      {
-        slug: "building-your-brand",
-        title: "Building Your Personal Brand",
-        content: `
-          <h2>Create a Memorable Personal Brand</h2>
-          <p>Your personal brand is what makes brands remember and choose you over others.</p>
-          
-          <h3>Define Your Niche</h3>
-          <ul>
-            <li><strong>Be Specific:</strong> "Travel creator" is generic. "Budget backpacking in Southeast Asia" is memorable</li>
-            <li><strong>Find Your Angle:</strong> What unique perspective do you bring?</li>
-            <li><strong>Stay Consistent:</strong> Your content should have a recognizable style</li>
-          </ul>
-          
-          <h3>Visual Consistency</h3>
-          <ul>
-            <li>Use consistent colors, fonts, and editing styles</li>
-            <li>Create a cohesive portfolio that tells a story</li>
-            <li>Your cover photos should immediately communicate your vibe</li>
-          </ul>
-          
-          <h3>Voice & Personality</h3>
-          <ul>
-            <li>Let your personality shine in your bio and messages</li>
-            <li>Be authentic - brands value genuine creators</li>
-            <li>Develop catchphrases or formats your audience recognizes</li>
-          </ul>
-          
-          <h3>Portfolio Curation</h3>
-          <ul>
-            <li>Only show your absolute best work</li>
-            <li>Include variety while maintaining your style</li>
-            <li>Update regularly with fresh content</li>
-            <li>Remove outdated or lower-quality pieces</li>
-          </ul>
         `,
         roles: ['creator'],
         order: 3
@@ -601,40 +662,38 @@ export const knowledgeBaseCategories: KBCategory[] = [
           <h2>Earn More From Your Content</h2>
           <p>Strategic pricing and service structuring can significantly increase your income.</p>
           
-          <h3>Tiered Service Pricing</h3>
-          <p>Offer multiple price points to capture different budgets:</p>
+          <h3>Negotiation Strategies</h3>
+          <p>Since all pricing is negotiable, here's how to maximize each deal:</p>
           <ul>
-            <li><strong>Basic:</strong> Simple deliverable, fastest turnaround</li>
-            <li><strong>Standard:</strong> More polish, includes minor revisions</li>
-            <li><strong>Premium:</strong> Full production value, multiple revisions, exclusivity</li>
+            <li><strong>Understand Value:</strong> Know what your content is worth based on reach and engagement</li>
+            <li><strong>Add Value First:</strong> Offer suggestions that benefit the brand before discussing price</li>
+            <li><strong>Bundle Services:</strong> Propose packages that increase total value</li>
+            <li><strong>Consider Exclusivity:</strong> Charge more for exclusive content or category exclusivity</li>
+            <li><strong>Usage Rights Premium:</strong> Extended usage rights warrant higher pricing</li>
           </ul>
           
-          <h3>Upselling Strategies</h3>
+          <h3>Upselling Opportunities</h3>
           <ul>
             <li>Offer add-ons: extra revisions, faster delivery, raw footage</li>
-            <li>Suggest complementary services: "Would you also like Stories?"</li>
-            <li>Create bundles: "3 posts for the price of 2.5"</li>
+            <li>Suggest complementary services: "Would you also like Stories for extra reach?"</li>
+            <li>Create bundles: "3 posts for a better rate than individual posts"</li>
           </ul>
           
           <h3>Build Repeat Relationships</h3>
           <ul>
-            <li>Over-deliver on first bookings to earn repeat business</li>
-            <li>Offer "returning client" discounts</li>
+            <li>Over-deliver on first collaborations to earn repeat business</li>
+            <li>Offer "returning client" considerations</li>
             <li>Stay in touch with past brands</li>
             <li>Suggest relevant opportunities when you see them</li>
           </ul>
           
-          <h3>Increase Your Value</h3>
+          <h3>Increase Your Value Over Time</h3>
           <ul>
             <li>Grow your audience = higher rates</li>
             <li>Improve engagement = more valuable to brands</li>
             <li>Build case studies from successful campaigns</li>
             <li>Get testimonials and reviews</li>
           </ul>
-          
-          <div class="alert alert-info">
-            <strong>Rule of Thumb:</strong> Aim to increase your rates by 10-20% every 6 months as you gain experience and reviews.
-          </div>
         `,
         roles: ['creator'],
         order: 4
@@ -643,12 +702,12 @@ export const knowledgeBaseCategories: KBCategory[] = [
         slug: "response-time-importance",
         title: "Why Response Time Matters",
         content: `
-          <h2>Speed Wins Bookings</h2>
-          <p>Response time is one of the biggest factors in converting inquiries to bookings.</p>
+          <h2>Speed Wins Collaborations</h2>
+          <p>Response time is one of the biggest factors in converting inquiries to collaborations.</p>
           
           <h3>The Numbers</h3>
           <ul>
-            <li>Creators who respond within 1 hour are <strong>7x more likely</strong> to get booked</li>
+            <li>Creators who respond within 1 hour are <strong>7x more likely</strong> to secure the collaboration</li>
             <li>Response within 4 hours: <strong>4x more likely</strong></li>
             <li>Response after 24 hours: Brand has likely moved on</li>
           </ul>
@@ -665,16 +724,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
           <ul>
             <li><strong>Enable Push Notifications:</strong> Know immediately when you get a message</li>
             <li><strong>Set Response Windows:</strong> Check messages at set times throughout the day</li>
-            <li><strong>Use Quick Replies:</strong> Have templates ready for common questions</li>
             <li><strong>Acknowledge First:</strong> Even if you can't fully respond, say "Thanks! I'll review this and get back to you within [time]"</li>
-          </ul>
-          
-          <h3>When You Can't Respond Immediately</h3>
-          <p>If you're unavailable for an extended period:</p>
-          <ul>
-            <li>Update your profile status</li>
-            <li>Extend delivery times temporarily</li>
-            <li>Mention availability in your bio</li>
           </ul>
         `,
         roles: ['creator'],
@@ -683,82 +733,167 @@ export const knowledgeBaseCategories: KBCategory[] = [
     ]
   },
   {
-    slug: "managing-bookings-creators",
-    title: "Managing Bookings",
-    description: "How to handle booking requests, deliveries, and revisions",
+    slug: "managing-collaborations",
+    title: "Managing Collaborations",
+    description: "How to handle collaboration requests, negotiations, and delivery",
     icon: Briefcase,
     roles: ['creator'],
     order: 3,
     articles: [
       {
-        slug: "accepting-bookings",
-        title: "Accepting & Declining Bookings",
+        slug: "handling-inquiries",
+        title: "Handling Brand Inquiries",
         content: `
-          <h2>When You Receive a Booking</h2>
-          <p>When a brand books your service, you'll receive a notification. Review the booking details carefully before accepting.</p>
+          <h2>When a Brand Reaches Out</h2>
+          <p>When a brand messages you, they're interested in working together. Here's how to handle inquiries professionally.</p>
           
-          <h3>Before Accepting, Check:</h3>
+          <h3>Initial Response</h3>
           <ul>
-            <li>The brand's requirements and message</li>
-            <li>Your availability within the delivery timeframe</li>
-            <li>Any special requests or content needs</li>
+            <li>Thank them for reaching out</li>
+            <li>Express genuine interest in their brand/product</li>
+            <li>Ask clarifying questions about their needs</li>
+            <li>Share relevant examples from your portfolio</li>
           </ul>
           
-          <h3>Declining Bookings</h3>
-          <p>It's okay to decline bookings that don't fit your brand or schedule. Declining before acceptance has no penalty. However, once accepted, you're committed to delivery.</p>
+          <h3>Discussing Terms</h3>
+          <p>Use the chat to discuss:</p>
+          <ul>
+            <li>Specific deliverables they need</li>
+            <li>Timeline and deadlines</li>
+            <li>Content usage rights</li>
+            <li>Any special requirements</li>
+            <li>Pricing based on scope</li>
+          </ul>
+          
+          <h3>When to Send an Agreement</h3>
+          <p>Once you've verbally agreed on terms in chat, send a formal Agreement to document everything. This creates a professional record and shows you're serious about the collaboration.</p>
         `,
         roles: ['creator'],
         order: 1
+      },
+      {
+        slug: "negotiating-terms",
+        title: "Negotiating Terms Effectively",
+        content: `
+          <h2>The Art of Negotiation</h2>
+          <p>Good negotiation leads to fair deals for both parties. Here's how to negotiate effectively.</p>
+          
+          <h3>Know Your Worth</h3>
+          <ul>
+            <li>Understand your audience value (size, engagement, demographics)</li>
+            <li>Research market rates for your niche</li>
+            <li>Have a minimum rate you won't go below</li>
+            <li>Factor in production costs and time</li>
+          </ul>
+          
+          <h3>Understand Their Needs</h3>
+          <ul>
+            <li>What's their goal? (awareness, sales, content library)</li>
+            <li>What's their budget range?</li>
+            <li>What's their timeline?</li>
+            <li>Are there exclusivity requirements?</li>
+          </ul>
+          
+          <h3>Finding Middle Ground</h3>
+          <ul>
+            <li>Be flexible on terms while protecting your value</li>
+            <li>Offer alternatives if budget is tight ("For that budget, I could do X instead of Y")</li>
+            <li>Consider long-term relationship value</li>
+            <li>Document everything in the agreement</li>
+          </ul>
+          
+          <h3>When to Walk Away</h3>
+          <p>Not every opportunity is right for you. It's okay to decline if:</p>
+          <ul>
+            <li>Budget is significantly below your minimum</li>
+            <li>Requirements don't align with your values</li>
+            <li>Timeline is unrealistic</li>
+            <li>Something feels off</li>
+          </ul>
+        `,
+        roles: ['creator'],
+        order: 2
       },
       {
         slug: "delivering-content",
         title: "Delivering Your Content",
         content: `
           <h2>The Delivery Process</h2>
-          <p>Once you've completed the content, submit your deliverables to the CollabHunts team as instructed during the project coordination.</p>
+          <p>Once you've created the content, deliver it as specified in your agreement.</p>
           
-          <h3>What Happens After Delivery</h3>
+          <h3>Before Delivery</h3>
+          <ul>
+            <li>Review the agreement requirements</li>
+            <li>Double-check all deliverables are complete</li>
+            <li>Ensure quality matches or exceeds expectations</li>
+            <li>Prepare files in requested formats</li>
+          </ul>
+          
+          <h3>Delivery Methods</h3>
+          <p>Arrange delivery method with the brand - common options include:</p>
+          <ul>
+            <li>Direct file sharing (Google Drive, Dropbox)</li>
+            <li>Sending via platform messaging</li>
+            <li>Posting live and sharing links</li>
+          </ul>
+          
+          <h3>After Delivery</h3>
           <ol>
-            <li>CollabHunts reviews your deliverables for quality</li>
-            <li>We share them with the brand for approval</li>
-            <li>Brand provides feedback through us</li>
-            <li>Once approved, you receive payment from CollabHunts</li>
+            <li>Notify the brand that content is ready</li>
+            <li>Be available for any quick clarifications</li>
+            <li>Handle reasonable revision requests promptly</li>
+            <li>Request payment as per your agreement</li>
           </ol>
           
-          <div class="alert alert-warning">
-            <strong>Important:</strong> Make sure your deliverables match what was agreed upon. Clear communication prevents delays.
+          <div class="alert alert-info">
+            <strong>Remember:</strong> Payment is arranged directly between you and the brand. Follow up on payment according to your agreed terms.
           </div>
         `,
         roles: ['creator'],
-        order: 2
+        order: 3
       },
       {
         slug: "handling-revisions",
         title: "Handling Revision Requests",
         content: `
           <h2>Revisions Are Normal</h2>
-          <p>Brands may request changes before approving your delivery. This is a normal part of the creative process.</p>
+          <p>Brands may request changes to your content. This is a normal part of the creative process.</p>
           
           <h3>Best Practices</h3>
           <ul>
-            <li>Clarify revision limits in your service descriptions</li>
+            <li>Clarify revision limits in your agreements</li>
             <li>Respond to revision requests promptly</li>
             <li>Ask for specific feedback if the request is unclear</li>
-            <li>Document all communication through the platform</li>
+            <li>Document all communication in chat</li>
           </ul>
           
-          <h3>Excessive Revisions</h3>
-          <p>If a brand is requesting unreasonable revisions outside the original scope, you can open a dispute for our team to review.</p>
+          <h3>Reasonable vs. Excessive Revisions</h3>
+          <p><strong>Reasonable:</strong></p>
+          <ul>
+            <li>Minor tweaks to wording or timing</li>
+            <li>Adjustments to match brand guidelines</li>
+            <li>Fixes for things you missed in the brief</li>
+          </ul>
+          
+          <p><strong>Excessive (consider extra charges):</strong></p>
+          <ul>
+            <li>Complete concept changes after approval</li>
+            <li>Multiple rounds beyond agreed limit</li>
+            <li>Requests outside original scope</li>
+          </ul>
+          
+          <h3>Handling Disagreements</h3>
+          <p>If there's a significant disagreement about deliverables, refer back to your agreement. If you can't resolve it, contact our support team for mediation.</p>
         `,
         roles: ['creator'],
-        order: 3
+        order: 4
       }
     ]
   },
   {
     slug: "payments-creators",
-    title: "Payments & Payouts",
-    description: "Everything about getting paid for your work",
+    title: "Payments & Earnings",
+    description: "Understanding how payments work in the marketplace model",
     icon: Wallet,
     roles: ['creator'],
     order: 4,
@@ -767,35 +902,74 @@ export const knowledgeBaseCategories: KBCategory[] = [
         slug: "how-payments-work",
         title: "How Payments Work",
         content: `
-          <h2>Managed Payment System</h2>
-          <p>CollabHunts handles all payments. Brands pay us, and we pay you after successful delivery.</p>
+          <h2>Direct Payment Model</h2>
+          <p>CollabHunts is a discovery marketplace with <strong>zero transaction fees</strong>. All payments are arranged directly between you and the brand.</p>
           
-          <h3>Payment Process</h3>
+          <h3>What This Means for You</h3>
           <ul>
-            <li><strong>Brand books you:</strong> Brand pays CollabHunts for the collaboration</li>
-            <li><strong>You deliver:</strong> Complete and submit your work</li>
-            <li><strong>Brand approves:</strong> Brand reviews and approves deliverables</li>
-            <li><strong>You get paid:</strong> CollabHunts releases payment to you</li>
+            <li><strong>Keep 100%:</strong> No platform fees on your earnings</li>
+            <li><strong>Flexible Payment:</strong> Arrange payment terms that work for both parties</li>
+            <li><strong>Direct Relationship:</strong> Build trust directly with brands</li>
           </ul>
           
-          <h3>Your Earnings</h3>
-          <p>You receive the <strong>full price</strong> you set for your services. All fees are handled separately.</p>
+          <h3>Typical Payment Arrangements</h3>
+          <p>Common structures creators use:</p>
+          <ul>
+            <li><strong>Full upfront:</strong> Payment before work begins</li>
+            <li><strong>50/50 split:</strong> Half upfront, half on delivery</li>
+            <li><strong>On delivery:</strong> Payment upon content submission</li>
+            <li><strong>Net terms:</strong> Payment within X days of delivery</li>
+          </ul>
+          
+          <h3>Document Terms in Agreements</h3>
+          <p>Always include payment terms in your AI-drafted agreement. This creates a clear record of what was agreed.</p>
+          
+          <div class="alert alert-info">
+            <strong>Tip:</strong> For new brand relationships, consider requesting a deposit or full payment upfront until trust is established.
+          </div>
         `,
         roles: ['creator'],
         order: 1
       },
       {
-        slug: "payout-settings",
-        title: "Payout Settings & Timing",
+        slug: "payment-best-practices",
+        title: "Payment Best Practices",
         content: `
-          <h2>Setting Up Payouts</h2>
-          <p>Connect your payout account in the Payouts tab of your dashboard to receive payments.</p>
+          <h2>Protect Yourself</h2>
+          <p>Since payments happen outside the platform, here are best practices to protect yourself.</p>
           
-          <h3>Payout Timing</h3>
+          <h3>Before Starting Work</h3>
           <ul>
-            <li>Earnings are released immediately after approval</li>
-            <li>Funds arrive within 2-5 business days depending on your bank</li>
-            <li>You can track all payouts in your Payouts tab</li>
+            <li>Get a signed/confirmed agreement</li>
+            <li>Research the brand (website, social presence, reviews)</li>
+            <li>For larger projects, request a deposit</li>
+            <li>Clarify exact payment method and timeline</li>
+          </ul>
+          
+          <h3>Payment Methods</h3>
+          <p>Common options include:</p>
+          <ul>
+            <li>Bank transfer</li>
+            <li>PayPal</li>
+            <li>Wise (for international)</li>
+            <li>Venmo/Zelle (domestic)</li>
+          </ul>
+          
+          <h3>Following Up on Payment</h3>
+          <ul>
+            <li>Send a polite reminder when payment is due</li>
+            <li>Reference your agreement terms</li>
+            <li>Document all communication</li>
+            <li>Contact our support if you need mediation help</li>
+          </ul>
+          
+          <h3>Red Flags</h3>
+          <p>Be cautious if a brand:</p>
+          <ul>
+            <li>Refuses to sign an agreement</li>
+            <li>Wants extensive work before any payment</li>
+            <li>Is vague about payment terms</li>
+            <li>Pressures you to work outside normal terms</li>
           </ul>
         `,
         roles: ['creator'],
@@ -816,24 +990,33 @@ export const knowledgeBaseCategories: KBCategory[] = [
         title: "Issue Resolution",
         content: `
           <h2>When Issues Happen</h2>
-          <p>Sometimes there may be disagreements about deliverables. CollabHunts acts as a mediator to resolve issues fairly.</p>
+          <p>Sometimes there may be disagreements about deliverables or payments. CollabHunts can help mediate issues.</p>
           
-          <h3>Resolution Process</h3>
+          <h3>Steps to Resolve Issues</h3>
           <ol>
-            <li><strong>Issue Reported:</strong> Either party raises a concern with our team</li>
-            <li><strong>Review:</strong> CollabHunts reviews the situation with both parties</li>
-            <li><strong>Resolution:</strong> Our team makes a fair decision based on the agreement</li>
+            <li><strong>Communicate First:</strong> Try to resolve directly with the brand through chat</li>
+            <li><strong>Reference Agreement:</strong> Point to what was agreed in your documented agreement</li>
+            <li><strong>Seek Mediation:</strong> If you can't resolve it, contact our support team</li>
           </ol>
           
-          <h3>Possible Outcomes</h3>
+          <h3>How Mediation Works</h3>
           <ul>
-            <li><strong>Full payment to you:</strong> Work meets agreed requirements</li>
-            <li><strong>Full refund to brand:</strong> Significant issues with delivery</li>
-            <li><strong>Partial payment:</strong> Compromise when both parties share responsibility</li>
+            <li>Submit your concern to care@collabhunts.com</li>
+            <li>Provide the agreement and relevant chat history</li>
+            <li>We'll review the situation with both parties</li>
+            <li>We'll provide recommendations for resolution</li>
+          </ul>
+          
+          <h3>Protecting Yourself</h3>
+          <ul>
+            <li>Always use AI-drafted agreements to document terms</li>
+            <li>Keep all communication in the platform chat</li>
+            <li>Don't delete messages or agreements</li>
+            <li>Screenshot any external communications</li>
           </ul>
           
           <div class="alert alert-info">
-            <strong>Tip:</strong> Always keep records and communicate through CollabHunts. This helps us resolve issues quickly and fairly.
+            <strong>Note:</strong> While we can mediate and provide recommendations, payment enforcement may require additional steps since payments happen directly between parties.
           </div>
         `,
         roles: ['creator'],
@@ -854,7 +1037,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
         title: "Allowed & Prohibited Content",
         content: `
           <h2>Content Standards</h2>
-          <p>All content created through CollabHunts must comply with our community guidelines and legal requirements.</p>
+          <p>All content created through CollabHunts collaborations must comply with our community guidelines and legal requirements.</p>
           
           <h3>Prohibited Content</h3>
           <ul>
@@ -868,6 +1051,14 @@ export const knowledgeBaseCategories: KBCategory[] = [
           
           <h3>FTC Disclosure Requirements</h3>
           <p>Sponsored content must include clear disclosures like #ad or #sponsored. This is a legal requirement in most jurisdictions.</p>
+          
+          <h3>Platform Authenticity</h3>
+          <ul>
+            <li>Don't misrepresent your follower counts</li>
+            <li>Don't use fake engagement</li>
+            <li>Be honest about past brand relationships</li>
+            <li>Keep your profile information accurate</li>
+          </ul>
         `,
         roles: ['creator'],
         order: 1
@@ -879,7 +1070,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
   {
     slug: "getting-started-brands",
     title: "Getting Started",
-    description: "Learn how to find creators and launch your first campaign",
+    description: "Learn how to find creators and start collaborating",
     icon: BookOpen,
     roles: ['brand'],
     order: 1,
@@ -889,19 +1080,27 @@ export const knowledgeBaseCategories: KBCategory[] = [
         title: "How CollabHunts Works for Brands",
         content: `
           <h2>Welcome to CollabHunts!</h2>
-          <p>CollabHunts connects your brand with authentic content creators. Here's how to get started:</p>
+          <p>CollabHunts is a <strong>discovery marketplace</strong> connecting your brand with authentic content creators. Think of it like a classifieds platform for influencer partnerships.</p>
+          
+          <h3>The Marketplace Model</h3>
+          <p>We're a connection platform with <strong>zero transaction fees</strong>. You find creators, negotiate terms directly, and arrange payment between yourselves. We facilitate the connection, not the transaction.</p>
           
           <h3>Step-by-Step Process</h3>
           <ol>
-            <li><strong>Create your brand account</strong> - Set up your company profile</li>
-            <li><strong>Browse creators</strong> - Use filters to find the perfect match</li>
-            <li><strong>Book services</strong> - Select a creator's service and pay (held in escrow)</li>
-            <li><strong>Receive content</strong> - Creator delivers within the agreed timeframe</li>
-            <li><strong>Approve & release payment</strong> - Review deliverables and approve</li>
+            <li><strong>Browse creators</strong> - Search and filter to find the perfect match</li>
+            <li><strong>Subscribe to contact</strong> - Choose a plan to message creators</li>
+            <li><strong>Message directly</strong> - Chat to discuss your needs and negotiate terms</li>
+            <li><strong>Receive agreement</strong> - Creator sends a professional AI-drafted agreement</li>
+            <li><strong>Confirm collaboration</strong> - Review and confirm the agreement terms</li>
+            <li><strong>Arrange payment</strong> - Pay the creator directly as agreed</li>
+            <li><strong>Receive content</strong> - Get your deliverables as specified</li>
           </ol>
           
-          <div class="alert alert-warning">
-            <strong>Important:</strong> You have 72 hours to review deliverables. After that, payment is automatically released to the creator.
+          <h3>What "Starting from" Pricing Means</h3>
+          <p>Creator packages show "Starting from $X" pricing. This is their base rate - final pricing is always negotiated based on your specific requirements, timeline, and content usage needs.</p>
+          
+          <div class="alert alert-info">
+            <strong>Tip:</strong> Take time to browse creator portfolios and reviews before reaching out. The best collaborations happen when there's genuine brand-creator fit.
           </div>
         `,
         roles: ['brand'],
@@ -911,222 +1110,287 @@ export const knowledgeBaseCategories: KBCategory[] = [
         slug: "finding-creators",
         title: "Finding the Right Creators",
         content: `
-          <h2>Discovering Creators</h2>
-          <p>Use our powerful search and filtering tools to find creators that match your brand.</p>
+          <h2>Discover Your Perfect Creators</h2>
+          <p>CollabHunts offers powerful tools to find creators that match your brand's needs.</p>
           
-          <h3>Available Filters</h3>
+          <h3>Search Filters</h3>
           <ul>
-            <li><strong>Category:</strong> Lifestyle, Fashion, Tech, Food, etc.</li>
+            <li><strong>Category:</strong> Food, Fashion, Fitness, Tech, and more</li>
             <li><strong>Location:</strong> Country, state, city</li>
+            <li><strong>Follower Range:</strong> Nano to mega-influencers</li>
             <li><strong>Platform:</strong> Instagram, TikTok, YouTube</li>
-            <li><strong>Follower count:</strong> Range of audience size</li>
+            <li><strong>Package Type:</strong> Unbox & Review, Social Boost, etc.</li>
           </ul>
           
-          <h3>Advanced Filters (Pro/Premium)</h3>
+          <h3>Advanced Filters (Pro & Premium)</h3>
           <ul>
-            <li>Age range demographics</li>
-            <li>Gender filtering</li>
-            <li>Language preferences</li>
-            <li>Ethnicity targeting</li>
+            <li>Age range</li>
+            <li>Gender</li>
+            <li>Primary language</li>
+            <li>Ethnicity (for diverse campaigns)</li>
           </ul>
           
-          <h3>Tips for Finding Great Creators</h3>
+          <h3>Evaluating Creators</h3>
+          <p>When reviewing a creator's profile, consider:</p>
           <ul>
-            <li>Look at engagement rates, not just follower counts</li>
-            <li>Review their portfolio for content quality</li>
-            <li>Check their ratings from other brands</li>
-            <li>Read their bio to ensure brand alignment</li>
+            <li>Content quality and style alignment</li>
+            <li>Engagement rate vs. follower count</li>
+            <li>Portfolio examples relevant to your needs</li>
+            <li>Reviews from other brands</li>
+            <li>Pricing relative to your budget</li>
           </ul>
         `,
         roles: ['brand'],
         order: 2
       },
       {
-        slug: "choosing-right-creator",
-        title: "How to Choose the Right Creator",
+        slug: "contacting-creators",
+        title: "Contacting & Negotiating with Creators",
         content: `
-          <h2>Beyond Follower Count</h2>
-          <p>The best creator for your campaign isn't always the one with the most followers. Here's what really matters.</p>
+          <h2>Starting the Conversation</h2>
+          <p>With an active subscription, you can message creators directly to discuss potential collaborations.</p>
           
-          <h3>Key Factors to Consider</h3>
+          <h3>Your First Message</h3>
+          <p>Make a good first impression by including:</p>
           <ul>
-            <li><strong>Engagement Rate:</strong> High engagement indicates an active, trusting audience</li>
-            <li><strong>Content Quality:</strong> Does their style match your brand aesthetic?</li>
-            <li><strong>Audience Demographics:</strong> Are their followers your target customers?</li>
-            <li><strong>Brand Alignment:</strong> Do they authentically use products like yours?</li>
-            <li><strong>Past Performance:</strong> Check reviews from other brands</li>
+            <li>Brief introduction of your brand</li>
+            <li>Why you're interested in working with them specifically</li>
+            <li>What type of content you're looking for</li>
+            <li>Your timeline and budget range</li>
           </ul>
           
-          <h3>Red Flags to Watch</h3>
+          <h3>Negotiating Terms</h3>
+          <p>Use the chat to discuss:</p>
           <ul>
-            <li>Unusually low engagement for their follower count (potential fake followers)</li>
-            <li>No portfolio or poor quality samples</li>
-            <li>Pricing that seems too good to be true</li>
-            <li>Slow response times during inquiry</li>
+            <li>Specific deliverables you need</li>
+            <li>Timeline and deadlines</li>
+            <li>Content usage rights</li>
+            <li>Exclusivity requirements</li>
+            <li>Final pricing</li>
           </ul>
           
-          <h3>Micro vs. Macro Influencers</h3>
-          <table>
-            <tr><th>Micro (10k-100k)</th><th>Macro (100k+)</th></tr>
-            <tr><td>Higher engagement rates</td><td>Broader reach</td></tr>
-            <tr><td>More affordable</td><td>More brand awareness</td></tr>
-            <tr><td>Niche audiences</td><td>Diverse audiences</td></tr>
-            <tr><td>More authentic feel</td><td>More polished content</td></tr>
-          </table>
+          <h3>Receiving an Agreement</h3>
+          <p>Once terms are agreed, the creator will send you an AI-drafted agreement documenting everything. Review it carefully and confirm to proceed.</p>
           
           <div class="alert alert-info">
-            <strong>Pro Tip:</strong> Consider booking multiple micro-influencers instead of one macro-influencer for better ROI on most campaigns.
+            <strong>Tip:</strong> Be clear about your expectations upfront. This leads to better content and smoother collaborations.
           </div>
         `,
         roles: ['brand'],
         order: 3
-      }
-    ]
-  },
-  {
-    slug: "booking-creators",
-    title: "Booking Creators",
-    description: "How to book services and work with creators",
-    icon: Briefcase,
-    roles: ['brand'],
-    order: 2,
-    articles: [
-      {
-        slug: "booking-process",
-        title: "How to Book a Creator",
-        content: `
-          <h2>Managed Booking Process</h2>
-          <p>All creator collaborations are managed by CollabHunts. Here's how it works:</p>
-          
-          <ol>
-            <li>Find a creator you want to work with</li>
-            <li>Click "Book This Service" on their profile</li>
-            <li>Contact CollabHunts with your project details</li>
-            <li>We coordinate with the creator and finalize terms</li>
-            <li>Make payment securely to CollabHunts</li>
-            <li>Receive your content</li>
-          </ol>
-          
-          <h3>Why Managed Bookings?</h3>
-          <ul>
-            <li><strong>Quality Assurance:</strong> We ensure deliverables meet expectations</li>
-            <li><strong>Payment Protection:</strong> Secure transactions through CollabHunts</li>
-            <li><strong>Dispute Resolution:</strong> We mediate if issues arise</li>
-            <li><strong>Hassle-Free:</strong> We handle all the coordination</li>
-          </ul>
-        `,
-        roles: ['brand'],
-        order: 1
       },
       {
-        slug: "reviewing-deliverables",
-        title: "Reviewing Deliverables",
+        slug: "understanding-agreements-brands",
+        title: "Understanding Agreements",
         content: `
-          <h2>Content Review Process</h2>
-          <p>When a creator completes your project, CollabHunts will share the deliverables with you for review.</p>
+          <h2>Professional Collaboration Agreements</h2>
+          <p>Creators send AI-drafted agreements to document your collaboration terms professionally.</p>
           
-          <h3>Your Options</h3>
+          <h3>What's Included</h3>
           <ul>
-            <li><strong>Approve:</strong> Confirm the content meets your requirements</li>
-            <li><strong>Request Changes:</strong> Ask for specific revisions through our team</li>
-            <li><strong>Report Issues:</strong> Contact us if there are significant problems</li>
+            <li>Both parties' details</li>
+            <li>Agreed deliverables and specifications</li>
+            <li>Timeline and deadlines</li>
+            <li>Pricing and payment terms</li>
+            <li>Content usage rights</li>
+            <li>Revision expectations</li>
           </ul>
           
-          <div class="alert alert-info">
-            <strong>Note:</strong> CollabHunts manages the revision process to ensure smooth communication between you and the creator.
-          </div>
-        `,
-        roles: ['brand'],
-        order: 2
-      },
-      {
-        slug: "writing-effective-briefs",
-        title: "Writing Effective Campaign Briefs",
-        content: `
-          <h2>Clear Briefs = Better Results</h2>
-          <p>The quality of content you receive directly depends on the clarity of your brief.</p>
-          
-          <h3>Essential Brief Elements</h3>
-          <ol>
-            <li><strong>Campaign Objective:</strong> What do you want to achieve? (awareness, sales, engagement)</li>
-            <li><strong>Target Audience:</strong> Who should the content appeal to?</li>
-            <li><strong>Key Messages:</strong> What must be communicated?</li>
-            <li><strong>Content Requirements:</strong> Format, length, style preferences</li>
-            <li><strong>Brand Guidelines:</strong> Colors, logos, dos and don'ts</li>
-            <li><strong>Timeline:</strong> Important dates and deadlines</li>
-            <li><strong>Examples:</strong> Links to content you like (and dislike)</li>
-          </ol>
-          
-          <h3>What to Avoid</h3>
+          <h3>Reviewing an Agreement</h3>
+          <p>Before confirming, make sure:</p>
           <ul>
-            <li>Vague instructions like "make it cool"</li>
-            <li>Too many requirements that stifle creativity</li>
-            <li>Unrealistic expectations for the budget</li>
-            <li>Missing information that causes back-and-forth</li>
+            <li>All deliverables are clearly specified</li>
+            <li>Timeline works for your needs</li>
+            <li>Price matches what you discussed</li>
+            <li>Usage rights meet your marketing needs</li>
           </ul>
           
-          <h3>Template Brief</h3>
-          <div class="example-box">
-            <p><strong>Campaign:</strong> [Name]<br>
-            <strong>Product:</strong> [What you're promoting]<br>
-            <strong>Objective:</strong> [Awareness/Sales/Engagement]<br>
-            <strong>Target Audience:</strong> [Demographics]<br>
-            <strong>Key Message:</strong> [Main point to convey]<br>
-            <strong>Content Type:</strong> [Post/Story/Video etc.]<br>
-            <strong>Must Include:</strong> [Required elements]<br>
-            <strong>Avoid:</strong> [Things not to do]<br>
-            <strong>Examples:</strong> [Links to reference content]<br>
-            <strong>Deadline:</strong> [Date]</p>
-          </div>
+          <h3>Confirming an Agreement</h3>
+          <p>When you confirm, you're agreeing to the documented terms. The collaboration will appear in your calendar for easy tracking.</p>
+          
+          <h3>After Confirmation</h3>
+          <ul>
+            <li>Arrange payment with the creator as specified</li>
+            <li>Provide any materials they need (product samples, brand guidelines)</li>
+            <li>Be available to answer questions</li>
+            <li>Review deliverables when ready</li>
+          </ul>
         `,
         roles: ['brand'],
-        order: 3
+        order: 4
       }
     ]
   },
   {
     slug: "subscriptions-brands",
     title: "Subscriptions & Pricing",
-    description: "Understanding subscription tiers and marketplace fees",
+    description: "Understanding subscription tiers and features",
     icon: Star,
     roles: ['brand'],
-    order: 3,
+    order: 2,
     articles: [
       {
         slug: "subscription-tiers",
         title: "Subscription Tiers Explained",
         content: `
           <h2>Choose the Right Plan</h2>
+          <p>CollabHunts is a discovery platform with <strong>zero transaction fees</strong>. Your subscription unlocks platform features - all payments to creators happen directly between you.</p>
           
-          <h3>Basic ($39/month)</h3>
+          <h3>No Package (Free)</h3>
           <ul>
-            <li>Contact and message creators</li>
+            <li>Browse and search creators</li>
+            <li>View profiles and portfolios</li>
+          </ul>
+          
+          <h3>Basic ($10/month)</h3>
+          <ul>
+            <li>Everything free users get</li>
+            <li>Chat & negotiate with creators</li>
             <li>View all creator pricing</li>
             <li>10 GB Content Library</li>
           </ul>
           
-          <h3>Pro ($99/month)</h3>
+          <h3>Pro ($49/month)</h3>
           <ul>
-            <li>All Basic features</li>
-            <li>Creator CRM (save, notes, folders)</li>
-            <li>Advanced demographic filters</li>
-            <li>1 active campaign per month</li>
-            <li>Mass messaging</li>
+            <li>Everything in Basic</li>
+            <li>Post 1 opportunity per month</li>
+            <li>Advanced demographic filters (age, language, ethnicity)</li>
+            <li>Creator CRM (save creators, add notes, organize folders)</li>
+            <li>Mass messaging (up to 50 creators/day)</li>
+            <li>Verified Business Badge eligibility</li>
           </ul>
           
-          <h3>Premium ($299/month)</h3>
+          <h3>Premium ($99/month)</h3>
           <ul>
-            <li>All Pro features</li>
+            <li>Everything in Pro</li>
+            <li>Post unlimited opportunities</li>
             <li>50 GB Content Library</li>
-            <li>Unlimited campaigns</li>
-            <li>Priority support</li>
+            <li>Mass messaging (up to 100 creators/day)</li>
+            <li>Priority customer support (Coming Soon)</li>
           </ul>
           
-          <h3>How Bookings Work</h3>
-          <p>CollabHunts is a discovery platform. Once you find creators you want to work with, message them directly to discuss your project and negotiate terms. All payments and transactions are handled offline between you and the creator.</p>
+          <div class="alert alert-info">
+            <strong>Note:</strong> Your subscription covers platform access only. Creator payments are arranged directly - we don't process transactions or charge fees on collaborations.
+          </div>
         `,
         roles: ['brand'],
         order: 1
+      },
+      {
+        slug: "verified-business-badge",
+        title: "Verified Business Badge",
+        content: `
+          <h2>Build Trust with Creators</h2>
+          <p>Pro and Premium brands can apply for a Verified Business Badge to stand out and build credibility.</p>
+          
+          <h3>What You Get</h3>
+          <ul>
+            <li><strong>Verified Checkmark:</strong> Displayed on your profile and in messages</li>
+            <li><strong>Higher Trust:</strong> Creators are more likely to respond</li>
+            <li><strong>Better Response Rates:</strong> Stand out from unverified brands</li>
+            <li><strong>Professional Image:</strong> Show you're a legitimate business</li>
+          </ul>
+          
+          <h3>Requirements</h3>
+          <ul>
+            <li>Pro or Premium subscription</li>
+            <li>Verified phone number</li>
+            <li>$99/year verification fee</li>
+            <li>Pass our business verification review</li>
+          </ul>
+          
+          <h3>How to Apply</h3>
+          <ol>
+            <li>Go to your Brand Dashboard</li>
+            <li>Find the "Get Verified" card</li>
+            <li>Complete the verification payment</li>
+            <li>Our team reviews your application (1-3 business days)</li>
+            <li>Badge activated upon approval</li>
+          </ol>
+        `,
+        roles: ['brand'],
+        order: 2
+      }
+    ]
+  },
+  {
+    slug: "opportunities-brands",
+    title: "Posting Opportunities",
+    description: "Let creators come to you with opportunity listings",
+    icon: Megaphone,
+    roles: ['brand'],
+    order: 3,
+    articles: [
+      {
+        slug: "creating-opportunities",
+        title: "Creating Opportunity Posts",
+        content: `
+          <h2>Let Creators Come to You</h2>
+          <p>Instead of reaching out to individual creators, post an opportunity and receive applications from interested creators.</p>
+          
+          <h3>Opportunity Pricing</h3>
+          <ul>
+            <li><strong>Standard Listing:</strong> $15 per opportunity</li>
+            <li><strong>Featured Upgrade:</strong> +$25 for prominent placement</li>
+          </ul>
+          
+          <h3>Creating an Opportunity</h3>
+          <ol>
+            <li>Go to your Brand Dashboard > Opportunities</li>
+            <li>Click "Create Opportunity"</li>
+            <li>Select a package type (Unbox & Review, Social Boost, Meet & Greet, or Custom)</li>
+            <li>Add title, description, and requirements</li>
+            <li>Set budget, date, and available spots</li>
+            <li>Submit for approval</li>
+          </ol>
+          
+          <h3>Package Types</h3>
+          <ul>
+            <li><strong>Standard Packages:</strong> Have fixed deliverables (read-only)</li>
+            <li><strong>Custom Experience:</strong> Allows you to specify unique requirements</li>
+          </ul>
+          
+          <h3>Approval Process</h3>
+          <p>All opportunities are reviewed before going live. This typically takes 1-2 business days.</p>
+        `,
+        roles: ['brand'],
+        order: 1
+      },
+      {
+        slug: "reviewing-applications",
+        title: "Reviewing Creator Applications",
+        content: `
+          <h2>Managing Applications</h2>
+          <p>Once your opportunity is live, creators can apply. Here's how to review and select the best fits.</p>
+          
+          <h3>What Applications Include</h3>
+          <ul>
+            <li>Creator's message explaining their interest</li>
+            <li>Their proposed rate</li>
+            <li>Link to their full profile</li>
+          </ul>
+          
+          <h3>Evaluating Applicants</h3>
+          <p>Consider:</p>
+          <ul>
+            <li>Portfolio quality and relevance</li>
+            <li>Audience demographics and engagement</li>
+            <li>Past collaboration reviews</li>
+            <li>Price vs. your budget</li>
+            <li>Quality of their application message</li>
+          </ul>
+          
+          <h3>Accepting Applicants</h3>
+          <ol>
+            <li>Review the application</li>
+            <li>Click to accept or decline</li>
+            <li>Accepted creators can message you to finalize details</li>
+            <li>Negotiate final terms in chat</li>
+            <li>Creator sends agreement to document terms</li>
+          </ol>
+        `,
+        roles: ['brand'],
+        order: 2
       }
     ]
   },
@@ -1156,7 +1420,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
           
           <h3>Storage Limits</h3>
           <ul>
-            <li><strong>Basic:</strong> No access</li>
+            <li><strong>Basic:</strong> 10 GB included</li>
             <li><strong>Pro:</strong> 10 GB included</li>
             <li><strong>Premium:</strong> 50 GB included</li>
             <li><strong>Additional:</strong> $10 per 100 GB</li>
@@ -1194,180 +1458,50 @@ export const knowledgeBaseCategories: KBCategory[] = [
     ]
   },
   {
-    slug: "campaigns-brands",
-    title: "Campaign Management",
-    description: "Creating and managing influencer campaigns",
-    icon: TrendingUp,
+    slug: "disputes-brands",
+    title: "Disputes & Support",
+    description: "How to handle issues and get resolution",
+    icon: AlertTriangle,
     roles: ['brand'],
     order: 5,
     articles: [
       {
-        slug: "creating-campaigns",
-        title: "Creating Campaigns",
+        slug: "handling-issues",
+        title: "Handling Collaboration Issues",
         content: `
-          <h2>Post Campaign Opportunities</h2>
-          <p>Campaigns let creators come to you! Post what you're looking for and receive applications.</p>
+          <h2>When Things Don't Go as Planned</h2>
+          <p>Most collaborations go smoothly, but if issues arise, here's how to address them.</p>
           
-          <h3>Creating a Campaign</h3>
+          <h3>Common Issues</h3>
+          <ul>
+            <li>Deliverables don't match agreement</li>
+            <li>Quality below expectations</li>
+            <li>Missed deadlines</li>
+            <li>Communication problems</li>
+          </ul>
+          
+          <h3>Steps to Resolve</h3>
           <ol>
-            <li>Go to your Brand Dashboard</li>
-            <li>Click "Create Campaign"</li>
-            <li>Add title, description, and requirements</li>
-            <li>Set budget and available spots</li>
-            <li>Set a deadline</li>
-            <li>Submit for approval</li>
+            <li><strong>Communicate First:</strong> Discuss the issue with the creator in chat</li>
+            <li><strong>Reference Agreement:</strong> Point to what was documented</li>
+            <li><strong>Propose Solution:</strong> Suggest a fair resolution (revision, partial refund, etc.)</li>
+            <li><strong>Seek Mediation:</strong> If you can't resolve it, contact our support</li>
           </ol>
           
-          <h3>Campaign Approval</h3>
-          <p>All campaigns are reviewed by our team before going live. This typically takes 1-2 business days.</p>
-          
-          <h3>Campaign Limits by Tier</h3>
+          <h3>Mediation Process</h3>
           <ul>
-            <li><strong>Basic:</strong> No campaigns</li>
-            <li><strong>Pro:</strong> 1 active campaign per month</li>
-            <li><strong>Premium:</strong> Unlimited campaigns</li>
+            <li>Email care@collabhunts.com with details</li>
+            <li>Include the agreement and relevant chat history</li>
+            <li>We'll review with both parties</li>
+            <li>We'll provide recommendations</li>
           </ul>
+          
+          <div class="alert alert-info">
+            <strong>Prevention:</strong> Clear agreements with specific deliverables prevent most disputes. Take time to document everything before starting.
+          </div>
         `,
         roles: ['brand'],
         order: 1
-      },
-      {
-        slug: "maximizing-campaign-results",
-        title: "Maximizing Your Campaign Results",
-        content: `
-          <h2>Get Better ROI</h2>
-          <p>Follow these best practices to maximize the impact of your influencer campaigns.</p>
-          
-          <h3>Before the Campaign</h3>
-          <ul>
-            <li><strong>Set Clear Goals:</strong> Define measurable objectives (reach, engagement, sales)</li>
-            <li><strong>Choose Right Creators:</strong> Prioritize relevance over reach</li>
-            <li><strong>Provide Detailed Briefs:</strong> Clear expectations = better content</li>
-          </ul>
-          
-          <h3>During the Campaign</h3>
-          <ul>
-            <li><strong>Be Available:</strong> Respond quickly to creator questions</li>
-            <li><strong>Be Flexible:</strong> Trust creators to know their audience</li>
-            <li><strong>Track Performance:</strong> Monitor metrics in real-time</li>
-          </ul>
-          
-          <h3>After the Campaign</h3>
-          <ul>
-            <li><strong>Repurpose Content:</strong> Use UGC across your marketing channels</li>
-            <li><strong>Build Relationships:</strong> Re-book high-performers</li>
-            <li><strong>Leave Reviews:</strong> Help great creators get discovered</li>
-            <li><strong>Analyze Results:</strong> Document what worked for future campaigns</li>
-          </ul>
-          
-          <h3>Content Repurposing Ideas</h3>
-          <ul>
-            <li>Website hero images and testimonials</li>
-            <li>Paid ad creative (with proper rights)</li>
-            <li>Email marketing content</li>
-            <li>Social proof on product pages</li>
-            <li>Sales presentation materials</li>
-          </ul>
-        `,
-        roles: ['brand'],
-        order: 2
-      },
-      {
-        slug: "building-creator-relationships",
-        title: "Building Long-Term Creator Relationships",
-        content: `
-          <h2>The Power of Repeat Collaborations</h2>
-          <p>Long-term creator partnerships deliver better results than one-off campaigns.</p>
-          
-          <h3>Benefits of Repeat Collaborations</h3>
-          <ul>
-            <li>Creators understand your brand better over time</li>
-            <li>More authentic content as they genuinely use your product</li>
-            <li>Better rates for ongoing partnerships</li>
-            <li>Consistent brand presence in their content</li>
-          </ul>
-          
-          <h3>Using the Creator CRM</h3>
-          <p>Pro and Premium brands can use the Creator CRM to:</p>
-          <ul>
-            <li><strong>Save Favorites:</strong> Build a roster of go-to creators</li>
-            <li><strong>Add Notes:</strong> Track what worked well with each creator</li>
-            <li><strong>View History:</strong> See all past collaborations</li>
-            <li><strong>Organize:</strong> Create folders by campaign, category, or tier</li>
-          </ul>
-          
-          <h3>Nurturing Relationships</h3>
-          <ul>
-            <li>Pay promptly - approve deliverables quickly</li>
-            <li>Provide constructive feedback, not just criticism</li>
-            <li>Share campaign results with creators</li>
-            <li>Send products they'll genuinely enjoy</li>
-            <li>Consider exclusive partnerships for top performers</li>
-          </ul>
-        `,
-        roles: ['brand'],
-        order: 3
-      }
-    ]
-  },
-  {
-    slug: "disputes-brands",
-    title: "Disputes & Support",
-    description: "How to open disputes and get resolution",
-    icon: AlertTriangle,
-    roles: ['brand'],
-    order: 6,
-    articles: [
-      {
-        slug: "opening-disputes",
-        title: "Opening a Dispute",
-        content: `
-          <h2>When to Open a Dispute</h2>
-          <p>Disputes should be a last resort when you can't resolve issues directly with the creator.</p>
-          
-          <h3>Valid Dispute Reasons</h3>
-          <ul>
-            <li>Deliverables don't match the booking requirements</li>
-            <li>Quality significantly below expectations</li>
-            <li>Content not delivered by deadline</li>
-            <li>Creator is unresponsive</li>
-          </ul>
-          
-          <h3>How to Open a Dispute</h3>
-          <ol>
-            <li>Go to your Bookings tab</li>
-            <li>Find the relevant booking</li>
-            <li>Click "Open Dispute"</li>
-            <li>Explain the issue with evidence</li>
-            <li>Wait for creator response (3 days)</li>
-          </ol>
-        `,
-        roles: ['brand'],
-        order: 1
-      },
-      {
-        slug: "dispute-resolution",
-        title: "Dispute Resolution Process",
-        content: `
-          <h2>How Disputes Are Resolved</h2>
-          
-          <h3>Timeline</h3>
-          <ol>
-            <li><strong>Day 0:</strong> You open dispute with explanation</li>
-            <li><strong>Days 1-3:</strong> Creator responds</li>
-            <li><strong>Days 4-6:</strong> Negotiation period</li>
-            <li><strong>Day 7+:</strong> Admin review if unresolved</li>
-          </ol>
-          
-          <h3>Possible Outcomes</h3>
-          <ul>
-            <li><strong>Full refund:</strong> Major issues with delivery</li>
-            <li><strong>Partial refund:</strong> Some work was acceptable</li>
-            <li><strong>No refund:</strong> Delivery met requirements</li>
-          </ul>
-        `,
-        roles: ['brand'],
-        order: 2
       }
     ]
   },
@@ -1397,10 +1531,20 @@ export const knowledgeBaseCategories: KBCategory[] = [
           
           <h3>Prohibited Activities</h3>
           <ul>
-            <li>Circumventing the platform for payments</li>
+            <li>Creating fake profiles or misrepresenting yourself</li>
             <li>Creating fake reviews or engagement</li>
             <li>Misrepresenting audience or metrics</li>
             <li>Harassment or abuse of other users</li>
+            <li>Posting prohibited content</li>
+          </ul>
+          
+          <h3>Marketplace Understanding</h3>
+          <p>CollabHunts is a discovery platform. We facilitate connections but don't process payments. You're responsible for:</p>
+          <ul>
+            <li>Negotiating fair terms</li>
+            <li>Documenting agreements</li>
+            <li>Arranging and fulfilling payments directly</li>
+            <li>Delivering/receiving content as agreed</li>
           </ul>
           
           <p><a href="/terms">Read the full Terms of Service</a></p>
@@ -1419,14 +1563,14 @@ export const knowledgeBaseCategories: KBCategory[] = [
           <ul>
             <li>Account information (name, email, phone)</li>
             <li>Profile data you provide</li>
-            <li>Transaction records</li>
+            <li>Messages and agreements on the platform</li>
             <li>Usage analytics</li>
           </ul>
           
           <h3>How We Use It</h3>
           <ul>
             <li>Providing our services</li>
-            <li>Processing payments</li>
+            <li>Facilitating connections and messaging</li>
             <li>Improving the platform</li>
             <li>Communicating with you</li>
           </ul>
@@ -1435,6 +1579,42 @@ export const knowledgeBaseCategories: KBCategory[] = [
         `,
         roles: ['all'],
         order: 2
+      },
+      {
+        slug: "marketplace-model",
+        title: "Understanding the Marketplace Model",
+        content: `
+          <h2>How CollabHunts Works</h2>
+          <p>CollabHunts operates as a classifieds-style marketplace, similar to platforms like Dubizzle or OLX, but specifically for creator-brand collaborations.</p>
+          
+          <h3>What This Means</h3>
+          <ul>
+            <li><strong>Discovery Platform:</strong> We help brands find creators and vice versa</li>
+            <li><strong>Direct Relationships:</strong> You communicate and negotiate directly</li>
+            <li><strong>No Transaction Fees:</strong> All payments happen between parties</li>
+            <li><strong>Agreement Records:</strong> AI-drafted agreements document your terms</li>
+          </ul>
+          
+          <h3>How We Make Money</h3>
+          <p>Instead of transaction fees, we offer value-added services:</p>
+          <ul>
+            <li><strong>Brand Subscriptions:</strong> Access features like messaging, CRM, and filters</li>
+            <li><strong>Creator Boost:</strong> Paid visibility for creators ($29-79/week)</li>
+            <li><strong>Verified Badges:</strong> $99/year for verified business status</li>
+            <li><strong>Opportunity Listings:</strong> $15 base + $25 for featured</li>
+          </ul>
+          
+          <h3>Your Responsibilities</h3>
+          <p>Since we don't process payments:</p>
+          <ul>
+            <li>Document terms clearly in agreements</li>
+            <li>Arrange payment methods with your counterpart</li>
+            <li>Follow through on your commitments</li>
+            <li>Handle any issues professionally</li>
+          </ul>
+        `,
+        roles: ['all'],
+        order: 3
       }
     ]
   }
@@ -1455,23 +1635,24 @@ export function getCategoryBySlug(slug: string): KBCategory | undefined {
 export function getArticleBySlug(categorySlug: string, articleSlug: string): { category: KBCategory; article: KBArticle } | undefined {
   const category = getCategoryBySlug(categorySlug);
   if (!category) return undefined;
+  
   const article = category.articles.find(a => a.slug === articleSlug);
   if (!article) return undefined;
+  
   return { category, article };
 }
 
 export function searchArticles(query: string, role: 'creator' | 'brand' | null): Array<{ category: KBCategory; article: KBArticle }> {
-  const normalizedQuery = query.toLowerCase().trim();
-  if (!normalizedQuery) return [];
+  const results: Array<{ category: KBCategory; article: KBArticle }> = [];
+  const lowerQuery = query.toLowerCase();
   
   const categories = getCategoriesForRole(role);
-  const results: Array<{ category: KBCategory; article: KBArticle }> = [];
   
   for (const category of categories) {
     for (const article of category.articles) {
       if (
-        article.title.toLowerCase().includes(normalizedQuery) ||
-        article.content.toLowerCase().includes(normalizedQuery)
+        article.title.toLowerCase().includes(lowerQuery) ||
+        article.content.toLowerCase().includes(lowerQuery)
       ) {
         results.push({ category, article });
       }
