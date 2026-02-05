@@ -128,6 +128,12 @@ const Influencers = () => {
           .eq("user_id", user.id)
           .maybeSingle();
         
+        // Redirect creators to their dashboard - they shouldn't browse other creators
+        if (creatorProfile) {
+          navigate('/creator-dashboard', { replace: true });
+          return;
+        }
+        
         setHasBrandProfile(!!brandProfile);
         setHasCreatorProfile(!!creatorProfile);
         setIsLoggedIn(true);
