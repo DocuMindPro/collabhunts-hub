@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Save, Gift, Sparkles, Users, Swords, Wand2 } from "lucide-react";
+import { Loader2, Save, Gift, Sparkles, Users, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EVENT_PACKAGES, type PackageType } from "@/config/packages";
@@ -43,7 +43,6 @@ const PACKAGE_ICONS: Record<string, React.ReactNode> = {
   unbox_review: <Gift className="h-5 w-5" />,
   social_boost: <Sparkles className="h-5 w-5" />,
   meet_greet: <Users className="h-5 w-5" />,
-  competition: <Swords className="h-5 w-5" />,
   custom: <Wand2 className="h-5 w-5" />
 };
 
@@ -51,7 +50,6 @@ const PACKAGE_NAMES: Record<string, string> = {
   unbox_review: "Unbox & Review",
   social_boost: "Social Boost",
   meet_greet: "Meet & Greet",
-  competition: "Live PK Battle",
   custom: "Custom Experience"
 };
 
@@ -65,7 +63,6 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
   const [storyUpsellPrice, setStoryUpsellPrice] = useState("");
 
-  const isPKBattle = serviceType === "competition";
   const isCustom = serviceType === "custom";
   const packageConfig = serviceType ? EVENT_PACKAGES[serviceType as PackageType] : null;
   const hasStoryUpsell = packageConfig?.upsells?.some(u => u.id === 'instagram_stories');
@@ -80,8 +77,8 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
 
       if (data) {
         const types = [...new Set(data.map(d => d.service_type))];
-        // Filter to only show the 5 main packages
-        const mainPackages = ['unbox_review', 'social_boost', 'meet_greet', 'competition', 'custom'];
+        // Filter to only show the 4 main packages (excluding Live PK Battle which is platform-managed)
+        const mainPackages = ['unbox_review', 'social_boost', 'meet_greet', 'custom'];
         setAvailableTypes(types.filter(t => mainPackages.includes(t)));
       }
     };
@@ -119,9 +116,9 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
       return;
     }
 
-    // Validate price (except for PK Battle and Custom)
+    // Validate price (except for Custom which is negotiated)
     const priceValue = parseFloat(price);
-    if (!isPKBattle && !isCustom && (!priceValue || priceValue < 10)) {
+    if (!isCustom && (!priceValue || priceValue < 10)) {
       toast.error("Please enter a valid price (minimum $10)");
       return;
     }
@@ -129,7 +126,7 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
     setIsSaving(true);
 
     try {
-      const priceCents = (isPKBattle || isCustom) ? 0 : Math.round(priceValue * 100);
+      const priceCents = isCustom ? 0 : Math.round(priceValue * 100);
       const storyUpsellCents = storyUpsellPrice ? Math.round(parseFloat(storyUpsellPrice) * 100) : null;
       
       const updateData = {
@@ -221,8 +218,8 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
             </div>
           )}
 
-          {/* Price (hidden for PK Battle and Custom) */}
-          {serviceType && !isPKBattle && !isCustom && (
+          {/* Price (hidden for Custom which is negotiated) */}
+          {serviceType && !isCustom && (
             <div className="space-y-2">
               <Label htmlFor="price">Your Price (USD)</Label>
               <div className="relative">
@@ -245,7 +242,7 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
           )}
           
           {/* Story Upsell Price */}
-          {serviceType && hasStoryUpsell && !isPKBattle && !isCustom && (
+          {serviceType && hasStoryUpsell && !isCustom && (
             <div className="space-y-2 p-3 bg-muted/50 rounded-lg">
               <Label htmlFor="storyUpsell" className="flex items-center gap-2">
                 📸 Instagram Stories Upsell
@@ -269,15 +266,14 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
             </div>
           )}
 
-          {/* PK Battle / Custom Notice */}
-          {(isPKBattle || isCustom) && (
+          {/* Custom Experience Notice */}
+          {isCustom && (
             <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-sm">
-              <p className="font-medium mb-1">💡 Pricing handled by CollabHunts</p>
+              <p className="font-medium mb-1">🎨 How Custom Experience Works</p>
               <p className="text-muted-foreground">
-                {isPKBattle 
-                  ? "We'll discuss pricing with you when brands are interested in booking PK battles."
-                  : "Custom experiences are discussed directly with brands to agree on deliverables and pricing."
-                }
+                By enabling this, you're telling brands you're open to unique collaborations 
+                beyond standard packages. Brands will message you to discuss ideas, and you'll 
+                negotiate terms together.
               </p>
             </div>
           )}
@@ -296,8 +292,8 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
             </div>
           )}
 
-          {/* Delivery Days (hidden for PK Battle) */}
-          {serviceType && !isPKBattle && (
+          {/* Delivery Days */}
+          {serviceType && (
             <div className="space-y-2">
               <Label htmlFor="deliveryDays">Delivery Time (days)</Label>
               <Input
@@ -317,7 +313,7 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
               <div className="space-y-0.5">
                 <Label>Active</Label>
                 <p className="text-xs text-muted-foreground">
-                  {isPKBattle ? "Available for PK battles" : "Visible to brands"}
+                  Visible to brands
                 </p>
               </div>
               <Switch
