@@ -57,7 +57,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
       {
         title: 'Content Creation',
         items: [
-          'Unboxing video recorded at home',
+          'Unboxing video recorded',
           'Product review/demonstration',
           'Highlights key features & benefits',
         ],
