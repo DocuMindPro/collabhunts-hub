@@ -1309,6 +1309,50 @@ export type Database = {
           },
         ]
       }
+      creator_featuring: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          creator_profile_id: string
+          end_date: string
+          feature_type: string
+          id: string
+          is_active: boolean | null
+          price_cents: number
+          start_date: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          creator_profile_id: string
+          end_date: string
+          feature_type: string
+          id?: string
+          is_active?: boolean | null
+          price_cents: number
+          start_date: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          creator_profile_id?: string
+          end_date?: string
+          feature_type?: string
+          id?: string
+          is_active?: boolean | null
+          price_cents?: number
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_featuring_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_notes: {
         Row: {
           brand_profile_id: string
@@ -1445,8 +1489,10 @@ export type Database = {
           ethnicity: string | null
           event_experience_description: string | null
           event_portfolio_urls: string[] | null
+          featuring_priority: number | null
           gender: string | null
           id: string
+          is_featured: boolean | null
           location_city: string | null
           location_country: string | null
           location_state: string | null
@@ -1481,8 +1527,10 @@ export type Database = {
           ethnicity?: string | null
           event_experience_description?: string | null
           event_portfolio_urls?: string[] | null
+          featuring_priority?: number | null
           gender?: string | null
           id?: string
+          is_featured?: boolean | null
           location_city?: string | null
           location_country?: string | null
           location_state?: string | null
@@ -1517,8 +1565,10 @@ export type Database = {
           ethnicity?: string | null
           event_experience_description?: string | null
           event_portfolio_urls?: string[] | null
+          featuring_priority?: number | null
           gender?: string | null
           id?: string
+          is_featured?: boolean | null
           location_city?: string | null
           location_country?: string | null
           location_state?: string | null

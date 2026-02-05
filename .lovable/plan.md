@@ -88,34 +88,27 @@ The existing `AdPlacement` component can display paid ads on:
 - `src/components/creator-dashboard/MessagesTab.tsx` - Added agreement message support and Send Agreement button
 - `src/pages/CreatorDashboard.tsx` - Removed Payouts tab, renamed "Events" to "Agreements"
 
-### 🔲 Phase 3: Creator Featuring System (NEXT)
-
-**New Components:**
-- `src/components/agreements/AgreementTemplates.tsx` - Pre-built templates
-- `src/components/agreements/AgreementBuilder.tsx` - AI-assisted builder
-- `src/components/agreements/AgreementPreview.tsx` - Preview before sending
-- `src/components/chat/AgreementMessage.tsx` - Display in chat with Confirm/Decline buttons
-
-**New Edge Function:**
-- `supabase/functions/draft-agreement/index.ts` - Uses Lovable AI to help draft
+### ✅ Phase 3: Creator Featuring System (COMPLETED)
 
 **Database Changes:**
-```sql
-CREATE TABLE creator_agreements (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  creator_profile_id UUID REFERENCES creator_profiles(id),
-  brand_profile_id UUID REFERENCES brand_profiles(id),
-  conversation_id UUID REFERENCES conversations(id),
-  template_type TEXT, -- 'unbox_review', 'social_boost', 'meet_greet', 'custom'
-  content TEXT NOT NULL, -- The full agreement text
-  deliverables JSONB, -- Array of deliverables
-  proposed_price_cents INTEGER,
-  event_date DATE,
-  status TEXT DEFAULT 'pending', -- 'pending', 'confirmed', 'declined', 'completed'
-  confirmed_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
+- Created `creator_featuring` table with RLS policies
+- Added `is_featured` and `featuring_priority` columns to `creator_profiles`
+
+**New Files Created:**
+- `src/config/featuring-tiers.ts` - Featuring tier configuration with prices
+- `src/components/creator-dashboard/FeaturingTab.tsx` - Main featuring management tab
+- `src/components/creator-dashboard/BoostProfileDialog.tsx` - Purchase featuring dialog
+
+**Files Modified:**
+- `src/pages/CreatorDashboard.tsx` - Added "Boost" tab
+
+**Featuring Tiers:**
+| Tier | Price/Week |
+|------|------------|
+| Featured Badge | $29 |
+| Homepage Spotlight | $49 |
+| Category Boost | $39 |
+| Auto Popup | $79 |
 
 ### Phase 3: Creator Featuring System (New Feature)
 **Database Changes:**
