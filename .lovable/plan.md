@@ -1,98 +1,105 @@
 
-# Communicate Flexible Deliverables
+# Add Brand Verification Badge Card
 
-## The Problem
-Currently, listing "Instagram Reel" and "TikTok video" as separate items implies both are required. You want to communicate that these are **options/examples** that get finalized during the agreement negotiation.
+## Overview
+Create a verification card for brands in their Account tab that allows them to:
+1. See their current verification status
+2. Pay the $99 verification fee
+3. Submit their request for admin review
 
-## Proposed Solutions
+## Current State
+- **Database**: `brand_profiles` has `verification_status`, `is_verified`, `verification_submitted_at`, etc. - but no payment tracking columns
+- **Admin UI**: Already built in `AdminVerificationsTab.tsx` to approve/reject requests
+- **Brand UI**: Missing - brands have no way to request verification
 
-### Option A: Add a "Typical Deliverables" Header (Recommended)
-Add a small intro text before the phases that signals flexibility:
+## Required Changes
 
-**Before each phase section, add:**
-> "Typical deliverables may include:"
+### 1. Database Migration
+Add payment tracking columns to `brand_profiles` (similar to creator_profiles):
+- `verification_payment_status` (text, default 'not_paid')
+- `verification_paid_at` (timestamptz)
+- `verification_expires_at` (timestamptz)
+- `verification_payment_id` (text)
 
-This makes it clear that items listed are examples of what **could** be included, not a fixed checklist.
+### 2. New Component: `BrandVerificationBadgeCard.tsx`
+Create a card component similar to `VerificationBadgeCard.tsx` but adapted for brands:
 
-### Option B: Use "and/or" Language in Items
-Combine related content types into flexible statements:
-- "Instagram Reel (permanent post)" + "TikTok video" → **"Social content (Reels and/or TikToks)"**
-- Keep the format general but informative
+**States to Handle:**
+- **Not Started**: Show benefits, $99/year price, require phone verification first
+- **Payment Needed**: Phone verified, ready to pay
+- **Pending Review**: Paid, waiting for admin approval
+- **Approved/Active**: Show verified status with expiry date
+- **Rejected**: Show rejection reason with option to reapply
+- **Expired**: Option to renew
 
-### Option C: Add a Footer Note
-Add a small disclaimer at the bottom of each card:
-> "*Exact deliverables finalized in agreement"
+**Key Differences from Creator Card:**
+- Brands require admin review after payment (creators get instant activation)
+- Must have verified phone before requesting verification
+- Show "Verified Business" terminology
 
----
+### 3. Update `BrandAccountTab.tsx`
+Add the `BrandVerificationBadgeCard` component after the Phone Verification card.
 
-## Recommended Approach: Combine A + C
-
-### Changes to Make
-
-**1. `src/components/brand/PackageCard.tsx`**
-Add a subtle intro line before the phases section:
-```
-Typical deliverables may include:
-```
-
-Add a footer note after the phases:
-```
-*Exact deliverables finalized in agreement
-```
-
-**2. `src/config/packages.ts`**
-Simplify content-related items by using flexible wording:
-- Social Boost "Content Delivered" phase:
-  - Current: "Instagram Reel (permanent post)", "TikTok video"
-  - New: "Social content (Reels, TikToks, or both)"
-  
-- Unbox & Review "Content Posted" phase:
-  - Current: "Reel/TikTok (permanent post)"
-  - Keep as-is (already implies flexibility with the slash)
-
----
-
-## Visual Result
+## Flow
 
 ```text
-┌─────────────────────────────────┐
-│  Social Boost                   │
-│  Custom pricing                 │
-│                                 │
-│  Typical deliverables include:  │  ← New header
-│                                 │
-│  DURING VISIT                   │
-│  ✓ Creator visits venue         │
-│  ✓ Captures content on-site     │
-│                                 │
-│  CONTENT DELIVERED              │
-│  ✓ Social content (Reels,       │  ← Flexible wording
-│    TikToks, or both)            │
-│  ✓ Tag & location in all posts  │
-│                                 │
-│  *Finalized in agreement        │  ← New footer
-│                                 │
-│  [Find Creators]                │
-└─────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                  Brand Verification Flow                     │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1. Phone Not Verified                                       │
+│     ├── Show: "Verify your phone first"                     │
+│     └── Disabled payment button                              │
+│                                                              │
+│  2. Phone Verified, Not Paid                                 │
+│     ├── Show: Benefits + $99/year price                     │
+│     └── "Get Verified" button → Payment dialog              │
+│                                                              │
+│  3. Paid, Pending Review                                     │
+│     ├── Show: "Under Review" status                         │
+│     └── "Our team will review your request within 24-48h"   │
+│                                                              │
+│  4. Approved (Active)                                        │
+│     ├── Show: Green "Verified Business" badge               │
+│     └── Expiry date + renewal option (if expiring soon)     │
+│                                                              │
+│  5. Rejected                                                 │
+│     ├── Show: Rejection reason                              │
+│     └── "Reapply" button                                    │
+│                                                              │
+│  6. Expired                                                  │
+│     ├── Show: "Verification Expired"                        │
+│     └── "Renew" button → Payment dialog                     │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
 ```
 
----
+## Files to Create/Modify
+
+| File | Action | Description |
+|------|--------|-------------|
+| Database Migration | Create | Add payment tracking columns |
+| `src/components/brand-dashboard/BrandVerificationBadgeCard.tsx` | Create | New verification card component |
+| `src/components/brand-dashboard/BrandAccountTab.tsx` | Modify | Import and render the verification card |
 
 ## Technical Details
 
-### File: `src/components/brand/PackageCard.tsx`
-- Add intro text before the phases map: `<p className="text-xs text-muted-foreground italic mb-2">Typical deliverables may include:</p>`
-- Add footer note after phases: `<p className="text-xs text-muted-foreground/70 italic mt-2">*Exact deliverables finalized in agreement</p>`
+### BrandVerificationBadgeCard Component
+- Props: `brandProfileId: string`, `phoneVerified: boolean`
+- Fetches verification status on mount
+- Uses `MockPaymentDialog` for payment (same as creator verification)
+- On successful payment:
+  - Sets `verification_payment_status = 'paid'`
+  - Sets `verification_paid_at` and `verification_expires_at` (1 year)
+  - Sets `verification_status = 'pending'`
+  - Sets `verification_submitted_at`
 
-### File: `src/config/packages.ts`
-- Update `social_boost.phases[1].items` (Content Delivered) to consolidate social content items
-- Update `meet_greet.phases[2].items` (Post-Event) similarly if needed
-- Keep process-related items unchanged (venue visits, interactions, etc.)
+### BrandAccountTab Updates
+- Fetch brand profile including verification fields
+- Pass `brandProfileId` and `phoneVerified` to `BrandVerificationBadgeCard`
+- Position the verification card prominently (after phone verification)
 
----
-
-## Summary
-This approach:
-1. **Keeps the structure** - Brands still see the types of deliverables and phases
-2. **Signals flexibility** - Clear language that these are examples, not fixed requirements
-3. **Sets expectations** - Footer reminds them that the agreement is where specifics get locked in
+## Benefits Display
+- "Verified Business" badge on your profile
+- Increased trust with creators
+- Priority visibility in creator searches
