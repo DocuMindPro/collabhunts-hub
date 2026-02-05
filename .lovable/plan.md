@@ -1,66 +1,59 @@
 
-# Redirect Creators Away from /influencers Page
+# Hide "Find Creators" and "For Brands" Links from Creators
 
-## Overview
-Implement full restriction (like Collabstr) - when a logged-in creator tries to access the `/influencers` marketplace page, they will be automatically redirected to their creator dashboard.
+## Problem
+The navigation bar shows "Find Creators" and "For Brands" links to logged-in creators (as shown in your screenshot). Since we're implementing the Collabstr model where creators focus only on their own business, these links should be hidden.
+
+## Current Logic vs. Required Logic
+
+| Link | Current Behavior | Required Behavior |
+|------|-----------------|-------------------|
+| Find Creators | Shown to everyone | Hide from creators |
+| For Brands | Hidden only from brands | Hide from creators AND brands |
+| Opportunities | Shown only to creators | Shown only to creators (unchanged) |
+| What's New | Shown to logged-in users | Shown to logged-in users (unchanged) |
 
 ## Changes Required
 
-### File: `src/pages/Influencers.tsx`
+### File: `src/components/Navbar.tsx`
 
-Update the `checkUserStatus` function to redirect creators immediately after detecting their profile:
+Update the `getNavLinks()` function to exclude creator-restricted links:
 
 ```tsx
-const checkUserStatus = async () => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      // Check for brand profile
-      const { data: brandProfile } = await supabase
-        .from("brand_profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      // Check for creator profile
-      const { data: creatorProfile } = await supabase
-        .from("creator_profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      // Redirect creators to their dashboard - they shouldn't browse other creators
-      if (creatorProfile) {
-        navigate('/creator-dashboard', { replace: true });
-        return;
-      }
-      
-      setHasBrandProfile(!!brandProfile);
-      setHasCreatorProfile(!!creatorProfile);
-      setIsLoggedIn(true);
-    } else {
-      setHasBrandProfile(false);
-      setHasCreatorProfile(false);
-      setIsLoggedIn(false);
-    }
-  } catch (error) {
-    console.error("Error checking user status:", error);
-  } finally {
-    setAuthCheckComplete(true);
+const getNavLinks = (): NavLink[] => {
+  const links: NavLink[] = [];
+  
+  // Only show "Find Creators" to non-creators (brands and prospects)
+  if (!hasCreatorProfile) {
+    links.push({ to: "/influencers", label: "Find Creators" });
   }
+  
+  // Only show Opportunities link to users with a creator profile
+  if (hasCreatorProfile) {
+    links.push({ to: "/opportunities", label: "Opportunities" });
+  }
+  
+  // Only show "For Brands" to non-brand AND non-creator users (prospects only)
+  if (!hasBrandProfile && !hasCreatorProfile) {
+    links.push({ to: "/brand", label: "For Brands" });
+  }
+  
+  if (user) {
+    links.push({ to: "/whats-new", label: "What's New", icon: Sparkles });
+  }
+  
+  return links;
 };
 ```
 
-## Behavior Summary
+## Result for Each User Type
 
-| User Type | Current Behavior | New Behavior |
-|-----------|-----------------|--------------|
-| Not logged in | Can browse creators | Can browse creators (unchanged) |
-| Logged-in Brand | Can browse creators | Can browse creators (unchanged) |
-| Logged-in Creator | Can browse creators | Redirected to `/creator-dashboard` |
+| User Type | Navigation Links Shown |
+|-----------|----------------------|
+| Not logged in | Find Creators, For Brands |
+| Logged-in (no profile) | Find Creators, For Brands, What's New |
+| Logged-in Creator | Opportunities, What's New |
+| Logged-in Brand | Find Creators, What's New |
 
-## Why This Makes Sense
-- Prevents creators from seeing competitor pricing/services
-- Aligns with industry standard (Collabstr model)
-- Clean separation: brands browse, creators manage their business
-- Uses `replace: true` so back button doesn't loop back to `/influencers`
+## Summary
+This is a small change (~3 lines modified) in the `getNavLinks()` function that properly restricts navigation based on user role, aligning with the Collabstr model where creators only see their business-relevant links.
