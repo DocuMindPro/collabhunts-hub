@@ -99,8 +99,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
       {
         title: 'Content Delivered',
         items: [
-          'Instagram Reel (permanent post)',
-          'TikTok video',
+          'Social content (Reels, TikToks, or both)',
           'Tag & location in all posts',
         ],
       },
@@ -147,7 +146,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
       {
         title: 'Post-Event',
         items: [
-          'Recap video',
+          'Recap content (Reels, TikToks, or both)',
           'Brand tagged in all posts',
         ],
       },
