@@ -1512,6 +1512,10 @@ export type Database = {
           travel_radius_km: number | null
           updated_at: string | null
           user_id: string
+          verification_expires_at: string | null
+          verification_paid_at: string | null
+          verification_payment_id: string | null
+          verification_payment_status: string | null
         }
         Insert: {
           allow_mass_messages?: boolean | null
@@ -1550,6 +1554,10 @@ export type Database = {
           travel_radius_km?: number | null
           updated_at?: string | null
           user_id: string
+          verification_expires_at?: string | null
+          verification_paid_at?: string | null
+          verification_payment_id?: string | null
+          verification_payment_status?: string | null
         }
         Update: {
           allow_mass_messages?: boolean | null
@@ -1588,6 +1596,10 @@ export type Database = {
           travel_radius_km?: number | null
           updated_at?: string | null
           user_id?: string
+          verification_expires_at?: string | null
+          verification_paid_at?: string | null
+          verification_payment_id?: string | null
+          verification_payment_status?: string | null
         }
         Relationships: []
       }
