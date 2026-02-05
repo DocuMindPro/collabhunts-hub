@@ -1,67 +1,98 @@
 
-# Generalize Package Descriptions
+# Communicate Flexible Deliverables
 
 ## The Problem
-Current package descriptions lock in specific numbers that should be negotiable:
-- "1 Instagram Reel", "1 TikTok video" 
-- "3 hours at venue", "1-2 hours"
-- "1 week before", "2 weeks before"
+Currently, listing "Instagram Reel" and "TikTok video" as separate items implies both are required. You want to communicate that these are **options/examples** that get finalized during the agreement negotiation.
 
-Since the final agreement is between creator and brand, these specifics shouldn't be set in stone on the public-facing cards.
+## Proposed Solutions
 
-## Proposed Solution
-Keep the **structure and guidance** (what types of deliverables, what phases exist) but remove the **specific quantities and durations**. The cards become a "menu of possibilities" rather than a fixed contract.
+### Option A: Add a "Typical Deliverables" Header (Recommended)
+Add a small intro text before the phases that signals flexibility:
 
-### Before → After Examples
+**Before each phase section, add:**
+> "Typical deliverables may include:"
 
-**Phase Titles:**
-- "During Visit (1-2 hours)" → "During Visit"
-- "Pre-Event (1 week before)" → "Pre-Event"
-- "During Event (3 hours)" → "During Event"
+This makes it clear that items listed are examples of what **could** be included, not a fixed checklist.
 
-**Phase Items:**
-- "1 Instagram Reel (permanent post)" → "Instagram Reel (permanent post)"
-- "1 TikTok video (same content)" → "TikTok video"
-- "1 announcement video" → "Announcement video"
-- "1 recap video" → "Recap video"
+### Option B: Use "and/or" Language in Items
+Combine related content types into flexible statements:
+- "Instagram Reel (permanent post)" + "TikTok video" → **"Social content (Reels and/or TikToks)"**
+- Keep the format general but informative
 
-**Also Remove:**
-- The `durationRange` display from the UI (the "1-2 hours" / "2-4 hours" under price)
-
-### What Stays
-- Package names and general descriptions
-- Phase structure (Pre/During/Post)
-- Types of deliverables (Reels, TikToks, venue visits, etc.)
-- "Ideal for" section
-- Upsells section
+### Option C: Add a Footer Note
+Add a small disclaimer at the bottom of each card:
+> "*Exact deliverables finalized in agreement"
 
 ---
 
-## Files to Modify
+## Recommended Approach: Combine A + C
 
-### 1. `src/config/packages.ts`
-Update the phase titles and items to remove specific counts/timeframes:
+### Changes to Make
 
-**Unbox & Review:**
-- "Content Posted" items: "Reel/TikTok (permanent post)" instead of "1 Reel/TikTok"
+**1. `src/components/brand/PackageCard.tsx`**
+Add a subtle intro line before the phases section:
+```
+Typical deliverables may include:
+```
 
-**Social Boost:**
-- Phase title: "During Visit" instead of "During Visit (1-2 hours)"
-- Items: "Instagram Reel (permanent post)", "TikTok video" (no "1" prefix)
+Add a footer note after the phases:
+```
+*Exact deliverables finalized in agreement
+```
 
-**Meet & Greet:**
-- Phase titles: "Pre-Event", "During Event", "Post-Event" (no timeframes)
-- Items: "Announcement video", "Recap video" (no "1" prefix)
-
-**Live PK Battle:**
-- Phase titles: "Pre-Event", "During Event", "Post-Event" (no "2 weeks", "2-6 hours")
-- Items: generalized wording
-
-### 2. `src/components/brand/PackageCard.tsx`
-- Remove the `durationRange` display section (the clock icon with hours)
-- Keep everything else as-is
+**2. `src/config/packages.ts`**
+Simplify content-related items by using flexible wording:
+- Social Boost "Content Delivered" phase:
+  - Current: "Instagram Reel (permanent post)", "TikTok video"
+  - New: "Social content (Reels, TikToks, or both)"
+  
+- Unbox & Review "Content Posted" phase:
+  - Current: "Reel/TikTok (permanent post)"
+  - Keep as-is (already implies flexibility with the slash)
 
 ---
 
-## Result
-Brands see the **type of experience** they can expect without being locked into specific quantities. The actual deliverables (how many posts, exact duration) get negotiated and finalized in the agreement between creator and brand.
+## Visual Result
+
+```text
+┌─────────────────────────────────┐
+│  Social Boost                   │
+│  Custom pricing                 │
+│                                 │
+│  Typical deliverables include:  │  ← New header
+│                                 │
+│  DURING VISIT                   │
+│  ✓ Creator visits venue         │
+│  ✓ Captures content on-site     │
+│                                 │
+│  CONTENT DELIVERED              │
+│  ✓ Social content (Reels,       │  ← Flexible wording
+│    TikToks, or both)            │
+│  ✓ Tag & location in all posts  │
+│                                 │
+│  *Finalized in agreement        │  ← New footer
+│                                 │
+│  [Find Creators]                │
+└─────────────────────────────────┘
+```
+
+---
+
+## Technical Details
+
+### File: `src/components/brand/PackageCard.tsx`
+- Add intro text before the phases map: `<p className="text-xs text-muted-foreground italic mb-2">Typical deliverables may include:</p>`
+- Add footer note after phases: `<p className="text-xs text-muted-foreground/70 italic mt-2">*Exact deliverables finalized in agreement</p>`
+
+### File: `src/config/packages.ts`
+- Update `social_boost.phases[1].items` (Content Delivered) to consolidate social content items
+- Update `meet_greet.phases[2].items` (Post-Event) similarly if needed
+- Keep process-related items unchanged (venue visits, interactions, etc.)
+
+---
+
+## Summary
+This approach:
+1. **Keeps the structure** - Brands still see the types of deliverables and phases
+2. **Signals flexibility** - Clear language that these are examples, not fixed requirements
+3. **Sets expectations** - Footer reminds them that the agreement is where specifics get locked in
