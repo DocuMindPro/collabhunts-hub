@@ -201,7 +201,7 @@ const MessageDialog = ({ isOpen, onClose, conversationId, recipientName }: Messa
                             }`}
                           >
                             {isPackageInquiryMsg ? (
-                              <PackageInquiryMessage content={msg.content} isOwn={isOwn} />
+                              <PackageInquiryMessage content={msg.content} isOwn={isOwn} messageId={msg.id} />
                             ) : (
                               <p className="break-words text-sm">{msg.content}</p>
                             )}
