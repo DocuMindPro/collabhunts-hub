@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 interface RotatingTextProps {
   words: string[];
@@ -22,16 +23,26 @@ const RotatingText = ({ words, className = "" }: RotatingTextProps) => {
   }, [words.length]);
 
   return (
-    <span className={`inline-block relative ${className}`}>
+    <span className={cn("inline-block relative", className)}>
       <span
-        className={`inline-block transition-all duration-500 ${
+        className={cn(
+          "inline-block transition-all duration-500",
           isAnimating 
             ? "opacity-0 translate-y-4" 
             : "opacity-100 translate-y-0"
-        }`}
+        )}
       >
         {words[currentIndex]}
       </span>
+      {/* Animated gradient underline */}
+      <span 
+        className={cn(
+          "absolute -bottom-1 left-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary",
+          "rounded-full transition-all duration-500 animate-gradient-shift",
+          isAnimating ? "w-0 opacity-0" : "w-full opacity-100"
+        )}
+        style={{ backgroundSize: "200% 100%" }}
+      />
     </span>
   );
 };
