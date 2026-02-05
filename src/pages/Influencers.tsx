@@ -13,7 +13,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Search, Star, Instagram, Youtube, Play, Filter, X, ChevronDown, ChevronUp, Calendar, Gift } from "lucide-react";
+import { Search, Star, Instagram, Youtube, Play, Filter, X, ChevronDown, ChevronUp, Calendar, Gift, Sparkles } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -40,6 +40,7 @@ interface CreatorWithDetails {
   secondary_languages: string[] | null;
   show_pricing_to_public: boolean | null;
   open_to_invitations: boolean | null;
+  is_featured: boolean;
   social_accounts: Array<{
     platform: string;
     username: string;
@@ -167,6 +168,7 @@ const Influencers = () => {
     try {
       setLoading(true);
 
+      // Fetch creators
       const { data, error } = await supabase
         .from("creator_profiles")
         .select(`
@@ -186,10 +188,22 @@ const Influencers = () => {
           creator_social_accounts(platform, username, follower_count),
           creator_services(service_type, price_cents)
         `)
-        .eq("status", "approved")
-        .order("created_at", { ascending: false });
+        .eq("status", "approved");
 
       if (error) throw error;
+
+      // Fetch active featuring records
+      const now = new Date().toISOString();
+      const { data: featuringData } = await supabase
+        .from("creator_featuring")
+        .select("creator_profile_id, feature_type")
+        .eq("is_active", true)
+        .gt("end_date", now);
+
+      // Create a set of featured creator IDs
+      const featuredCreatorIds = new Set(
+        (featuringData || []).map(f => f.creator_profile_id)
+      );
 
       const formattedCreators: CreatorWithDetails[] = (data || []).map((creator) => ({
         id: creator.id,
@@ -205,9 +219,17 @@ const Influencers = () => {
         secondary_languages: creator.secondary_languages,
         show_pricing_to_public: creator.show_pricing_to_public,
         open_to_invitations: creator.open_to_invitations,
+        is_featured: featuredCreatorIds.has(creator.id),
         social_accounts: creator.creator_social_accounts || [],
         services: creator.creator_services || []
       }));
+
+      // Sort: featured creators first, then by created_at
+      formattedCreators.sort((a, b) => {
+        if (a.is_featured && !b.is_featured) return -1;
+        if (!a.is_featured && b.is_featured) return 1;
+        return 0;
+      });
 
       setCreators(formattedCreators);
     } catch (error: any) {
@@ -378,9 +400,18 @@ const Influencers = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             
             {/* Platform & Followers Badge - Top Left */}
-            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
-              <PlatformIcon className="h-3.5 w-3.5" />
-              <span>{formatFollowers(mainPlatform.followers)}</span>
+            <div className="absolute top-3 left-3 flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+                <PlatformIcon className="h-3.5 w-3.5" />
+                <span>{formatFollowers(mainPlatform.followers)}</span>
+              </div>
+              {/* Featured Badge */}
+              {creator.is_featured && (
+                <div className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-amber-500 to-orange-500 backdrop-blur-sm rounded-full text-white text-xs font-semibold shadow-lg">
+                  <Sparkles className="h-3 w-3" />
+                  <span>Featured</span>
+                </div>
+              )}
             </div>
             
             {/* Open to Invitations Banner */}
