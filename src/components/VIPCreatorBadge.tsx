@@ -10,20 +10,56 @@ import { cn } from "@/lib/utils";
 interface VIPCreatorBadgeProps {
   className?: string;
   size?: "sm" | "md" | "lg";
+  variant?: "icon" | "pill";
   showTooltip?: boolean;
 }
 
-const VIPCreatorBadge = ({ className, size = "md", showTooltip = true }: VIPCreatorBadgeProps) => {
-  const sizeClasses = {
-    sm: "h-3.5 w-3.5",
-    md: "h-4 w-4",
-    lg: "h-5 w-5",
+const VIPCreatorBadge = ({ className, size = "md", variant = "icon", showTooltip = true }: VIPCreatorBadgeProps) => {
+  const iconSizeClasses = {
+    sm: "h-3 w-3",
+    md: "h-3.5 w-3.5",
+    lg: "h-4 w-4",
   };
 
-  const badge = (
+  // Pill variant - Collabstr style with premium gradient
+  if (variant === "pill") {
+    const pillBadge = (
+      <span 
+        className={cn(
+          "inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full text-white text-xs font-semibold shadow-lg shrink-0",
+          className
+        )}
+      >
+        <Crown className={cn(iconSizeClasses[size], "text-white")} />
+        VIP Creator
+      </span>
+    );
+
+    if (!showTooltip) {
+      return pillBadge;
+    }
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex items-center cursor-help">
+              {pillBadge}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs">VIP Creator - Premium verified creator</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  // Icon variant - original behavior
+  const iconBadge = (
     <Crown 
       className={cn(
-        sizeClasses[size],
+        iconSizeClasses[size],
         "text-amber-500 fill-amber-500/20 shrink-0",
         className
       )} 
@@ -31,7 +67,7 @@ const VIPCreatorBadge = ({ className, size = "md", showTooltip = true }: VIPCrea
   );
 
   if (!showTooltip) {
-    return badge;
+    return iconBadge;
   }
 
   return (
@@ -39,7 +75,7 @@ const VIPCreatorBadge = ({ className, size = "md", showTooltip = true }: VIPCrea
       <Tooltip>
         <TooltipTrigger asChild>
           <span className="inline-flex items-center cursor-help">
-            {badge}
+            {iconBadge}
           </span>
         </TooltipTrigger>
         <TooltipContent>
