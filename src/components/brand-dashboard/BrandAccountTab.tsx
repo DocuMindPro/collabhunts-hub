@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Building2, Phone, Mail, Globe, MapPin, Calendar, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import PhoneInput from "@/components/PhoneInput";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import BrandVerificationBadgeCard from "./BrandVerificationBadgeCard";
 
 interface BrandProfile {
   id: string;
@@ -270,12 +270,19 @@ const BrandAccountTab = () => {
 
           {!brandProfile?.phone_verified && !isEditingPhone && (
             <p className="text-xs text-muted-foreground">
-              Phone verification is required for brand verification badge
+              Phone verification is required for business verification badge
             </p>
           )}
         </CardContent>
       </Card>
 
+      {/* Verification Badge Card */}
+      {brandProfile && (
+        <BrandVerificationBadgeCard 
+          brandProfileId={brandProfile.id} 
+          phoneVerified={brandProfile.phone_verified || false}
+        />
+      )}
       {/* Company Information Card */}
       <Card>
         <CardHeader className="pb-3">
