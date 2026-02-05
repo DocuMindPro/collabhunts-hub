@@ -55,17 +55,20 @@ const Navbar = () => {
   type NavLink = { to: string; label: string; icon?: typeof Sparkles };
   
   const getNavLinks = (): NavLink[] => {
-    const links: NavLink[] = [
-      { to: "/influencers", label: "Find Creators" },
-    ];
+    const links: NavLink[] = [];
+    
+    // Only show "Find Creators" to non-creators (brands and prospects)
+    if (!hasCreatorProfile) {
+      links.push({ to: "/influencers", label: "Find Creators" });
+    }
     
     // Only show Opportunities link to users with a creator profile
     if (hasCreatorProfile) {
       links.push({ to: "/opportunities", label: "Opportunities" });
     }
     
-    // Only show "For Brands" to non-brand users (prospects)
-    if (!hasBrandProfile) {
+    // Only show "For Brands" to non-brand AND non-creator users (prospects only)
+    if (!hasBrandProfile && !hasCreatorProfile) {
       links.push({ to: "/brand", label: "For Brands" });
     }
     
