@@ -70,38 +70,38 @@ const CreatorDashboard = () => {
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 md:space-y-6">
             {!isNative && (
-            <TabsList className="flex w-full overflow-x-auto gap-1 lg:w-auto lg:inline-flex">
-                <TabsTrigger value="overview" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
-                  <BarChart3 className="h-4 w-4" />
-                  <span className="text-[10px] sm:text-sm">Overview</span>
+            <TabsList className="flex w-full h-auto overflow-x-auto gap-0.5 p-1 sm:h-10 lg:w-auto lg:inline-flex">
+                <TabsTrigger value="overview" className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 shrink-0 min-w-[52px] px-1.5 py-1.5 sm:min-w-0 sm:px-3">
+                  <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="text-[9px] leading-tight sm:text-sm truncate">Overview</span>
                 </TabsTrigger>
-                <TabsTrigger value="profile" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
-                  <User className="h-4 w-4" />
-                  <span className="text-[10px] sm:text-sm">Profile</span>
+                <TabsTrigger value="profile" className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 shrink-0 min-w-[52px] px-1.5 py-1.5 sm:min-w-0 sm:px-3">
+                  <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="text-[9px] leading-tight sm:text-sm truncate">Profile</span>
                 </TabsTrigger>
-                <TabsTrigger value="services" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
-                  <Package className="h-4 w-4" />
-                  <span className="text-[10px] sm:text-sm">Packages</span>
+                <TabsTrigger value="services" className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 shrink-0 min-w-[52px] px-1.5 py-1.5 sm:min-w-0 sm:px-3">
+                  <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="text-[9px] leading-tight sm:text-sm truncate">Packages</span>
                 </TabsTrigger>
-              <TabsTrigger value="bookings" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
-                <Calendar className="h-4 w-4" />
-                <span className="text-[10px] sm:text-sm">Agreements</span>
+              <TabsTrigger value="bookings" className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 shrink-0 min-w-[52px] px-1.5 py-1.5 sm:min-w-0 sm:px-3">
+                <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="text-[9px] leading-tight sm:text-sm truncate">Agreements</span>
               </TabsTrigger>
-              <TabsTrigger value="calendar" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
-                <CalendarDays className="h-4 w-4" />
-                <span className="text-[10px] sm:text-sm">Calendar</span>
+              <TabsTrigger value="calendar" className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 shrink-0 min-w-[52px] px-1.5 py-1.5 sm:min-w-0 sm:px-3">
+                <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="text-[9px] leading-tight sm:text-sm truncate">Calendar</span>
               </TabsTrigger>
-              <TabsTrigger value="opportunities" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
-                <Briefcase className="h-4 w-4" />
-                <span className="text-[10px] sm:text-sm">Opps</span>
+              <TabsTrigger value="opportunities" className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 shrink-0 min-w-[52px] px-1.5 py-1.5 sm:min-w-0 sm:px-3">
+                <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="text-[9px] leading-tight sm:text-sm truncate">Opps</span>
               </TabsTrigger>
-              <TabsTrigger value="boost" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
-                <Rocket className="h-4 w-4" />
-                <span className="text-[10px] sm:text-sm">Boost</span>
+              <TabsTrigger value="boost" className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 shrink-0 min-w-[52px] px-1.5 py-1.5 sm:min-w-0 sm:px-3">
+                <Rocket className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="text-[9px] leading-tight sm:text-sm truncate">Boost</span>
               </TabsTrigger>
-              <TabsTrigger value="messages" className="flex-col sm:flex-row gap-0.5 sm:gap-2 shrink-0 px-2 sm:px-3">
-                <MessageSquare className="h-4 w-4" />
-                <span className="text-[10px] sm:text-sm">Messages</span>
+              <TabsTrigger value="messages" className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 shrink-0 min-w-[52px] px-1.5 py-1.5 sm:min-w-0 sm:px-3">
+                <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="text-[9px] leading-tight sm:text-sm truncate">Messages</span>
               </TabsTrigger>
             </TabsList>
             )}
