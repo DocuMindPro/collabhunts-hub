@@ -8,11 +8,11 @@ import ProfileTab from "@/components/creator-dashboard/ProfileTab";
 import ServicesTab from "@/components/creator-dashboard/ServicesTab";
 import BookingsTab from "@/components/creator-dashboard/BookingsTab";
 import MessagesTab from "@/components/creator-dashboard/MessagesTab";
-// PayoutsTab removed - platform no longer takes payments
 import OpportunitiesTab from "@/components/creator-dashboard/OpportunitiesTab";
+import FeaturingTab from "@/components/creator-dashboard/FeaturingTab";
 import MobileBottomNav from "@/components/mobile/MobileBottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, User, Package, Calendar, MessageSquare, Briefcase } from "lucide-react";
+import { BarChart3, User, Package, Calendar, MessageSquare, Briefcase, Rocket } from "lucide-react";
 
 const CreatorDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -90,6 +90,10 @@ const CreatorDashboard = () => {
                   <Briefcase className="h-4 w-4" />
                   <span className="hidden sm:inline">Opportunities</span>
                 </TabsTrigger>
+                <TabsTrigger value="boost" className="gap-2 shrink-0">
+                  <Rocket className="h-4 w-4" />
+                  <span className="hidden sm:inline">Boost</span>
+                </TabsTrigger>
                 <TabsTrigger value="messages" className="gap-2 shrink-0">
                   <MessageSquare className="h-4 w-4" />
                   <span className="hidden sm:inline">Messages</span>
@@ -115,6 +119,10 @@ const CreatorDashboard = () => {
 
             <TabsContent value="opportunities" className="space-y-6">
               {creatorProfileId && <OpportunitiesTab creatorProfileId={creatorProfileId} />}
+            </TabsContent>
+
+            <TabsContent value="boost" className="space-y-6">
+              {creatorProfileId && <FeaturingTab creatorProfileId={creatorProfileId} />}
             </TabsContent>
 
             <TabsContent value="messages" className="space-y-6">
