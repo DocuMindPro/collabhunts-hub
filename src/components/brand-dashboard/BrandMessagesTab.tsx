@@ -12,9 +12,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import TypingIndicator from "@/components/chat/TypingIndicator";
 import MessageReadReceipt from "@/components/chat/MessageReadReceipt";
-import PackageInquiryCard from "@/components/chat/PackageInquiryCard";
+import InquiryFormCard, { type InquiryFormData } from "@/components/chat/InquiryFormCard";
 import PackageInquiryMessage, { isPackageInquiry } from "@/components/chat/PackageInquiryMessage";
 import OfferMessage, { isOfferMessage } from "@/components/chat/OfferMessage";
+import CounterOfferDialog from "@/components/chat/CounterOfferDialog";
+import { type NegotiationData } from "@/components/chat/NegotiationMessage";
 
 interface Conversation {
   id: string;
@@ -59,6 +61,8 @@ const BrandMessagesTab = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({});
   const [pendingPackage, setPendingPackage] = useState<PendingPackage | null>(null);
+  const [showCounterDialog, setShowCounterDialog] = useState(false);
+  const [activeNegotiation, setActiveNegotiation] = useState<NegotiationData | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -95,20 +99,28 @@ const BrandMessagesTab = () => {
     }
   }, [searchParams, conversations]);
 
-  const handleSendPackageInquiry = async () => {
+  const handleSendPackageInquiry = async (formData: InquiryFormData) => {
     if (!pendingPackage || !selectedConversation || !userId) return;
 
-    const serviceType = pendingPackage.service_type.replace(/_/g, ' ').split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-    const price = (pendingPackage.price_cents / 100).toFixed(2);
-    const deliveryDays = pendingPackage.delivery_days;
+    // Create structured inquiry data
+    const inquiryData: NegotiationData = {
+      type: "inquiry",
+      message_id: "", // Will be set after insert
+      package_type: formData.package_type,
+      proposed_budget_cents: formData.proposed_budget_cents,
+      preferred_date: formData.preferred_date,
+      preferred_time: formData.preferred_time,
+      duration_hours: formData.duration_hours,
+      notes: formData.notes,
+      status: "pending",
+    };
 
-    const inquiryMessage = `Hi! I'm interested in your "${serviceType}" package ($${price}, ${deliveryDays} day${deliveryDays !== 1 ? 's' : ''} delivery). I'd like to discuss the details before we proceed.`;
+    const messageContent = JSON.stringify(inquiryData);
 
     const tempMessage: Message = {
       id: `temp-${Date.now()}`,
       sender_id: userId,
-      content: inquiryMessage,
+      content: messageContent,
       created_at: new Date().toISOString(),
       is_read: false,
     };
@@ -120,7 +132,9 @@ const BrandMessagesTab = () => {
       const { error } = await supabase.from("messages").insert({
         conversation_id: selectedConversation,
         sender_id: userId,
-        content: inquiryMessage,
+        content: messageContent,
+        message_type: "negotiation",
+        negotiation_status: "pending",
       });
 
       if (error) throw error;
@@ -134,6 +148,59 @@ const BrandMessagesTab = () => {
 
   const handleDismissPackage = () => {
     setPendingPackage(null);
+  };
+
+  // Handle accepting a counter offer from creator
+  const handleAcceptOffer = async (data: NegotiationData) => {
+    try {
+      await supabase
+        .from("messages")
+        .update({ negotiation_status: "accepted" })
+        .eq("id", data.message_id);
+      
+      // Send acceptance message
+      await supabase.from("messages").insert({
+        conversation_id: selectedConversation,
+        sender_id: userId,
+        content: `✅ I accept your offer of $${(data.proposed_budget_cents / 100).toFixed(0)} for the ${data.package_type.replace(/_/g, ' ')} package. Please send an agreement when ready!`,
+        message_type: "text",
+      });
+      
+      toast.success("Offer accepted! Wait for the creator to send an agreement.");
+      fetchMessages(selectedConversation || "");
+    } catch (error) {
+      console.error("Error accepting offer:", error);
+      toast.error("Failed to accept offer");
+    }
+  };
+
+  // Handle counter offer
+  const handleCounterOffer = (data: NegotiationData) => {
+    setActiveNegotiation(data);
+    setShowCounterDialog(true);
+  };
+
+  // Handle decline
+  const handleDeclineOffer = async (data: NegotiationData) => {
+    try {
+      await supabase
+        .from("messages")
+        .update({ negotiation_status: "declined" })
+        .eq("id", data.message_id);
+      
+      await supabase.from("messages").insert({
+        conversation_id: selectedConversation,
+        sender_id: userId,
+        content: "I'll have to pass on this offer. Thank you for your time!",
+        message_type: "text",
+      });
+      
+      toast.success("Offer declined");
+      fetchMessages(selectedConversation || "");
+    } catch (error) {
+      console.error("Error declining offer:", error);
+      toast.error("Failed to decline offer");
+    }
   };
 
   useEffect(() => {
@@ -531,7 +598,15 @@ const BrandMessagesTab = () => {
                             : isPackageInquiryMsg ? '' : "bg-card border rounded-bl-md shadow-sm"
                         }`}>
                           {isPackageInquiryMsg ? (
-                            <PackageInquiryMessage content={msg.content} isOwn={isOwn} />
+                            <PackageInquiryMessage 
+                              content={msg.content} 
+                              isOwn={isOwn} 
+                              messageId={msg.id}
+                              negotiationStatus={(msg as any).negotiation_status}
+                              onAccept={handleAcceptOffer}
+                              onCounter={handleCounterOffer}
+                              onDecline={handleDeclineOffer}
+                            />
                           ) : (
                             <p className="break-words text-sm">{msg.content}</p>
                           )}
@@ -554,9 +629,9 @@ const BrandMessagesTab = () => {
           </div>
         </div>
 
-        {/* Package Inquiry Card */}
+        {/* Package Inquiry Form */}
         {pendingPackage && (
-          <PackageInquiryCard
+          <InquiryFormCard
             packageData={pendingPackage}
             onSend={handleSendPackageInquiry}
             onDismiss={handleDismissPackage}
@@ -621,6 +696,23 @@ const BrandMessagesTab = () => {
           </div>
         )}
       </Card>
+      
+      {/* Counter Offer Dialog */}
+      {activeNegotiation && selectedConversation && (
+        <CounterOfferDialog
+          open={showCounterDialog}
+          onOpenChange={(open) => {
+            setShowCounterDialog(open);
+            if (!open) setActiveNegotiation(null);
+          }}
+          conversationId={selectedConversation}
+          originalInquiry={activeNegotiation}
+          onCounterSent={() => {
+            fetchMessages(selectedConversation);
+            setActiveNegotiation(null);
+          }}
+        />
+      )}
     </div>
   );
 };

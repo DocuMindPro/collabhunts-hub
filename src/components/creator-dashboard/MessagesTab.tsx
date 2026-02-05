@@ -17,6 +17,8 @@ import OfferMessage, { isOfferMessage } from "@/components/chat/OfferMessage";
 import AgreementMessage from "@/components/chat/AgreementMessage";
 import SendOfferDialog from "@/components/chat/SendOfferDialog";
 import SendAgreementDialog from "@/components/agreements/SendAgreementDialog";
+import CounterOfferDialog from "@/components/chat/CounterOfferDialog";
+import { type NegotiationData } from "@/components/chat/NegotiationMessage";
 import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 
 interface Conversation {
@@ -50,6 +52,8 @@ const MessagesTab = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showOfferDialog, setShowOfferDialog] = useState(false);
   const [showAgreementDialog, setShowAgreementDialog] = useState(false);
+  const [showCounterDialog, setShowCounterDialog] = useState(false);
+  const [activeNegotiation, setActiveNegotiation] = useState<NegotiationData | null>(null);
   const [prefillPackageData, setPrefillPackageData] = useState<{
     serviceType: string;
     priceCents: number;
@@ -68,16 +72,56 @@ const MessagesTab = () => {
   const isNative = Capacitor.isNativePlatform();
   const { keyboardHeight } = useKeyboardHeight();
 
-  const handlePackageReply = (type: "quote" | "accept", packageData?: { serviceType: string; price: string }) => {
-    if (type === "quote") {
-      setNewMessage("Thank you for your interest! For this package, I can offer you a great deal. Let me know if you'd like to proceed or have any questions.");
-    } else if (type === "accept" && packageData) {
-      // Pre-fill and open the SendOfferDialog
+  // Handle accept - opens agreement dialog with pre-filled data
+  const handleAcceptInquiry = async (data: NegotiationData) => {
+    try {
+      // Update the message status to accepted
+      await supabase
+        .from("messages")
+        .update({ negotiation_status: "accepted" })
+        .eq("id", data.message_id);
+      
+      // Pre-fill and open agreement dialog
+      setActiveNegotiation(data);
       setPrefillPackageData({
-        serviceType: packageData.serviceType,
-        priceCents: Math.round(parseFloat(packageData.price) * 100),
+        serviceType: data.package_type,
+        priceCents: data.proposed_budget_cents,
       });
-      setShowOfferDialog(true);
+      setShowAgreementDialog(true);
+      fetchMessages(selectedConversation || "");
+    } catch (error) {
+      console.error("Error accepting inquiry:", error);
+      toast.error("Failed to accept inquiry");
+    }
+  };
+
+  // Handle counter offer
+  const handleCounterInquiry = (data: NegotiationData) => {
+    setActiveNegotiation(data);
+    setShowCounterDialog(true);
+  };
+
+  // Handle decline
+  const handleDeclineInquiry = async (data: NegotiationData) => {
+    try {
+      await supabase
+        .from("messages")
+        .update({ negotiation_status: "declined" })
+        .eq("id", data.message_id);
+      
+      // Send decline message
+      await supabase.from("messages").insert({
+        conversation_id: selectedConversation,
+        sender_id: userId,
+        content: "I'm not available for this inquiry at the moment. Thank you for your interest!",
+        message_type: "text",
+      });
+      
+      toast.success("Inquiry declined");
+      fetchMessages(selectedConversation || "");
+    } catch (error) {
+      console.error("Error declining inquiry:", error);
+      toast.error("Failed to decline inquiry");
     }
   };
 
@@ -499,9 +543,12 @@ const MessagesTab = () => {
                           {isPackageInquiryMsg ? (
                             <PackageInquiryMessage 
                               content={msg.content} 
-                              isOwn={isOwn} 
-                              onReply={handlePackageReply}
-                              showReplyActions={!isOwn}
+                              isOwn={isOwn}
+                              messageId={msg.id}
+                              negotiationStatus={(msg as any).negotiation_status}
+                              onAccept={handleAcceptInquiry}
+                              onCounter={handleCounterInquiry}
+                              onDecline={handleDeclineInquiry}
                             />
                           ) : (
                             <p className="break-words text-sm">{msg.content}</p>
@@ -584,6 +631,23 @@ const MessagesTab = () => {
             onOfferSent={() => fetchMessages(selectedConversation || "")}
             prefillServiceType={prefillPackageData?.serviceType}
             prefillPriceCents={prefillPackageData?.priceCents}
+          />
+        )}
+
+        {/* Counter Offer Dialog */}
+        {activeNegotiation && selectedConversation && (
+          <CounterOfferDialog
+            open={showCounterDialog}
+            onOpenChange={(open) => {
+              setShowCounterDialog(open);
+              if (!open) setActiveNegotiation(null);
+            }}
+            conversationId={selectedConversation}
+            originalInquiry={activeNegotiation}
+            onCounterSent={() => {
+              fetchMessages(selectedConversation);
+              setActiveNegotiation(null);
+            }}
           />
         )}
       </div>

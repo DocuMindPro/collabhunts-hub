@@ -2339,7 +2339,9 @@ export type Database = {
           id: string
           is_read: boolean | null
           message_type: string | null
+          negotiation_status: string | null
           offer_id: string | null
+          parent_message_id: string | null
           sender_id: string
         }
         Insert: {
@@ -2349,7 +2351,9 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message_type?: string | null
+          negotiation_status?: string | null
           offer_id?: string | null
+          parent_message_id?: string | null
           sender_id: string
         }
         Update: {
@@ -2359,7 +2363,9 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message_type?: string | null
+          negotiation_status?: string | null
           offer_id?: string | null
+          parent_message_id?: string | null
           sender_id?: string
         }
         Relationships: [
@@ -2375,6 +2381,13 @@ export type Database = {
             columns: ["offer_id"]
             isOneToOne: false
             referencedRelation: "booking_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_parent_message_id_fkey"
+            columns: ["parent_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
         ]
