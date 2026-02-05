@@ -85,11 +85,6 @@ const PackageInfoCard = ({
           </div>
           <div className="flex-1">
             <CardTitle className="text-lg">{pkg.name}</CardTitle>
-            {pkg.durationRange && (
-              <Badge variant="outline" className="mt-1 text-xs">
-                {pkg.durationRange.min}-{pkg.durationRange.max} hours
-              </Badge>
-            )}
           </div>
           {hasPriceRange && (
             <div className="text-right">

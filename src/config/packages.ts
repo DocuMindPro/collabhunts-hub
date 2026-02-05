@@ -65,7 +65,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
       {
         title: 'Content Posted',
         items: [
-          '1 Reel/TikTok (permanent post)',
+          'Reel/TikTok (permanent post)',
           'Brand tagged in all posts',
         ],
       },
@@ -89,7 +89,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     ],
     phases: [
       {
-        title: 'During Visit (1-2 hours)',
+        title: 'During Visit',
         items: [
           'Creator visits venue',
           'Tries product/service',
@@ -99,8 +99,8 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
       {
         title: 'Content Delivered',
         items: [
-          '1 Instagram Reel (permanent post)',
-          '1 TikTok video (same content)',
+          'Instagram Reel (permanent post)',
+          'TikTok video',
           'Tag & location in all posts',
         ],
       },
@@ -130,13 +130,13 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     ],
     phases: [
       {
-        title: 'Pre-Event (1 week before)',
+        title: 'Pre-Event',
         items: [
-          '1 announcement video',
+          'Announcement video',
         ],
       },
       {
-        title: 'During Event (3 hours)',
+        title: 'During Event',
         items: [
           'Creator present at venue',
           'Live interaction with fans',
@@ -147,7 +147,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
       {
         title: 'Post-Event',
         items: [
-          '1 recap video',
+          'Recap video',
           'Brand tagged in all posts',
         ],
       },
@@ -175,7 +175,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     ],
     phases: [
       {
-        title: 'Pre-Event (2 weeks before)',
+        title: 'Pre-Event',
         items: [
           'Event announcement & creator lineup reveal',
           'Ticket sales promotion across social channels',
@@ -183,9 +183,9 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
         ],
       },
       {
-        title: 'During Event (2-6 hours)',
+        title: 'During Event',
         items: [
-          'Live PK battles (3-4 min rounds) between creators',
+          'Live PK battles between creators',
           'In-person audience experience at your venue',
           'Dual-screen setup: live stream + venue display',
           'Real-time engagement from online & in-person fans',
