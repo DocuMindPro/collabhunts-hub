@@ -73,8 +73,22 @@ The existing `AdPlacement` component can display paid ads on:
 - No platform fees displayed
 - Agreement confirmation sends a message indicating payment should be arranged directly
 
-### 🔲 Phase 2: Agreement System (NEXT)
-Create an AI-powered agreement drafting system:
+### ✅ Phase 2: Agreement System (COMPLETED)
+
+**Database Changes:**
+- Created `creator_agreements` table with RLS policies
+
+**New Files Created:**
+- `src/config/agreement-templates.ts` - Agreement templates configuration
+- `src/components/agreements/SendAgreementDialog.tsx` - AI-powered agreement drafting dialog
+- `src/components/chat/AgreementMessage.tsx` - Agreement display in chat with Confirm/Decline
+- `supabase/functions/draft-agreement/index.ts` - AI drafting endpoint using Lovable AI
+
+**Files Modified:**
+- `src/components/creator-dashboard/MessagesTab.tsx` - Added agreement message support and Send Agreement button
+- `src/pages/CreatorDashboard.tsx` - Removed Payouts tab, renamed "Events" to "Agreements"
+
+### 🔲 Phase 3: Creator Featuring System (NEXT)
 
 **New Components:**
 - `src/components/agreements/AgreementTemplates.tsx` - Pre-built templates

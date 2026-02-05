@@ -8,11 +8,11 @@ import ProfileTab from "@/components/creator-dashboard/ProfileTab";
 import ServicesTab from "@/components/creator-dashboard/ServicesTab";
 import BookingsTab from "@/components/creator-dashboard/BookingsTab";
 import MessagesTab from "@/components/creator-dashboard/MessagesTab";
-import PayoutsTab from "@/components/creator-dashboard/PayoutsTab";
+// PayoutsTab removed - platform no longer takes payments
 import OpportunitiesTab from "@/components/creator-dashboard/OpportunitiesTab";
 import MobileBottomNav from "@/components/mobile/MobileBottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, User, Package, Calendar, MessageSquare, Wallet, Briefcase } from "lucide-react";
+import { BarChart3, User, Package, Calendar, MessageSquare, Briefcase } from "lucide-react";
 
 const CreatorDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -84,15 +84,11 @@ const CreatorDashboard = () => {
                 </TabsTrigger>
                 <TabsTrigger value="bookings" className="gap-2 shrink-0">
                   <Calendar className="h-4 w-4" />
-                  <span className="hidden sm:inline">Events</span>
+                  <span className="hidden sm:inline">Agreements</span>
                 </TabsTrigger>
                 <TabsTrigger value="opportunities" className="gap-2 shrink-0">
                   <Briefcase className="h-4 w-4" />
                   <span className="hidden sm:inline">Opportunities</span>
-                </TabsTrigger>
-                <TabsTrigger value="payouts" className="gap-2 shrink-0">
-                  <Wallet className="h-4 w-4" />
-                  <span className="hidden sm:inline">Earnings</span>
                 </TabsTrigger>
                 <TabsTrigger value="messages" className="gap-2 shrink-0">
                   <MessageSquare className="h-4 w-4" />
@@ -119,10 +115,6 @@ const CreatorDashboard = () => {
 
             <TabsContent value="opportunities" className="space-y-6">
               {creatorProfileId && <OpportunitiesTab creatorProfileId={creatorProfileId} />}
-            </TabsContent>
-
-            <TabsContent value="payouts" className="space-y-6">
-              <PayoutsTab />
             </TabsContent>
 
             <TabsContent value="messages" className="space-y-6">
