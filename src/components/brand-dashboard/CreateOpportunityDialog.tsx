@@ -17,6 +17,11 @@ import CountrySelect from "@/components/CountrySelect";
 import LocationSelect from "@/components/LocationSelect";
 import { hasLocationData, getStatesForCountry } from "@/config/country-locations";
 import { COUNTRIES } from "@/components/PhoneInput";
+import MockPaymentDialog from "@/components/payments/MockPaymentDialog";
+
+// Opportunity posting pricing (in cents)
+const OPPORTUNITY_POSTING_FEE = 1500; // $15 to post
+const FEATURED_UPGRADE_FEE = 2500; // +$25 to feature
 
 interface CreateOpportunityDialogProps {
   brandProfileId: string;
@@ -32,6 +37,9 @@ const CreateOpportunityDialog = ({
   onSuccess,
 }: CreateOpportunityDialogProps) => {
   const [submitting, setSubmitting] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [wantsFeatured, setWantsFeatured] = useState(false);
+  const [pendingOpportunityData, setPendingOpportunityData] = useState<any>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -106,8 +114,6 @@ const CreateOpportunityDialog = ({
       return;
     }
 
-    setSubmitting(true);
-
     // For standard packages, auto-generate description from package includes
     let finalDescription = formData.description;
     if (isStandardPackage && selectedPackage) {
@@ -117,39 +123,60 @@ const CreateOpportunityDialog = ({
       }
     }
 
+    // Store pending data and show payment dialog
+    setPendingOpportunityData({
+      brand_profile_id: brandProfileId,
+      title: formData.title,
+      description: finalDescription || null,
+      package_type: formData.package_type || null,
+      event_date: formData.event_date,
+      start_time: formData.start_time || null,
+      end_time: formData.end_time || null,
+      is_paid: formData.is_paid,
+      budget_cents: formData.is_paid && formData.budget 
+        ? Math.round(parseFloat(formData.budget) * 100) 
+        : null,
+      spots_available: parseInt(formData.spots_available) || 1,
+      requirements: formData.requirements || null,
+      follower_ranges: formData.follower_ranges.length > 0 ? formData.follower_ranges : null,
+      location_city: formData.location_city || null,
+      location_country: selectedCountryName || null,
+    });
+    
+    setShowPaymentDialog(true);
+  };
+
+  const handlePaymentSuccess = async (paymentId: string, selectedItems: string[]) => {
+    if (!pendingOpportunityData) return;
+    
+    setSubmitting(true);
+    setShowPaymentDialog(false);
+
+    const isFeatured = selectedItems.includes("Featured Placement");
+
     const { error } = await supabase
       .from("brand_opportunities")
       .insert({
-        brand_profile_id: brandProfileId,
-        title: formData.title,
-        description: finalDescription || null,
-        package_type: formData.package_type || null,
-        event_date: formData.event_date,
-        start_time: formData.start_time || null,
-        end_time: formData.end_time || null,
-        is_paid: formData.is_paid,
-        budget_cents: formData.is_paid && formData.budget 
-          ? Math.round(parseFloat(formData.budget) * 100) 
-          : null,
-        spots_available: parseInt(formData.spots_available) || 1,
-        requirements: formData.requirements || null,
-        follower_ranges: formData.follower_ranges.length > 0 ? formData.follower_ranges : null,
-        location_city: formData.location_city || null,
-        location_country: selectedCountryName || null,
+        ...pendingOpportunityData,
+        // Add featured flag if selected (we'll need to add this column)
+        // is_featured: isFeatured,
       });
 
     if (error) {
       console.error("Error creating opportunity:", error);
       toast({
         title: "Error",
-        description: "Failed to create opportunity. Please try again.",
+        description: "Payment successful but failed to create opportunity. Please contact support.",
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Opportunity Posted!",
-        description: "Creators can now discover and apply to your opportunity.",
+        title: isFeatured ? "Featured Opportunity Posted!" : "Opportunity Posted!",
+        description: isFeatured 
+          ? "Your opportunity is now featured and creators can discover it."
+          : "Creators can now discover and apply to your opportunity.",
       });
+      // Reset form
       setFormData({
         title: "",
         description: "",
@@ -166,10 +193,17 @@ const CreateOpportunityDialog = ({
         location_state: "",
         location_country: "LB",
       });
+      setPendingOpportunityData(null);
+      setWantsFeatured(false);
       onSuccess();
     }
 
     setSubmitting(false);
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentDialog(false);
+    setPendingOpportunityData(null);
   };
 
   return (
@@ -472,10 +506,34 @@ const CreateOpportunityDialog = ({
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={submitting} className="w-full sm:w-auto">
-            {submitting ? "Creating..." : "Post Opportunity"}
+            {submitting ? "Creating..." : "Continue to Payment"}
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Payment Dialog */}
+      <MockPaymentDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        title="Post Opportunity"
+        description="Pay to publish your opportunity on the board"
+        lineItems={[
+          {
+            label: "Opportunity Posting",
+            amountCents: OPPORTUNITY_POSTING_FEE,
+          },
+          {
+            label: "Featured Placement",
+            amountCents: FEATURED_UPGRADE_FEE,
+            isOptional: true,
+            isSelected: wantsFeatured,
+            onToggle: setWantsFeatured,
+            description: "Get priority visibility at the top of the opportunities board",
+          },
+        ]}
+        onSuccess={handlePaymentSuccess}
+        onCancel={handlePaymentCancel}
+      />
     </Dialog>
   );
 };
