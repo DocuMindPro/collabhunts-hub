@@ -1,4 +1,4 @@
-import { Clock, CheckCircle, Sparkles, MessageSquare, Search } from "lucide-react";
+import { CheckCircle, Sparkles, MessageSquare, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -42,14 +42,6 @@ const PackageCard = ({ pkgType, pkg }: PackageCardProps) => {
         </p>
       )}
       
-      {pkg.durationRange && (
-        <p className="text-sm text-muted-foreground mb-4 flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          {pkg.durationRange.min === pkg.durationRange.max 
-            ? `${pkg.durationRange.min} hours` 
-            : `${pkg.durationRange.min}-${pkg.durationRange.max} hours`}
-        </p>
-      )}
       <p className="text-sm text-muted-foreground mb-4">
         {pkg.description}
       </p>
