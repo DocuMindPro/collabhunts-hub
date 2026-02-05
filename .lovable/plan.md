@@ -1,247 +1,199 @@
 
-# Creator Badge System - Collabstr-Style Visual Upgrade
+
+# Mobile Featured Creators Grid - Compact 4x4 Layout
 
 ## Overview
 
-Transform the current icon-only badges into prominent, pill-shaped badges with clear labels like Collabstr uses. This makes badges instantly recognizable and more impactful for brands browsing creators.
+Transform the Featured Creators section on mobile from a 2-column layout showing 6 creators into a dense 4-column grid showing 16 creators in 4 rows. This gives visitors a fuller preview of the creator community while encouraging brand registration to unlock full browsing.
 
 ---
 
-## Current vs. Proposed
+## Current vs. Proposed (Mobile)
 
 ```text
-CURRENT (Icon-only):
-+---------------------------+
-| Sarah Ahmed 🛡️ 👑         |
-+---------------------------+
-(tiny icons, easy to miss)
+CURRENT (Mobile):
++-------+-------+
+|   1   |   2   |  <- 2 columns, 6 total
++-------+-------+
+|   3   |   4   |
++-------+-------+
+|   5   |   6   |
++-------+-------+
+[Browse All Creators]
 
-PROPOSED (Pill badges like Collabstr):
-+---------------------------+
-| 🛡️ Vetted | 👑 VIP Creator |
-+---------------------------+
-| Sarah Ahmed               |
-+---------------------------+
-(clear labels, prominent placement)
+PROPOSED (Mobile):
++----+----+----+----+
+| 1  | 2  | 3  | 4  |  <- 4 columns, 16 total
++----+----+----+----+
+| 5  | 6  | 7  | 8  |
++----+----+----+----+
+| 9  | 10 | 11 | 12 |
++----+----+----+----+
+| 13 | 14 | 15 | 16 |
++----+----+----+----+
+[Browse All Creators]
 ```
 
 ---
 
-## Design Specification (Matching Collabstr)
+## Design Changes
 
-### Badge Visual Style
+### 1. Grid Layout Update
 
-| Badge | Icon | Label | Background | Text Color |
-|-------|------|-------|------------|------------|
-| Vetted | ShieldCheck | "Vetted" | Gray semi-transparent | White |
-| VIP Creator | Crown | "VIP Creator" | Amber/Gold gradient | White |
+| Breakpoint | Current | Proposed |
+|------------|---------|----------|
+| Mobile (<768px) | 2 columns | 4 columns |
+| Tablet (md) | 3 columns | 4 columns |
+| Desktop (lg) | 6 columns | 6 columns |
 
-### Badge Characteristics
-- **Shape**: Rounded pill (rounded-full)
-- **Size**: Compact but readable (text-xs, px-2.5 py-1)
-- **Icon**: Small icon (h-3 w-3) left of text
-- **Background**: Semi-transparent with backdrop blur
-- **Tooltip**: Shows detailed description on hover
+### 2. Card Size Adjustments (Mobile)
+
+Since we're fitting 4 cards per row on mobile, each card needs to be more compact:
+
+| Element | Current | Proposed |
+|---------|---------|----------|
+| Card padding | p-3 | p-1.5 (mobile) |
+| Name font | text-sm | text-xs (mobile) |
+| Gap between cards | gap-4 | gap-2 (mobile) |
+| Badges | Full pill | Smaller on mobile |
+| Follower/category text | Visible | Hidden on mobile (space) |
+
+### 3. Creator Count
+
+| Current | Proposed |
+|---------|----------|
+| 6 creators fetched | 16 creators fetched |
 
 ---
 
-## Files to Modify
+## File to Modify
 
-### 1. `src/components/VettedBadge.tsx`
+### `src/components/home/CreatorSpotlight.tsx`
 
-**Current**: Just a green shield icon
-**New**: Pill-shaped badge with "Vetted" text
-
+#### Change 1: Increase fetch limit (line 53)
 ```tsx
-// Add variant prop for different display modes
-interface VettedBadgeProps {
-  variant?: "icon" | "pill";  // NEW: "icon" for compact, "pill" for full label
-  // ...existing props
-}
+// Before
+.limit(6);
 
-// Pill variant renders:
-<span className="inline-flex items-center gap-1 px-2.5 py-1 
-  bg-gray-800/80 backdrop-blur-sm rounded-full text-white text-xs font-medium">
-  <ShieldCheck className="h-3 w-3" />
-  Vetted
-</span>
+// After
+.limit(16);
 ```
 
-### 2. `src/components/VIPCreatorBadge.tsx`
-
-**Current**: Just a gold crown icon
-**New**: Premium pill-shaped badge with "VIP Creator" text
-
+#### Change 2: Update grid classes (line 108)
 ```tsx
-// Add variant prop
-interface VIPCreatorBadgeProps {
-  variant?: "icon" | "pill";  // NEW
-  // ...existing props
-}
+// Before
+<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 mb-10">
 
-// Pill variant renders:
-<span className="inline-flex items-center gap-1 px-2.5 py-1 
-  bg-gradient-to-r from-amber-500 to-orange-500 rounded-full 
-  text-white text-xs font-semibold shadow-lg">
-  <Crown className="h-3 w-3" />
-  VIP Creator
-</span>
+// After
+<div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4 lg:gap-6 mb-10">
 ```
 
-### 3. `src/pages/Influencers.tsx`
+#### Change 3: Make cards more compact on mobile
 
-**Update creator card rendering (lines 470-482)**
-
-Move badges from the name row to a dedicated row at the top of the overlay:
-
+Update the card container to be smaller on mobile:
 ```tsx
-{/* Creator Info - Bottom Overlay */}
-<div className="absolute bottom-0 left-0 right-0 p-4">
-  {/* NEW: Badge row - Collabstr style */}
-  <div className="flex items-center gap-2 mb-2">
-    <VettedBadge variant="pill" showTooltip={true} />
-    {isCreatorVIP(creator) && (
-      <VIPCreatorBadge variant="pill" showTooltip={true} />
-    )}
-  </div>
-  
-  {/* Name without inline badges */}
-  <h3 className="font-heading font-semibold text-lg text-white line-clamp-1">
-    {creator.display_name}
-  </h3>
-  <p className="text-sm text-white/80 line-clamp-1">
-    {creator.categories[0] || "Content Creator"}
-  </p>
-</div>
+<div className="relative rounded-lg md:rounded-xl overflow-hidden ...">
 ```
 
-### 4. `src/pages/CreatorProfile.tsx`
-
-**Update profile header (lines 574-580 and 646-652)**
-
-Add pill badges below or beside the name for prominence:
-
+Update info section padding:
 ```tsx
-{/* Mobile */}
-<div className="flex items-center gap-2 flex-wrap mb-2">
-  <VettedBadge variant="pill" />
-  {isVIP(creator) && <VIPCreatorBadge variant="pill" />}
-</div>
-<h1 className="text-2xl font-heading font-bold">
+<div className="absolute bottom-0 left-0 right-0 p-1.5 md:p-3 text-primary-foreground">
+```
+
+Update name text size:
+```tsx
+<p className="font-semibold text-[10px] md:text-sm truncate">
   {creator.display_name}
-</h1>
+</p>
+```
 
-{/* Desktop - badges in dedicated row */}
-<div className="flex items-center gap-2 mb-2">
-  <VettedBadge variant="pill" />
-  {isVIP(creator) && <VIPCreatorBadge variant="pill" />}
+#### Change 4: Hide follower/category on mobile
+
+Only show on larger screens to save space:
+```tsx
+<div className="hidden md:flex items-center gap-2 text-xs opacity-80 mt-1">
+  {/* follower count and category */}
 </div>
 ```
 
-### 5. `src/components/home/CreatorSpotlight.tsx`
+#### Change 5: Adjust badges for mobile
 
-**Update badge display (lines 142-162)**
-
-Already uses pill-style badges for VIP/Vetted. Ensure consistency by importing the new components:
-
+Use smaller badges or hide text on mobile:
 ```tsx
-{/* Replace inline badge rendering with components */}
-<div className="absolute top-2 left-2 flex items-center gap-1.5">
-  <VettedBadge variant="pill" showTooltip={false} />
-  {isVip && <VIPCreatorBadge variant="pill" showTooltip={false} />}
-</div>
+{(isVip || isVetted) && (
+  <div className="absolute top-1 left-1 md:top-2 md:left-2 flex items-center gap-1">
+    {isVetted && <VettedBadge variant="pill" size="sm" showTooltip={false} className="scale-75 md:scale-100" />}
+    {isVip && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} className="scale-75 md:scale-100" />}
+  </div>
+)}
+```
+
+#### Change 6: Reduce animation stagger on mobile
+
+With 16 cards, staggering all of them would take too long:
+```tsx
+delay={Math.min(index * 50, 400)}  // Cap delay at 400ms
 ```
 
 ---
 
-## Badge Component Structure
-
-### VettedBadge.tsx (Updated)
-
-```tsx
-interface VettedBadgeProps {
-  className?: string;
-  size?: "sm" | "md" | "lg";
-  variant?: "icon" | "pill";  // NEW
-  showTooltip?: boolean;
-}
-
-// If variant === "pill":
-//   Render full pill with icon + "Vetted" text
-// If variant === "icon" (default for backward compatibility):
-//   Render just the icon (current behavior)
-```
-
-### VIPCreatorBadge.tsx (Updated)
-
-```tsx
-interface VIPCreatorBadgeProps {
-  className?: string;
-  size?: "sm" | "md" | "lg";
-  variant?: "icon" | "pill";  // NEW
-  showTooltip?: boolean;
-}
-
-// If variant === "pill":
-//   Render premium gradient pill with icon + "VIP Creator" text
-// If variant === "icon" (default):
-//   Render just the crown icon
-```
-
----
-
-## Visual Examples
-
-### Creator Card (Influencers Page)
+## Visual Result (Mobile)
 
 ```text
-+------------------------+
-| [IG] 125K    ★ 5.0    |
-|                        |
-|   [Creator Image]      |
-|                        |
-| 🛡️ Vetted  👑 VIP Creator  <- NEW: Pill badges
-|                        |
-| Sarah Ahmed            |
-| Lifestyle              |
-+------------------------+
-| Starting from $150     |
-+------------------------+
++----------------------------------------+
+|         Featured Creators              |
+|   See who's already on CollabHunts     |
+|                                        |
+| +----+ +----+ +----+ +----+           |
+| |VIP | |    | |    | |Vttd|           |
+| |    | |    | |    | |    |           |
+| |Sara| |Ali | |Nour| |Maya|           |
+| +----+ +----+ +----+ +----+           |
+| +----+ +----+ +----+ +----+           |
+| |    | |    | |VIP | |    |           |
+| |    | |    | |    | |    |           |
+| |Zein| |Lina| |Fadi| |Rima|           |
+| +----+ +----+ +----+ +----+           |
+| +----+ +----+ +----+ +----+           |
+| |    | |    | |    | |    |           |
+| |    | |    | |    | |    |           |
+| |Joe | |Sam | |Mia | |Leo |           |
+| +----+ +----+ +----+ +----+           |
+| +----+ +----+ +----+ +----+           |
+| |Vttd| |    | |    | |VIP |           |
+| |    | |    | |    | |    |           |
+| |Aya | |Omar| |Tia | |Jad |           |
+| +----+ +----+ +----+ +----+           |
+|                                        |
+|     [ Browse All Creators → ]          |
+|                                        |
++----------------------------------------+
 ```
 
-### Creator Profile Header
-
-```text
-+------------------------------------------+
-| [Avatar]  🛡️ Vetted  👑 VIP Creator      |
-|           Sarah Ahmed  ⭐ 4.9 (23)        |
-|           📍 Beirut, Lebanon              |
-+------------------------------------------+
-```
+- Compact cards with just image + name
+- Badges scaled down but visible
+- Follower counts hidden on mobile (shown on tablet/desktop)
+- 16 creators give a good preview of the community
 
 ---
 
-## Badge Color Palette
+## Future Enhancement (Brand Registration Gate)
 
-| Badge | Background | Icon | Text |
-|-------|------------|------|------|
-| Vetted | `bg-gray-800/80 backdrop-blur-sm` | `text-green-400` | `text-white` |
-| VIP Creator | `bg-gradient-to-r from-amber-500 to-orange-500` | `text-white` | `text-white` |
+After this change, the "Browse All Creators" button can later be updated to:
+1. Check if user is logged in as a brand
+2. If not, show a registration prompt instead of navigating to /influencers
+3. This encourages brands to register to see the full creator roster
 
 ---
 
-## Implementation Summary
+## Summary
 
-| File | Change |
-|------|--------|
-| `VettedBadge.tsx` | Add `variant` prop with "icon" (default) and "pill" options |
-| `VIPCreatorBadge.tsx` | Add `variant` prop with "icon" (default) and "pill" options |
-| `Influencers.tsx` | Use `variant="pill"` badges in creator cards |
-| `CreatorProfile.tsx` | Use `variant="pill"` badges in profile header |
-| `CreatorSpotlight.tsx` | Use new badge components with `variant="pill"` |
+| Change | Description |
+|--------|-------------|
+| Grid columns | 2 -> 4 on mobile |
+| Creator count | 6 -> 16 |
+| Card size | Smaller padding, text, gaps |
+| Meta info | Hidden on mobile |
+| Badges | Scaled down 75% on mobile |
+| Animation | Faster stagger (50ms vs 100ms, capped) |
 
-This approach:
-- Maintains backward compatibility (icon-only is default)
-- Adds clear, Collabstr-style pill badges where needed
-- Keeps tooltips for detailed descriptions
-- Uses consistent styling across all pages
