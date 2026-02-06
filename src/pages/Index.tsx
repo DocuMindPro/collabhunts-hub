@@ -19,6 +19,7 @@ import CreatorSpotlight from "@/components/home/CreatorSpotlight";
 import TestimonialCarousel from "@/components/home/TestimonialCarousel";
 import BentoGrid from "@/components/home/BentoGrid";
 import BrandRegistrationPrompt from "@/components/BrandRegistrationPrompt";
+import PlatformFeatures from "@/components/home/PlatformFeatures";
 import { cn } from "@/lib/utils";
 
 const Index = () => {
@@ -298,6 +299,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Platform Features Showcase */}
+      <PlatformFeatures />
 
       {/* Testimonials Section */}
       <TestimonialCarousel />
