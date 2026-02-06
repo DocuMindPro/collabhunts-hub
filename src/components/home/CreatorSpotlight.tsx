@@ -6,6 +6,7 @@ import { ArrowRight, Instagram, Youtube } from "lucide-react";
 import AnimatedSection from "@/components/AnimatedSection";
 import VettedBadge from "@/components/VettedBadge";
 import VIPCreatorBadge from "@/components/VIPCreatorBadge";
+import FeaturedBadge from "@/components/FeaturedBadge";
 import BrandRegistrationPrompt from "@/components/BrandRegistrationPrompt";
 import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 
@@ -16,6 +17,7 @@ interface Creator {
   categories: string[] | null;
   is_featured: boolean | null;
   featuring_priority: number | null;
+  status: string | null;
 }
 
 interface SocialAccount {
@@ -90,7 +92,7 @@ const CreatorSpotlight = () => {
       // Fetch creators
       const { data: creatorData, error: creatorError } = await supabase
         .from('creator_profiles')
-        .select('id, display_name, profile_image_url, categories, is_featured, featuring_priority')
+        .select('id, display_name, profile_image_url, categories, is_featured, featuring_priority, status')
         .eq('status', 'approved')
         .order('featuring_priority', { ascending: false, nullsFirst: false })
         .limit(8);
@@ -153,7 +155,8 @@ const CreatorSpotlight = () => {
             const primarySocial = creator.socialAccounts[0];
             const PlatformIcon = primarySocial ? getPlatformIcon(primarySocial.platform) : Instagram;
             const isVip = (creator.featuring_priority || 0) >= 3;
-            const isVetted = !isVip && creator.is_featured;
+            const isFeatured = creator.is_featured === true;
+            const isVetted = creator.status === 'approved';
 
             return (
               <AnimatedSection 
@@ -182,12 +185,11 @@ const CreatorSpotlight = () => {
                         </div>
                       )}
                       
-                      {(isVip || isVetted) && (
-                        <div className="absolute top-2 left-2 flex items-center gap-1.5 z-10">
-                          {isVetted && <VettedBadge variant="pill" size="sm" showTooltip={false} />}
-                          {isVip && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} />}
-                        </div>
-                      )}
+                      <div className="absolute top-2 left-2 flex flex-wrap items-center gap-1.5 z-10">
+                        {isVetted && <VettedBadge variant="pill" size="sm" showTooltip={false} />}
+                        {isFeatured && <FeaturedBadge variant="pill" size="sm" showTooltip={false} />}
+                        {isVip && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} />}
+                      </div>
 
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                     </div>
