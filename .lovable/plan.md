@@ -1,44 +1,52 @@
 
-# Fix Announcement Banner Save and Display
 
-## Problem
-Two issues identified:
-1. **Save not persisting**: When the admin toggles "Banner Enabled" on and clicks "Save Banner Settings", the update does not persist to the database. The `updated_at` timestamp confirms the row was never modified after initial creation.
-2. **Banner not showing**: Since the database value remains `"false"`, the `AnnouncementBanner` component correctly hides itself.
+# Fix Announcement Banner Save (Persistent Issue)
 
 ## Root Cause
-The `saveBannerSettings` function uses `.update({ value }).eq("key", key)` which can silently fail (0 rows updated, no error returned by Supabase) if the RLS policy evaluation doesn't match at runtime. This happens because Supabase's `.update()` does not throw an error when no rows are affected.
 
-## Fix
+The UPDATE RLS policy on `site_settings` has `USING(has_role(auth.uid(), 'admin'))` but **no `WITH CHECK` clause**. When PostgREST processes an upsert (`INSERT ... ON CONFLICT DO UPDATE`), it needs both the INSERT and UPDATE policies to fully pass. The missing `WITH CHECK` on UPDATE can cause the upsert to silently succeed with 0 rows affected -- no error is thrown, but nothing is written.
 
-### 1. Switch from `.update()` to `.upsert()` in `AdminAnnouncementsTab.tsx`
-Replace the update loop with upsert calls that match on the `key` column, ensuring the row is always written. Also add proper error detection by checking the returned data count.
+The code also lacks verification that the save actually persisted.
 
-```typescript
-// Before (silently fails):
-const { error } = await supabase
-  .from("site_settings")
-  .update({ value })
-  .eq("key", key);
+## Changes
 
-// After (reliable):
-const { error } = await supabase
-  .from("site_settings")
-  .upsert(
-    { key, value, category: "announcement" },
-    { onConflict: "key" }
-  );
+### 1. Database Migration: Fix the UPDATE RLS policy
+
+Drop and recreate the UPDATE policy with an explicit `WITH CHECK`:
+
+```sql
+DROP POLICY IF EXISTS "Admins can update site settings" ON public.site_settings;
+
+CREATE POLICY "Admins can update site settings"
+  ON public.site_settings
+  FOR UPDATE
+  USING (has_role(auth.uid(), 'admin'::app_role))
+  WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
 ```
 
-### 2. Add a unique constraint on `site_settings.key` (if not already present)
-A database migration to add a unique constraint on the `key` column so upsert's `onConflict` works correctly.
+### 2. Code Change: `src/components/admin/AdminAnnouncementsTab.tsx`
 
-### 3. Verify `AnnouncementBanner` placement
-The banner is already rendered in `App.tsx` outside the Router, which is correct. Once the database value is properly saved, it will display automatically on page load.
+Update `saveBannerSettings` to:
+- Add `.select()` after upsert to get returned rows
+- Verify rows were actually affected
+- Add `updated_at` to the upsert payload so the timestamp updates
 
-## Files to Modify
-- **`src/components/admin/AdminAnnouncementsTab.tsx`** -- Change `.update()` to `.upsert()` with `onConflict: "key"` and add success verification
-- **Database migration** -- Add unique constraint on `site_settings.key` if missing
+```typescript
+for (const { key, value } of updates) {
+  const { data, error } = await supabase
+    .from("site_settings")
+    .upsert(
+      { key, value, category: "announcement", updated_at: new Date().toISOString() },
+      { onConflict: "key" }
+    )
+    .select();
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("Save failed - you may not have admin permissions");
+  }
+}
+```
 
 ## Expected Result
-After the fix, toggling the banner on and clicking Save will reliably persist the setting, and the announcement banner will appear at the top of the website on next page load.
+After these changes, saving banner settings will reliably persist to the database. The banner will appear on the website when enabled, and the admin UI will show the correct state on refresh.
+
