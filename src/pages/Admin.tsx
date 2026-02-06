@@ -28,6 +28,7 @@ import AdminPlatformManualTab from "@/components/admin/AdminPlatformManualTab";
 import AdminVerificationsTab from "@/components/admin/AdminVerificationsTab";
 import AdminBrandingSeoTab from "@/components/admin/AdminBrandingSeoTab";
 import AdminFeatureOverridesTab from "@/components/admin/AdminFeatureOverridesTab";
+import AdminAnnouncementsTab from "@/components/admin/AdminAnnouncementsTab";
 import AdminQuickActions from "@/components/admin/AdminQuickActions";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
@@ -913,6 +914,10 @@ const Admin = () => {
                 <Crown className="h-4 w-4" />
                 <span className="hidden sm:inline">Features</span>
               </TabsTrigger>
+              <TabsTrigger value="announcements" className="gap-2 shrink-0">
+                <Phone className="h-4 w-4" />
+                <span className="hidden sm:inline">Announcements</span>
+              </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -1452,6 +1457,11 @@ const Admin = () => {
             {/* Features Tab */}
             <TabsContent value="features">
               <AdminFeatureOverridesTab />
+            </TabsContent>
+
+            {/* Announcements Tab */}
+            <TabsContent value="announcements">
+              <AdminAnnouncementsTab />
             </TabsContent>
           </Tabs>
         </div>
