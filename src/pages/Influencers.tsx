@@ -541,21 +541,28 @@ const Influencers = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-1 py-12">
+      <main className="flex-1 py-6">
         <div className="container mx-auto px-4">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4">
-              Book Creators for Events
-            </h1>
-            <p className="text-xl text-muted-foreground">
+          <div className="mb-5">
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-2xl md:text-3xl font-heading font-bold">
+                Book Creators for Events
+              </h1>
+              {!loading && (
+                <Badge variant="secondary" className="text-xs">
+                  {filteredCreators.length} results
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
               Find verified creators available for live fan experiences at your location
             </p>
           </div>
 
           {/* Filters */}
-          <div className="bg-card rounded-xl border border-border p-6 mb-4 shadow-card">
-            <div className="grid md:grid-cols-4 gap-4">
+          <div className="bg-card rounded-xl border border-border p-4 mb-4 shadow-card">
+            <div className="grid md:grid-cols-4 gap-3">
               <div className="md:col-span-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -617,26 +624,20 @@ const Influencers = () => {
 
           {/* Advanced Filters Panel - Now FREE for everyone */}
           {showAdvancedFilters && (
-            <Card className="mb-8">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Advanced Filters</CardTitle>
-                  {hasActiveAdvancedFilters && (
-                    <Button variant="ghost" size="sm" onClick={clearAdvancedFilters} className="gap-2">
-                      <X className="h-4 w-4" />
-                      Clear Filters
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {/* LOCATION - Priority filter for event-based platform */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-semibold">Location</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Find creators near your venue
-                    </p>
+            <Card className="mb-4 p-4">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm font-semibold">Advanced Filters</span>
+                {hasActiveAdvancedFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearAdvancedFilters} className="gap-1 h-7 text-xs">
+                    <X className="h-3 w-3" />
+                    Clear
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-4">
+                {/* LOCATION */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Location</Label>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">Country</Label>
@@ -692,72 +693,39 @@ const Influencers = () => {
                         />
                       </div>
                     </div>
+                </div>
+
+                {/* Toggle filters - 2-column grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="flex items-center justify-between rounded-lg border p-3">
+                    <Label className="text-sm flex items-center gap-1.5">
+                      <Zap className="h-3.5 w-3.5 text-emerald-500" />
+                      Responds Fast
+                    </Label>
+                    <Switch checked={respondsFast} onCheckedChange={setRespondsFast} />
                   </div>
-
-                  <Separator />
-
-                  {/* Responds Fast Toggle */}
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label className="text-base font-semibold flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-emerald-500" />
-                        Responds Fast
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        Show only creators who typically respond within 24 hours
-                      </p>
-                    </div>
-                    <Switch
-                      checked={respondsFast}
-                      onCheckedChange={setRespondsFast}
-                    />
+                  <div className="flex items-center justify-between rounded-lg border p-3">
+                    <Label className="text-sm flex items-center gap-1.5">
+                      <Star className="h-3.5 w-3.5 text-primary" />
+                      Top Rated
+                    </Label>
+                    <Switch checked={topRated} onCheckedChange={setTopRated} />
                   </div>
-
-                  <Separator />
-
-                  {/* Top Rated Toggle */}
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label className="text-base font-semibold flex items-center gap-2">
-                        <Star className="h-4 w-4 text-primary" />
-                        Top Rated
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        Show only creators rated 4.0+ with at least 3 reviews
-                      </p>
-                    </div>
-                    <Switch
-                      checked={topRated}
-                      onCheckedChange={setTopRated}
-                    />
+                  <div className="flex items-center justify-between rounded-lg border p-3">
+                    <Label className="text-sm flex items-center gap-1.5">
+                      <Gift className="h-3.5 w-3.5 text-green-500" />
+                      Free Invites
+                    </Label>
+                    <Switch checked={openToFreeInvites} onCheckedChange={setOpenToFreeInvites} />
                   </div>
+                </div>
 
-                  <Separator />
-
-                  {/* Open to Free Invites Toggle */}
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label className="text-base font-semibold flex items-center gap-2">
-                        <Gift className="h-4 w-4 text-green-500" />
-                        Open to Free Invites
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        Show only creators accepting product-only or experience-based deals
-                      </p>
-                    </div>
-                    <Switch
-                      checked={openToFreeInvites}
-                      onCheckedChange={setOpenToFreeInvites}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  {/* Language */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-semibold">Language</Label>
+                {/* Language + Followers by Platform - same row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-semibold">Language</Label>
                     <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                      <SelectTrigger className="w-full md:w-[300px]">
+                      <SelectTrigger>
                         <SelectValue placeholder="Select language" />
                       </SelectTrigger>
                       <SelectContent>
@@ -768,25 +736,18 @@ const Influencers = () => {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  <Separator />
-
-                  {/* Platform-Specific Followers */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-semibold">Followers by Platform</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Filter creators by minimum followers on a specific platform
-                    </p>
-                    <div className="flex flex-col md:flex-row gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-semibold">Followers by Platform</Label>
+                    <div className="flex gap-2">
                       <Select value={followerPlatform} onValueChange={(value) => {
                         setFollowerPlatform(value);
                         if (value === "all") setMinPlatformFollowers("");
                       }}>
-                        <SelectTrigger className="w-full md:w-[200px]">
-                          <SelectValue placeholder="Select platform" />
+                        <SelectTrigger className="w-1/2">
+                          <SelectValue placeholder="Platform" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Platforms</SelectItem>
+                          <SelectItem value="all">All</SelectItem>
                           <SelectItem value="instagram">Instagram</SelectItem>
                           <SelectItem value="tiktok">TikTok</SelectItem>
                           <SelectItem value="youtube">YouTube</SelectItem>
@@ -796,23 +757,23 @@ const Influencers = () => {
                       </Select>
                       <Input
                         type="number"
-                        placeholder="Min followers (e.g., 10000)"
+                        placeholder="Min followers"
                         value={minPlatformFollowers}
                         onChange={(e) => setMinPlatformFollowers(e.target.value)}
                         disabled={followerPlatform === "all"}
-                        className="w-full md:w-[200px]"
+                        className="w-1/2"
                       />
                     </div>
                   </div>
+                </div>
 
-                  <Separator />
-
-                  {/* Age Range - Demoted */}
-                  <div className="space-y-3">
+                {/* Age Range + Gender - same row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <Label className="text-base font-semibold">Age Range</Label>
-                      <span className="text-sm text-muted-foreground">
-                        {ageRange[0]} - {ageRange[1]}+ years
+                      <Label className="text-sm font-semibold">Age Range</Label>
+                      <span className="text-xs text-muted-foreground">
+                        {ageRange[0]} - {ageRange[1]}+
                       </span>
                     </div>
                     <Slider
@@ -824,15 +785,11 @@ const Influencers = () => {
                       className="w-full"
                     />
                   </div>
-
-                  <Separator />
-
-                  {/* Gender - Demoted */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-semibold">Gender</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-semibold">Gender</Label>
+                    <div className="flex flex-wrap gap-3">
                       {GENDERS.map((gender) => (
-                        <div key={gender} className="flex items-center space-x-2">
+                        <div key={gender} className="flex items-center space-x-1.5">
                           <Checkbox
                             id={`gender-${gender}`}
                             checked={selectedGenders.includes(gender)}
@@ -844,7 +801,7 @@ const Influencers = () => {
                               }
                             }}
                           />
-                          <label htmlFor={`gender-${gender}`} className="text-sm cursor-pointer">
+                          <label htmlFor={`gender-${gender}`} className="text-xs cursor-pointer">
                             {gender}
                           </label>
                         </div>
@@ -852,7 +809,7 @@ const Influencers = () => {
                     </div>
                   </div>
                 </div>
-              </CardContent>
+              </div>
             </Card>
           )}
 
@@ -887,13 +844,13 @@ const Influencers = () => {
 
           {/* Results */}
           {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
             </div>
           ) : filteredCreators.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-xl text-muted-foreground">No creators found matching your criteria</p>
-              <p className="text-sm text-muted-foreground mt-2">Try adjusting your filters</p>
+            <div className="text-center py-8">
+              <p className="text-lg text-muted-foreground">No creators found matching your criteria</p>
+              <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters</p>
             </div>
           ) : (
             <>
@@ -903,7 +860,7 @@ const Influencers = () => {
               </div>
 
               {/* Creator Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                 {filteredCreators.slice(0, 8).map(renderCreatorCard)}
 
                 {/* Inline Ad 1 - After first 8 cards */}
@@ -925,10 +882,20 @@ const Influencers = () => {
                 {filteredCreators.slice(16).map(renderCreatorCard)}
               </div>
 
-              <div className="text-center mt-8">
-                <p className="text-muted-foreground">
+              <div className="text-center mt-6">
+                <p className="text-sm text-muted-foreground">
                   Showing {filteredCreators.length} creator{filteredCreators.length !== 1 ? "s" : ""}
                 </p>
+              </div>
+
+              {/* CTA Banner */}
+              <div className="mt-6 text-center p-4 rounded-lg bg-primary/5 border border-primary/10">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Can't find the right creator?
+                </p>
+                <Button size="sm" onClick={() => navigate('/brand-dashboard?tab=opportunities')}>
+                  Post an Opportunity
+                </Button>
               </div>
             </>
           )}
