@@ -135,7 +135,7 @@ const Footer = () => {
                 <ul className="space-y-2">
                   <li>
                     <Link to="/influencers" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                      Find Creators
+                      Find Influencers
                     </Link>
                   </li>
                   {hasBrandProfile && (
@@ -206,7 +206,7 @@ const Footer = () => {
                 <ul className="space-y-2">
                   <li>
                     <Link to="/influencers" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                      Find Creators
+                      Find Influencers
                     </Link>
                   </li>
                   <li>

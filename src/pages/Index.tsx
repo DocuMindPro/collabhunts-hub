@@ -148,7 +148,7 @@ const Index = () => {
             <div className="space-y-6">
               <AnimatedSection animation="fade-up">
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight">
-                  Find Your Creator{" "}
+                  Find Your Influencer{" "}
                   <RotatingText 
                     words={rotatingWords} 
                     className="bg-gradient-to-r from-primary to-yellow-500 bg-clip-text text-transparent" 
@@ -158,7 +158,7 @@ const Index = () => {
               
               <AnimatedSection animation="fade-up" delay={100}>
                 <p className="text-xl text-muted-foreground max-w-lg">
-                  Discover vetted creators for brand events, content, and collaborations. 
+                  Discover vetted influencers for brand events, content, and collaborations. 
                   Connect directly, negotiate your own terms — <span className="font-semibold text-primary">$0 platform fees, always.</span>
                 </p>
               </AnimatedSection>
@@ -197,7 +197,7 @@ const Index = () => {
                     <p className="text-3xl font-bold text-primary animate-glow-pulse">
                       <AnimatedCounter end={100} suffix="%" duration={1500} />
                     </p>
-                    <p className="text-sm text-muted-foreground">Vetted Creators</p>
+                    <p className="text-sm text-muted-foreground">Vetted Influencers</p>
                   </div>
                   <div className="text-center">
                     <p className="text-3xl font-bold text-primary animate-glow-pulse">
@@ -209,7 +209,7 @@ const Index = () => {
                     <p className="text-3xl font-bold text-primary animate-glow-pulse">
                       <AnimatedCounter end="VIP" isNumeric={false} />
                     </p>
-                    <p className="text-sm text-muted-foreground">Creator Options</p>
+                    <p className="text-sm text-muted-foreground">Influencer Options</p>
                   </div>
                 </div>
               </AnimatedSection>
