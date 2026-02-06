@@ -1,63 +1,123 @@
 
+# Admin Feature Toggle for Paid Features
 
-# Remove Debug Page & Create Professional Loading Screen
+## Overview
 
-## What Changes
+Add a new "Feature Overrides" tab to the Admin Dashboard that lets you manually activate or deactivate all paid features for any creator or brand, bypassing their subscription/payment status.
 
-1. **Remove the Debug page and button** -- Delete the debug route, the floating debug button, and clean up imports in `App.tsx`.
+## All Paid Features Identified
 
-2. **Redesign the pre-React loading screen in `index.html`** -- Replace the current hourglass + debug buttons with a creative, professional loading animation featuring a camera emoji (representing collaboration/content creation) with a spinning ring around it. Clean, branded, no debug buttons visible.
+**Creator Paid Features:**
+1. **VIP Badge** -- `verification_payment_status` (paid/unpaid), `verification_expires_at`
+2. **Profile Boost / Featuring** -- `is_featured`, `featuring_priority`, plus `creator_featuring` table records
+3. **Featured Badge** -- featuring type `featured_badge`
+4. **Homepage Spotlight** -- featuring type `homepage_spotlight`
+5. **Category Boost** -- featuring type `category_boost`
+6. **Auto Popup** -- featuring type `auto_popup`
 
-3. **Update `PageLoader.tsx`** -- Make the in-app React loading screen match the new branding with the same camera/collaboration theme.
+**Brand Paid Features:**
+1. **Subscription Plan** -- `brand_subscriptions` table (`none`, `basic`, `pro`, `premium`)
+2. **Verified Business Badge** -- `verification_payment_status` (paid/not_paid), `verification_expires_at`, `is_verified`
 
-4. **Clean up `NativeLoadingScreen.tsx`** -- Update to match the new loading design.
+## What Gets Built
+
+### 1. New Database Table: `admin_feature_overrides`
+
+A table to track admin-granted feature overrides separately from user payments. This way toggling features on/off from admin doesn't mess with the user's actual payment records.
+
+```text
+admin_feature_overrides
+- id (UUID, PK)
+- target_type (text: 'creator' | 'brand')
+- target_profile_id (UUID)
+- feature_key (text: e.g. 'vip_badge', 'featured_badge', 'subscription_pro', etc.)
+- is_enabled (boolean)
+- granted_by (UUID, admin user)
+- granted_at (timestamptz)
+- expires_at (timestamptz, nullable -- for time-limited grants)
+- notes (text, nullable)
+```
+
+### 2. New Admin Tab Component: `AdminFeatureOverridesTab.tsx`
+
+The UI will have:
+- **Search bar** to find a creator or brand by name/email
+- **Two sections**: Creator Features and Brand Features
+- When a user is selected, show a card with all their paid features as **toggle switches**:
+
+**For a Creator:**
+| Feature | Status | Toggle |
+|---------|--------|--------|
+| VIP Badge | Active (paid) | [ON/OFF] |
+| Featured Badge | Inactive | [ON/OFF] |
+| Homepage Spotlight | Inactive | [ON/OFF] |
+| Category Boost | Inactive | [ON/OFF] |
+| Auto Popup | Inactive | [ON/OFF] |
+
+**For a Brand:**
+| Feature | Status | Toggle |
+|---------|--------|--------|
+| Subscription Plan | None | [Select: none/basic/pro/premium] |
+| Verified Business Badge | Not Paid | [ON/OFF] |
+
+- Toggling ON directly updates the relevant database columns (e.g., sets `verification_payment_status = 'paid'`, `is_featured = true`, creates/updates subscription records)
+- Toggling OFF reverses those changes
+- Each toggle shows whether the feature was **paid by user** vs **admin-granted**
+
+### 3. Integration into Admin.tsx
+
+- Add a new tab "Features" with a crown/toggle icon in the tab list
+- Import and render `AdminFeatureOverridesTab` in the new `TabsContent`
 
 ## Technical Details
 
-### Files to modify:
+### Database Migration
+- Create `admin_feature_overrides` table with RLS (admin-only read/write)
+- Add policy: only users with `admin` role can CRUD
 
-**`src/App.tsx`**
-- Remove `import Debug from "./pages/Debug"`
-- Remove `import NativeDebugButton from "./components/NativeDebugButton"`
-- Remove the `<NativeDebugButton />` component from the render tree
-- Remove the `/debug` route from both `NativeAppRoutes` and `WebAppRoutes`
+### AdminFeatureOverridesTab.tsx Logic
 
-**`index.html`**
-- Replace the pre-React loader content: remove the hourglass emoji, "Show Debug Info" and "Test Bundle Fetch" buttons
-- New design: a camera emoji with a CSS-animated spinning ring around it, "CollabHunts" brand name, and a subtle "Preparing your experience..." tagline
-- Keep the error-handling scripts (they still serve a purpose for diagnosing failures), but hide the debug buttons -- they only appear if React fails to mount after 10 seconds
-- Clean, dark background with the brand orange accent color
+**Search flow:**
+1. User types a name/email
+2. Query both `creator_profiles` and `brand_profiles` for matches
+3. Display results as selectable cards
 
-**`src/components/PageLoader.tsx`**
-- Update with a camera emoji and branded styling to match the new loading screen
+**Creator feature toggles:**
+- **VIP Badge toggle**: Updates `creator_profiles.verification_payment_status` to `'paid'` or `'unpaid'`, sets/clears `verification_expires_at` (1 year from now when enabling)
+- **Boost toggles** (4 types): Inserts/deactivates records in `creator_featuring` table, updates `is_featured` and `featuring_priority` on `creator_profiles`
 
-**`src/components/NativeLoadingScreen.tsx`**
-- Update to use the camera theme consistently
+**Brand feature toggles:**
+- **Subscription plan selector**: Cancels existing active subscriptions via `brand_subscriptions` update, inserts new subscription with selected plan type and 1-year expiry
+- **Verified Badge toggle**: Updates `brand_profiles.verification_payment_status` to `'paid'`/`'not_paid'`, sets/clears `is_verified`, `verification_expires_at`
 
-### Files to delete:
-- `src/pages/Debug.tsx`
-- `src/components/NativeDebugButton.tsx`
+### Files to Create
+- `src/components/admin/AdminFeatureOverridesTab.tsx`
 
-### Loading Screen Design
+### Files to Modify
+- `src/pages/Admin.tsx` -- Add the new tab trigger and content
+- Database migration for `admin_feature_overrides` table
 
-```text
-+----------------------------------+
-|                                  |
-|                                  |
-|         [spinning ring]          |
-|           📸 (camera)            |
-|         [/spinning ring]         |
-|                                  |
-|          CollabHunts             |
-|   Preparing your experience...   |
-|                                  |
-|                                  |
-+----------------------------------+
+### New Migration SQL
+```sql
+CREATE TABLE public.admin_feature_overrides (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  target_type TEXT NOT NULL CHECK (target_type IN ('creator', 'brand')),
+  target_profile_id UUID NOT NULL,
+  feature_key TEXT NOT NULL,
+  is_enabled BOOLEAN NOT NULL DEFAULT true,
+  granted_by UUID REFERENCES auth.users(id),
+  granted_at TIMESTAMPTZ DEFAULT now(),
+  expires_at TIMESTAMPTZ,
+  notes TEXT,
+  UNIQUE(target_type, target_profile_id, feature_key)
+);
+
+ALTER TABLE public.admin_feature_overrides ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can manage feature overrides"
+ON public.admin_feature_overrides
+FOR ALL
+USING (
+  EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
+);
 ```
-
-- Dark branded background (#1a1a2e)
-- Spinning ring in brand orange (#F97316) with a gradient trail
-- Camera emoji centered inside the ring
-- Clean typography, no debug clutter
-- Debug info still available but only surfaces automatically if React fails to mount (as a fallback)
-
