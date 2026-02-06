@@ -22,7 +22,7 @@ const steps: BentoStep[] = [
     icon: Calendar,
     step: 2,
     title: "Connect Directly",
-    description: "Message creators, discuss terms, and finalize with an AI-drafted agreement. No middlemen involved.",
+    description: "Message creators, discuss terms, and finalize with an AI-drafted agreement. No middlemen, no fees, complete privacy.",
     size: "large"
   },
   {
