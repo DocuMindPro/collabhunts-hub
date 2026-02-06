@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, Phone, Mail, Globe, MapPin, Calendar, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Building2, Phone, Mail, Globe, MapPin, Calendar, CheckCircle2, AlertCircle, Loader2, Camera } from "lucide-react";
+import ProfileAvatar from "@/components/ProfileAvatar";
 import PhoneInput from "@/components/PhoneInput";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import BrandVerificationBadgeCard from "./BrandVerificationBadgeCard";
 
 interface BrandProfile {
   id: string;
+  user_id: string;
   company_name: string;
   industry: string | null;
   company_size: string | null;
@@ -18,6 +20,7 @@ interface BrandProfile {
   location_country: string | null;
   phone_number: string | null;
   phone_verified: boolean | null;
+  logo_url: string | null;
   created_at: string | null;
 }
 
@@ -33,6 +36,7 @@ const BrandAccountTab = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   useEffect(() => {
     fetchBrandProfile();
@@ -47,7 +51,7 @@ const BrandAccountTab = () => {
 
       const { data, error } = await supabase
         .from('brand_profiles')
-        .select('id, company_name, industry, company_size, website_url, location_country, phone_number, phone_verified, created_at')
+        .select('id, user_id, company_name, industry, company_size, website_url, location_country, phone_number, phone_verified, logo_url, created_at')
         .eq('user_id', user.id)
         .single();
 
@@ -143,8 +147,82 @@ const BrandAccountTab = () => {
     );
   }
 
+  const handleLogoUpload = async (file: File) => {
+    if (!brandProfile) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Logo must be under 5MB");
+      return;
+    }
+    setUploadingLogo(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${brandProfile.user_id}/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('brand-logos')
+        .upload(filePath, file);
+      if (uploadError) throw uploadError;
+      const { data: publicUrlData } = supabase.storage
+        .from('brand-logos')
+        .getPublicUrl(filePath);
+      const { error: updateError } = await supabase
+        .from('brand_profiles')
+        .update({ logo_url: publicUrlData.publicUrl })
+        .eq('id', brandProfile.id);
+      if (updateError) throw updateError;
+      toast.success("Logo updated!");
+      fetchBrandProfile();
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      toast.error("Failed to upload logo");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   return (
     <div className="space-y-4 max-w-3xl">
+      {/* Brand Logo Card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Camera className="h-4 w-4" />
+            Brand Logo
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <label className="cursor-pointer group relative">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleLogoUpload(file);
+                }}
+                disabled={uploadingLogo}
+              />
+              <ProfileAvatar
+                src={brandProfile?.logo_url}
+                fallbackName={brandProfile?.company_name || "B"}
+                className="h-16 w-16"
+              />
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                {uploadingLogo ? (
+                  <Loader2 className="h-5 w-5 text-white animate-spin" />
+                ) : (
+                  <Camera className="h-5 w-5 text-white" />
+                )}
+              </div>
+            </label>
+            <div>
+              <p className="text-sm font-medium">{brandProfile?.company_name}</p>
+              <p className="text-xs text-muted-foreground">Click the logo to change it</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Phone Verification Card - Priority */}
       <Card>
         <CardHeader className="pb-3">

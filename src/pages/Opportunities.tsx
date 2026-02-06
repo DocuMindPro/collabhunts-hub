@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Calendar, MapPin, Users, DollarSign, Clock, Search, Gift, Briefcase, Building2, AlertCircle, BarChart3 } from "lucide-react";
+import { Calendar, MapPin, Users, DollarSign, Clock, Search, Gift, Briefcase, AlertCircle, BarChart3 } from "lucide-react";
+import ProfileAvatar from "@/components/ProfileAvatar";
 import { EVENT_PACKAGES, PackageType } from "@/config/packages";
 import { FOLLOWER_RANGES, checkFollowerEligibility, formatFollowerRanges, formatFollowerCount, getCombinedRange } from "@/config/follower-ranges";
 import ApplyOpportunityDialog from "@/components/opportunities/ApplyOpportunityDialog";
@@ -366,14 +367,19 @@ const Opportunities = () => {
                   <Card key={opportunity.id} className="flex flex-col hover:shadow-md transition-shadow">
                     <CardHeader className="p-4 pb-2">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base truncate">{opportunity.title}</CardTitle>
-                          <CardDescription className="flex items-center gap-1 mt-0.5 text-xs">
-                            <Building2 className="h-3 w-3 shrink-0" />
-                            <span className="truncate">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <ProfileAvatar
+                            src={opportunity.brand_profiles?.logo_url}
+                            fallbackName={opportunity.brand_profiles?.company_name || "B"}
+                            className="h-7 w-7 shrink-0"
+                            fallbackClassName="text-[10px]"
+                          />
+                          <div className="min-w-0">
+                            <CardTitle className="text-base truncate">{opportunity.title}</CardTitle>
+                            <CardDescription className="truncate mt-0.5 text-xs">
                               {opportunity.brand_profiles?.venue_name || opportunity.brand_profiles?.company_name}
-                            </span>
-                          </CardDescription>
+                            </CardDescription>
+                          </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           {packageInfo && (
