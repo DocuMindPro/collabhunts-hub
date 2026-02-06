@@ -39,6 +39,7 @@ const CreateOpportunityDialog = ({
   const [submitting, setSubmitting] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [wantsFeatured, setWantsFeatured] = useState(false);
+  const [enforceFollowerRange, setEnforceFollowerRange] = useState(true);
   const [pendingOpportunityData, setPendingOpportunityData] = useState<any>(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -138,7 +139,7 @@ const CreateOpportunityDialog = ({
         : null,
       spots_available: parseInt(formData.spots_available) || 1,
       requirements: formData.requirements || null,
-      follower_ranges: formData.follower_ranges.length > 0 ? formData.follower_ranges : null,
+      follower_ranges: enforceFollowerRange && formData.follower_ranges.length > 0 ? formData.follower_ranges : null,
       location_city: formData.location_city || null,
       location_country: selectedCountryName || null,
     });
@@ -195,6 +196,7 @@ const CreateOpportunityDialog = ({
       });
       setPendingOpportunityData(null);
       setWantsFeatured(false);
+      setEnforceFollowerRange(true);
       onSuccess();
     }
 
@@ -509,9 +511,17 @@ const CreateOpportunityDialog = ({
               {submitting ? "Creating..." : "Continue to Payment"}
             </Button>
           </div>
-          <p className="text-xs text-center text-muted-foreground">
-            Only creators matching your selected criteria (location, follower range) will be able to apply.
-          </p>
+          <div className="flex items-center justify-between w-full p-2 border rounded-lg">
+            <div>
+              <p className="text-sm font-medium">Restrict by follower range</p>
+              <p className="text-xs text-muted-foreground">
+                {enforceFollowerRange
+                  ? "Only matching creators can apply"
+                  : "Any creator can apply regardless of follower count"}
+              </p>
+            </div>
+            <Switch checked={enforceFollowerRange} onCheckedChange={setEnforceFollowerRange} />
+          </div>
         </DialogFooter>
       </DialogContent>
 
