@@ -1,90 +1,73 @@
 
 
-# Add Repeated & Multiple Schedule Push Notifications
+# Fix Announcement Banner Save - Auth Session Issue
 
-## Overview
-Enhance the push notification scheduling system to support:
-1. **Repeated/recurring schedules** (e.g., daily, weekly, monthly)
-2. **Multiple scheduled dates** per notification (e.g., send the same notification on Feb 26, Mar 5, and Mar 12)
+## Root Cause
 
-## Database Changes
+The console shows `Auth state changed: INITIAL_SESSION undefined`, meaning the authentication session is not always properly established when the page loads. Combined with this, the CORS error on `auth-bridge` can intermittently prevent session initialization.
 
-Add columns to the `scheduled_push_notifications` table:
+When the user clicks "Save Banner Settings", if `auth.uid()` is null (no active session), the RLS policy silently filters out the upsert -- no error is thrown, but 0 rows are affected. The current code has a check for this, but the error message is generic and doesn't help the user recover.
 
-- `repeat_type` (text, nullable) -- Values: `none`, `daily`, `weekly`, `monthly`. Default `none`.
-- `repeat_end_date` (timestamptz, nullable) -- When the recurring schedule stops.
-- `parent_id` (uuid, nullable, FK to self) -- Links child occurrences back to a parent for repeated schedules.
+## Changes
 
-When a repeated notification is created, the initial row is the "parent" with the repeat settings. The cron job (or at creation time) generates child rows for each occurrence.
+### 1. `src/components/admin/AdminAnnouncementsTab.tsx`
 
-## UI Changes in `AdminAnnouncementsTab.tsx`
+- **Check auth session before saving**: Before attempting the upsert, verify the user has an active session. If not, show a clear error asking them to re-login.
+- **Switch from `upsert` to `update`**: Since these rows already exist in the database, use `.update()` with `.eq("key", key)` instead of `upsert`. This is simpler, more predictable, and avoids the INSERT+UPDATE RLS complexity.
+- **Add better error feedback**: Show specific error messages when save fails due to auth or permission issues.
 
-Update the "Schedule for Later" section to add:
-
-1. **Multiple Dates Mode**: A toggle or option to add multiple specific dates. Show a list of selected dates with an "Add Date" button and the ability to remove individual dates.
-
-2. **Repeat Mode**: A select dropdown for repeat frequency (`None`, `Daily`, `Weekly`, `Monthly`) and an optional end date picker for when the repetition stops.
-
-3. **Delivery radio group** becomes three options:
-   - Send Now
-   - Schedule for Later (single date/time)
-   - Schedule Multiple / Repeat
-
-When submitting with multiple dates, insert one row per date into `scheduled_push_notifications`. When submitting with repeat, insert the parent row with `repeat_type` and `repeat_end_date`, then generate child rows for each occurrence up to the end date.
-
-## Changes to `ScheduledNotificationsList.tsx`
-
-- Show repeat badge (e.g., "Repeats Weekly") on notifications that have a `repeat_type`.
-- Group child notifications under their parent, or show them flat with a "Recurring" indicator.
-- Cancelling a parent with repeat cancels all pending children too.
-
-## Files to Modify
-
-| File | Change |
-|------|--------|
-| Database migration | Add `repeat_type`, `repeat_end_date`, `parent_id` columns |
-| `src/components/admin/AdminAnnouncementsTab.tsx` | Add multiple dates UI, repeat frequency selector, updated submission logic |
-| `src/components/admin/ScheduledNotificationsList.tsx` | Show repeat badges, handle bulk cancel of recurring series |
-
-## Technical Details
-
-### Multiple dates insertion logic:
 ```typescript
-// For each selected date, create a scheduled notification
-for (const date of selectedDates) {
-  const scheduledAt = new Date(date);
-  scheduledAt.setHours(hours, minutes, 0, 0);
-  await supabase.from("scheduled_push_notifications").insert({
-    title, body, scheduled_at: scheduledAt.toISOString(),
-    created_by: user.id,
-  });
-}
+const saveBannerSettings = async () => {
+  setIsSavingBanner(true);
+  try {
+    // Verify auth session first
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error("You must be logged in to save settings. Please refresh and log in again.");
+      return;
+    }
+
+    const updates = [
+      { key: "announcement_enabled", value: bannerEnabled.toString() },
+      { key: "announcement_text", value: bannerText },
+      { key: "announcement_link", value: bannerLink },
+      { key: "announcement_style", value: bannerStyle },
+    ];
+
+    for (const { key, value } of updates) {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .update({ value, updated_at: new Date().toISOString() })
+        .eq("key", key)
+        .select();
+
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Save failed - you may not have admin permissions");
+      }
+    }
+
+    toast.success("Announcement banner settings saved!");
+  } catch (error: any) {
+    console.error("Error saving banner settings:", error);
+    toast.error(error.message || "Failed to save banner settings");
+  } finally {
+    setIsSavingBanner(false);
+  }
+};
 ```
 
-### Repeat schedule logic:
-```typescript
-// Generate occurrences from start date to end date
-const occurrences = generateOccurrences(startDate, endDate, repeatType);
-// Insert parent row
-const { data: parent } = await supabase.from("scheduled_push_notifications").insert({
-  title, body, scheduled_at: occurrences[0].toISOString(),
-  repeat_type: repeatType, repeat_end_date: endDate.toISOString(),
-  created_by: user.id,
-}).select().single();
-// Insert child rows
-for (const date of occurrences.slice(1)) {
-  await supabase.from("scheduled_push_notifications").insert({
-    title, body, scheduled_at: date.toISOString(),
-    parent_id: parent.id, created_by: user.id,
-  });
-}
-```
+### Key Differences from Current Code
 
-### Cancel recurring series:
-```typescript
-await supabase.from("scheduled_push_notifications")
-  .update({ status: "cancelled" })
-  .or(`id.eq.${parentId},parent_id.eq.${parentId}`)
-  .eq("status", "pending");
-```
+| Aspect | Current | Fixed |
+|--------|---------|-------|
+| Auth check | None | Verifies session before save |
+| DB operation | `upsert` with `onConflict` | `update` with `.eq("key", key)` |
+| Error message | Generic toast | Specific auth/permission messages |
+
+## Why This Fixes It
+
+1. **Auth check first**: Prevents silent failures when the session is expired or not initialized
+2. **`update` instead of `upsert`**: Avoids the complex INSERT+UPDATE RLS interaction. Since the announcement rows already exist in the database, a direct UPDATE is simpler and only needs the UPDATE RLS policy to pass
+3. **Better error handling**: Shows the actual error message so the user knows what went wrong
 
