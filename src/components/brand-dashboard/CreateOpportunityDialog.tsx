@@ -462,15 +462,18 @@ const CreateOpportunityDialog = ({
 
           {/* Follower Ranges */}
           <div className="space-y-2">
-            <div className="space-y-0.5">
+            <div className="flex items-center justify-between">
               <Label className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 Follower Range (Optional)
               </Label>
-              <p className="text-xs text-muted-foreground">
-                Leave all unchecked to accept all sizes.
-              </p>
+              <Switch checked={enforceFollowerRange} onCheckedChange={setEnforceFollowerRange} />
             </div>
+            <p className="text-xs text-muted-foreground">
+              {enforceFollowerRange
+                ? "Only matching creators can apply. Leave all unchecked to accept all sizes."
+                : "Any creator can apply regardless of follower count."}
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
               {FOLLOWER_RANGE_ORDER.map((rangeKey) => {
                 const range = FOLLOWER_RANGES[rangeKey];
@@ -510,17 +513,6 @@ const CreateOpportunityDialog = ({
             <Button onClick={handleSubmit} disabled={submitting} className="w-full sm:w-auto">
               {submitting ? "Creating..." : "Continue to Payment"}
             </Button>
-          </div>
-          <div className="flex items-center justify-between w-full p-2 border rounded-lg">
-            <div>
-              <p className="text-sm font-medium">Restrict by follower range</p>
-              <p className="text-xs text-muted-foreground">
-                {enforceFollowerRange
-                  ? "Only matching creators can apply"
-                  : "Any creator can apply regardless of follower count"}
-              </p>
-            </div>
-            <Switch checked={enforceFollowerRange} onCheckedChange={setEnforceFollowerRange} />
           </div>
         </DialogFooter>
       </DialogContent>
