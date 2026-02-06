@@ -502,6 +502,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "booking_offers_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "booking_offers_conversation_id_fkey"
             columns: ["conversation_id"]
             isOneToOne: false
@@ -627,6 +634,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_creator_profile_id_fkey"
             columns: ["creator_profile_id"]
             isOneToOne: false
@@ -645,6 +659,13 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -731,6 +752,13 @@ export type Database = {
             columns: ["brand_profile_id"]
             isOneToOne: false
             referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_opportunities_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -903,6 +931,13 @@ export type Database = {
             referencedRelation: "brand_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "brand_storage_usage_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: true
+            referencedRelation: "brand_profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       brand_subscriptions: {
@@ -951,6 +986,13 @@ export type Database = {
             columns: ["brand_profile_id"]
             isOneToOne: false
             referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_subscriptions_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1114,6 +1156,13 @@ export type Database = {
             referencedRelation: "brand_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "campaigns_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       content_folders: {
@@ -1150,6 +1199,13 @@ export type Database = {
             columns: ["brand_profile_id"]
             isOneToOne: false
             referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_folders_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
             referencedColumns: ["id"]
           },
           {
@@ -1244,6 +1300,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "content_library_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "content_library_creator_profile_id_fkey"
             columns: ["creator_profile_id"]
             isOneToOne: false
@@ -1287,6 +1350,13 @@ export type Database = {
             columns: ["brand_profile_id"]
             isOneToOne: false
             referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
             referencedColumns: ["id"]
           },
           {
@@ -1365,6 +1435,13 @@ export type Database = {
             columns: ["brand_profile_id"]
             isOneToOne: false
             referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_agreements_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
             referencedColumns: ["id"]
           },
           {
@@ -1465,6 +1542,13 @@ export type Database = {
             columns: ["brand_profile_id"]
             isOneToOne: false
             referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_notes_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
             referencedColumns: ["id"]
           },
           {
@@ -2077,6 +2161,13 @@ export type Database = {
             referencedRelation: "brand_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "events_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       franchise_countries: {
@@ -2298,6 +2389,13 @@ export type Database = {
             referencedRelation: "brand_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "mass_message_templates_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       mass_messages_log: {
@@ -2334,6 +2432,13 @@ export type Database = {
             columns: ["brand_profile_id"]
             isOneToOne: false
             referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mass_messages_log_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
             referencedColumns: ["id"]
           },
           {
@@ -2743,6 +2848,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reviews_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reviews_creator_profile_id_fkey"
             columns: ["creator_profile_id"]
             isOneToOne: false
@@ -2779,6 +2891,13 @@ export type Database = {
             columns: ["brand_profile_id"]
             isOneToOne: false
             referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_creators_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
             referencedColumns: ["id"]
           },
           {
@@ -2937,6 +3056,13 @@ export type Database = {
             referencedRelation: "brand_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "storage_purchases_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -2962,7 +3088,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      brand_profiles_public: {
+        Row: {
+          company_name: string | null
+          created_at: string | null
+          id: string | null
+          industry: string | null
+          is_verified: boolean | null
+          location_country: string | null
+          logo_url: string | null
+          venue_city: string | null
+          venue_name: string | null
+          venue_type: string | null
+          verification_status: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string | null
+          id?: string | null
+          industry?: string | null
+          is_verified?: boolean | null
+          location_country?: string | null
+          logo_url?: string | null
+          venue_city?: string | null
+          venue_name?: string | null
+          venue_type?: string | null
+          verification_status?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string | null
+          id?: string | null
+          industry?: string | null
+          is_verified?: boolean | null
+          location_country?: string | null
+          logo_url?: string | null
+          venue_city?: string | null
+          venue_name?: string | null
+          venue_type?: string | null
+          verification_status?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_campaign_auto_approval: {
