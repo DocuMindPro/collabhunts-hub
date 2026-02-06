@@ -6,9 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Bell, Megaphone, Send, Loader2, CheckCircle, XCircle, ExternalLink, X } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Bell, Megaphone, Send, Loader2, CheckCircle, XCircle, ExternalLink, X, CalendarIcon, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import ScheduledNotificationsList from "./ScheduledNotificationsList";
 
 const AdminAnnouncementsTab = () => {
   // Announcement banner states
@@ -22,8 +28,12 @@ const AdminAnnouncementsTab = () => {
   // Push notification states
   const [pushTitle, setPushTitle] = useState("");
   const [pushBody, setPushBody] = useState("");
+  const [sendMode, setSendMode] = useState<"now" | "schedule">("now");
+  const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
+  const [scheduleTime, setScheduleTime] = useState("12:00");
   const [isSendingPush, setIsSendingPush] = useState(false);
   const [pushResult, setPushResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [scheduledListKey, setScheduledListKey] = useState(0);
 
   useEffect(() => {
     fetchBannerSettings();
@@ -79,6 +89,60 @@ const AdminAnnouncementsTab = () => {
       return;
     }
 
+    if (sendMode === "schedule") {
+      if (!scheduleDate) {
+        toast.error("Please select a date for scheduling");
+        return;
+      }
+
+      setIsSendingPush(true);
+      setPushResult(null);
+
+      try {
+        const [hours, minutes] = scheduleTime.split(":").map(Number);
+        const scheduledAt = new Date(scheduleDate);
+        scheduledAt.setHours(hours, minutes, 0, 0);
+
+        if (scheduledAt <= new Date()) {
+          toast.error("Scheduled time must be in the future");
+          setIsSendingPush(false);
+          return;
+        }
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        const { error } = await supabase
+          .from("scheduled_push_notifications")
+          .insert({
+            title: pushTitle,
+            body: pushBody,
+            scheduled_at: scheduledAt.toISOString(),
+            created_by: user.id,
+          });
+
+        if (error) throw error;
+
+        setPushResult({
+          success: true,
+          message: `Notification scheduled for ${format(scheduledAt, "MMM d, yyyy 'at' h:mm a")}`,
+        });
+        toast.success("Notification scheduled!");
+        setPushTitle("");
+        setPushBody("");
+        setScheduleDate(undefined);
+        setScheduledListKey(prev => prev + 1);
+      } catch (error: any) {
+        console.error("Error scheduling push:", error);
+        setPushResult({ success: false, message: error.message || "Failed to schedule notification" });
+        toast.error(error.message || "Failed to schedule notification");
+      } finally {
+        setIsSendingPush(false);
+      }
+      return;
+    }
+
+    // Send Now mode
     setIsSendingPush(true);
     setPushResult(null);
 
@@ -240,7 +304,7 @@ const AdminAnnouncementsTab = () => {
             Push Notification to Creators
           </CardTitle>
           <CardDescription>
-            Send push notifications to all creators who have the mobile app installed.
+            Send push notifications to all creators who have the mobile app installed. Send immediately or schedule for later.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -265,17 +329,87 @@ const AdminAnnouncementsTab = () => {
             />
           </div>
 
+          {/* Send Mode Toggle */}
+          <div className="space-y-3">
+            <Label>Delivery</Label>
+            <RadioGroup
+              value={sendMode}
+              onValueChange={(v) => setSendMode(v as "now" | "schedule")}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="now" id="mode-now" />
+                <Label htmlFor="mode-now" className="font-normal cursor-pointer">Send Now</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="schedule" id="mode-schedule" />
+                <Label htmlFor="mode-schedule" className="font-normal cursor-pointer">Schedule for Later</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Schedule Date/Time Picker */}
+          {sendMode === "schedule" && (
+            <div className="grid sm:grid-cols-2 gap-4 p-4 rounded-lg border bg-muted/30">
+              <div className="space-y-2">
+                <Label>Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !scheduleDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {scheduleDate ? format(scheduleDate, "MMM d, yyyy") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={scheduleDate}
+                      onSelect={setScheduleDate}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="schedule-time">Time</Label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="schedule-time"
+                    type="time"
+                    value={scheduleTime}
+                    onChange={(e) => setScheduleTime(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           <Button
             onClick={sendPushToCreators}
-            disabled={isSendingPush || !pushTitle || !pushBody}
+            disabled={isSendingPush || !pushTitle || !pushBody || (sendMode === "schedule" && !scheduleDate)}
             className="gap-2"
           >
-            {isSendingPush ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Send to All Creators
+            {isSendingPush ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : sendMode === "schedule" ? (
+              <Clock className="h-4 w-4" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            {sendMode === "schedule" ? "Schedule Notification" : "Send to All Creators"}
           </Button>
 
           {pushResult && (
-            <div className={`flex items-center gap-2 p-3 rounded-lg ${pushResult.success ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400" : "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"}`}>
+            <div className={`flex items-center gap-2 p-3 rounded-lg ${pushResult.success ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}>
               {pushResult.success ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
               <span>{pushResult.message}</span>
             </div>
@@ -286,6 +420,9 @@ const AdminAnnouncementsTab = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Scheduled Notifications List */}
+      <ScheduledNotificationsList key={scheduledListKey} />
     </div>
   );
 };

@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.send-push-to-creators]
 verify_jwt = false
+
+[functions.process-scheduled-push]
+verify_jwt = false

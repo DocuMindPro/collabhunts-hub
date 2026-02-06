@@ -2945,6 +2945,42 @@ export type Database = {
           },
         ]
       }
+      scheduled_push_notifications: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          result: Json | null
+          scheduled_at: string
+          sent_at: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by: string
+          id?: string
+          result?: Json | null
+          scheduled_at: string
+          sent_at?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          result?: Json | null
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
       service_price_ranges: {
         Row: {
           created_at: string
