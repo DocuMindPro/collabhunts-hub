@@ -1,122 +1,88 @@
 
 
-# Add "Responds Fast" Badge, Rating Filter, and Fix VIP References
+# Make the /influencers Page More Compact and Polished
 
-## Overview
+## Problem
 
-Three changes needed:
-1. Replace "Filter by VIP" text in BentoGrid with proper wording (VIP is a paid tier, not a quality indicator)
-2. Create a "Responds Fast" badge that auto-applies to creators who respond within 24 hours
-3. Add "Responds Fast" and "Top Rated" filter toggles to the advanced filters panel
+The page header is oversized (text-4xl/5xl + text-xl subtitle), the filter card has excessive padding, the advanced filters panel is very tall and spacious, and there's no strong CTA near the results. Overall it feels spread out and lacks visual punch.
 
-## Database Changes
+## Changes in `src/pages/Influencers.tsx`
 
-### New columns on `creator_profiles`
+### 1. Compact Header with Inline Result Count
 
-Add two computed/cached columns to avoid expensive queries on every page load:
-
-```sql
-ALTER TABLE public.creator_profiles 
-  ADD COLUMN avg_response_minutes integer DEFAULT NULL,
-  ADD COLUMN average_rating numeric(3,2) DEFAULT NULL,
-  ADD COLUMN total_reviews integer DEFAULT 0;
-```
-
-- `avg_response_minutes`: Updated whenever a creator sends a reply in a conversation. Calculated as the average time (in minutes) between a brand's message and the creator's first reply across recent conversations.
-- `average_rating` and `total_reviews`: Cached from the reviews table (if exists) or set manually by admin for now.
-
-### Database function to calculate response time
-
-A trigger function on the `messages` table that, when a creator sends a message, calculates the time since the brand's last message in that conversation and updates `avg_response_minutes` on the creator's profile.
-
-## New Component: `RespondseFastBadge.tsx`
-
-A pill badge (matching the Collabstr "Responds Fast" reference screenshot) with a lightning bolt icon:
-
-```
-[Zap icon] Responds Fast
-```
-
-- Green/teal pill style similar to existing badges
-- Only shown when `avg_response_minutes <= 1440` (24 hours)
-- Displayed in the consolidated badge row on both `/influencers` cards and `CreatorSpotlight` cards
-
-## Changes to `src/pages/Influencers.tsx`
-
-### 1. Update interface and fetch query
-
-Add `avg_response_minutes`, `average_rating`, `total_reviews` to `CreatorWithDetails` interface and the Supabase select query.
-
-### 2. Add filter state variables
+Reduce heading from `text-4xl md:text-5xl` to `text-2xl md:text-3xl`, subtitle from `text-xl` to `text-sm`, and reduce `mb-8` to `mb-5`. Add result count badge inline with title.
 
 ```tsx
-const [respondsFast, setRespondsFast] = useState(false);
-const [topRated, setTopRated] = useState(false);
+<div className="mb-5">
+  <div className="flex items-center gap-3 mb-1">
+    <h1 className="text-2xl md:text-3xl font-heading font-bold">
+      Book Creators for Events
+    </h1>
+    {!loading && (
+      <Badge variant="secondary" className="text-xs">
+        {filteredCreators.length} results
+      </Badge>
+    )}
+  </div>
+  <p className="text-sm text-muted-foreground">
+    Find verified creators available for live fan experiences at your location
+  </p>
+</div>
 ```
 
-### 3. Add filter logic
+### 2. Compact Filter Bar
+
+- Reduce padding from `p-6` to `p-4`
+- Reduce gap from `gap-4` to `gap-3`
+- Keep `mb-4` as-is (already tight)
+
+### 3. Compact Advanced Filters Panel
+
+- Remove `CardHeader` and `CardTitle` -- use a simple flex row with "Advanced Filters" text and Clear button
+- Reduce `space-y-6` to `space-y-4` throughout
+- Use `grid grid-cols-1 md:grid-cols-2` for toggle filters (Responds Fast, Top Rated, Open to Free Invites side by side)
+- Group Language + Followers by Platform on one row
+- Group Age Range + Gender on one row
+- Remove individual `<Separator />` between each filter -- use lighter visual separation via grid gaps
+- Reduce overall padding from `p-6` to `p-4`
+- Change `mb-8` to `mb-4`
+
+### 4. Tighter Creator Grid
+
+- Reduce `py-12` on main to `py-6`
+- Reduce grid gap from `gap-4 md:gap-6` to `gap-3 md:gap-4`
+
+### 5. Add CTA Banner Below Grid
+
+After the results count at the bottom, add a compact CTA:
 
 ```tsx
-if (respondsFast) {
-  matchesAdvanced = matchesAdvanced && 
-    (creator.avg_response_minutes !== null && creator.avg_response_minutes <= 1440);
-}
-if (topRated) {
-  matchesAdvanced = matchesAdvanced && 
-    (creator.average_rating !== null && creator.average_rating >= 4.0 && creator.total_reviews >= 3);
-}
+<div className="mt-6 text-center p-4 rounded-lg bg-primary/5 border border-primary/10">
+  <p className="text-sm text-muted-foreground mb-2">
+    Can't find the right creator?
+  </p>
+  <Button size="sm" onClick={() => navigate('/brand-dashboard?tab=opportunities')}>
+    Post an Opportunity
+  </Button>
+</div>
 ```
 
-### 4. Add filter toggles to advanced filters panel
+### 6. Compact Empty State
 
-After the "Open to Free Invites" toggle, add two more toggles:
+Reduce `py-12` to `py-8` on empty/loading states.
 
-- **Responds Fast** (Zap icon): "Show only creators who typically respond within 24 hours"
-- **Top Rated** (Star icon): "Show only creators rated 4.0+ with at least 3 reviews"
+## Summary of Visual Impact
 
-### 5. Add RespondseFastBadge to card badge row
-
-In the consolidated top-left badge area, add:
-```tsx
-{creator.avg_response_minutes !== null && creator.avg_response_minutes <= 1440 && (
-  <RespondsFastBadge variant="pill" size="sm" showTooltip={false} />
-)}
-```
-
-### 6. Update `hasActiveAdvancedFilters` and `clearAdvancedFilters`
-
-Include `respondsFast` and `topRated` in both.
-
-## Changes to `src/components/home/BentoGrid.tsx`
-
-Update Step 1 description from:
-> "Filter by VIP status for premium talent."
-
-To:
-> "Filter by ratings and response time to find the best fit."
-
-## Changes to `src/components/home/CreatorSpotlight.tsx`
-
-Add `avg_response_minutes` to the fetch query and display the `RespondsFastBadge` in the badge row for qualifying creators.
-
-## Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/components/RespondsFastBadge.tsx` | New pill badge component (Zap icon + "Responds Fast") |
+- Header: ~40% shorter
+- Filter bar: ~20% shorter
+- Advanced filters: ~50% shorter (2-column layout for toggles)
+- Grid spacing: tighter
+- Added bottom CTA for brands who don't find a match
+- Overall page feels denser and more professional
 
 ## Files to Modify
 
 | File | Change |
-|------|---------|
-| `src/pages/Influencers.tsx` | Add filters, badge display, fetch new columns |
-| `src/components/home/BentoGrid.tsx` | Fix "Filter by VIP" text |
-| `src/components/home/CreatorSpotlight.tsx` | Add RespondseFastBadge to badge row |
-
-## Database Migration
-
-| Change | Details |
-|--------|---------|
-| Add columns to `creator_profiles` | `avg_response_minutes`, `average_rating`, `total_reviews` |
-| Create trigger function | Auto-calculate avg response time on new messages |
+|------|--------|
+| `src/pages/Influencers.tsx` | All changes above |
 
