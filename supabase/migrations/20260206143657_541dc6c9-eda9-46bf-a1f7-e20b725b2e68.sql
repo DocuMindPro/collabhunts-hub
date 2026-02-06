@@ -1,0 +1,1 @@
+ALTER TABLE public.brand_opportunities ADD COLUMN enforce_follower_range boolean NOT NULL DEFAULT true;

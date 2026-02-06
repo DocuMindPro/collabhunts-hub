@@ -358,8 +358,9 @@ const Opportunities = () => {
                   : null;
                 
                 // Check follower eligibility
-                const isEligible = checkFollowerEligibility(creatorMaxFollowers, opportunity.follower_ranges);
                 const hasFollowerRequirement = opportunity.follower_ranges && opportunity.follower_ranges.length > 0;
+                const enforceRange = (opportunity as any).enforce_follower_range !== false;
+                const isEligible = !enforceRange || checkFollowerEligibility(creatorMaxFollowers, opportunity.follower_ranges);
                 const combinedRange = getCombinedRange(opportunity.follower_ranges);
 
                 return (
@@ -466,7 +467,7 @@ const Opportunities = () => {
                       )}
 
                       {/* Eligibility Warning */}
-                      {!isEligible && hasFollowerRequirement && (
+                      {!isEligible && hasFollowerRequirement && enforceRange && (
                         <Alert variant="destructive" className="mb-4 py-2">
                           <AlertCircle className="h-4 w-4" />
                           <AlertDescription className="text-xs">
