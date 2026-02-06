@@ -1,77 +1,76 @@
 
 
-# Fix Creator Badges on Homepage Cards
+# Add Registration Fields to Brand Signup
 
-## Problem
+## Overview
 
-Badges aren't showing because the current logic requires `is_featured: true` for the Vetted badge, but both approved creators have `is_featured: false`. Per the badge system:
-- **Vetted** = all approved creators (free, automatic)
-- **VIP** = creators who paid for VIP status ($99/year)
-- **Featured** = creators who purchased a boost package ($29-$79/week)
+Add mandatory fields for first name, last name, position/title, and location address to the brand registration form.
 
-## Changes to `src/components/home/CreatorSpotlight.tsx`
+## Database Migration
 
-### 1. Fix Badge Logic
+Add 3 new columns to `brand_profiles`:
 
-Current (broken):
+```sql
+ALTER TABLE public.brand_profiles
+  ADD COLUMN first_name text,
+  ADD COLUMN last_name text,
+  ADD COLUMN contact_position text;
+```
+
+These are nullable at the DB level (existing rows won't have them), but the signup form will enforce them as required.
+
+## Form Changes in `src/pages/BrandSignup.tsx`
+
+### New State Variables
+Replace the single `fullName` field with:
+- `firstName` (mandatory)
+- `lastName` (mandatory)
+- `contactPosition` (mandatory) -- e.g. "Marketing Manager", "Owner", "CEO"
+- `venueAddress` (mandatory) -- uses existing `venue_address` column
+
+### New Validation Schemas
 ```typescript
-const isVip = (creator.featuring_priority || 0) >= 3;
-const isVetted = !isVip && creator.is_featured;
+const firstNameSchema = z.string().trim().min(2, "First name required").max(50);
+const lastNameSchema = z.string().trim().min(2, "Last name required").max(50);
+const positionSchema = z.string().trim().min(2, "Position required").max(100);
+const addressSchema = z.string().trim().min(5, "Address required").max(300);
 ```
 
-Updated:
-```typescript
-const isVip = creator.is_vip === true;
-const isFeatured = creator.is_featured === true;
-const isVetted = creator.status === 'approved'; // All approved = vetted
-```
+### Form UI Updates
 
-### 2. Fetch `is_vip` from Database
+Replace the current "Your Full Name" input with two side-by-side fields:
 
-Add `is_vip` to the select query:
-```typescript
-.select('id, display_name, profile_image_url, categories, is_featured, featuring_priority, is_vip')
-```
+| Field | Label | Placeholder | Required |
+|-------|-------|-------------|----------|
+| First Name | "First Name" | "John" | Yes |
+| Last Name | "Last Name" | "Doe" | Yes |
 
-Update the Creator interface to include `is_vip`.
+Add a new "Position / Title" field after the name fields:
 
-### 3. Show All Three Badge Types
+| Field | Label | Placeholder | Required |
+|-------|-------|-------------|----------|
+| Position | "Your Position / Title" | "e.g., Marketing Manager, Owner" | Yes |
 
-Display up to 3 badges on each card:
-- **Vetted** (green shield pill) -- shown on ALL cards since all approved creators are vetted
-- **Featured** (amber sparkles pill) -- shown when `is_featured` is true (paid boost)
-- **VIP** (gold crown pill) -- shown when `is_vip` is true (paid VIP subscription)
+Add a "Location Address" field in the Brand Information section (after Country):
 
-```tsx
-<div className="absolute top-2 left-2 flex flex-wrap items-center gap-1.5 z-10">
-  <VettedBadge variant="pill" size="sm" showTooltip={false} />
-  {isFeatured && <FeaturedBadge variant="pill" size="sm" />}
-  {isVip && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} />}
-</div>
-```
+| Field | Label | Placeholder | Required |
+|-------|-------|-------------|----------|
+| Address | "Business Address" | "e.g., Hamra Street, Beirut" | Yes |
 
-### 4. Create a Featured Badge Component (if not existing)
+### Submit Handler Updates
 
-New file `src/components/FeaturedBadge.tsx` -- a pill badge with amber Sparkles icon and "Featured" text, similar to the existing VettedBadge/VIPCreatorBadge pattern.
+- Validate new fields with zod schemas
+- Pass `full_name` to auth signup as `${firstName} ${lastName}`
+- Save to `brand_profiles`:
+  - `first_name: firstName`
+  - `last_name: lastName`
+  - `contact_position: contactPosition`
+  - `venue_address: venueAddress`
 
-### 5. Remove the Conditional Wrapper
+## Files to Change
 
-Currently badges only render if `(isVip || isVetted)`. Since all approved creators are vetted, always render the badge container.
-
----
-
-## Database Check
-
-Need to verify if `is_vip` column exists on `creator_profiles`. If not, we'll use `featuring_priority >= 3` as the VIP indicator (current convention) until a proper VIP subscription column is added.
-
-## Files to Create/Modify
-
-| File | Action | Description |
-|------|--------|-------------|
-| `src/components/FeaturedBadge.tsx` | CREATE | New Featured pill badge (amber Sparkles icon) |
-| `src/components/home/CreatorSpotlight.tsx` | MODIFY | Fix badge logic, always show Vetted, conditionally show Featured/VIP |
-
-## Result
-
-Every creator card will display at minimum the green "Vetted" pill badge. Creators with active boost packages show an additional "Featured" badge. VIP subscribers show the gold "VIP Creator" badge. All three can stack.
+| File | Action |
+|------|--------|
+| Database migration | Add `first_name`, `last_name`, `contact_position` columns |
+| `src/pages/BrandSignup.tsx` | Replace fullName with firstName/lastName, add position and address fields |
 
