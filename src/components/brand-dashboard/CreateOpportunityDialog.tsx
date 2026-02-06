@@ -496,7 +496,7 @@ const CreateOpportunityDialog = ({
                       htmlFor={`range-${rangeKey}`}
                       className="text-xs font-medium cursor-pointer leading-tight"
                     >
-                      {range.label}
+                      {range.label} ({range.description.replace(' followers', '')})
                     </label>
                   </div>
                 );
