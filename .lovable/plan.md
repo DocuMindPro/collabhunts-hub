@@ -1,36 +1,34 @@
 
 
-# Show Follower Counts in Range Checkboxes
+# Separate Follower Range Display from Enforcement
 
-## What's Wrong
-The follower range checkboxes only display the tier name (e.g., "Nano", "Micro") but not the actual follower counts (e.g., "1K - 10K"). The user wants the counts visible so brands know exactly what each tier means.
+## The Problem
+Currently, when the "enforce" toggle is off, `follower_ranges` is saved as `null` in the database. This means the opportunity card shows no follower info at all. The user wants:
+- **Always show** the selected follower tiers on the opportunity card (e.g., "Nano, Micro creators")
+- **Separately control** whether ineligible creators are blocked from applying
 
-## What's NOT Wrong
-The toggle behavior is already correct -- it controls whether the selected ranges are enforced or if any creator can apply. No logic changes needed.
+## Solution
+Add a new `enforce_follower_range` boolean column to the `brand_opportunities` table. Always save selected ranges, and use the boolean to control enforcement.
 
-## Change in `src/components/brand-dashboard/CreateOpportunityDialog.tsx`
+## Database Change
+Add column `enforce_follower_range` (boolean, default `true`) to `brand_opportunities`.
 
-Update the checkbox label (around line 498-499) to include the `range.description` alongside the `range.label`:
+## Code Changes
 
-**Before:**
-```
-Nano
-```
+### 1. `src/components/brand-dashboard/CreateOpportunityDialog.tsx`
+- **Line 142**: Always save `formData.follower_ranges` (not conditionally based on toggle)
+- Add `enforce_follower_range: enforceFollowerRange` to the saved data object
 
-**After:**
-```
-Nano (1K - 10K)
-```
+### 2. `src/pages/Opportunities.tsx`
+- Update the eligibility check: only block creators when `opportunity.enforce_follower_range` is `true`
+- Always show the follower range info on the card (remove the `hasFollowerRequirement` condition, or base it on ranges being non-empty)
+- Only show the "Not Eligible" warning and disabled button when `enforce_follower_range` is true AND creator doesn't match
 
-Specifically, change the label text from `{range.label}` to `{range.label} ({range.description.replace(' followers', '')})` to show:
-- Nano (1K - 10K)
-- Micro (10K - 50K)
-- Mid-tier (50K - 100K)
-- Macro (100K - 500K)
-- Mega (500K+)
+### Summary of Behavior
 
-## File to Modify
+| Ranges Selected | Enforce ON | Card Shows | Can Apply? |
+|----------------|------------|------------|------------|
+| Nano, Micro | Yes | "Nano, Micro creators" | Only if eligible |
+| Nano, Micro | No | "Nano, Micro creators" | Yes, anyone |
+| None selected | Either | Nothing | Yes, anyone |
 
-| File | Change |
-|------|--------|
-| `src/components/brand-dashboard/CreateOpportunityDialog.tsx` | Update checkbox label text to include follower count range |
