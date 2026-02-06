@@ -1,0 +1,103 @@
+import { useState, useEffect } from "react";
+import { X, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Capacitor } from "@capacitor/core";
+
+type BannerStyle = "info" | "warning" | "success" | "promo";
+
+const styleClasses: Record<BannerStyle, string> = {
+  info: "bg-primary/90 text-primary-foreground",
+  warning: "bg-amber-500 text-white",
+  success: "bg-emerald-600 text-white",
+  promo: "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white",
+};
+
+const AnnouncementBanner = () => {
+  const [enabled, setEnabled] = useState(false);
+  const [text, setText] = useState("");
+  const [link, setLink] = useState("");
+  const [style, setStyle] = useState<BannerStyle>("info");
+  const [dismissed, setDismissed] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Skip on native
+    if (Capacitor.isNativePlatform()) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchAnnouncement = async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("key, value")
+        .in("key", ["announcement_enabled", "announcement_text", "announcement_link", "announcement_style"]);
+
+      if (data) {
+        const settings: Record<string, string> = {};
+        data.forEach(item => { settings[item.key] = item.value || ""; });
+
+        const isEnabled = settings.announcement_enabled === "true";
+        const announcementText = settings.announcement_text || "";
+        const announcementLink = settings.announcement_link || "";
+        const announcementStyle = (settings.announcement_style || "info") as BannerStyle;
+
+        setEnabled(isEnabled);
+        setText(announcementText);
+        setLink(announcementLink);
+        setStyle(announcementStyle);
+
+        // Check if this specific announcement was dismissed
+        if (isEnabled && announcementText) {
+          const hash = btoa(announcementText).slice(0, 16);
+          const dismissedKey = `announcement_dismissed_${hash}`;
+          if (localStorage.getItem(dismissedKey) === "true") {
+            setDismissed(true);
+          }
+        }
+      }
+
+      setLoading(false);
+    };
+
+    fetchAnnouncement();
+  }, []);
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    const hash = btoa(text).slice(0, 16);
+    localStorage.setItem(`announcement_dismissed_${hash}`, "true");
+  };
+
+  if (loading || !enabled || !text || dismissed || Capacitor.isNativePlatform()) {
+    return null;
+  }
+
+  return (
+    <div className={`relative w-full py-2.5 px-4 text-center text-sm font-medium ${styleClasses[style]}`}>
+      <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
+        <span>{text}</span>
+        {link && (
+          <a
+            href={link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 underline underline-offset-2 hover:opacity-80 font-semibold"
+          >
+            Learn More
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        )}
+      </div>
+      <button
+        onClick={handleDismiss}
+        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-white/20 transition-colors"
+        aria-label="Dismiss announcement"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+};
+
+export default AnnouncementBanner;

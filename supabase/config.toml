@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.draft-agreement]
 verify_jwt = false
+
+[functions.send-push-to-creators]
+verify_jwt = false
