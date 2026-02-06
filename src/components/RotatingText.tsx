@@ -23,10 +23,11 @@ const RotatingText = ({ words, className = "" }: RotatingTextProps) => {
   }, [words.length]);
 
   return (
-    <span className={cn("inline-block relative", className)}>
+    <span className="inline-block relative">
       <span
         className={cn(
           "inline-block transition-all duration-500",
+          className,
           isAnimating 
             ? "opacity-0 translate-y-4" 
             : "opacity-100 translate-y-0"
