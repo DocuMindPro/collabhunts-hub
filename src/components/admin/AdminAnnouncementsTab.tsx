@@ -47,6 +47,13 @@ const AdminAnnouncementsTab = () => {
   const saveBannerSettings = async () => {
     setIsSavingBanner(true);
     try {
+      // Verify auth session first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("You must be logged in to save settings. Please refresh and log in again.");
+        return;
+      }
+
       const updates = [
         { key: "announcement_enabled", value: bannerEnabled.toString() },
         { key: "announcement_text", value: bannerText },
@@ -57,11 +64,10 @@ const AdminAnnouncementsTab = () => {
       for (const { key, value } of updates) {
         const { data, error } = await supabase
           .from("site_settings")
-          .upsert(
-            { key, value, category: "announcement", updated_at: new Date().toISOString() },
-            { onConflict: "key" }
-          )
+          .update({ value, updated_at: new Date().toISOString() })
+          .eq("key", key)
           .select();
+
         if (error) throw error;
         if (!data || data.length === 0) {
           throw new Error("Save failed - you may not have admin permissions");
@@ -71,7 +77,7 @@ const AdminAnnouncementsTab = () => {
       toast.success("Announcement banner settings saved!");
     } catch (error: any) {
       console.error("Error saving banner settings:", error);
-      toast.error("Failed to save banner settings");
+      toast.error(error.message || "Failed to save banner settings");
     } finally {
       setIsSavingBanner(false);
     }
