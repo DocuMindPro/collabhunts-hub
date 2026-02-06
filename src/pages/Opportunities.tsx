@@ -462,7 +462,7 @@ const Opportunities = () => {
                       {hasFollowerRequirement && (
                         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
                           <BarChart3 className="h-3 w-3 shrink-0" />
-                          <span>{formatFollowerRanges(opportunity.follower_ranges)}</span>
+                          <span>Min. {formatFollowerCount(combinedRange?.min || 0)} followers</span>
                         </div>
                       )}
 
