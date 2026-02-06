@@ -17,6 +17,7 @@ import PackageInquiryMessage, { isPackageInquiry } from "@/components/chat/Packa
 import OfferMessage, { isOfferMessage } from "@/components/chat/OfferMessage";
 import CounterOfferDialog from "@/components/chat/CounterOfferDialog";
 import { type NegotiationData } from "@/components/chat/NegotiationMessage";
+import { getMessagePreview } from "@/lib/message-preview";
 
 interface Conversation {
   id: string;
@@ -487,7 +488,7 @@ const BrandMessagesTab = () => {
                     </div>
                     <div className="flex items-center justify-between gap-2 mt-1">
                       <p className="text-sm text-muted-foreground truncate">
-                        {conv.last_message || "No messages yet"}
+                        {getMessagePreview(conv.last_message || "") || "No messages yet"}
                       </p>
                       {conv.unread_count && conv.unread_count > 0 && (
                         <span className="bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0">
