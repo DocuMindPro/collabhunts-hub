@@ -547,7 +547,7 @@ const Influencers = () => {
           <div className="mb-5">
             <div className="flex items-center gap-3 mb-1">
               <h1 className="text-2xl md:text-3xl font-heading font-bold">
-                Book Creators for Events
+                Book Influencers for Events
               </h1>
               {!loading && (
                 <Badge variant="secondary" className="text-xs">
@@ -556,7 +556,7 @@ const Influencers = () => {
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              Find verified creators available for live fan experiences at your location
+              Find verified influencers available for live fan experiences at your location
             </p>
           </div>
 
