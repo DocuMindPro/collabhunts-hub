@@ -13,20 +13,20 @@ interface IntentStepProps {
 const intents = [
   {
     id: "one-time",
-    label: "One-time campaign",
-    description: "I need creators for a specific campaign or launch",
+    label: "Book a one-time event",
+    description: "I'm looking for a creator for a specific event",
     icon: Megaphone,
   },
   {
     id: "ongoing",
-    label: "Ongoing content",
-    description: "I want to build long-term creator relationships",
+    label: "Recurring collaborations",
+    description: "I want to work with creators on a regular basis",
     icon: RefreshCw,
   },
   {
     id: "exploring",
     label: "Just exploring",
-    description: "I'm researching the platform and options",
+    description: "I'm browsing creators and packages available",
     icon: Search,
   },
 ];

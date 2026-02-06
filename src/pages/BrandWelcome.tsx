@@ -66,17 +66,17 @@ const BrandWelcome = () => {
     {
       icon: Search,
       title: "Browse Creators",
-      description: "Find creators who match your brand's vibe and audience",
+      description: "Discover creators by category, location, and availability",
     },
     {
       icon: Calendar,
-      title: "Book an Event",
-      description: "Select a package: Meet & Greet, Workshop, or Competition",
+      title: "Send an Inquiry",
+      description: "Choose a package and message the creator directly",
     },
     {
       icon: Users,
-      title: "Host & Earn",
-      description: "Attract new customers and create memorable experiences",
+      title: "Collaborate",
+      description: "Finalize details, sign an agreement, and host your event",
     },
   ];
 
@@ -95,9 +95,9 @@ const BrandWelcome = () => {
             Welcome to CollabHunts, {venueName}!
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            {categories.length > 0 
-              ? `Discover ${categories.slice(0, 2).join(" & ")} creators ready to host events at your venue`
-              : "Connect with talented creators and host unforgettable events"
+          {categories.length > 0 
+              ? `Discover ${categories.slice(0, 2).join(" & ")} creators ready to collaborate with your brand`
+              : "Connect with talented creators and grow your brand"
             }
           </p>
         </div>
