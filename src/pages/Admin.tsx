@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, Database, FlaskConical, Phone, X, Gavel, BookOpen, BadgeCheck, ImageIcon, MapPin, CalendarDays } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, Database, FlaskConical, Phone, X, Gavel, BookOpen, BadgeCheck, ImageIcon, MapPin, CalendarDays, Crown } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AdminTestingTab from "@/components/admin/AdminTestingTab";
 import AdminCreatorsTab from "@/components/admin/AdminCreatorsTab";
@@ -27,6 +27,7 @@ import AdminDisputesTab from "@/components/admin/AdminDisputesTab";
 import AdminPlatformManualTab from "@/components/admin/AdminPlatformManualTab";
 import AdminVerificationsTab from "@/components/admin/AdminVerificationsTab";
 import AdminBrandingSeoTab from "@/components/admin/AdminBrandingSeoTab";
+import AdminFeatureOverridesTab from "@/components/admin/AdminFeatureOverridesTab";
 import AdminQuickActions from "@/components/admin/AdminQuickActions";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
@@ -830,6 +831,10 @@ const Admin = () => {
                 <ImageIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Branding</span>
               </TabsTrigger>
+              <TabsTrigger value="features" className="gap-2 shrink-0">
+                <Crown className="h-4 w-4" />
+                <span className="hidden sm:inline">Features</span>
+              </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -1366,9 +1371,9 @@ const Admin = () => {
               <AdminBrandingSeoTab />
             </TabsContent>
 
-            {/* Branding Tab */}
-            <TabsContent value="branding">
-              <AdminBrandingSeoTab />
+            {/* Features Tab */}
+            <TabsContent value="features">
+              <AdminFeatureOverridesTab />
             </TabsContent>
           </Tabs>
         </div>

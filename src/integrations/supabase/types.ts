@@ -85,6 +85,42 @@ export type Database = {
           },
         ]
       }
+      admin_feature_overrides: {
+        Row: {
+          expires_at: string | null
+          feature_key: string
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          is_enabled: boolean
+          notes: string | null
+          target_profile_id: string
+          target_type: string
+        }
+        Insert: {
+          expires_at?: string | null
+          feature_key: string
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_enabled?: boolean
+          notes?: string | null
+          target_profile_id: string
+          target_type: string
+        }
+        Update: {
+          expires_at?: string | null
+          feature_key?: string
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_enabled?: boolean
+          notes?: string | null
+          target_profile_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       affiliate_earnings: {
         Row: {
           affiliate_amount_cents: number
