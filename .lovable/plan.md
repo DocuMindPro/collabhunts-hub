@@ -1,43 +1,36 @@
 
 
-# Remove Fixed Counts from Package Includes
+# Show Follower Counts in Range Checkboxes
 
-## Problem
-The "What's Included (Standard Package)" section in the Post Opportunity dialog shows deliverables with specific counts (e.g., "1 Instagram Reel", "1-2 hour venue visit", "3 hours at venue"). This contradicts the flexible deliverables policy where exact quantities are finalized in agreements.
+## What's Wrong
+The follower range checkboxes only display the tier name (e.g., "Nano", "Micro") but not the actual follower counts (e.g., "1K - 10K"). The user wants the counts visible so brands know exactly what each tier means.
 
-## Change: Update `includes` arrays in `src/config/packages.ts`
+## What's NOT Wrong
+The toggle behavior is already correct -- it controls whether the selected ranges are enforced or if any creator can apply. No logic changes needed.
 
-The `phases` sections were already updated to be count-free, but the `includes` arrays (which the opportunity dialog reads) were not. Here are the updates:
+## Change in `src/components/brand-dashboard/CreateOpportunityDialog.tsx`
 
-### Unbox and Review
-| Before | After |
-|--------|-------|
-| Product shipped to creator | Product shipped to creator |
-| 1 Instagram Reel or TikTok video | Social content (Reel, TikTok, or both) |
-| Honest review with product highlights | Honest review with product highlights |
-| Brand tagged in all posts | Brand tagged in all posts |
+Update the checkbox label (around line 498-499) to include the `range.description` alongside the `range.label`:
 
-### Social Boost
-| Before | After |
-|--------|-------|
-| 1-2 hour venue visit | Venue visit |
-| 1 Instagram Reel (permanent) | Social content (Reels, TikToks, or both) |
-| 1 TikTok video | Tag and location in all posts |
-| Tag and location in all posts | Honest review with CTA |
-| Honest review with CTA | *(remove duplicate line)* |
+**Before:**
+```
+Nano
+```
 
-### Meet and Greet
-| Before | After |
-|--------|-------|
-| 1-week pre-event promotion | Pre-event promotion |
-| 3 hours at venue | Creator appearance at venue |
-| Live fan interaction and photos | Live fan interaction and photos |
-| Recap video | Recap content (Reels, TikToks, or both) |
+**After:**
+```
+Nano (1K - 10K)
+```
+
+Specifically, change the label text from `{range.label}` to `{range.label} ({range.description.replace(' followers', '')})` to show:
+- Nano (1K - 10K)
+- Micro (10K - 50K)
+- Mid-tier (50K - 100K)
+- Macro (100K - 500K)
+- Mega (500K+)
 
 ## File to Modify
+
 | File | Change |
 |------|--------|
-| `src/config/packages.ts` | Update `includes` arrays for unbox_review, social_boost, and meet_greet |
-
-No UI component changes needed -- the dialog already reads from these arrays.
-
+| `src/components/brand-dashboard/CreateOpportunityDialog.tsx` | Update checkbox label text to include follower count range |
