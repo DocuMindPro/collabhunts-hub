@@ -1556,6 +1556,8 @@ export type Database = {
         Row: {
           allow_mass_messages: boolean | null
           availability_calendar: Json | null
+          average_rating: number | null
+          avg_response_minutes: number | null
           bio: string | null
           birth_date: string | null
           categories: string[] | null
@@ -1587,6 +1589,7 @@ export type Database = {
           status: string | null
           terms_accepted_at: string | null
           terms_version: string | null
+          total_reviews: number | null
           travel_radius_km: number | null
           updated_at: string | null
           user_id: string
@@ -1598,6 +1601,8 @@ export type Database = {
         Insert: {
           allow_mass_messages?: boolean | null
           availability_calendar?: Json | null
+          average_rating?: number | null
+          avg_response_minutes?: number | null
           bio?: string | null
           birth_date?: string | null
           categories?: string[] | null
@@ -1629,6 +1634,7 @@ export type Database = {
           status?: string | null
           terms_accepted_at?: string | null
           terms_version?: string | null
+          total_reviews?: number | null
           travel_radius_km?: number | null
           updated_at?: string | null
           user_id: string
@@ -1640,6 +1646,8 @@ export type Database = {
         Update: {
           allow_mass_messages?: boolean | null
           availability_calendar?: Json | null
+          average_rating?: number | null
+          avg_response_minutes?: number | null
           bio?: string | null
           birth_date?: string | null
           categories?: string[] | null
@@ -1671,6 +1679,7 @@ export type Database = {
           status?: string | null
           terms_accepted_at?: string | null
           terms_version?: string | null
+          total_reviews?: number | null
           travel_radius_km?: number | null
           updated_at?: string | null
           user_id?: string

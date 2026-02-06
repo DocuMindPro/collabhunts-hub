@@ -13,7 +13,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Search, Star, Instagram, Youtube, Play, Filter, X, ChevronDown, ChevronUp, Calendar, Gift, Sparkles } from "lucide-react";
+import { Search, Star, Instagram, Youtube, Play, Filter, X, ChevronDown, ChevronUp, Calendar, Gift, Sparkles, Zap } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -28,6 +28,7 @@ import LocationSelect from "@/components/LocationSelect";
 import VettedBadge from "@/components/VettedBadge";
 import VIPCreatorBadge from "@/components/VIPCreatorBadge";
 import FeaturedBadge from "@/components/FeaturedBadge";
+import RespondsFastBadge from "@/components/RespondsFastBadge";
 import { isPast } from "date-fns";
 
 interface CreatorWithDetails {
@@ -47,6 +48,9 @@ interface CreatorWithDetails {
   is_featured: boolean;
   verification_payment_status: string | null;
   verification_expires_at: string | null;
+  avg_response_minutes: number | null;
+  average_rating: number | null;
+  total_reviews: number | null;
   social_accounts: Array<{
     platform: string;
     username: string;
@@ -90,6 +94,8 @@ const Influencers = () => {
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [openToFreeInvites, setOpenToFreeInvites] = useState(false);
+  const [respondsFast, setRespondsFast] = useState(false);
+  const [topRated, setTopRated] = useState(false);
   
   // Other filters
   const [selectedLanguage, setSelectedLanguage] = useState("all");
@@ -231,6 +237,9 @@ const Influencers = () => {
           open_to_invitations,
           verification_payment_status,
           verification_expires_at,
+          avg_response_minutes,
+          average_rating,
+          total_reviews,
           creator_social_accounts(platform, username, follower_count),
           creator_services(service_type, price_cents)
         `)
@@ -268,6 +277,9 @@ const Influencers = () => {
         is_featured: featuredCreatorIds.has(creator.id),
         verification_payment_status: creator.verification_payment_status,
         verification_expires_at: creator.verification_expires_at,
+        avg_response_minutes: creator.avg_response_minutes,
+        average_rating: creator.average_rating ? Number(creator.average_rating) : null,
+        total_reviews: creator.total_reviews,
         social_accounts: creator.creator_social_accounts || [],
         services: creator.creator_services || []
       }));
@@ -304,7 +316,7 @@ const Influencers = () => {
   };
 
   const hasActiveAdvancedFilters = selectedCountry !== "all" || selectedState !== "" || 
-    selectedCity !== "" || openToFreeInvites || selectedLanguage !== "all" ||
+    selectedCity !== "" || openToFreeInvites || respondsFast || topRated || selectedLanguage !== "all" ||
     (followerPlatform !== "all" && minPlatformFollowers !== "") ||
     ageRange[0] > 18 || ageRange[1] < 65 || selectedGenders.length > 0;
 
@@ -313,6 +325,8 @@ const Influencers = () => {
     setSelectedState("");
     setSelectedCity("");
     setOpenToFreeInvites(false);
+    setRespondsFast(false);
+    setTopRated(false);
     setSelectedLanguage("all");
     setFollowerPlatform("all");
     setMinPlatformFollowers("");
@@ -348,6 +362,18 @@ const Influencers = () => {
       // Open to Free Invites filter
       if (openToFreeInvites) {
         matchesAdvanced = matchesAdvanced && creator.open_to_invitations === true;
+      }
+
+      // Responds Fast filter
+      if (respondsFast) {
+        matchesAdvanced = matchesAdvanced && 
+          (creator.avg_response_minutes !== null && creator.avg_response_minutes <= 1440);
+      }
+
+      // Top Rated filter
+      if (topRated) {
+        matchesAdvanced = matchesAdvanced && 
+          (creator.average_rating !== null && creator.average_rating >= 4.0 && (creator.total_reviews || 0) >= 3);
       }
 
       // Language filter
@@ -460,6 +486,9 @@ const Influencers = () => {
               <VettedBadge variant="pill" size="sm" showTooltip={false} />
               {creator.is_featured && <FeaturedBadge variant="pill" size="sm" showTooltip={false} />}
               {isCreatorVIP(creator) && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} />}
+              {creator.avg_response_minutes !== null && creator.avg_response_minutes <= 1440 && (
+                <RespondsFastBadge variant="pill" size="sm" showTooltip={false} />
+              )}
               {creator.open_to_invitations && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-500 rounded-full text-white text-xs font-semibold">
                   <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
@@ -471,7 +500,7 @@ const Influencers = () => {
             {/* Rating Badge - Top Right */}
             <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium">
               <Star className="h-3 w-3 fill-primary text-primary" />
-              <span>5.0</span>
+              <span>{creator.average_rating ? Number(creator.average_rating).toFixed(1) : "5.0"}</span>
             </div>
 
             {/* Creator Info - Bottom Overlay */}
@@ -663,6 +692,44 @@ const Influencers = () => {
                         />
                       </div>
                     </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Responds Fast Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base font-semibold flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-emerald-500" />
+                        Responds Fast
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Show only creators who typically respond within 24 hours
+                      </p>
+                    </div>
+                    <Switch
+                      checked={respondsFast}
+                      onCheckedChange={setRespondsFast}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  {/* Top Rated Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base font-semibold flex items-center gap-2">
+                        <Star className="h-4 w-4 text-primary" />
+                        Top Rated
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Show only creators rated 4.0+ with at least 3 reviews
+                      </p>
+                    </div>
+                    <Switch
+                      checked={topRated}
+                      onCheckedChange={setTopRated}
+                    />
                   </div>
 
                   <Separator />
