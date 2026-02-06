@@ -738,10 +738,13 @@ export type Database = {
           amenities: string[] | null
           company_name: string
           company_size: string | null
+          contact_position: string | null
           created_at: string | null
+          first_name: string | null
           id: string
           industry: string | null
           is_verified: boolean | null
+          last_name: string | null
           location_country: string | null
           logo_url: string | null
           marketing_intent: string | null
@@ -778,10 +781,13 @@ export type Database = {
           amenities?: string[] | null
           company_name: string
           company_size?: string | null
+          contact_position?: string | null
           created_at?: string | null
+          first_name?: string | null
           id?: string
           industry?: string | null
           is_verified?: boolean | null
+          last_name?: string | null
           location_country?: string | null
           logo_url?: string | null
           marketing_intent?: string | null
@@ -818,10 +824,13 @@ export type Database = {
           amenities?: string[] | null
           company_name?: string
           company_size?: string | null
+          contact_position?: string | null
           created_at?: string | null
+          first_name?: string | null
           id?: string
           industry?: string | null
           is_verified?: boolean | null
+          last_name?: string | null
           location_country?: string | null
           logo_url?: string | null
           marketing_intent?: string | null

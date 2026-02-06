@@ -24,6 +24,10 @@ import CountrySelect from "@/components/CountrySelect";
 const emailSchema = z.string().email("Invalid email address").max(255);
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters").max(100);
 const companyNameSchema = z.string().trim().min(2, "Company name must be at least 2 characters").max(200);
+const firstNameSchema = z.string().trim().min(2, "First name must be at least 2 characters").max(50);
+const lastNameSchema = z.string().trim().min(2, "Last name must be at least 2 characters").max(50);
+const positionSchema = z.string().trim().min(2, "Position is required").max(100);
+const addressSchema = z.string().trim().min(5, "Address must be at least 5 characters").max(300);
 const websiteSchema = z.string().url("Invalid URL").or(z.literal(""));
 const phoneSchema = z.string()
   .min(10, "Phone number must be at least 10 digits")
@@ -38,7 +42,10 @@ const BrandSignup = () => {
   const { requirePhone, loading: verificationLoading } = useVerificationSettings();
 
   // Form fields
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [contactPosition, setContactPosition] = useState("");
+  const [venueAddress, setVenueAddress] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -220,6 +227,10 @@ const BrandSignup = () => {
 
     try {
       // Validate inputs
+      firstNameSchema.parse(firstName);
+      lastNameSchema.parse(lastName);
+      positionSchema.parse(contactPosition);
+      addressSchema.parse(venueAddress);
       emailSchema.parse(email);
       passwordSchema.parse(password);
       companyNameSchema.parse(companyName);
@@ -235,7 +246,7 @@ const BrandSignup = () => {
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
-            full_name: fullName,
+            full_name: `${firstName} ${lastName}`,
             user_type: "brand"
           }
         }
@@ -250,6 +261,10 @@ const BrandSignup = () => {
         .insert({
           user_id: authData.user.id,
           company_name: companyName,
+          first_name: firstName,
+          last_name: lastName,
+          contact_position: contactPosition,
+          venue_address: venueAddress,
           website_url: websiteUrl || null,
           industry,
           company_size: companySize,
@@ -337,12 +352,40 @@ const BrandSignup = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      placeholder="John"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                      maxLength={50}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      placeholder="Doe"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                      maxLength={50}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Label htmlFor="fullName">Your Full Name</Label>
+                  <Label htmlFor="contactPosition">Your Position / Title</Label>
                   <Input
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    id="contactPosition"
+                    placeholder="e.g., Marketing Manager, Owner"
+                    value={contactPosition}
+                    onChange={(e) => setContactPosition(e.target.value)}
                     required
                     maxLength={100}
                     disabled={isLoading}
@@ -522,6 +565,19 @@ const BrandSignup = () => {
                         onChange={setLocationCountry}
                         disabled={isLoading}
                         placeholder="Select your country"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="venueAddress">Business Address</Label>
+                      <Input
+                        id="venueAddress"
+                        placeholder="e.g., Hamra Street, Beirut"
+                        value={venueAddress}
+                        onChange={(e) => setVenueAddress(e.target.value)}
+                        required
+                        maxLength={300}
+                        disabled={isLoading}
                       />
                     </div>
                   </div>
