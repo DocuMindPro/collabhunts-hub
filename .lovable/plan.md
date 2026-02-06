@@ -1,50 +1,42 @@
 
 
-# Fix: Feature Toggles Not Working (RLS Policy Issue)
+# Make Profile ID Visible to Everyone (Not Admin-Only)
 
-## Root Cause
+## What's Changing
 
-The `creator_featuring` table is missing RLS policies for admin access:
-- **No admin INSERT policy** -- admins can't create featuring records
-- **No UPDATE policy at all** -- nobody can deactivate featuring records
-- The existing INSERT policy only allows creators to insert their own records
+The creator profile ID with the copy button already exists in the code, but it's currently hidden behind an admin-only check. You want it visible to all visitors, similar to how TikTok shows user IDs publicly.
 
-This is why VIP Badge works (it updates `creator_profiles`, which has an admin UPDATE policy) but all other features fail silently -- the database rejects the writes due to RLS, the code doesn't properly catch the error, and the UI shows "Feature activated" even though nothing changed.
+## Changes
 
-## Fix
+### 1. CreatorProfile.tsx -- Remove admin-only restriction (2 places: mobile + desktop layouts)
 
-### 1. Database Migration -- Add missing RLS policies
+- **Mobile layout (line 582)**: Remove the `{isAdmin && (` wrapper so the ID + copy button is always shown
+- **Desktop layout (line 664)**: Same removal
 
-Add three policies to `creator_featuring`:
+The ID display will show a truncated ID like `ID: 7cd60651...` with a copy icon, visible to everyone.
 
-```sql
--- Allow admins to insert featuring records
-CREATE POLICY "Admins can insert featuring"
-ON public.creator_featuring FOR INSERT
-WITH CHECK (
-  EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
-);
+### 2. Brand Profile
 
--- Allow admins to update featuring records
-CREATE POLICY "Admins can update featuring"
-ON public.creator_featuring FOR UPDATE
-USING (
-  EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
-);
+Brands don't have a public profile page like creators do -- the Brand.tsx page is a general landing page. Brand IDs are already visible with copy buttons in the admin Feature Overrides search results, which is the primary place where brand IDs are needed. No changes needed here.
 
--- Allow admins to view all featuring records
-CREATE POLICY "Admins can view all featuring"
-ON public.creator_featuring FOR SELECT
-USING (
-  EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
-);
+### Technical Details
+
+Both mobile and desktop sections will change from:
+```tsx
+{isAdmin && (
+  <button onClick={...}>
+    <span>ID: {creator.id.slice(0, 8)}...</span>
+    <Copy />
+  </button>
+)}
+```
+To simply:
+```tsx
+<button onClick={...}>
+  <span>ID: {creator.id.slice(0, 8)}...</span>
+  <Copy />
+</button>
 ```
 
-### 2. Code Fix -- Add error handling in `AdminFeatureOverridesTab.tsx`
-
-Update the `toggleCreatorFeature` function to properly check for errors on each database operation (insert/update) so failures are reported instead of showing a false success toast.
-
 ### Files to Modify
-- Database migration (new) -- add admin RLS policies to `creator_featuring`
-- `src/components/admin/AdminFeatureOverridesTab.tsx` -- add error checking after each Supabase call
-
+- `src/pages/CreatorProfile.tsx` -- Remove `isAdmin` guard from ID display in both mobile and desktop layouts
