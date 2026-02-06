@@ -1,50 +1,49 @@
 
-# Compact and Beautiful Opportunities Page Redesign
+# Add Brand Logo to Signup and Opportunity Cards
 
-## Problems with Current Design
-- Cards are too tall with excessive padding (p-6 headers, p-6 content)
-- Description text takes up unnecessary space showing deliverable lists
-- Details section has too much vertical spacing
-- Package badge on a separate line adds height
-- The overall card density is poor -- too much whitespace
+## What Changes
 
-## Changes to `src/pages/Opportunities.tsx`
+1. **Brand Signup form** -- Add a mandatory logo upload field in the "Brand Information" section
+2. **Brand Account tab** -- Add logo display and change option so brands can update it later
+3. **Opportunities page** -- Show the brand's logo as a small round avatar next to the company name on each card
 
-### 1. Reduce Card Padding
-- CardHeader: change from default `p-6` to `p-4 pb-2`
-- CardContent: change from default `p-6 pt-0` to `px-4 pb-4 pt-0`
+## How It Works
 
-### 2. Compact Header Row
-- Move the package type badge inline with the paid/free badge in the header row (instead of a separate line in content)
-- Reduce title from `text-lg` to `text-base font-semibold`
+The `logo_url` column already exists in `brand_profiles` but is never populated. We will:
 
-### 3. Remove Description
-- Remove the description block entirely -- it shows raw deliverable lists which is noisy and not useful at the card level. The details (date, location, spots, budget) already convey what matters.
+1. Create a new storage bucket `brand-logos` (public) via SQL migration
+2. Add a logo upload input to the signup form that uploads to this bucket using Supabase Storage (simpler than the R2 edge function pattern, and consistent with the existing `profile-images` bucket)
+3. Save the resulting public URL to `brand_profiles.logo_url` during signup
+4. Display the logo on opportunity cards using the `ProfileAvatar` component
 
-### 4. Tighter Details Section
-- Reduce spacing from `space-y-2` to `space-y-1.5`
-- Use smaller icons: `h-3.5 w-3.5` instead of `h-4 w-4`
-- Use `text-xs` instead of `text-sm` for detail rows
-- Combine date and time into a single cleaner format
+## Database Change
 
-### 5. Inline Metadata Row
-- Combine spots left + budget into a single horizontal row with a separator dot instead of stacking vertically
-- Move follower requirement inline with other metadata
+Create storage bucket + RLS policies:
+```sql
+INSERT INTO storage.buckets (id, name, public) VALUES ('brand-logos', 'brand-logos', true);
 
-### 6. Slimmer Apply Button Area
-- Reduce button padding area: `pt-3` instead of `pt-4`
-- Use smaller button size: `h-9` instead of default
+CREATE POLICY "Anyone can view brand logos" ON storage.objects FOR SELECT USING (bucket_id = 'brand-logos');
+CREATE POLICY "Authenticated users can upload brand logos" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'brand-logos' AND auth.role() = 'authenticated');
+CREATE POLICY "Users can update their own brand logos" ON storage.objects FOR UPDATE USING (bucket_id = 'brand-logos' AND auth.uid()::text = (storage.foldername(name))[1]);
+CREATE POLICY "Users can delete their own brand logos" ON storage.objects FOR DELETE USING (bucket_id = 'brand-logos' AND auth.uid()::text = (storage.foldername(name))[1]);
+```
 
-### 7. Smaller Grid Gap
-- Reduce grid gap from `gap-4` to `gap-3`
+## Code Changes
 
-### 8. Compact Eligibility Warning
-- Make it a single-line inline text instead of a full Alert box
+### 1. `src/pages/BrandSignup.tsx`
+- Add state for `logoFile` and `logoPreview`
+- Add a circular logo upload area (click-to-upload) in the Brand Information section, before the company name field
+- Mark it as required -- disable the submit button if no logo is selected
+- On submit: upload file to `brand-logos/{userId}/{filename}`, get public URL, include `logo_url` in the brand_profiles insert
+
+### 2. `src/pages/Opportunities.tsx` (card header area, ~line 367-377)
+- Replace the `Building2` icon with a `ProfileAvatar` showing `opportunity.brand_profiles.logo_url`
+- The avatar will be small (h-7 w-7) and sit to the left of the title/company name
+- Falls back to company initial letter if no logo
+
+### 3. `src/components/brand-dashboard/BrandAccountTab.tsx`
+- Add a logo display/upload section so brands can view and update their logo after registration
 
 ## Visual Result
-Cards will be roughly 40% shorter, fitting more opportunities on screen with a cleaner, more modern look. Key info (title, brand, date, location, budget, spots) remains scannable at a glance.
 
-## File
-| File | Changes |
-|------|---------|
-| `src/pages/Opportunities.tsx` | Redesign card layout for compactness and visual polish |
+Each opportunity card will show a small round brand logo to the left of the title, making cards instantly recognizable and more professional. The signup form will have a prominent logo upload area ensuring every brand has a logo from day one.
