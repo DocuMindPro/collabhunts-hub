@@ -152,7 +152,7 @@ const Index = () => {
               <AnimatedSection animation="fade-up">
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight">
                   Find Your Creator{" "}
-                  <span className="bg-gradient-accent bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-primary to-yellow-500 bg-clip-text text-transparent">
                     <RotatingText words={rotatingWords} />
                   </span>
                 </h1>
