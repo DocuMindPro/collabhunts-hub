@@ -2951,6 +2951,9 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          parent_id: string | null
+          repeat_end_date: string | null
+          repeat_type: string | null
           result: Json | null
           scheduled_at: string
           sent_at: string | null
@@ -2962,6 +2965,9 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          parent_id?: string | null
+          repeat_end_date?: string | null
+          repeat_type?: string | null
           result?: Json | null
           scheduled_at: string
           sent_at?: string | null
@@ -2973,13 +2979,24 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          parent_id?: string | null
+          repeat_end_date?: string | null
+          repeat_type?: string | null
           result?: Json | null
           scheduled_at?: string
           sent_at?: string | null
           status?: string
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_push_notifications_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_push_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_price_ranges: {
         Row: {
