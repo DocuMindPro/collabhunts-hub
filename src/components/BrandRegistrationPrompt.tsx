@@ -1,15 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import { Building2, CheckCircle } from "lucide-react";
+import { Building2, CheckCircle, ArrowRight } from "lucide-react";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface BrandRegistrationPromptProps {
   open: boolean;
@@ -24,42 +22,64 @@ const BrandRegistrationPrompt = ({ open, onOpenChange }: BrandRegistrationPrompt
     navigate("/brand-signup");
   };
 
+  const benefits = [
+    "Free registration",
+    "Takes less than 2 minutes",
+    "Direct access to all influencers",
+  ];
+
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="sm:max-w-md">
-        <AlertDialogHeader className="text-center sm:text-center">
-          <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Building2 className="h-6 w-6 text-primary" />
+    <Dialog open={open} onOpenChange={() => {}}>
+      <DialogContent
+        className="sm:max-w-[425px] p-0 overflow-hidden gap-0 [&>button]:hidden"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        {/* Gradient accent line */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
+
+        <div className="p-8 flex flex-col items-center text-center space-y-6">
+          {/* Icon */}
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
+            <Building2 className="h-8 w-8 text-primary-foreground" />
           </div>
-          <AlertDialogTitle className="text-xl">Register Your Brand</AlertDialogTitle>
-          <AlertDialogDescription className="text-center space-y-4">
-            <p>
-              To browse and connect with creators, you need to register your brand first.
-            </p>
-            <div className="space-y-2 text-left">
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                <span>Free registration</span>
+
+          {/* Title */}
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="text-2xl font-bold tracking-tight">
+              Register Your Brand
+            </DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground">
+              Connect with top influencers and grow your business
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Benefits */}
+          <div className="flex flex-col gap-2.5 w-full">
+            {benefits.map((benefit) => (
+              <div
+                key={benefit}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-primary/5 border border-primary/10"
+              >
+                <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                <span className="text-sm font-medium">{benefit}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                <span>Takes less than 2 minutes</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                <span>Direct access to all creators</span>
-              </div>
-            </div>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="sm:justify-center gap-2">
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleRegister} className="bg-primary hover:bg-primary/90">
+            ))}
+          </div>
+
+          {/* CTA */}
+          <Button
+            onClick={handleRegister}
+            size="lg"
+            className="w-full h-12 text-base font-semibold gap-2"
+          >
             Register Now
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
