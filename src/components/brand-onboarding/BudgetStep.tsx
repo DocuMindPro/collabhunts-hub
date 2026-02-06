@@ -12,19 +12,19 @@ interface BudgetStepProps {
 }
 
 const budgetRanges = [
-  { id: "under-1k", label: "Under $1,000", description: "Small-scale campaigns" },
-  { id: "1k-5k", label: "$1,000 - $5,000", description: "Mid-sized campaigns" },
-  { id: "5k-10k", label: "$5,000 - $10,000", description: "Major campaigns" },
-  { id: "10k-plus", label: "$10,000+", description: "Enterprise-level" },
+  { id: "under-200", label: "Under $200", description: "Product reviews, small events" },
+  { id: "200-500", label: "$200 - $500", description: "Social boosts, meet & greets" },
+  { id: "500-1500", label: "$500 - $1,500", description: "Larger events, multi-day" },
+  { id: "1500-plus", label: "$1,500+", description: "Premium experiences" },
 ];
 
 const BudgetStep = ({ value, onChange, onNext, onBack, onSkip }: BudgetStepProps) => {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">What's your monthly budget?</h2>
+        <h2 className="text-2xl font-bold">What's your budget per event?</h2>
         <p className="text-muted-foreground">
-          We'll show you creators that fit your budget
+          This helps us recommend the right creators and packages
         </p>
       </div>
 
