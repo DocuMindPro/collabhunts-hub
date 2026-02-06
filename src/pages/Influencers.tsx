@@ -478,7 +478,7 @@ const Influencers = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             
             {/* All Badges - Top Left (Collabstr-style) */}
-            <div className="absolute top-3 left-3 right-12 flex flex-wrap items-center gap-1.5 z-10">
+            <div className="absolute top-3 left-3 right-14 flex flex-wrap items-center gap-1.5 z-10">
               <div className="flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
                 <PlatformIcon className="h-3.5 w-3.5" />
                 <span>{formatFollowers(mainPlatform.followers)}</span>

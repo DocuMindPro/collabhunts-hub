@@ -25,7 +25,7 @@ const FeaturedBadge = ({ className, size = "md", variant = "icon", showTooltip =
     const pillBadge = (
       <span 
         className={cn(
-          "inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full text-white text-xs font-semibold shadow-lg shrink-0",
+          "inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full text-white text-xs font-semibold shadow-lg shrink-0",
           className
         )}
       >

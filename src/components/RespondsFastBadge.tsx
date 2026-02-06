@@ -25,12 +25,12 @@ const RespondsFastBadge = ({ className, size = "md", variant = "icon", showToolt
     const pillBadge = (
       <span 
         className={cn(
-          "inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full text-white text-xs font-semibold shadow-lg shrink-0",
+          "inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full text-white text-xs font-semibold shadow-lg shrink-0",
           className
         )}
       >
         <Zap className={cn(iconSizeClasses[size], "text-white fill-white")} />
-        Responds Fast
+        Fast
       </span>
     );
 
