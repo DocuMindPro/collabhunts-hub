@@ -93,7 +93,7 @@ const CreatorSpotlight = () => {
         .select('id, display_name, profile_image_url, categories, is_featured, featuring_priority')
         .eq('status', 'approved')
         .order('featuring_priority', { ascending: false, nullsFirst: false })
-        .limit(16);
+        .limit(8);
 
       if (creatorError || !creatorData) {
         setLoading(false);
@@ -148,7 +148,7 @@ const CreatorSpotlight = () => {
           </p>
         </AnimatedSection>
 
-        <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4 lg:gap-6 mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5 lg:gap-6 mb-10">
           {creators.map((creator, index) => {
             const primarySocial = creator.socialAccounts[0];
             const PlatformIcon = primarySocial ? getPlatformIcon(primarySocial.platform) : Instagram;
@@ -165,9 +165,8 @@ const CreatorSpotlight = () => {
                   to={`/creator/${creator.id}`}
                   className="group block"
                 >
-                  <div className="relative rounded-lg md:rounded-xl overflow-hidden bg-card border border-border/50 transition-all duration-300 hover:shadow-hover hover:-translate-y-1">
-                    {/* Image */}
-                    <div className="aspect-square relative overflow-hidden">
+                  <div className="relative rounded-xl overflow-hidden bg-card border border-border/50 transition-all duration-300 hover:shadow-hover hover:-translate-y-1">
+                    <div className="aspect-[3/4] relative overflow-hidden">
                       {creator.profile_image_url ? (
                         <img
                           src={creator.profile_image_url}
@@ -177,30 +176,26 @@ const CreatorSpotlight = () => {
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                          <span className="text-xl md:text-3xl font-bold text-primary/50">
+                          <span className="text-3xl font-bold text-primary/50">
                             {creator.display_name.charAt(0)}
                           </span>
                         </div>
                       )}
                       
-                      {/* VIP/Vetted Badges - Scaled down on mobile */}
                       {(isVip || isVetted) && (
-                        <div className="absolute top-1 left-1 md:top-2 md:left-2 flex items-center gap-1">
-                          {isVetted && <VettedBadge variant="pill" size="sm" showTooltip={false} className="scale-75 md:scale-100 origin-top-left" />}
-                          {isVip && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} className="scale-75 md:scale-100 origin-top-left" />}
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5 z-10">
+                          {isVetted && <VettedBadge variant="pill" size="sm" showTooltip={false} />}
+                          {isVip && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} />}
                         </div>
                       )}
 
-                      {/* Gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                     </div>
 
-                    {/* Info - Compact on mobile */}
-                    <div className="absolute bottom-0 left-0 right-0 p-1.5 md:p-3 text-primary-foreground">
-                      <p className="font-semibold text-[10px] md:text-sm truncate">{creator.display_name}</p>
+                    <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 text-white">
+                      <p className="font-semibold text-sm md:text-base truncate">{creator.display_name}</p>
                       
-                      {/* Follower count - Hidden on mobile */}
-                      <div className="hidden md:flex items-center gap-2 text-xs opacity-80 mt-1">
+                      <div className="flex items-center gap-2 text-xs opacity-90 mt-1">
                         {primarySocial && primarySocial.follower_count ? (
                           <span className="flex items-center gap-1">
                             <PlatformIcon className="h-3 w-3" />
@@ -209,7 +204,9 @@ const CreatorSpotlight = () => {
                         ) : null}
                         
                         {creator.categories && creator.categories.length > 0 && (
-                          <span className="truncate">• {creator.categories[0]}</span>
+                          <span className="truncate">
+                            {primarySocial?.follower_count ? "· " : ""}{creator.categories[0]}
+                          </span>
                         )}
                       </div>
                     </div>
