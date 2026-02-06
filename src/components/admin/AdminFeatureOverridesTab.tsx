@@ -184,11 +184,10 @@ const AdminFeatureOverridesTab = () => {
         selected.data.verification_payment_status = enable ? "paid" : "unpaid";
         selected.data.verification_expires_at = enable ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() : null;
       } else {
-        if (enable) {
-          // Insert new featuring record
+      if (enable) {
           const now = new Date();
           const endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
-          await supabase.from("creator_featuring").insert({
+          const { error: insertErr } = await supabase.from("creator_featuring").insert({
             creator_profile_id: profileId,
             feature_type: key,
             is_active: true,
@@ -196,21 +195,21 @@ const AdminFeatureOverridesTab = () => {
             start_date: now.toISOString().split("T")[0],
             end_date: endDate.toISOString().split("T")[0],
           });
+          if (insertErr) throw insertErr;
 
-          // Update is_featured flag
-          await supabase
+          const { error: updateErr } = await supabase
             .from("creator_profiles")
             .update({ is_featured: true, featuring_priority: 10 })
             .eq("id", profileId);
+          if (updateErr) throw updateErr;
         } else {
-          // Deactivate featuring records of this type
-          await supabase
+          const { error: deactivateErr } = await supabase
             .from("creator_featuring")
             .update({ is_active: false })
             .eq("creator_profile_id", profileId)
             .eq("feature_type", key);
+          if (deactivateErr) throw deactivateErr;
 
-          // Check if any other featuring is still active
           const { data: remaining } = await supabase
             .from("creator_featuring")
             .select("id")
