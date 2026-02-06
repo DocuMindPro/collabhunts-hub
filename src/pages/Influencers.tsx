@@ -27,6 +27,7 @@ import CountrySelect from "@/components/CountrySelect";
 import LocationSelect from "@/components/LocationSelect";
 import VettedBadge from "@/components/VettedBadge";
 import VIPCreatorBadge from "@/components/VIPCreatorBadge";
+import FeaturedBadge from "@/components/FeaturedBadge";
 import { isPast } from "date-fns";
 
 interface CreatorWithDetails {
@@ -450,30 +451,22 @@ const Influencers = () => {
             {/* Overlay badges on image */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             
-            {/* Platform & Followers Badge - Top Left */}
-            <div className="absolute top-3 left-3 flex items-center gap-2">
+            {/* All Badges - Top Left (Collabstr-style) */}
+            <div className="absolute top-3 left-3 right-12 flex flex-wrap items-center gap-1.5 z-10">
               <div className="flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
                 <PlatformIcon className="h-3.5 w-3.5" />
                 <span>{formatFollowers(mainPlatform.followers)}</span>
               </div>
-              {/* Featured Badge */}
-              {creator.is_featured && (
-                <div className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-amber-500 to-orange-500 backdrop-blur-sm rounded-full text-white text-xs font-semibold shadow-lg">
-                  <Sparkles className="h-3 w-3" />
-                  <span>Featured</span>
-                </div>
+              <VettedBadge variant="pill" size="sm" showTooltip={false} />
+              {creator.is_featured && <FeaturedBadge variant="pill" size="sm" showTooltip={false} />}
+              {isCreatorVIP(creator) && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} />}
+              {creator.open_to_invitations && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-500 rounded-full text-white text-xs font-semibold">
+                  <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
+                  Free Invites
+                </span>
               )}
             </div>
-            
-            {/* Open to Invitations Banner */}
-            {creator.open_to_invitations && (
-              <div className="absolute bottom-[72px] left-0 z-10">
-                <div className="bg-green-500 text-white text-[11px] font-semibold px-4 py-1.5 rounded-r-full shadow-lg flex items-center gap-1.5">
-                  <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
-                  Open to Free Invites
-                </div>
-              </div>
-            )}
 
             {/* Rating Badge - Top Right */}
             <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium">
@@ -483,11 +476,6 @@ const Influencers = () => {
 
             {/* Creator Info - Bottom Overlay */}
             <div className="absolute bottom-0 left-0 right-0 p-4">
-              {/* Badge row - Collabstr style */}
-              <div className="flex items-center gap-1.5 mb-2">
-                <VettedBadge variant="pill" size="sm" showTooltip={false} />
-                {isCreatorVIP(creator) && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} />}
-              </div>
               <h3 className="font-heading font-semibold text-lg text-white line-clamp-1">
                 {creator.display_name}
               </h3>
