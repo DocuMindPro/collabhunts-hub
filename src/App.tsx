@@ -9,7 +9,6 @@ import CookieConsent from "./components/CookieConsent";
 import useSiteSettings from "./hooks/useSiteSettings";
 import PushNotificationProvider from "./components/PushNotificationProvider";
 import NativeErrorBoundary from "./components/NativeErrorBoundary";
-import NativeDebugButton from "./components/NativeDebugButton";
 import NativeAppGate from "./components/NativeAppGate";
 
 // Eager load all pages for native compatibility
@@ -38,7 +37,6 @@ import KnowledgeBaseArticle from "./pages/KnowledgeBaseArticle";
 import WhatsNew from "./pages/WhatsNew";
 import Changelog from "./pages/Changelog";
 import Download from "./pages/Download";
-import Debug from "./pages/Debug";
 import NotFound from "./pages/NotFound";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
@@ -76,8 +74,6 @@ const NativeAppRoutes = () => (
       {/* Creator profile viewing */}
       <Route path="/creator/:id" element={<CreatorProfile />} />
       
-      {/* Debug route for troubleshooting */}
-      <Route path="/debug" element={<Debug />} />
       
       {/* Catch all - redirect to dashboard */}
       <Route path="*" element={<Navigate to="/creator-dashboard" replace />} />
@@ -180,7 +176,6 @@ const WebAppRoutes = () => (
       } 
     />
     <Route path="/download" element={<Download />} />
-    <Route path="/debug" element={<Debug />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
@@ -193,7 +188,6 @@ const App = () => (
           <Toaster />
           <Sonner />
           <Router>
-            <NativeDebugButton />
             <PushNotificationProvider>
               <PageTransition>
                 {isNativePlatform ? <NativeAppRoutes /> : <WebAppRoutes />}
