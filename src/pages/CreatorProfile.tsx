@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Star, Instagram, Youtube, Twitter, Play, Image as ImageIcon, Images, MessageCircle, Heart } from "lucide-react";
+import { MapPin, Star, Instagram, Youtube, Twitter, Play, Image as ImageIcon, Images, MessageCircle, Heart, Copy } from "lucide-react";
 import { useSaveCreator } from "@/hooks/useSaveCreator";
 import BookingDialog from "@/components/BookingDialog";
 import MessageDialog from "@/components/MessageDialog";
@@ -579,6 +579,15 @@ const CreatorProfile = () => {
                   <h1 className="text-2xl font-heading font-bold">
                     {creator.display_name}
                   </h1>
+                  {isAdmin && (
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(creator.id); toast({ title: "ID copied" }); }}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <span className="font-mono">ID: {creator.id.slice(0, 8)}...</span>
+                      <Copy className="h-3 w-3" />
+                    </button>
+                  )}
                   <div className="flex items-center gap-1 bg-primary/10 px-2.5 py-1 rounded-full">
                     <Star className="h-4 w-4 fill-primary text-primary" />
                     <span className="font-semibold text-sm">{creator.avgRating.toFixed(1)}</span>
@@ -652,6 +661,15 @@ const CreatorProfile = () => {
                     <h1 className="text-2xl font-heading font-bold">
                       {creator.display_name}
                     </h1>
+                    {isAdmin && (
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(creator.id); toast({ title: "ID copied" }); }}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <span className="font-mono">ID: {creator.id.slice(0, 8)}...</span>
+                        <Copy className="h-3 w-3" />
+                      </button>
+                    )}
                     <div className="flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded-full">
                       <Star className="h-3.5 w-3.5 fill-primary text-primary" />
                       <span className="font-semibold text-sm">{creator.avgRating.toFixed(1)}</span>

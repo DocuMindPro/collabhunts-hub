@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Crown, BadgeCheck, Sparkles, Star, TrendingUp, Zap, Building2, Palette, Loader2 } from "lucide-react";
+import { Search, Crown, BadgeCheck, Sparkles, Star, TrendingUp, Zap, Building2, Palette, Loader2, Copy } from "lucide-react";
 import type { PlanType } from "@/config/plans";
 
 interface CreatorResult {
@@ -65,6 +65,13 @@ const AdminFeatureOverridesTab = () => {
   const [toggling, setToggling] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const isUUID = (str: string) => /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(str);
+
+  const copyId = (id: string) => {
+    navigator.clipboard.writeText(id);
+    toast({ title: "ID copied" });
+  };
+
   const handleSearch = async () => {
     if (!search.trim() || search.length < 2) return;
     setSearching(true);
@@ -72,19 +79,20 @@ const AdminFeatureOverridesTab = () => {
 
     try {
       const query = search.trim();
+      const isId = isUUID(query);
 
       // Search creators
       const { data: creators } = await supabase
         .from("creator_profiles")
         .select("id, user_id, display_name, verification_payment_status, verification_expires_at, is_featured, featuring_priority")
-        .or(`display_name.ilike.%${query}%`)
+        .or(isId ? `id.eq.${query},user_id.eq.${query}` : `display_name.ilike.%${query}%`)
         .limit(10);
 
       // Search brands
       const { data: brands } = await supabase
         .from("brand_profiles")
         .select("id, user_id, company_name, is_verified, verification_payment_status, verification_expires_at")
-        .or(`company_name.ilike.%${query}%`)
+        .or(isId ? `id.eq.${query},user_id.eq.${query}` : `company_name.ilike.%${query}%`)
         .limit(10);
 
       // Also search by email via profiles table
@@ -338,7 +346,7 @@ const AdminFeatureOverridesTab = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name or email..."
+                placeholder="Search by ID, name, or email..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -360,14 +368,19 @@ const AdminFeatureOverridesTab = () => {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {creatorResults.map((c) => (
-                      <Button
-                        key={c.id}
-                        variant={selected?.type === "creator" && selected.data.id === c.id ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => selectCreator(c)}
-                      >
-                        {c.display_name}
-                      </Button>
+                      <div key={c.id} className="flex items-center gap-1">
+                        <Button
+                          variant={selected?.type === "creator" && selected.data.id === c.id ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => selectCreator(c)}
+                        >
+                          {c.display_name}
+                          <span className="ml-1.5 font-mono text-[10px] opacity-60">{c.id.slice(0, 8)}</span>
+                        </Button>
+                        <button onClick={() => copyId(c.id)} className="p-1 hover:bg-muted rounded" title="Copy ID">
+                          <Copy className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -379,14 +392,19 @@ const AdminFeatureOverridesTab = () => {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {brandResults.map((b) => (
-                      <Button
-                        key={b.id}
-                        variant={selected?.type === "brand" && selected.data.id === b.id ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => selectBrand(b)}
-                      >
-                        {b.company_name}
-                      </Button>
+                      <div key={b.id} className="flex items-center gap-1">
+                        <Button
+                          variant={selected?.type === "brand" && selected.data.id === b.id ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => selectBrand(b)}
+                        >
+                          {b.company_name}
+                          <span className="ml-1.5 font-mono text-[10px] opacity-60">{b.id.slice(0, 8)}</span>
+                        </Button>
+                        <button onClick={() => copyId(b.id)} className="p-1 hover:bg-muted rounded" title="Copy ID">
+                          <Copy className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
