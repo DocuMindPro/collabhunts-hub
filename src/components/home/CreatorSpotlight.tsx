@@ -7,6 +7,7 @@ import AnimatedSection from "@/components/AnimatedSection";
 import VettedBadge from "@/components/VettedBadge";
 import VIPCreatorBadge from "@/components/VIPCreatorBadge";
 import FeaturedBadge from "@/components/FeaturedBadge";
+import RespondsFastBadge from "@/components/RespondsFastBadge";
 import BrandRegistrationPrompt from "@/components/BrandRegistrationPrompt";
 import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 
@@ -18,6 +19,7 @@ interface Creator {
   is_featured: boolean | null;
   featuring_priority: number | null;
   status: string | null;
+  avg_response_minutes: number | null;
 }
 
 interface SocialAccount {
@@ -92,7 +94,7 @@ const CreatorSpotlight = () => {
       // Fetch creators
       const { data: creatorData, error: creatorError } = await supabase
         .from('creator_profiles')
-        .select('id, display_name, profile_image_url, categories, is_featured, featuring_priority, status')
+        .select('id, display_name, profile_image_url, categories, is_featured, featuring_priority, status, avg_response_minutes')
         .eq('status', 'approved')
         .order('featuring_priority', { ascending: false, nullsFirst: false })
         .limit(8);
@@ -157,6 +159,7 @@ const CreatorSpotlight = () => {
             const isVip = (creator.featuring_priority || 0) >= 3;
             const isFeatured = creator.is_featured === true;
             const isVetted = creator.status === 'approved';
+            const respondsFast = creator.avg_response_minutes !== null && creator.avg_response_minutes <= 1440;
 
             return (
               <AnimatedSection 
@@ -189,6 +192,7 @@ const CreatorSpotlight = () => {
                         {isVetted && <VettedBadge variant="pill" size="sm" showTooltip={false} />}
                         {isFeatured && <FeaturedBadge variant="pill" size="sm" showTooltip={false} />}
                         {isVip && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} />}
+                        {respondsFast && <RespondsFastBadge variant="pill" size="sm" showTooltip={false} />}
                       </div>
 
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />

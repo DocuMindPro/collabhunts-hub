@@ -15,7 +15,7 @@ const steps: BentoStep[] = [
     icon: Search,
     step: 1,
     title: "Discover Creators",
-    description: "Browse vetted creators by location, niche, and availability. Filter by VIP status for premium talent.",
+    description: "Browse vetted creators by location, niche, and availability. Filter by ratings and response time to find the best fit.",
     size: "small"
   },
   {
