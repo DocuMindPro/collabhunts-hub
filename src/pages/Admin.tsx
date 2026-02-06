@@ -1673,7 +1673,7 @@ const Admin = () => {
                     {selectedUser.brand_logo_url && (
                       <div>
                         <h4 className="font-medium text-muted-foreground mb-1">Logo</h4>
-                        <img src={selectedUser.brand_logo_url} alt="Logo" className="h-10 w-10 rounded object-cover" />
+                        <img src={selectedUser.brand_logo_url} alt="Logo" className="h-14 w-14 rounded-lg object-cover border" />
                       </div>
                     )}
                     <div>
