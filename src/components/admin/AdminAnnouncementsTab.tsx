@@ -67,13 +67,17 @@ const AdminAnnouncementsTab = () => {
       ];
 
       for (const { key, value } of updates) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("site_settings")
           .upsert(
-            { key, value, category: "announcement" },
+            { key, value, category: "announcement", updated_at: new Date().toISOString() },
             { onConflict: "key" }
-          );
+          )
+          .select();
         if (error) throw error;
+        if (!data || data.length === 0) {
+          throw new Error("Save failed - you may not have admin permissions");
+        }
       }
 
       toast.success("Announcement banner settings saved!");
