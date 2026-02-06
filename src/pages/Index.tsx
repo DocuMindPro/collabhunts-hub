@@ -115,9 +115,6 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const eventTypes = [
-    "Unbox & Review", "Social Boost", "Meet & Greet", "Brand Activation", "Custom Experience"
-  ];
 
   const rotatingWords = ["Zero Fees, Full Impact", "Your City, Your Creator", "Private. Direct. Done.", "Where Collabs Come Alive"];
 
@@ -193,29 +190,8 @@ const Index = () => {
                 </div>
               </AnimatedSection>
 
-              {/* Quick Event Types */}
-              <AnimatedSection animation="fade-up" delay={300}>
-                <div className="flex flex-wrap gap-2 stagger-fade-in">
-                  {eventTypes.map((eventType) => (
-                    <button
-                      key={eventType}
-                      onClick={() => {
-                        if (hasBrandProfile) {
-                          navigate(`/influencers?event_type=${eventType}`);
-                        } else {
-                          setShowRegistrationPrompt(true);
-                        }
-                      }}
-                      className="category-badge text-sm px-4 py-2 rounded-full bg-card border border-border/50 hover:border-primary hover:bg-primary/5 transition-all duration-300"
-                    >
-                      {eventType}
-                    </button>
-                  ))}
-                </div>
-              </AnimatedSection>
-
               {/* Animated Stats */}
-              <AnimatedSection animation="fade-up" delay={400}>
+              <AnimatedSection animation="fade-up" delay={300}>
                 <div className="flex items-center gap-8 pt-4">
                   <div className="text-center">
                     <p className="text-3xl font-bold text-primary animate-glow-pulse">
@@ -239,7 +215,7 @@ const Index = () => {
               </AnimatedSection>
 
               {/* Trust Banner */}
-              <AnimatedSection animation="fade-up" delay={500}>
+              <AnimatedSection animation="fade-up" delay={400}>
                 <div className="flex flex-wrap gap-3 pt-2">
                   <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10">
                     <BadgeDollarSign className="h-4 w-4 text-primary" />
