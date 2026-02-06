@@ -1,51 +1,50 @@
 
 
-# Add Profile IDs with Copy Button + Improve Admin Search
+# Fix: Feature Toggles Not Working (RLS Policy Issue)
 
-## Overview
-Add a visible profile ID with a copy button on both creator and brand profile pages (visible only to admins), and enhance the admin Feature Overrides search to support searching by ID, name, or email.
+## Root Cause
 
-## Changes
+The `creator_featuring` table is missing RLS policies for admin access:
+- **No admin INSERT policy** -- admins can't create featuring records
+- **No UPDATE policy at all** -- nobody can deactivate featuring records
+- The existing INSERT policy only allows creators to insert their own records
 
-### 1. Creator Profile Page (`src/pages/CreatorProfile.tsx`)
-- Add a small ID display below the creator name (visible only to admins)
-- Show truncated UUID with a copy-to-clipboard button
-- Format: `ID: 7cd60651...` with a small copy icon next to it
-- Only visible when `isAdmin` is true (already tracked in state)
+This is why VIP Badge works (it updates `creator_profiles`, which has an admin UPDATE policy) but all other features fail silently -- the database rejects the writes due to RLS, the code doesn't properly catch the error, and the UI shows "Feature activated" even though nothing changed.
 
-### 2. Admin Feature Overrides Search (`src/components/admin/AdminFeatureOverridesTab.tsx`)
-- Update placeholder text to: "Search by ID, name, or email..."
-- Add UUID search support: if search looks like a UUID, query `creator_profiles` and `brand_profiles` by `id` directly
-- Also add search by `user_id` for UUID-like queries
-- Show the profile ID next to each result button so admins can confirm they found the right one
+## Fix
 
-### 3. Brand Profile Visibility
-- Since the Brand.tsx page is a landing page (not a brand profile view), the brand ID will be shown in the admin Feature Overrides results instead
-- In the admin panel, each brand result button will show the brand ID with a copy button
+### 1. Database Migration -- Add missing RLS policies
 
-## Technical Details
+Add three policies to `creator_featuring`:
 
-### CreatorProfile.tsx Changes
-- After the display name (both mobile and desktop), add a conditional block:
-```tsx
-{isAdmin && (
-  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-    <span>ID: {creator.id.slice(0, 8)}...</span>
-    <button onClick={() => { navigator.clipboard.writeText(creator.id); toast({ title: "ID copied" }); }}>
-      <Copy className="h-3 w-3" />
-    </button>
-  </div>
-)}
+```sql
+-- Allow admins to insert featuring records
+CREATE POLICY "Admins can insert featuring"
+ON public.creator_featuring FOR INSERT
+WITH CHECK (
+  EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
+);
+
+-- Allow admins to update featuring records
+CREATE POLICY "Admins can update featuring"
+ON public.creator_featuring FOR UPDATE
+USING (
+  EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
+);
+
+-- Allow admins to view all featuring records
+CREATE POLICY "Admins can view all featuring"
+ON public.creator_featuring FOR SELECT
+USING (
+  EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
+);
 ```
 
-### AdminFeatureOverridesTab.tsx Changes
-- Update search placeholder
-- Detect UUID pattern in search query
-- If UUID-like, search by `id` column directly on both tables
-- Show profile ID (truncated) next to each result name
-- Add a small copy button next to each result's ID
+### 2. Code Fix -- Add error handling in `AdminFeatureOverridesTab.tsx`
+
+Update the `toggleCreatorFeature` function to properly check for errors on each database operation (insert/update) so failures are reported instead of showing a false success toast.
 
 ### Files to Modify
-- `src/pages/CreatorProfile.tsx` -- Add admin-only ID display with copy button
-- `src/components/admin/AdminFeatureOverridesTab.tsx` -- Update search to support ID, show IDs in results
+- Database migration (new) -- add admin RLS policies to `creator_featuring`
+- `src/components/admin/AdminFeatureOverridesTab.tsx` -- add error checking after each Supabase call
 
