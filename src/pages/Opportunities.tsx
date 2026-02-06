@@ -371,8 +371,8 @@ const Opportunities = () => {
                           <ProfileAvatar
                             src={opportunity.brand_profiles?.logo_url}
                             fallbackName={opportunity.brand_profiles?.company_name || "B"}
-                            className="h-7 w-7 shrink-0"
-                            fallbackClassName="text-[10px]"
+                            className="h-9 w-9 shrink-0"
+                            fallbackClassName="text-xs"
                           />
                           <div className="min-w-0">
                             <CardTitle className="text-base truncate">{opportunity.title}</CardTitle>
