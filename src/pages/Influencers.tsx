@@ -69,7 +69,7 @@ const isCreatorVIP = (creator: CreatorWithDetails) => {
   return !isPast(new Date(creator.verification_expires_at));
 };
 
-const GENDERS = ["Male", "Female", "Non-binary"];
+const GENDERS = ["Male", "Female"];
 const LANGUAGES = ["English", "Spanish", "French", "German", "Portuguese", "Arabic", "Hindi", "Chinese", "Japanese", "Korean"];
 
 const Influencers = () => {
