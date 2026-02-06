@@ -1,29 +1,34 @@
 
 
-# Upgrade Hero Rotating Slogans
+# Fix Invisible Rotating Slogans
 
-## What Changes
+## Problem
+The rotating slogans render in the DOM (the gradient underline is visible), but the text itself is invisible. The root cause is a CSS conflict: the custom `.gradient-accent` class sets `background` via shorthand, which gets overridden by or conflicts with Tailwind's `bg-clip-text` utility. The text is set to `text-transparent` but the gradient background isn't clipping to the text properly.
 
-Replace the current 4 rotating words beneath "Find Your Creator" with 4 punchier, more memorable slogans that reinforce the platform's core value props (zero fees, privacy, local creators, results).
+## Solution
+Replace the custom `bg-gradient-accent` class with an inline Tailwind gradient that works reliably with `bg-clip-text text-transparent`.
 
-## New Slogans
+## Change
 
-1. **"Zero Fees, Full Impact"** -- Immediately hits the $0 fee message with a power close
-2. **"Your City, Your Creator"** -- Emphasizes the local, in-person angle
-3. **"Private. Direct. Done."** -- Three punchy words capturing confidentiality + simplicity
-4. **"Where Collabs Come Alive"** -- Emotional hook tying to live events
-
-## Code Change
-
-**`src/pages/Index.tsx`** -- Update the `rotatingWords` array (~line 136):
+**`src/pages/Index.tsx`** (~line 148-150): Replace the gradient span wrapping `RotatingText`:
 
 ```tsx
 // Before
-const rotatingWords = ["Made Simple", "Zero Fees", "Near You", "That Convert"];
+<span className="bg-gradient-accent bg-clip-text text-transparent">
+  <RotatingText words={rotatingWords} />
+</span>
 
 // After
-const rotatingWords = ["Zero Fees, Full Impact", "Your City, Your Creator", "Private. Direct. Done.", "Where Collabs Come Alive"];
+<span className="bg-gradient-to-r from-primary to-yellow-500 bg-clip-text text-transparent">
+  <RotatingText words={rotatingWords} />
+</span>
 ```
 
-Single line change, no new files needed. The existing `RotatingText` component already handles the fade-in/fade-out animation and gradient underline.
+This uses Tailwind's native gradient utilities which are fully compatible with `bg-clip-text`. The colors (`from-primary to-yellow-500`) match the existing accent gradient (orange to gold).
+
+## Files
+
+| File | Action |
+|------|--------|
+| `src/pages/Index.tsx` | Fix gradient class on RotatingText wrapper |
 
