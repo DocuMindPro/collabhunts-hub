@@ -1,36 +1,43 @@
 
 
-# Move "Restrict by follower range" Toggle Inline with the Follower Range Label
+# Remove Fixed Counts from Package Includes
 
-## Current State
-The toggle sits at the bottom of the dialog footer, separated from the follower range section. It looks disconnected.
+## Problem
+The "What's Included (Standard Package)" section in the Post Opportunity dialog shows deliverables with specific counts (e.g., "1 Instagram Reel", "1-2 hour venue visit", "3 hours at venue"). This contradicts the flexible deliverables policy where exact quantities are finalized in agreements.
 
-## Proposed Change
-Move the toggle switch to sit inline with the "Follower Range (Optional)" label, right next to it. Remove it from the `DialogFooter` entirely.
+## Change: Update `includes` arrays in `src/config/packages.ts`
 
-### In `src/components/brand-dashboard/CreateOpportunityDialog.tsx`:
+The `phases` sections were already updated to be count-free, but the `includes` arrays (which the opportunity dialog reads) were not. Here are the updates:
 
-1. **Move the Switch next to the Follower Range label** -- replace the current label area with a row that has the label on the left and the Switch on the right, plus the dynamic description text below.
+### Unbox and Review
+| Before | After |
+|--------|-------|
+| Product shipped to creator | Product shipped to creator |
+| 1 Instagram Reel or TikTok video | Social content (Reel, TikTok, or both) |
+| Honest review with product highlights | Honest review with product highlights |
+| Brand tagged in all posts | Brand tagged in all posts |
 
-2. **Remove the toggle from DialogFooter** -- the footer goes back to just having the Cancel and Continue buttons.
+### Social Boost
+| Before | After |
+|--------|-------|
+| 1-2 hour venue visit | Venue visit |
+| 1 Instagram Reel (permanent) | Social content (Reels, TikToks, or both) |
+| 1 TikTok video | Tag and location in all posts |
+| Tag and location in all posts | Honest review with CTA |
+| Honest review with CTA | *(remove duplicate line)* |
 
-### Technical Details
+### Meet and Greet
+| Before | After |
+|--------|-------|
+| 1-week pre-event promotion | Pre-event promotion |
+| 3 hours at venue | Creator appearance at venue |
+| Live fan interaction and photos | Live fan interaction and photos |
+| Recap video | Recap content (Reels, TikToks, or both) |
 
-**Follower Range section label area (around line 459):** Replace the current label + helper text with:
-```tsx
-<div className="flex items-center justify-between">
-  <Label className="flex items-center gap-2">
-    <Users className="h-4 w-4 text-muted-foreground" />
-    Follower Range (Optional)
-  </Label>
-  <Switch checked={enforceFollowerRange} onCheckedChange={setEnforceFollowerRange} />
-</div>
-<p className="text-xs text-muted-foreground">
-  {enforceFollowerRange
-    ? "Only matching creators can apply. Leave all unchecked to accept all sizes."
-    : "Any creator can apply regardless of follower count."}
-</p>
-```
+## File to Modify
+| File | Change |
+|------|--------|
+| `src/config/packages.ts` | Update `includes` arrays for unbox_review, social_boost, and meet_greet |
 
-**DialogFooter (around line 511-523):** Remove the toggle `<div>` block, keeping only the Cancel and Continue buttons.
+No UI component changes needed -- the dialog already reads from these arrays.
 
