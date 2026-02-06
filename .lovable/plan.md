@@ -1,54 +1,61 @@
 
 
-# Fix: Brand Signup Button Disabled Despite All Fields Filled
+# Align Brand Onboarding and Welcome Pages with Platform Identity
 
-## Root Cause
+## Problem
 
-The "Create Brand Account" button has this disabled condition:
+The onboarding and welcome pages still use campaign/content-marketing language that doesn't match the platform's identity as a **zero-fee discovery marketplace for event bookings**. Specific issues:
 
-```
-disabled={isLoading || !phoneVerified || !termsAccepted}
-```
+1. **IntentStep**: Options say "One-time campaign", "Ongoing content" -- should reflect event booking intent
+2. **BudgetStep**: Ranges are too high ($1K-$10K+) and descriptions say "campaigns" -- should reflect per-event budgets
+3. **BrandWelcome**: "How It Works" step 2 says "Workshop, or Competition" -- should use actual package names; step 3 says "Host & Earn" which doesn't make sense for brands
 
-It always requires `phoneVerified === true`, ignoring the `requirePhone` setting. When phone verification is disabled for testing, the button should not require phone verification.
+---
 
-## Fix in `src/pages/BrandSignup.tsx`
+## Changes
 
-### 1. Button disabled condition (line ~387)
+### 1. `src/components/brand-onboarding/IntentStep.tsx`
 
-Change:
-```tsx
-disabled={isLoading || !phoneVerified || !termsAccepted}
-```
-To:
-```tsx
-disabled={isLoading || (requirePhone && !phoneVerified) || !termsAccepted}
-```
+Update the 3 intent options to match event booking:
 
-### 2. Submit handler guard (line ~157)
+| Current | Updated |
+|---------|---------|
+| "One-time campaign" / "I need creators for a specific campaign or launch" | "Book a one-time event" / "I'm looking for a creator for a specific event" |
+| "Ongoing content" / "I want to build long-term creator relationships" | "Recurring collaborations" / "I want to work with creators on a regular basis" |
+| "Just exploring" / "I'm researching the platform and options" | "Just exploring" / "I'm browsing creators and packages available" |
 
-Already correct -- it checks `requirePhone && !phoneVerified`. No change needed.
+### 2. `src/components/brand-onboarding/BudgetStep.tsx`
 
-### 3. Helper text below button (line ~393)
+Lower the budget ranges to reflect realistic per-event pricing and remove "campaigns" wording:
 
-Change:
-```tsx
-{(!phoneVerified || !termsAccepted) && (
-  <p>
-    {!phoneVerified ? "Phone verification required" : "Please accept Terms of Service"}
-  </p>
-)}
-```
-To:
-```tsx
-{((requirePhone && !phoneVerified) || !termsAccepted) && (
-  <p>
-    {requirePhone && !phoneVerified ? "Phone verification required" : !termsAccepted ? "Please accept Terms of Service" : ""}
-  </p>
-)}
-```
+| Current | Updated |
+|---------|---------|
+| "Under $1,000" / "Small-scale campaigns" | "Under $200" / "Product reviews, small events" |
+| "$1,000 - $5,000" / "Mid-sized campaigns" | "$200 - $500" / "Social boosts, meet & greets" |
+| "$5,000 - $10,000" / "Major campaigns" | "$500 - $1,500" / "Larger events, multi-day" |
+| "$10,000+" / "Enterprise-level" | "$1,500+" / "Premium experiences" |
 
-## Result
+Also change the title from "What's your monthly budget?" to "What's your budget per event?" and subtitle to "This helps us recommend the right creators and packages".
 
-When phone verification is disabled (testing mode), the button enables as soon as all fields are filled and terms are accepted. When phone verification is enabled (production), behavior stays the same.
+### 3. `src/pages/BrandWelcome.tsx`
+
+Update the "How It Works" steps:
+
+| Step | Current | Updated |
+|------|---------|---------|
+| 1 | "Browse Creators" / "Find creators who match your brand's vibe and audience" | "Browse Creators" / "Discover creators by category, location, and availability" |
+| 2 | "Book an Event" / "Select a package: Meet & Greet, Workshop, or Competition" | "Send an Inquiry" / "Choose a package and message the creator directly" |
+| 3 | "Host & Earn" / "Attract new customers and create memorable experiences" | "Collaborate" / "Finalize details, sign an agreement, and host your event" |
+
+Also update the hero subtitle from "creators ready to host events at your venue" to "creators ready to collaborate with your brand", and the fallback text from "Connect with talented creators and host unforgettable events" to "Connect with talented creators and grow your brand".
+
+---
+
+## Files to Modify
+
+| File | Change |
+|------|--------|
+| `src/components/brand-onboarding/IntentStep.tsx` | Update 3 intent options text |
+| `src/components/brand-onboarding/BudgetStep.tsx` | Lower budget ranges, update labels |
+| `src/pages/BrandWelcome.tsx` | Update "How It Works" steps and hero copy |
 
