@@ -69,8 +69,10 @@ const AdminAnnouncementsTab = () => {
       for (const { key, value } of updates) {
         const { error } = await supabase
           .from("site_settings")
-          .update({ value })
-          .eq("key", key);
+          .upsert(
+            { key, value, category: "announcement" },
+            { onConflict: "key" }
+          );
         if (error) throw error;
       }
 
