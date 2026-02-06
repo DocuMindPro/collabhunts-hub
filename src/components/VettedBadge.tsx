@@ -26,7 +26,7 @@ const VettedBadge = ({ className, size = "md", variant = "icon", showTooltip = t
     const pillBadge = (
       <span 
         className={cn(
-          "inline-flex items-center gap-1 px-2.5 py-1 bg-gray-800/80 backdrop-blur-sm rounded-full text-white text-xs font-medium shrink-0",
+          "inline-flex items-center gap-1 px-2 py-1 bg-gray-800/80 backdrop-blur-sm rounded-full text-white text-xs font-medium shrink-0",
           className
         )}
       >
