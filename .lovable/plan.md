@@ -1,34 +1,29 @@
 
+# Show Minimum Follower Count on Opportunity Cards
 
-# Separate Follower Range Display from Enforcement
+## What Changes
+On the opportunity card, replace the tier name display (e.g., "Micro, Mid-tier, Mega creators") with the minimum follower count derived from the selected ranges (e.g., "Min. 10K followers").
 
-## The Problem
-Currently, when the "enforce" toggle is off, `follower_ranges` is saved as `null` in the database. This means the opportunity card shows no follower info at all. The user wants:
-- **Always show** the selected follower tiers on the opportunity card (e.g., "Nano, Micro creators")
-- **Separately control** whether ineligible creators are blocked from applying
+## How It Works
+The `getCombinedRange` function already calculates the overall min from selected ranges. We just need to use it for display instead of `formatFollowerRanges`.
 
-## Solution
-Add a new `enforce_follower_range` boolean column to the `brand_opportunities` table. Always save selected ranges, and use the boolean to control enforcement.
+## Code Change
 
-## Database Change
-Add column `enforce_follower_range` (boolean, default `true`) to `brand_opportunities`.
+### `src/pages/Opportunities.tsx` (around line 463-466)
 
-## Code Changes
+Replace:
+```
+<span>{formatFollowerRanges(opportunity.follower_ranges)}</span>
+```
 
-### 1. `src/components/brand-dashboard/CreateOpportunityDialog.tsx`
-- **Line 142**: Always save `formData.follower_ranges` (not conditionally based on toggle)
-- Add `enforce_follower_range: enforceFollowerRange` to the saved data object
+With:
+```
+<span>Min. {formatFollowerCount(combinedRange?.min || 0)} followers</span>
+```
 
-### 2. `src/pages/Opportunities.tsx`
-- Update the eligibility check: only block creators when `opportunity.enforce_follower_range` is `true`
-- Always show the follower range info on the card (remove the `hasFollowerRequirement` condition, or base it on ranges being non-empty)
-- Only show the "Not Eligible" warning and disabled button when `enforce_follower_range` is true AND creator doesn't match
+This will show:
+- Nano selected -> "Min. 1K followers"
+- Micro + Mid-tier + Mega selected -> "Min. 10K followers"
+- Macro only -> "Min. 100K followers"
 
-### Summary of Behavior
-
-| Ranges Selected | Enforce ON | Card Shows | Can Apply? |
-|----------------|------------|------------|------------|
-| Nano, Micro | Yes | "Nano, Micro creators" | Only if eligible |
-| Nano, Micro | No | "Nano, Micro creators" | Yes, anyone |
-| None selected | Either | Nothing | Yes, anyone |
-
+One file changed, one line updated.
