@@ -605,14 +605,14 @@ const BrandSignup = () => {
                   type="submit" 
                   className="w-full gradient-hero hover:opacity-90" 
                   size="lg"
-                  disabled={isLoading || !phoneVerified || !termsAccepted}
+                  disabled={isLoading || (requirePhone && !phoneVerified) || !termsAccepted}
                 >
                   {isLoading ? "Creating Account..." : "Create Brand Account"}
                 </Button>
 
-                {(!phoneVerified || !termsAccepted) && (
+                {((requirePhone && !phoneVerified) || !termsAccepted) && (
                   <p className="text-xs text-center text-muted-foreground">
-                    {!phoneVerified ? "Phone verification required" : "Please accept Terms of Service"}
+                    {requirePhone && !phoneVerified ? "Phone verification required" : !termsAccepted ? "Please accept Terms of Service" : ""}
                   </p>
                 )}
 
