@@ -1,67 +1,36 @@
 
 
-# Add Follower Range Enforcement Toggle
+# Move "Restrict by follower range" Toggle Inline with the Follower Range Label
 
-## Overview
+## Current State
+The toggle sits at the bottom of the dialog footer, separated from the follower range section. It looks disconnected.
 
-Replace the static disclaimer text below the "Continue to Payment" button with a toggle (Switch) that lets brands decide whether to enforce follower range restrictions. When ON, only creators matching the selected follower ranges can apply. When OFF, any creator can apply regardless of follower count.
+## Proposed Change
+Move the toggle switch to sit inline with the "Follower Range (Optional)" label, right next to it. Remove it from the `DialogFooter` entirely.
 
-## Changes in `src/components/brand-dashboard/CreateOpportunityDialog.tsx`
+### In `src/components/brand-dashboard/CreateOpportunityDialog.tsx`:
 
-### 1. Add New State Variable
+1. **Move the Switch next to the Follower Range label** -- replace the current label area with a row that has the label on the left and the Switch on the right, plus the dynamic description text below.
 
+2. **Remove the toggle from DialogFooter** -- the footer goes back to just having the Cancel and Continue buttons.
+
+### Technical Details
+
+**Follower Range section label area (around line 459):** Replace the current label + helper text with:
 ```tsx
-const [enforceFollowerRange, setEnforceFollowerRange] = useState(true);
-```
-
-### 2. Replace Disclaimer with Toggle Row
-
-Remove the current `<p>` disclaimer and replace it with a compact Switch row inside the `DialogFooter`:
-
-```tsx
-<div className="flex items-center justify-between w-full p-2 border rounded-lg text-xs">
-  <div>
-    <p className="font-medium text-sm">Restrict by follower range</p>
-    <p className="text-muted-foreground">
-      {enforceFollowerRange
-        ? "Only matching creators can apply"
-        : "Any creator can apply regardless of follower count"}
-    </p>
-  </div>
+<div className="flex items-center justify-between">
+  <Label className="flex items-center gap-2">
+    <Users className="h-4 w-4 text-muted-foreground" />
+    Follower Range (Optional)
+  </Label>
   <Switch checked={enforceFollowerRange} onCheckedChange={setEnforceFollowerRange} />
 </div>
+<p className="text-xs text-muted-foreground">
+  {enforceFollowerRange
+    ? "Only matching creators can apply. Leave all unchecked to accept all sizes."
+    : "Any creator can apply regardless of follower count."}
+</p>
 ```
 
-### 3. Pass Enforcement Flag to Database Insert
-
-In `handleSubmit`, include the enforcement flag in the pending data:
-
-```tsx
-follower_ranges: enforceFollowerRange && formData.follower_ranges.length > 0
-  ? formData.follower_ranges
-  : null,
-```
-
-When the toggle is OFF, `follower_ranges` is saved as `null` (meaning no restriction), even if the brand had checked some ranges. This keeps the database logic simple -- `null` means open to all.
-
-### 4. Reset on Form Clear
-
-Add `setEnforceFollowerRange(true)` alongside the existing form reset after successful submission.
-
-## No Database Changes Needed
-
-The existing `follower_ranges` column (TEXT ARRAY, nullable) already supports this. `null` = open to all, populated array = restricted. The filtering logic on the creator side already handles this.
-
-## Summary
-
-- One new Switch toggle replaces the static disclaimer
-- Brands have explicit control over enforcement
-- Default is ON (restricted) to encourage quality matching
-- No backend changes required
-
-## File to Modify
-
-| File | Change |
-|------|--------|
-| `src/components/brand-dashboard/CreateOpportunityDialog.tsx` | Add state, replace disclaimer with toggle, update data logic |
+**DialogFooter (around line 511-523):** Remove the toggle `<div>` block, keeping only the Cancel and Continue buttons.
 
