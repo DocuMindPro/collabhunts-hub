@@ -50,6 +50,40 @@ interface Profile {
   creator_phone_verified?: boolean | null;
   brand_phone?: string | null;
   brand_phone_verified?: boolean | null;
+  // Creator extended fields
+  creator_profile_id?: string;
+  creator_bio?: string | null;
+  creator_location_city?: string | null;
+  creator_location_state?: string | null;
+  creator_location_country?: string | null;
+  creator_categories?: string[];
+  creator_gender?: string | null;
+  creator_ethnicity?: string | null;
+  creator_primary_language?: string | null;
+  creator_birth_date?: string | null;
+  creator_average_rating?: number | null;
+  creator_total_reviews?: number | null;
+  creator_min_event_price_cents?: number | null;
+  creator_max_event_price_cents?: number | null;
+  creator_profile_image_url?: string | null;
+  creator_social_accounts?: Array<{ platform: string; username: string; follower_count: number | null }>;
+  // Brand extended fields
+  brand_profile_id?: string;
+  brand_first_name?: string | null;
+  brand_last_name?: string | null;
+  brand_contact_position?: string | null;
+  brand_logo_url?: string | null;
+  brand_industry?: string | null;
+  brand_company_size?: string | null;
+  brand_website_url?: string | null;
+  brand_venue_address?: string | null;
+  brand_venue_city?: string | null;
+  brand_location_country?: string | null;
+  brand_is_verified?: boolean | null;
+  brand_verification_status?: string | null;
+  brand_monthly_budget_range?: string | null;
+  brand_preferred_categories?: string[] | null;
+  brand_preferred_platforms?: string[] | null;
 }
 
 interface CreatorProfile {
@@ -302,15 +336,20 @@ const Admin = () => {
 
       if (rolesError) throw rolesError;
 
-      // Fetch creator profiles with phone
+      // Fetch creator profiles with extended fields
       const { data: creatorProfilesData } = await supabase
         .from("creator_profiles")
-        .select("id, user_id, display_name, status, phone_number, phone_verified");
+        .select("id, user_id, display_name, status, phone_number, phone_verified, bio, location_city, location_state, location_country, categories, gender, ethnicity, primary_language, birth_date, average_rating, total_reviews, min_event_price_cents, max_event_price_cents, profile_image_url");
 
-      // Fetch brand profiles with phone
+      // Fetch creator social accounts
+      const { data: socialAccountsData } = await supabase
+        .from("creator_social_accounts")
+        .select("creator_profile_id, platform, username, follower_count");
+
+      // Fetch brand profiles with extended fields
       const { data: brandProfilesData } = await supabase
         .from("brand_profiles")
-        .select("id, user_id, company_name, phone_number, phone_verified");
+        .select("id, user_id, company_name, phone_number, phone_verified, first_name, last_name, contact_position, logo_url, industry, company_size, website_url, venue_address, venue_city, location_country, is_verified, verification_status, monthly_budget_range, preferred_categories, preferred_platforms");
 
       // Fetch all bookings for stats calculations
       const { data: allBookingsData } = await supabase
@@ -347,6 +386,11 @@ const Admin = () => {
           brandBookingCount = brandBookings.length;
         }
 
+        // Get social accounts for this creator
+        const creatorSocials = creatorProfile
+          ? (socialAccountsData || []).filter(s => s.creator_profile_id === creatorProfile.id)
+          : [];
+
         return {
           ...profile,
           roles,
@@ -362,6 +406,40 @@ const Admin = () => {
           creator_phone_verified: creatorProfile?.phone_verified,
           brand_phone: brandProfile?.phone_number,
           brand_phone_verified: brandProfile?.phone_verified,
+          // Creator extended
+          creator_profile_id: creatorProfile?.id,
+          creator_bio: creatorProfile?.bio,
+          creator_location_city: creatorProfile?.location_city,
+          creator_location_state: creatorProfile?.location_state,
+          creator_location_country: creatorProfile?.location_country,
+          creator_categories: creatorProfile?.categories || [],
+          creator_gender: creatorProfile?.gender,
+          creator_ethnicity: creatorProfile?.ethnicity,
+          creator_primary_language: creatorProfile?.primary_language,
+          creator_birth_date: creatorProfile?.birth_date,
+          creator_average_rating: creatorProfile?.average_rating,
+          creator_total_reviews: creatorProfile?.total_reviews,
+          creator_min_event_price_cents: creatorProfile?.min_event_price_cents,
+          creator_max_event_price_cents: creatorProfile?.max_event_price_cents,
+          creator_profile_image_url: creatorProfile?.profile_image_url,
+          creator_social_accounts: creatorSocials,
+          // Brand extended
+          brand_profile_id: brandProfile?.id,
+          brand_first_name: brandProfile?.first_name,
+          brand_last_name: brandProfile?.last_name,
+          brand_contact_position: brandProfile?.contact_position,
+          brand_logo_url: brandProfile?.logo_url,
+          brand_industry: brandProfile?.industry,
+          brand_company_size: brandProfile?.company_size,
+          brand_website_url: brandProfile?.website_url,
+          brand_venue_address: brandProfile?.venue_address,
+          brand_venue_city: brandProfile?.venue_city,
+          brand_location_country: brandProfile?.location_country,
+          brand_is_verified: brandProfile?.is_verified,
+          brand_verification_status: brandProfile?.verification_status,
+          brand_monthly_budget_range: brandProfile?.monthly_budget_range,
+          brand_preferred_categories: brandProfile?.preferred_categories,
+          brand_preferred_platforms: brandProfile?.preferred_platforms,
         };
       });
 
@@ -1479,63 +1557,197 @@ const Admin = () => {
               {selectedUser.is_creator && (
                 <div className="border-t pt-4">
                   <h3 className="font-semibold mb-3">Creator Profile</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Display Name</h4>
+                      <h4 className="font-medium text-muted-foreground mb-1">Display Name</h4>
                       <p className="font-medium">{selectedUser.creator_display_name || "—"}</p>
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Status</h4>
+                      <h4 className="font-medium text-muted-foreground mb-1">Status</h4>
                       <Badge
-                        variant={
-                          selectedUser.creator_status === "approved"
-                            ? "default"
-                            : selectedUser.creator_status === "pending"
-                            ? "secondary"
-                            : "destructive"
-                        }
+                        variant={selectedUser.creator_status === "approved" ? "default" : selectedUser.creator_status === "pending" ? "secondary" : "destructive"}
                         className="capitalize"
                       >
                         {selectedUser.creator_status}
                       </Badge>
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Total Earned</h4>
-                      <p className="font-medium text-green-600">
-                        ${((selectedUser.total_earned_cents || 0) / 100).toFixed(2)}
+                      <h4 className="font-medium text-muted-foreground mb-1">Profile ID</h4>
+                      <p className="font-mono text-xs break-all">{selectedUser.creator_profile_id || "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Phone</h4>
+                      <div className="flex items-center gap-1">
+                        <p>{selectedUser.creator_phone || "—"}</p>
+                        {selectedUser.creator_phone_verified && <BadgeCheck className="h-3.5 w-3.5 text-green-500" />}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Location</h4>
+                      <p>{[selectedUser.creator_location_city, selectedUser.creator_location_state, selectedUser.creator_location_country].filter(Boolean).join(", ") || "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Primary Language</h4>
+                      <p>{selectedUser.creator_primary_language || "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Gender</h4>
+                      <p className="capitalize">{selectedUser.creator_gender || "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Ethnicity</h4>
+                      <p className="capitalize">{selectedUser.creator_ethnicity || "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Birth Date</h4>
+                      <p>{selectedUser.creator_birth_date ? new Date(selectedUser.creator_birth_date).toLocaleDateString() : "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Rating</h4>
+                      <p>{selectedUser.creator_average_rating ? `${selectedUser.creator_average_rating.toFixed(1)} ⭐ (${selectedUser.creator_total_reviews || 0} reviews)` : "No reviews"}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Price Range</h4>
+                      <p>
+                        {selectedUser.creator_min_event_price_cents || selectedUser.creator_max_event_price_cents
+                          ? `$${((selectedUser.creator_min_event_price_cents || 0) / 100).toFixed(0)} – $${((selectedUser.creator_max_event_price_cents || 0) / 100).toFixed(0)}`
+                          : "—"}
                       </p>
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Completed Bookings</h4>
+                      <h4 className="font-medium text-muted-foreground mb-1">Total Earned</h4>
+                      <p className="font-medium text-green-600">${((selectedUser.total_earned_cents || 0) / 100).toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Completed Bookings</h4>
                       <p className="font-medium">{selectedUser.booking_count || 0}</p>
                     </div>
                   </div>
+
+                  {selectedUser.creator_categories && selectedUser.creator_categories.length > 0 && (
+                    <div className="mt-3">
+                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Categories</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedUser.creator_categories.map((cat) => (
+                          <Badge key={cat} variant="outline" className="text-xs">{cat}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedUser.creator_social_accounts && selectedUser.creator_social_accounts.length > 0 && (
+                    <div className="mt-3">
+                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Social Accounts</h4>
+                      <div className="space-y-1">
+                        {selectedUser.creator_social_accounts.map((acc, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs border rounded px-2 py-1">
+                            <span className="font-medium">{acc.platform}</span>
+                            <span className="text-muted-foreground">@{acc.username}</span>
+                            {acc.follower_count && <span>{acc.follower_count.toLocaleString()} followers</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               {selectedUser.is_brand && (
                 <div className="border-t pt-4">
                   <h3 className="font-semibold mb-3">Brand Profile</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Company Name</h4>
+                      <h4 className="font-medium text-muted-foreground mb-1">Company Name</h4>
                       <p className="font-medium">{selectedUser.brand_name || "—"}</p>
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Status</h4>
-                      <Badge variant="default">Active</Badge>
+                      <h4 className="font-medium text-muted-foreground mb-1">Verification</h4>
+                      <Badge variant={selectedUser.brand_is_verified ? "default" : "secondary"} className="capitalize">
+                        {selectedUser.brand_verification_status || (selectedUser.brand_is_verified ? "Verified" : "Unverified")}
+                      </Badge>
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Total Spent</h4>
-                      <p className="font-medium text-blue-600">
-                        ${((selectedUser.total_spent_cents || 0) / 100).toFixed(2)}
-                      </p>
+                      <h4 className="font-medium text-muted-foreground mb-1">Profile ID</h4>
+                      <p className="font-mono text-xs break-all">{selectedUser.brand_profile_id || "—"}</p>
+                    </div>
+                    {selectedUser.brand_logo_url && (
+                      <div>
+                        <h4 className="font-medium text-muted-foreground mb-1">Logo</h4>
+                        <img src={selectedUser.brand_logo_url} alt="Logo" className="h-10 w-10 rounded object-cover" />
+                      </div>
+                    )}
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Contact Name</h4>
+                      <p>{[selectedUser.brand_first_name, selectedUser.brand_last_name].filter(Boolean).join(" ") || "—"}</p>
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Completed Bookings</h4>
+                      <h4 className="font-medium text-muted-foreground mb-1">Position</h4>
+                      <p>{selectedUser.brand_contact_position || "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Phone</h4>
+                      <div className="flex items-center gap-1">
+                        <p>{selectedUser.brand_phone || "—"}</p>
+                        {selectedUser.brand_phone_verified && <BadgeCheck className="h-3.5 w-3.5 text-green-500" />}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Industry</h4>
+                      <p className="capitalize">{selectedUser.brand_industry || "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Company Size</h4>
+                      <p>{selectedUser.brand_company_size || "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Website</h4>
+                      {selectedUser.brand_website_url ? (
+                        <a href={selectedUser.brand_website_url} target="_blank" rel="noopener noreferrer" className="text-primary underline truncate block">{selectedUser.brand_website_url}</a>
+                      ) : <p>—</p>}
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Business Address</h4>
+                      <p>{[selectedUser.brand_venue_address, selectedUser.brand_venue_city].filter(Boolean).join(", ") || "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Country</h4>
+                      <p>{selectedUser.brand_location_country || "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Monthly Budget</h4>
+                      <p>{selectedUser.brand_monthly_budget_range || "—"}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Total Spent</h4>
+                      <p className="font-medium text-blue-600">${((selectedUser.total_spent_cents || 0) / 100).toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-muted-foreground mb-1">Completed Bookings</h4>
                       <p className="font-medium">{selectedUser.booking_count || 0}</p>
                     </div>
                   </div>
+
+                  {selectedUser.brand_preferred_categories && selectedUser.brand_preferred_categories.length > 0 && (
+                    <div className="mt-3">
+                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Preferred Categories</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedUser.brand_preferred_categories.map((cat) => (
+                          <Badge key={cat} variant="outline" className="text-xs">{cat}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedUser.brand_preferred_platforms && selectedUser.brand_preferred_platforms.length > 0 && (
+                    <div className="mt-3">
+                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Preferred Platforms</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedUser.brand_preferred_platforms.map((plat) => (
+                          <Badge key={plat} variant="outline" className="text-xs">{plat}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
