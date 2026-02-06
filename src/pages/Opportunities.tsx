@@ -349,7 +349,7 @@ const Opportunities = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {filteredOpportunities.map((opportunity) => {
                 const hasApplied = appliedOpportunities.includes(opportunity.id);
                 const spotsLeft = opportunity.spots_available - opportunity.spots_filled;
@@ -357,7 +357,6 @@ const Opportunities = () => {
                   ? EVENT_PACKAGES[opportunity.package_type as PackageType] 
                   : null;
                 
-                // Check follower eligibility
                 const hasFollowerRequirement = opportunity.follower_ranges && opportunity.follower_ranges.length > 0;
                 const enforceRange = (opportunity as any).enforce_follower_range !== false;
                 const isEligible = !enforceRange || checkFollowerEligibility(creatorMaxFollowers, opportunity.follower_ranges);
@@ -365,135 +364,108 @@ const Opportunities = () => {
 
                 return (
                   <Card key={opportunity.id} className="flex flex-col hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-3">
+                    <CardHeader className="p-4 pb-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-lg truncate">{opportunity.title}</CardTitle>
-                          <CardDescription className="flex items-center gap-1 mt-1">
+                          <CardTitle className="text-base truncate">{opportunity.title}</CardTitle>
+                          <CardDescription className="flex items-center gap-1 mt-0.5 text-xs">
                             <Building2 className="h-3 w-3 shrink-0" />
                             <span className="truncate">
                               {opportunity.brand_profiles?.venue_name || opportunity.brand_profiles?.company_name}
                             </span>
                           </CardDescription>
                         </div>
-                        <Badge 
-                          variant="outline" 
-                          className={opportunity.is_paid 
-                            ? "bg-green-500/10 text-green-600 border-green-500/20 shrink-0" 
-                            : "bg-amber-500/10 text-amber-600 border-amber-500/20 shrink-0"
-                          }
-                        >
-                          {opportunity.is_paid ? (
-                            <>
-                              <DollarSign className="h-3 w-3 mr-0.5" />
-                              Paid
-                            </>
-                          ) : (
-                            <>
-                              <Gift className="h-3 w-3 mr-0.5" />
-                              Free
-                            </>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {packageInfo && (
+                            <Badge 
+                              variant="outline" 
+                              className={`text-[10px] px-1.5 py-0 ${getPackageBadgeColor(opportunity.package_type)}`}
+                            >
+                              {packageInfo.name}
+                            </Badge>
                           )}
-                        </Badge>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-[10px] px-1.5 py-0 ${opportunity.is_paid 
+                              ? "bg-green-500/10 text-green-600 border-green-500/20" 
+                              : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                            }`}
+                          >
+                            {opportunity.is_paid ? "Paid" : "Free"}
+                          </Badge>
+                        </div>
                       </div>
                     </CardHeader>
                     
-                    <CardContent className="flex-1 flex flex-col">
-                      {/* Package Type */}
-                      {packageInfo && (
-                        <Badge 
-                          variant="outline" 
-                          className={`mb-3 w-fit ${getPackageBadgeColor(opportunity.package_type)}`}
-                        >
-                          {packageInfo.name}
-                        </Badge>
-                      )}
-
-                      {/* Description */}
-                      {opportunity.description && (
-                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                          {opportunity.description}
-                        </p>
-                      )}
-
+                    <CardContent className="flex-1 flex flex-col px-4 pb-4 pt-0">
                       {/* Details */}
-                      <div className="space-y-2 text-sm mb-4">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Calendar className="h-4 w-4 shrink-0" />
-                          <span>{format(new Date(opportunity.event_date), "MMM d, yyyy")}</span>
-                          {opportunity.start_time && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {opportunity.start_time.slice(0, 5)}
-                            </span>
-                          )}
+                      <div className="space-y-1.5 text-xs mb-3">
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5 shrink-0" />
+                          <span>
+                            {format(new Date(opportunity.event_date), "MMM d, yyyy")}
+                            {opportunity.start_time && ` · ${opportunity.start_time.slice(0, 5)}`}
+                          </span>
                         </div>
                         
                         {(opportunity.location_city || opportunity.location_country) && (
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <MapPin className="h-4 w-4 shrink-0" />
-                            <span>
-                              {[opportunity.location_city, opportunity.location_country].filter(Boolean).join(", ")}
-                            </span>
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <MapPin className="h-3.5 w-3.5 shrink-0" />
+                            <span>{[opportunity.location_city, opportunity.location_country].filter(Boolean).join(", ")}</span>
                           </div>
                         )}
 
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Users className="h-4 w-4 shrink-0" />
+                        <div className="flex items-center gap-1.5 text-muted-foreground flex-wrap">
+                          <Users className="h-3.5 w-3.5 shrink-0" />
                           <span>
                             {spotsLeft > 0 
                               ? `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left`
-                              : 'No spots available'
+                              : 'Full'
                             }
                           </span>
+                          {opportunity.is_paid && opportunity.budget_cents && (
+                            <>
+                              <span className="text-muted-foreground/40">·</span>
+                              <span className="font-medium text-foreground">
+                                ${(opportunity.budget_cents / 100).toFixed(0)}/creator
+                              </span>
+                            </>
+                          )}
+                          {hasFollowerRequirement && (
+                            <>
+                              <span className="text-muted-foreground/40">·</span>
+                              <span>{formatFollowerCount(combinedRange?.min || 0)}+ followers</span>
+                            </>
+                          )}
                         </div>
-
-                        {opportunity.is_paid && opportunity.budget_cents && (
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <DollarSign className="h-4 w-4 shrink-0" />
-                            <span className="font-medium text-foreground">
-                              ${(opportunity.budget_cents / 100).toFixed(0)} per creator
-                            </span>
-                          </div>
-                        )}
                       </div>
 
-                      {/* Follower Range Requirement */}
-                      {hasFollowerRequirement && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-                          <BarChart3 className="h-3 w-3 shrink-0" />
-                          <span>Min. {formatFollowerCount(combinedRange?.min || 0)} followers</span>
-                        </div>
-                      )}
-
-                      {/* Eligibility Warning */}
+                      {/* Eligibility Warning - compact inline */}
                       {!isEligible && hasFollowerRequirement && enforceRange && (
-                        <Alert variant="destructive" className="mb-4 py-2">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription className="text-xs">
-                            Your highest follower count ({formatFollowerCount(creatorMaxFollowers)}) doesn't meet this opportunity's requirements
-                            {combinedRange && ` (${formatFollowerCount(combinedRange.min)} - ${combinedRange.max === Infinity ? '500K+' : formatFollowerCount(combinedRange.max)})`}.
-                          </AlertDescription>
-                        </Alert>
+                        <p className="text-[11px] text-destructive mb-3 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3 shrink-0" />
+                          Your followers ({formatFollowerCount(creatorMaxFollowers)}) don't meet requirements
+                        </p>
                       )}
 
                       {/* Apply Button */}
-                      <div className="mt-auto pt-4 border-t">
+                      <div className="mt-auto pt-3 border-t">
                         {hasApplied ? (
-                          <Button variant="outline" className="w-full" disabled>
+                          <Button variant="outline" size="sm" className="w-full h-9" disabled>
                             Applied
                           </Button>
                         ) : spotsLeft === 0 ? (
-                          <Button variant="outline" className="w-full" disabled>
+                          <Button variant="outline" size="sm" className="w-full h-9" disabled>
                             Filled
                           </Button>
                         ) : !isEligible ? (
-                          <Button variant="outline" className="w-full" disabled>
+                          <Button variant="outline" size="sm" className="w-full h-9" disabled>
                             Not Eligible
                           </Button>
                         ) : (
                           <Button 
-                            className="w-full" 
+                            size="sm"
+                            className="w-full h-9" 
                             onClick={() => handleApply(opportunity)}
                           >
                             Apply Now
