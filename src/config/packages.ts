@@ -42,7 +42,7 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     durationRange: null, // Flexible - typically 3-7 days after product receipt
     includes: [
       'Product shipped to creator',
-      '1 Instagram Reel or TikTok video',
+      'Social content (Reel, TikTok, or both)',
       'Honest review with product highlights',
       'Brand tagged in all posts',
     ],
@@ -81,9 +81,8 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     priceRange: null, // Custom pricing - depends on creator rates
     durationRange: { min: 1, max: 2 }, // 1-2 hours
     includes: [
-      '1-2 hour venue visit',
-      '1 Instagram Reel (permanent)',
-      '1 TikTok video',
+      'Venue visit',
+      'Social content (Reels, TikToks, or both)',
       'Tag & location in all posts',
       'Honest review with CTA',
     ],
@@ -122,10 +121,10 @@ export const EVENT_PACKAGES: Record<PackageType, EventPackage> = {
     priceRange: null, // Custom pricing - depends on creator rates
     durationRange: { min: 2, max: 4 }, // 2-4 hours
     includes: [
-      '1-week pre-event promotion',
-      '3 hours at venue',
+      'Pre-event promotion',
+      'Creator appearance at venue',
       'Live fan interaction & photos',
-      'Recap video',
+      'Recap content (Reels, TikToks, or both)',
     ],
     phases: [
       {
