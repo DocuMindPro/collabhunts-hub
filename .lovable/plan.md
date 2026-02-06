@@ -1,18 +1,27 @@
 
 
-# Remove Event Type Buttons, Keep Stats & Trust Banners
+# Replace "Creator" with "Influencer" in Specific Locations
 
-## What Changes
+## Changes
 
-Remove the "Quick Event Types" row of buttons (Unbox & Review, Social Boost, Meet & Greet, Brand Activation, Custom Experience) from the hero section. The animated stats (100% Vetted Creators, $0 Transaction Fees, VIP Creator Options) and trust banners will move up into that space, reducing clutter.
+Based on the screenshots, replace "Creator(s)" with "Influencer(s)" in these specific spots only:
 
-## Details
+### 1. `src/pages/Index.tsx`
+- Line 151: "Find Your Creator" → "Find Your Influencer"
+- Line 161: "Discover vetted creators" → "Discover vetted influencers"
+- Line 200: "Vetted Creators" → "Vetted Influencers"
+- Line 212: "Creator Options" → "Influencer Options"
 
-**`src/pages/Index.tsx`**:
-- Delete lines 196-215 (the entire "Quick Event Types" `AnimatedSection` block)
-- Update the delay on "Animated Stats" from 400 to 300 (taking the slot of the removed section)
-- Update the delay on "Trust Banner" from 500 to 400
-- The `eventTypes` array (line 130-132) can also be removed as it's no longer used
+### 2. `src/components/home/CreatorSpotlight.tsx`
+- Line 148: "Featured Creators" → "Featured Influencers"
 
-No other files affected. The stats and trust banners remain exactly as they are, just appearing higher up after the search bar.
+### 3. `src/components/Footer.tsx`
+- Line 138: "Find Creators" → "Find Influencers"
+- Line 209: "Find Creators" → "Find Influencers"
+
+### 4. `src/pages/Influencers.tsx`
+- Line 550: "Book Creators for Events" → "Book Influencers for Events"
+- Line 559: "Find verified creators" → "Find verified influencers"
+
+All other occurrences of "creator" across the platform (dashboards, admin, internal references) remain unchanged -- only the user-facing spots shown in the screenshots are updated.
 
