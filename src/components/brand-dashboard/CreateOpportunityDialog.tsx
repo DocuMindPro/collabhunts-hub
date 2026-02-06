@@ -139,7 +139,8 @@ const CreateOpportunityDialog = ({
         : null,
       spots_available: parseInt(formData.spots_available) || 1,
       requirements: formData.requirements || null,
-      follower_ranges: enforceFollowerRange && formData.follower_ranges.length > 0 ? formData.follower_ranges : null,
+      follower_ranges: formData.follower_ranges.length > 0 ? formData.follower_ranges : null,
+      enforce_follower_range: enforceFollowerRange,
       location_city: formData.location_city || null,
       location_country: selectedCountryName || null,
     });

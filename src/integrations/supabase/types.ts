@@ -657,6 +657,7 @@ export type Database = {
           created_at: string
           description: string | null
           end_time: string | null
+          enforce_follower_range: boolean
           event_date: string
           follower_ranges: string[] | null
           id: string
@@ -681,6 +682,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_time?: string | null
+          enforce_follower_range?: boolean
           event_date: string
           follower_ranges?: string[] | null
           id?: string
@@ -705,6 +707,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_time?: string | null
+          enforce_follower_range?: boolean
           event_date?: string
           follower_ranges?: string[] | null
           id?: string
