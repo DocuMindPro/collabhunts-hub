@@ -1,57 +1,52 @@
 
-
-# Add Platform Features Showcase to Homepage
+# Emphasize Zero Fees and Confidentiality on Homepage
 
 ## Overview
-Add a new visually stunning "Platform Features" section between the Benefits section and Testimonials. This section will highlight the three key platform capabilities -- AI-Drafted Agreements, Smart Calendar, and Opportunity Board -- using a creative split-screen bento layout with animated visual mockups.
+Add prominent $0 fees messaging and a new confidentiality/privacy section throughout the homepage. The zero-fee message will appear in more places, and a dedicated "Trust & Privacy" banner will highlight that only creators can see brands and only brands can see creators.
 
-## New Component: `src/components/home/PlatformFeatures.tsx`
+## Changes
 
-A dedicated section with three feature showcases in an alternating layout (feature left / visual right, then flipped). Each feature card includes:
+### 1. Hero Sub-headline Enhancement (`src/pages/Index.tsx`, ~line 161-164)
+- Add a bold inline "$0 fees" callout in the hero description text
+- Change to: "Discover vetted creators for brand events, content, and collaborations. Connect directly, negotiate your own terms -- **$0 platform fees, always.**"
 
-### Feature 1: AI-Drafted Agreements
-- Icon: `FileCheck` from lucide
-- Title: "AI-Drafted Agreements"
-- Description: "Finalize every deal with a professional, AI-generated agreement. Choose from templates like Unbox & Review, Social Boost, or Meet & Greet -- customized to your exact terms."
-- Visual: A stylized mini "agreement card" mockup showing a document icon, checkmarks for "Deliverables defined", "Timeline set", "Price confirmed", with a subtle green "Signed" badge -- all built with HTML/CSS, no images needed
+### 2. New Trust Banner Below Hero Stats (`src/pages/Index.tsx`, ~line 216-237)
+- Add a subtle inline trust strip below the animated stats with two key points:
+  - A `ShieldCheck` icon + "Zero Fees -- No commissions, no hidden charges"
+  - A `EyeOff` icon + "Private by Design -- Brands and creators see only each other"
+- Styled as a compact row with muted background pills, matching the existing design language
 
-### Feature 2: Smart Calendar
-- Icon: `CalendarDays` from lucide
-- Title: "Never Miss a Collab"
-- Description: "Every signed agreement automatically appears on your calendar with color-coded events and smart reminders at 7 days, 1 day, and day-of. Stay organized effortlessly."
-- Visual: A mini calendar mockup with 3 colored dots on different dates representing booking types, plus a small notification bell badge
+### 3. Update Benefits Array (`src/pages/Index.tsx`, ~line 124-129)
+- Replace the existing "Zero Platform Fees" benefit card with a stronger description: "No commissions, no hidden charges, no subscription required to connect. You keep 100% of every deal."
+- Add a 5th benefit card for confidentiality:
+  - Icon: `ShieldCheck`
+  - Title: "Private & Confidential"
+  - Description: "Only brands see creators. Only creators see brands. Your data stays between you."
+- Change grid to `lg:grid-cols-5` (or keep 4 and swap one less important card)
 
-### Feature 3: Opportunity Board
-- Icon: `Megaphone` from lucide
-- Title: "Post & Discover Opportunities"
-- Description: "Brands post gigs with budgets and requirements. Creators browse and apply in one click. The fastest way to match for your next event."
-- Visual: A mini opportunity card mockup showing a title, budget badge, and "Apply" button
+### 4. Dedicated "Zero Fees + Privacy" Section (`src/pages/Index.tsx`)
+- Add a new full-width banner section between BentoGrid and Benefits
+- Left side: Large "$0" animated counter with "Zero Fees. Zero Commissions. Zero Catches." heading
+- Right side: A `ShieldCheck` icon card explaining the confidentiality model: "Your marketplace is private. Brands only see creator profiles. Creators only see brand opportunities. No public exposure, no competitor snooping."
+- Use `GlowCard` with gradient background for visual impact
+- This becomes the primary trust-building section
 
-## Layout Design
-- Uses a 2-column asymmetric bento grid on desktop (text + visual mockup side by side)
-- Row 1: Text left, visual right (Agreement)
-- Row 2: Visual left, text right (Calendar) -- alternating for visual rhythm
-- Row 3: Full-width card with text left and visual right (Opportunities)
-- Each row uses `GlowCard` with different glow colors (primary, secondary, accent)
-- All wrapped in `AnimatedSection` with staggered delays
-- Mobile: stacks to single column, visual mockups sit below text
+### 5. Update BentoGrid Step 2 Description (`src/components/home/BentoGrid.tsx`, ~line 25)
+- Change "No middlemen involved." to "No middlemen, no fees, complete privacy."
 
-## Changes to `src/pages/Index.tsx`
-- Import the new `PlatformFeatures` component
-- Place it between the Benefits section and TestimonialCarousel (line ~303)
-- Section heading: "Built for Seamless Collabs" with subtitle "Every tool you need, from first message to final delivery"
+### 6. Update PlatformFeatures Subtitle (`src/components/home/PlatformFeatures.tsx`, ~line 129-131)
+- Add "All at zero cost" to the subtitle: "Every tool you need, from first message to final delivery -- all at zero cost"
 
-## Visual Details
-- Section background: `bg-background` with subtle decorative blur circles
-- Mini mockup cards use `bg-muted/50` with `border border-border/30` for a subtle, layered look
-- Animated entrance: text slides from left, visual slides from right (alternating)
-- Hover effects on the visual mockups: slight scale-up and border glow
-- Color-coded dots on calendar: primary (bookings), accent (agreements), secondary (deadlines)
+### 7. CTA Cards Enhancement (`src/pages/Index.tsx`, ~line 326, 366)
+- Add a small "$0 fees" badge/pill below each CTA card description to reinforce the message one more time before the user clicks
 
 ## Files
 
 | File | Action |
 |------|--------|
-| `src/components/home/PlatformFeatures.tsx` | Create -- new features showcase component |
-| `src/pages/Index.tsx` | Edit -- import and place PlatformFeatures between Benefits and Testimonials |
+| `src/pages/Index.tsx` | Add trust banner, new section, update benefits, enhance CTAs |
+| `src/components/home/BentoGrid.tsx` | Update step 2 description |
+| `src/components/home/PlatformFeatures.tsx` | Update subtitle |
 
+## Visual Result
+The zero-fee message will appear in 6 places across the homepage (hero text, hero stats, trust banner, dedicated section, benefits card, CTA cards). The confidentiality feature will appear in 3 places (trust banner, dedicated section, benefits card). This creates strong reinforcement without feeling repetitive, as each instance uses a different visual treatment.
