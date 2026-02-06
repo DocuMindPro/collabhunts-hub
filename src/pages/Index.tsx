@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Users, MapPin, Star, Sparkles } from "lucide-react";
+import { Search, Users, MapPin, Star, Sparkles, ShieldCheck, EyeOff, BadgeDollarSign } from "lucide-react";
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -125,7 +125,8 @@ const Index = () => {
     { icon: Users, title: "Drive Foot Traffic", description: "Creators bring their followers directly to your venue" },
     { icon: Star, title: "Vetted & VIP Creators", description: "All creators are reviewed; VIP creators go the extra mile" },
     { icon: MapPin, title: "Local Focus", description: "Find creators in your city ready for in-person collabs" },
-    { icon: Sparkles, title: "Zero Platform Fees", description: "Negotiate and pay creators directly — no middleman" },
+    { icon: BadgeDollarSign, title: "Zero Platform Fees", description: "No commissions, no hidden charges, no subscription required to connect. You keep 100% of every deal." },
+    { icon: ShieldCheck, title: "Private & Confidential", description: "Only brands see creators. Only creators see brands. Your data stays between you." },
   ];
 
   if (authLoading) {
@@ -160,7 +161,7 @@ const Index = () => {
               <AnimatedSection animation="fade-up" delay={100}>
                 <p className="text-xl text-muted-foreground max-w-lg">
                   Discover vetted creators for brand events, content, and collaborations. 
-                  Connect directly, negotiate your own terms — zero platform fees.
+                  Connect directly, negotiate your own terms — <span className="font-semibold text-primary">$0 platform fees, always.</span>
                 </p>
               </AnimatedSection>
               
@@ -235,6 +236,20 @@ const Index = () => {
                   </div>
                 </div>
               </AnimatedSection>
+
+              {/* Trust Banner */}
+              <AnimatedSection animation="fade-up" delay={500}>
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10">
+                    <BadgeDollarSign className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-medium text-foreground">Zero Fees — No commissions, no hidden charges</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10">
+                    <EyeOff className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-medium text-foreground">Private by Design — Brands & creators see only each other</span>
+                  </div>
+                </div>
+              </AnimatedSection>
             </div>
 
             {/* Hero Image with Parallax */}
@@ -268,6 +283,59 @@ const Index = () => {
       {/* How It Works - Bento Grid */}
       <BentoGrid />
 
+      {/* Zero Fees + Privacy Section */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="absolute top-10 left-1/3 w-72 h-72 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute bottom-10 right-1/4 w-56 h-56 rounded-full bg-accent/5 blur-3xl" />
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto items-center">
+            <AnimatedSection animation="slide-left">
+              <div className="space-y-4">
+                <div className="text-7xl md:text-8xl font-heading font-black text-primary">
+                  $0
+                </div>
+                <h2 className="text-3xl md:text-4xl font-heading font-bold">
+                  Zero Fees. Zero Commissions.<br />Zero Catches.
+                </h2>
+                <p className="text-muted-foreground text-lg max-w-md">
+                  Unlike other platforms that take 20-40% of every deal, CollabHunts charges absolutely nothing on transactions. 
+                  You negotiate directly, you pay directly, you keep everything.
+                </p>
+              </div>
+            </AnimatedSection>
+            <AnimatedSection animation="slide-right" delay={200}>
+              <GlowCard glowColor="secondary">
+                <div className="p-8 space-y-5">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10">
+                    <ShieldCheck className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-heading font-bold">Private by Design</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Your marketplace is confidential. Brands only see creator profiles. 
+                    Creators only see brand opportunities. No public exposure, no competitor snooping — 
+                    your business stays your business.
+                  </p>
+                  <div className="flex flex-col gap-2 pt-2">
+                    <div className="flex items-center gap-2 text-sm text-foreground">
+                      <EyeOff className="h-4 w-4 text-primary shrink-0" />
+                      <span>Creators can't see other creators' profiles</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-foreground">
+                      <EyeOff className="h-4 w-4 text-primary shrink-0" />
+                      <span>Brands can't see other brands' activity</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-foreground">
+                      <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+                      <span>All negotiations are 100% private</span>
+                    </div>
+                  </div>
+                </div>
+              </GlowCard>
+            </AnimatedSection>
+          </div>
+        </div>
+      </section>
+
       {/* Benefits Section - Enhanced */}
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
@@ -277,7 +345,7 @@ const Index = () => {
             </h2>
           </AnimatedSection>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6 max-w-6xl mx-auto">
             {benefits.map((benefit, index) => (
               <AnimatedSection key={index} animation="fade-up" delay={index * 100}>
                 <div className={cn(
@@ -322,10 +390,13 @@ const Index = () => {
                     <span className="text-sm font-medium text-primary">For Brands</span>
                   </div>
                   <h3 className="text-3xl font-heading font-bold mb-4">List Your Brand</h3>
-                  <p className="text-muted-foreground mb-6 flex-1">
+                  <p className="text-muted-foreground mb-4 flex-1">
                     Book creators to host live fan events. 
                     Drive foot traffic and create buzz for your business.
                   </p>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary mb-4 px-3 py-1 rounded-full bg-primary/5 border border-primary/10 w-fit">
+                    <BadgeDollarSign className="h-3 w-3" /> $0 platform fees
+                  </span>
                   {hasBrandProfile ? (
                     <Link to="/brand-dashboard">
                       <Button size="lg" variant="default" className="w-full btn-animated">
@@ -362,10 +433,13 @@ const Index = () => {
                     <span className="text-sm font-medium text-accent">For Creators</span>
                   </div>
                   <h3 className="text-3xl font-heading font-bold mb-4">Join as Creator</h3>
-                  <p className="text-muted-foreground mb-6 flex-1">
+                  <p className="text-muted-foreground mb-4 flex-1">
                     Get booked for live events at venues. Meet your fans in person, 
                     get paid fairly, and create amazing content.
                   </p>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent mb-4 px-3 py-1 rounded-full bg-accent/5 border border-accent/10 w-fit">
+                    <BadgeDollarSign className="h-3 w-3" /> Keep 100% of your earnings
+                  </span>
                   {hasCreatorProfile ? (
                     <Link to="/creator-dashboard">
                       <Button size="lg" className="w-full bg-accent hover:bg-accent-hover btn-animated">

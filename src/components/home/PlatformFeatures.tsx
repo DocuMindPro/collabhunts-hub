@@ -127,7 +127,7 @@ const PlatformFeatures = () => {
             Built for Seamless Collabs
           </h2>
           <p className="text-muted-foreground max-w-lg mx-auto">
-            Every tool you need, from first message to final delivery
+            Every tool you need, from first message to final delivery — all at zero cost
           </p>
         </AnimatedSection>
 
