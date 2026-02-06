@@ -334,7 +334,7 @@ const AdminPlatformManualTab = () => {
   const exportToPdf = async () => {
     setExportingPdf(true);
     try {
-      const jsPDF = (await import("jspdf")).default;
+      const { jsPDF } = await import("jspdf");
       const doc = new jsPDF();
       let yPos = 20;
       const pageHeight = 280;
