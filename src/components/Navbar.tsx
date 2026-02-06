@@ -249,7 +249,7 @@ const Navbar = () => {
                   className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors flex items-center gap-1"
                   title="Help & FAQs"
                 >
-                  <BookOpen className="h-4 w-4" />
+                  <BookOpen className="h-5 w-5" />
                 </Link>
                 <Link 
                   to={getMessagesLink()} 
