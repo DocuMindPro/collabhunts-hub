@@ -16,9 +16,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { z } from "zod";
-import { Phone, CheckCircle, Loader2, AlertCircle } from "lucide-react";
+import { Phone, CheckCircle, Loader2, AlertCircle, Camera } from "lucide-react";
 import PhoneInput from "@/components/PhoneInput";
 import CountrySelect from "@/components/CountrySelect";
+import ProfileAvatar from "@/components/ProfileAvatar";
 
 // Validation schemas
 const emailSchema = z.string().email("Invalid email address").max(255);
@@ -54,6 +55,10 @@ const BrandSignup = () => {
   const [companySize, setCompanySize] = useState("");
   const [locationCountry, setLocationCountry] = useState("LB");
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  // Logo upload
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   // Phone verification
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -205,6 +210,15 @@ const BrandSignup = () => {
       return;
     }
 
+    if (!logoFile) {
+      toast({
+        title: "Logo Required",
+        description: "Please upload your brand logo",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!termsAccepted) {
       toast({
         title: "Terms Required",
@@ -255,12 +269,28 @@ const BrandSignup = () => {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error("Failed to create user");
 
+      // Upload logo
+      let logoUrl: string | null = null;
+      if (logoFile) {
+        const fileExt = logoFile.name.split('.').pop();
+        const filePath = `${authData.user.id}/${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('brand-logos')
+          .upload(filePath, logoFile);
+        if (uploadError) throw uploadError;
+        const { data: publicUrlData } = supabase.storage
+          .from('brand-logos')
+          .getPublicUrl(filePath);
+        logoUrl = publicUrlData.publicUrl;
+      }
+
       // Create brand profile with phone info, country and terms acceptance
       const { error: profileError } = await supabase
         .from("brand_profiles")
         .insert({
           user_id: authData.user.id,
           company_name: companyName,
+          logo_url: logoUrl,
           first_name: firstName,
           last_name: lastName,
           contact_position: contactPosition,
@@ -501,6 +531,41 @@ const BrandSignup = () => {
                   <h3 className="font-semibold mb-3">Brand Information</h3>
                   
                   <div className="space-y-4">
+                    {/* Logo Upload */}
+                    <div className="flex flex-col items-center gap-2">
+                      <Label className="text-sm">Brand Logo <span className="text-destructive">*</span></Label>
+                      <label className="cursor-pointer group">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 5 * 1024 * 1024) {
+                                toast({ title: "File too large", description: "Logo must be under 5MB", variant: "destructive" });
+                                return;
+                              }
+                              setLogoFile(file);
+                              setLogoPreview(URL.createObjectURL(file));
+                            }
+                          }}
+                          disabled={isLoading}
+                        />
+                        <div className="relative">
+                          <ProfileAvatar
+                            src={logoPreview}
+                            fallbackName={companyName || "B"}
+                            className="h-20 w-20"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Camera className="h-5 w-5 text-white" />
+                          </div>
+                        </div>
+                      </label>
+                      <p className="text-[11px] text-muted-foreground">Click to upload (max 5MB)</p>
+                    </div>
+
                     <div>
                       <Label htmlFor="companyName">Brand / Business Name</Label>
                       <Input
@@ -605,14 +670,14 @@ const BrandSignup = () => {
                   type="submit" 
                   className="w-full gradient-hero hover:opacity-90" 
                   size="lg"
-                  disabled={isLoading || (requirePhone && !phoneVerified) || !termsAccepted}
+                  disabled={isLoading || (requirePhone && !phoneVerified) || !termsAccepted || !logoFile}
                 >
                   {isLoading ? "Creating Account..." : "Create Brand Account"}
                 </Button>
 
-                {((requirePhone && !phoneVerified) || !termsAccepted) && (
+                {((requirePhone && !phoneVerified) || !termsAccepted || !logoFile) && (
                   <p className="text-xs text-center text-muted-foreground">
-                    {requirePhone && !phoneVerified ? "Phone verification required" : !termsAccepted ? "Please accept Terms of Service" : ""}
+                    {!logoFile ? "Brand logo required" : requirePhone && !phoneVerified ? "Phone verification required" : !termsAccepted ? "Please accept Terms of Service" : ""}
                   </p>
                 )}
 
