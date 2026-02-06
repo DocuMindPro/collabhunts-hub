@@ -1,27 +1,47 @@
 
 
-# Replace "Creator" with "Influencer" in Specific Locations
+# Redesign Brand Registration Prompt
 
 ## Changes
 
-Based on the screenshots, replace "Creator(s)" with "Influencer(s)" in these specific spots only:
+### `src/components/BrandRegistrationPrompt.tsx`
 
-### 1. `src/pages/Index.tsx`
-- Line 151: "Find Your Creator" → "Find Your Influencer"
-- Line 161: "Discover vetted creators" → "Discover vetted influencers"
-- Line 200: "Vetted Creators" → "Vetted Influencers"
-- Line 212: "Creator Options" → "Influencer Options"
+**1. Remove Cancel button** -- Prevent dismissal by removing the Cancel button and disabling closing via overlay click or Escape key (`onOpenChange` will be blocked).
 
-### 2. `src/components/home/CreatorSpotlight.tsx`
-- Line 148: "Featured Creators" → "Featured Influencers"
+**2. Upgrade visual design** to a more premium, professional look:
+- Larger icon area with a gradient background and subtle shadow
+- Bolder typography with a compelling subtitle
+- Styled benefit items with rounded pill backgrounds instead of plain text
+- A full-width, larger "Register Now" CTA button with an arrow icon
+- Subtle gradient accent line at the top of the card
+- Update copy from "creators" to "influencers" to match recent renaming
 
-### 3. `src/components/Footer.tsx`
-- Line 138: "Find Creators" → "Find Influencers"
-- Line 209: "Find Creators" → "Find Influencers"
+### Technical Details
 
-### 4. `src/pages/Influencers.tsx`
-- Line 550: "Book Creators for Events" → "Book Influencers for Events"
-- Line 559: "Find verified creators" → "Find verified influencers"
+- Replace `AlertDialog` with a standard `Dialog` (since AlertDialog semantically implies a dismissible alert with cancel)
+- Set `onOpenChange` to a no-op so clicking the overlay or pressing Escape does nothing -- user must register or refresh
+- Remove the close (X) button by not rendering `DialogClose`
+- Add `onPointerDownOutside` and `onEscapeKeyDown` with `preventDefault` on `DialogContent` to block dismissal
 
-All other occurrences of "creator" across the platform (dashboards, admin, internal references) remain unchanged -- only the user-facing spots shown in the screenshots are updated.
+### Visual Structure
+
+```
++---------------------------------------+
+|  ~~~ gradient accent line ~~~         |
+|                                       |
+|         [gradient icon circle]        |
+|                                       |
+|      Register Your Brand              |
+|  Connect with top influencers         |
+|                                       |
+|  [pill] Free registration             |
+|  [pill] Takes less than 2 minutes     |
+|  [pill] Direct access to influencers  |
+|                                       |
+|  [====== Register Now  ->  ========]  |
+|                                       |
++---------------------------------------+
+```
+
+No Cancel button, no X button, no overlay dismiss.
 
