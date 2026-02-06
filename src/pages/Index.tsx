@@ -119,7 +119,7 @@ const Index = () => {
     "Unbox & Review", "Social Boost", "Meet & Greet", "Brand Activation", "Custom Experience"
   ];
 
-  const rotatingWords = ["Made Simple", "Zero Fees", "Near You", "That Convert"];
+  const rotatingWords = ["Zero Fees, Full Impact", "Your City, Your Creator", "Private. Direct. Done.", "Where Collabs Come Alive"];
 
   const benefits = [
     { icon: Users, title: "Drive Foot Traffic", description: "Creators bring their followers directly to your venue" },
