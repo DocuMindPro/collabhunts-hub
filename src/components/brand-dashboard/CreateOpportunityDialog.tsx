@@ -216,9 +216,9 @@ const CreateOpportunityDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-3 pt-2">
           {/* Title */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="title">Title *</Label>
             <Input
               id="title"
@@ -236,8 +236,8 @@ const CreateOpportunityDialog = ({
             />
           </div>
 
-          {/* Package Type - Moved up */}
-          <div className="space-y-2">
+          {/* Package Type */}
+          <div className="space-y-1.5">
             <Label>Package Type</Label>
             <Select 
               value={formData.package_type} 
@@ -258,12 +258,12 @@ const CreateOpportunityDialog = ({
 
           {/* Conditional: Locked Deliverables OR Custom Description */}
           {isStandardPackage && selectedPackage && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label className="flex items-center gap-2">
                 <Lock className="h-4 w-4 text-muted-foreground" />
                 What's Included (Standard Package)
               </Label>
-              <div className="bg-muted/50 border rounded-lg p-4 space-y-2">
+              <div className="bg-muted/50 border rounded-lg p-3 space-y-1">
                 {selectedPackage.includes.map((item, index) => (
                   <div key={index} className="flex items-start gap-2 text-sm">
                     <Check className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
@@ -279,7 +279,7 @@ const CreateOpportunityDialog = ({
           )}
 
           {isCustomPackage && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="description">Description *</Label>
               <Textarea
                 id="description"
@@ -298,9 +298,9 @@ const CreateOpportunityDialog = ({
             </div>
           )}
 
-          {/* Date and Time - Responsive Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            <div className="space-y-2">
+          {/* Date and Time */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+            <div className="space-y-1.5">
               <Label htmlFor="event_date">Event Date *</Label>
               <Input
                 id="event_date"
@@ -310,7 +310,7 @@ const CreateOpportunityDialog = ({
                 className="h-11"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="start_time">Start Time</Label>
               <Input
                 id="start_time"
@@ -320,7 +320,7 @@ const CreateOpportunityDialog = ({
                 className="h-11"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="end_time">End Time</Label>
               <Input
                 id="end_time"
@@ -333,22 +333,22 @@ const CreateOpportunityDialog = ({
           </div>
 
           {/* Paid vs Free Toggle */}
-          <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="flex items-center justify-between p-3 border rounded-lg">
             <div className="flex items-center gap-2">
               {formData.is_paid ? (
                 <>
-                  <DollarSign className="h-5 w-5 text-green-600" />
+                  <DollarSign className="h-4 w-4 text-green-600" />
                   <div>
-                    <p className="font-medium">Paid Opportunity</p>
-                    <p className="text-sm text-muted-foreground">Creators get paid for their work</p>
+                    <p className="text-sm font-medium">Paid Opportunity</p>
+                    <p className="text-xs text-muted-foreground">Creators get paid</p>
                   </div>
                 </>
               ) : (
                 <>
-                  <Gift className="h-5 w-5 text-amber-600" />
+                  <Gift className="h-4 w-4 text-amber-600" />
                   <div>
-                    <p className="font-medium">Free Invite</p>
-                    <p className="text-sm text-muted-foreground">Product/experience exchange only</p>
+                    <p className="text-sm font-medium">Free Invite</p>
+                    <p className="text-xs text-muted-foreground">Product/experience exchange</p>
                   </div>
                 </>
               )}
@@ -359,39 +359,40 @@ const CreateOpportunityDialog = ({
             />
           </div>
 
-          {/* Budget (only for paid) */}
-          {formData.is_paid && (
-            <div className="space-y-2">
-              <Label htmlFor="budget">Budget per Creator ($)</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="budget"
-                  type="number"
-                  placeholder="Enter budget per creator"
-                  value={formData.budget}
-                  onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
-                  className="pl-10"
-                />
+          {/* Budget + Spots inline */}
+          <div className={`grid gap-2 sm:gap-3 ${formData.is_paid ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            {formData.is_paid && (
+              <div className="space-y-1.5">
+                <Label htmlFor="budget">Budget per Creator ($)</Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="budget"
+                    type="number"
+                    placeholder="Budget"
+                    value={formData.budget}
+                    onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
+                    className="pl-10 h-10"
+                  />
+                </div>
               </div>
+            )}
+            <div className="space-y-1.5">
+              <Label htmlFor="spots">Creators Needed</Label>
+              <Input
+                id="spots"
+                type="number"
+                min="1"
+                value={formData.spots_available}
+                onChange={(e) => setFormData(prev => ({ ...prev, spots_available: e.target.value }))}
+                className="h-10"
+              />
             </div>
-          )}
-
-          {/* Spots Available */}
-          <div className="space-y-2">
-            <Label htmlFor="spots">Number of Creators Needed</Label>
-            <Input
-              id="spots"
-              type="number"
-              min="1"
-              value={formData.spots_available}
-              onChange={(e) => setFormData(prev => ({ ...prev, spots_available: e.target.value }))}
-            />
           </div>
 
-          {/* Location - Cascading Selection */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            <div className="space-y-2">
+          {/* Location */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+            <div className="space-y-1.5">
               <Label>Country *</Label>
               <CountrySelect
                 value={formData.location_country}
@@ -401,7 +402,7 @@ const CreateOpportunityDialog = ({
             </div>
             
             {countryHasLocationData && countryHasStates && (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>Region</Label>
                 <LocationSelect
                   type="state"
@@ -413,7 +414,7 @@ const CreateOpportunityDialog = ({
               </div>
             )}
             
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label>City</Label>
               {countryHasLocationData ? (
                 <LocationSelect
@@ -436,7 +437,7 @@ const CreateOpportunityDialog = ({
           </div>
 
           {/* Special Requirements */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="requirements">Special Requirements (Optional)</Label>
             <Textarea
               id="requirements"
@@ -458,24 +459,24 @@ const CreateOpportunityDialog = ({
           </div>
 
           {/* Follower Ranges */}
-          <div className="space-y-3">
-            <div className="space-y-1">
+          <div className="space-y-2">
+            <div className="space-y-0.5">
               <Label className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 Follower Range (Optional)
               </Label>
               <p className="text-xs text-muted-foreground">
-                Select which creator sizes you're looking for. Leave all unchecked to accept all sizes.
+                Leave all unchecked to accept all sizes.
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
               {FOLLOWER_RANGE_ORDER.map((rangeKey) => {
                 const range = FOLLOWER_RANGES[rangeKey];
                 const isSelected = formData.follower_ranges.includes(rangeKey);
                 return (
                   <div
                     key={rangeKey}
-                    className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                    className={`flex items-center space-x-2 p-2 border rounded-lg cursor-pointer transition-colors ${
                       isSelected ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
                     }`}
                     onClick={() => handleFollowerRangeToggle(rangeKey)}
@@ -484,16 +485,14 @@ const CreateOpportunityDialog = ({
                       id={`range-${rangeKey}`}
                       checked={isSelected}
                       onCheckedChange={() => handleFollowerRangeToggle(rangeKey)}
+                      className="h-3.5 w-3.5"
                     />
-                    <div className="flex-1">
-                      <label
-                        htmlFor={`range-${rangeKey}`}
-                        className="text-sm font-medium cursor-pointer"
-                      >
-                        {range.label}
-                      </label>
-                      <p className="text-xs text-muted-foreground">{range.description}</p>
-                    </div>
+                    <label
+                      htmlFor={`range-${rangeKey}`}
+                      className="text-xs font-medium cursor-pointer leading-tight"
+                    >
+                      {range.label}
+                    </label>
                   </div>
                 );
               })}
@@ -501,13 +500,18 @@ const CreateOpportunityDialog = ({
           </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={submitting} className="w-full sm:w-auto">
-            {submitting ? "Creating..." : "Continue to Payment"}
-          </Button>
+        <DialogFooter className="flex-col gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} disabled={submitting} className="w-full sm:w-auto">
+              {submitting ? "Creating..." : "Continue to Payment"}
+            </Button>
+          </div>
+          <p className="text-xs text-center text-muted-foreground">
+            Only creators matching your selected criteria (location, follower range) will be able to apply.
+          </p>
         </DialogFooter>
       </DialogContent>
 
