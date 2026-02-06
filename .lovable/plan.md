@@ -1,69 +1,122 @@
 
 
-# Fix Overlapping Badges on Creator Discovery Cards
+# Add "Responds Fast" Badge, Rating Filter, and Fix VIP References
 
-## Problem
+## Overview
 
-On the `/influencers` page, the "Open to Free Invites" banner (absolutely positioned at `bottom-[72px]`) overlaps with the "Vetted" and "VIP Creator" pill badges in the bottom overlay. These are placed in different containers with conflicting positions.
+Three changes needed:
+1. Replace "Filter by VIP" text in BentoGrid with proper wording (VIP is a paid tier, not a quality indicator)
+2. Create a "Responds Fast" badge that auto-applies to creators who respond within 24 hours
+3. Add "Responds Fast" and "Top Rated" filter toggles to the advanced filters panel
 
-## Solution
+## Database Changes
 
-Consolidate all badges into a single horizontal row at the **top-left** of the card (matching the Collabstr reference where "Top Creator" and "Responds Fast" sit side by side). This eliminates overlap entirely.
+### New columns on `creator_profiles`
 
-### Layout (Collabstr-inspired)
+Add two computed/cached columns to avoid expensive queries on every page load:
 
-All badges in one `flex-wrap` row at the top-left:
+```sql
+ALTER TABLE public.creator_profiles 
+  ADD COLUMN avg_response_minutes integer DEFAULT NULL,
+  ADD COLUMN average_rating numeric(3,2) DEFAULT NULL,
+  ADD COLUMN total_reviews integer DEFAULT 0;
+```
+
+- `avg_response_minutes`: Updated whenever a creator sends a reply in a conversation. Calculated as the average time (in minutes) between a brand's message and the creator's first reply across recent conversations.
+- `average_rating` and `total_reviews`: Cached from the reviews table (if exists) or set manually by admin for now.
+
+### Database function to calculate response time
+
+A trigger function on the `messages` table that, when a creator sends a message, calculates the time since the brand's last message in that conversation and updates `avg_response_minutes` on the creator's profile.
+
+## New Component: `RespondseFastBadge.tsx`
+
+A pill badge (matching the Collabstr "Responds Fast" reference screenshot) with a lightning bolt icon:
 
 ```
-[Platform + Followers] [Vetted] [Featured] [VIP] [Open to Free Invites]
+[Zap icon] Responds Fast
 ```
 
-Each badge is a pill with icon + text, spaced with `gap-1.5`, wrapping to next line if needed.
+- Green/teal pill style similar to existing badges
+- Only shown when `avg_response_minutes <= 1440` (24 hours)
+- Displayed in the consolidated badge row on both `/influencers` cards and `CreatorSpotlight` cards
 
-## Changes in `src/pages/Influencers.tsx`
+## Changes to `src/pages/Influencers.tsx`
 
-### 1. Move Vetted and VIP badges from bottom overlay to the top-left badge row (lines 454-466)
+### 1. Update interface and fetch query
 
-Merge the current top-left area (Platform/Followers + Featured) with Vetted, VIP, and Open to Free Invites into a single container:
+Add `avg_response_minutes`, `average_rating`, `total_reviews` to `CreatorWithDetails` interface and the Supabase select query.
+
+### 2. Add filter state variables
 
 ```tsx
-<div className="absolute top-3 left-3 right-12 flex flex-wrap items-center gap-1.5 z-10">
-  {/* Platform badge */}
-  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
-    <PlatformIcon className="h-3.5 w-3.5" />
-    <span>{formatFollowers(mainPlatform.followers)}</span>
-  </div>
-  {/* Vetted */}
-  <VettedBadge variant="pill" size="sm" showTooltip={false} />
-  {/* Featured */}
-  {creator.is_featured && <FeaturedBadge variant="pill" size="sm" showTooltip={false} />}
-  {/* VIP */}
-  {isCreatorVIP(creator) && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} />}
-  {/* Open to Free Invites */}
-  {creator.open_to_invitations && (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-500 rounded-full text-white text-xs font-semibold">
-      <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
-      Free Invites
-    </span>
-  )}
-</div>
+const [respondsFast, setRespondsFast] = useState(false);
+const [topRated, setTopRated] = useState(false);
 ```
 
-### 2. Remove the separate "Open to Invitations Banner" block (lines 468-476)
+### 3. Add filter logic
 
-Delete the absolutely positioned banner that causes overlap.
+```tsx
+if (respondsFast) {
+  matchesAdvanced = matchesAdvanced && 
+    (creator.avg_response_minutes !== null && creator.avg_response_minutes <= 1440);
+}
+if (topRated) {
+  matchesAdvanced = matchesAdvanced && 
+    (creator.average_rating !== null && creator.average_rating >= 4.0 && creator.total_reviews >= 3);
+}
+```
 
-### 3. Remove badge row from bottom overlay (lines 486-490)
+### 4. Add filter toggles to advanced filters panel
 
-Remove the Vetted/VIP badges from the bottom since they're now at the top. The bottom overlay will only show creator name and category.
+After the "Open to Free Invites" toggle, add two more toggles:
 
-### 4. Add FeaturedBadge import
+- **Responds Fast** (Zap icon): "Show only creators who typically respond within 24 hours"
+- **Top Rated** (Star icon): "Show only creators rated 4.0+ with at least 3 reviews"
 
-Replace the inline Featured badge JSX with the `FeaturedBadge` component (already imported but not used here -- needs to be added to imports).
+### 5. Add RespondseFastBadge to card badge row
+
+In the consolidated top-left badge area, add:
+```tsx
+{creator.avg_response_minutes !== null && creator.avg_response_minutes <= 1440 && (
+  <RespondsFastBadge variant="pill" size="sm" showTooltip={false} />
+)}
+```
+
+### 6. Update `hasActiveAdvancedFilters` and `clearAdvancedFilters`
+
+Include `respondsFast` and `topRated` in both.
+
+## Changes to `src/components/home/BentoGrid.tsx`
+
+Update Step 1 description from:
+> "Filter by VIP status for premium talent."
+
+To:
+> "Filter by ratings and response time to find the best fit."
+
+## Changes to `src/components/home/CreatorSpotlight.tsx`
+
+Add `avg_response_minutes` to the fetch query and display the `RespondsFastBadge` in the badge row for qualifying creators.
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/components/RespondsFastBadge.tsx` | New pill badge component (Zap icon + "Responds Fast") |
 
 ## Files to Modify
 
 | File | Change |
-|------|--------|
-| `src/pages/Influencers.tsx` | Consolidate all badges into single top-left row; remove bottom badge row and separate invitation banner |
+|------|---------|
+| `src/pages/Influencers.tsx` | Add filters, badge display, fetch new columns |
+| `src/components/home/BentoGrid.tsx` | Fix "Filter by VIP" text |
+| `src/components/home/CreatorSpotlight.tsx` | Add RespondseFastBadge to badge row |
+
+## Database Migration
+
+| Change | Details |
+|--------|---------|
+| Add columns to `creator_profiles` | `avg_response_minutes`, `average_rating`, `total_reviews` |
+| Create trigger function | Auto-calculate avg response time on new messages |
 
