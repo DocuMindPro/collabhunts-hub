@@ -1,52 +1,92 @@
 
 
-## Compact and Clean Up Backup History Page
+## Fix: Messages Failing to Send ("sender_type" error)
 
-### Issues Found
+### Root Cause
 
-1. **Outdated failed records**: 19 failed backup records (mostly `InvalidAccessKeyId` errors from old AWS credentials) are cluttering the table. These are no longer relevant since the keys were just updated and backups are working.
+The database trigger `update_creator_response_time` references `NEW.sender_type` on the `messages` table, but that column does not exist. Every message insert fails with:
 
-2. **Too much vertical space**: The page has 4 separate sections stacked vertically (Cron Status, 4 Stat Cards, 3 Storage Cards + Total Card, Backup Table) requiring excessive scrolling.
-
-3. **Redundant stat cards**: The "Backup Storage (S3)" stat card duplicates info already shown in the StorageMonitorCard's "AWS S3 Backups" card below it.
-
-4. **Header buttons are bulky**: 4 action buttons with long labels wrap on smaller screens and take up significant header space.
-
-5. **Table shows all 50+ records** with no filtering or pagination.
-
-### Plan
-
-**1. Clean up old failed records from the database**
-- Delete the 19 failed backup records that have `InvalidAccessKeyId` errors -- they're historical noise from the old credentials and serve no purpose.
-
-**2. Make the stat cards inline and smaller**
-- Merge the 4 stat cards (Total, Successful, Failed, S3 Size) into a single compact horizontal bar instead of 4 separate cards. Display as inline badges/chips in one row.
-
-**3. Consolidate the Storage Overview**
-- Collapse the 3 StorageMonitorCard cards + Total card into a single collapsible card (collapsed by default) since this info is secondary to the backup table.
-
-**4. Compact the header action buttons**
-- Move the testing/debug buttons (Test R2 Upload, Test Failure Email) into a dropdown menu labeled "Tests". Keep only "Backup Media" and "Full Backup" as primary buttons.
-
-**5. Add status filter tabs to the backup table**
-- Add compact filter tabs (All / Success / Failed) above the table so you can quickly filter records.
-- Reduce default limit from 50 to 20 records.
-
-**6. Reduce padding throughout**
-- Change outer padding from `p-6` to `p-4`, reduce `space-y-6` to `space-y-4`, and tighten card padding per the compact UI design policy.
-
-### Technical Details
-
-**Database cleanup (one-time):**
-```sql
-DELETE FROM backup_history 
-WHERE status = 'failed' 
-AND error_message LIKE '%InvalidAccessKeyId%';
+```
+record "new" has no field "sender_type"
 ```
 
-**Files modified:**
-- `src/pages/BackupHistory.tsx` -- compact layout, dropdown for test buttons, filter tabs, tighter spacing
-- `src/components/backup/StorageMonitorCard.tsx` -- wrap in a Collapsible component, collapsed by default
+The `messages` table only has: `id`, `conversation_id`, `sender_id`, `content`, `is_read`, `created_at`, `message_type`, `offer_id`, `parent_message_id`, `negotiation_status`.
 
-**No new files or dependencies needed.** Uses existing `Collapsible`, `DropdownMenu`, and `Tabs` components from the UI library.
+### Fix
 
+Replace the `update_creator_response_time()` function to determine the sender type by looking up `sender_id` against the conversation's brand/creator profiles instead of relying on a non-existent column.
+
+**Database migration** -- recreate the function:
+
+```sql
+CREATE OR REPLACE FUNCTION update_creator_response_time()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_creator_profile_id uuid;
+  v_conversation record;
+  v_avg_minutes integer;
+  v_is_creator boolean;
+BEGIN
+  -- Get conversation details
+  SELECT creator_profile_id, brand_profile_id INTO v_conversation
+  FROM public.conversations
+  WHERE id = NEW.conversation_id;
+
+  IF v_conversation.creator_profile_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- Check if the sender is the creator by matching sender_id
+  -- to the creator profile's user_id
+  SELECT EXISTS (
+    SELECT 1 FROM public.creator_profiles
+    WHERE id = v_conversation.creator_profile_id
+    AND user_id = NEW.sender_id
+  ) INTO v_is_creator;
+
+  -- Only process messages from creators
+  IF NOT v_is_creator THEN
+    RETURN NEW;
+  END IF;
+
+  v_creator_profile_id := v_conversation.creator_profile_id;
+
+  -- Determine sender type by joining against profiles
+  -- instead of using a non-existent sender_type column
+  WITH response_times AS (
+    SELECT DISTINCT ON (m_brand.conversation_id, m_brand.id)
+      EXTRACT(EPOCH FROM (m_creator.created_at - m_brand.created_at)) / 60
+        AS response_minutes
+    FROM public.messages m_brand
+    JOIN public.conversations c ON c.id = m_brand.conversation_id
+    JOIN public.brand_profiles bp ON bp.id = c.brand_profile_id
+    JOIN public.messages m_creator ON m_creator.conversation_id = m_brand.conversation_id
+      AND m_creator.sender_id != bp.user_id
+      AND m_creator.created_at > m_brand.created_at
+    WHERE c.creator_profile_id = v_creator_profile_id
+      AND m_brand.sender_id = bp.user_id
+      AND m_brand.created_at > now() - interval '90 days'
+    ORDER BY m_brand.conversation_id, m_brand.id, m_creator.created_at ASC
+  )
+  SELECT ROUND(AVG(response_minutes))::integer INTO v_avg_minutes
+  FROM response_times
+  WHERE response_minutes > 0;
+
+  UPDATE public.creator_profiles
+  SET avg_response_minutes = v_avg_minutes
+  WHERE id = v_creator_profile_id;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### What This Changes
+
+- **No new columns or tables** -- the fix derives sender type from existing data (matching `sender_id` against the conversation's creator/brand profile `user_id`)
+- **Same trigger** stays in place, just the function body is updated
+- Messages will send successfully again immediately after this migration runs
+
+### Files Modified
+
+- **Database migration only** -- no frontend code changes needed. The `BrandMessagesTab.tsx` insert code is correct; it's the trigger that's broken.
