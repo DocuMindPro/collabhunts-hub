@@ -11,7 +11,7 @@ import useSiteSettings from "./hooks/useSiteSettings";
 import PushNotificationProvider from "./components/PushNotificationProvider";
 import NativeErrorBoundary from "./components/NativeErrorBoundary";
 import NativeAppGate from "./components/NativeAppGate";
-import AnnouncementBanner from "./components/AnnouncementBanner";
+
 import PageLoader from "./components/PageLoader";
 
 // Eager load pages used by native app
@@ -186,7 +186,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <AnnouncementBanner />
+          
           <Router>
             <PushNotificationProvider>
               <PageTransition>
