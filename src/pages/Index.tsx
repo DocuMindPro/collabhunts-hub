@@ -147,15 +147,13 @@ const Index = () => {
         <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <AnimatedSection animation="fade-up">
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight">
                   Find Your Influencer{" "}
                   <RotatingText 
                     words={rotatingWords} 
                     className="bg-gradient-to-r from-primary to-yellow-500 bg-clip-text text-transparent" 
                   />
                 </h1>
-              </AnimatedSection>
               
               <AnimatedSection animation="fade-up" delay={100}>
                 <p className="text-xl text-muted-foreground max-w-lg">
