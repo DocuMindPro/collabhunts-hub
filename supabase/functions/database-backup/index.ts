@@ -145,69 +145,113 @@ async function uploadToS3(
   }
 }
 
-// Tables to backup - ALL 31 database tables
+// Tables to backup - ALL 60 database tables
 const TABLES_TO_BACKUP = [
-  // User Management (4 tables)
+  // User Management (5 tables)
   "profiles",
   "user_roles",
   "brand_profiles",
+  "brand_profiles_public",
   "creator_profiles",
-  // Creator Data (5 tables)
+  // Creator Data (8 tables)
   "creator_services",
   "creator_social_accounts",
   "creator_portfolio_media",
   "creator_payout_settings",
   "creator_notes",
-  // Brand Data (4 tables)
+  "creator_agreements",
+  "creator_featuring",
+  "service_price_ranges",
+  "service_price_tiers",
+  // Brand Data (5 tables)
   "brand_subscriptions",
   "brand_storage_usage",
   "saved_creators",
   "storage_purchases",
+  "brand_opportunities",
   // Transactions (5 tables)
   "bookings",
   "booking_deliverables",
   "booking_disputes",
+  "booking_offers",
   "payouts",
+  // Payments (2 tables)
+  "escrow_transactions",
   "reviews",
-  // Campaigns (2 tables)
+  // Campaigns (3 tables)
   "campaigns",
   "campaign_applications",
-  // Messaging (5 tables)
+  "opportunity_applications",
+  // Events (4 tables)
+  "events",
+  "event_registrations",
+  "event_reviews",
+  "event_gallery",
+  // Messaging (7 tables)
   "conversations",
   "messages",
   "notifications",
   "mass_message_templates",
   "mass_messages_log",
+  "device_tokens",
+  "scheduled_push_notifications",
   // Content Management (2 tables)
   "content_library",
   "content_folders",
-  // Analytics & System (3 tables)
+  // Careers (2 tables)
+  "career_positions",
+  "career_applications",
+  // Affiliates (4 tables)
+  "affiliates",
+  "affiliate_earnings",
+  "affiliate_payout_requests",
+  "referrals",
+  // Franchises (4 tables)
+  "franchise_owners",
+  "franchise_countries",
+  "franchise_earnings",
+  "franchise_payout_requests",
+  // System (5 tables)
   "profile_views",
   "backup_history",
   "platform_changelog",
-  // Advertising (1 table)
   "ad_placements",
+  "site_settings",
+  // Admin (2 tables)
+  "admin_feature_overrides",
+  "calendar_events",
 ];
 
 // Edge function descriptions for documentation
 const EDGE_FUNCTION_DESCRIPTIONS: Record<string, string> = {
   "admin-reset-password": "Allows administrators to reset user passwords. Validates admin role via JWT and uses service role to update passwords.",
-  "database-backup": "Creates comprehensive database backups including all 31 database tables, schema, and configurations. Uploads to AWS S3 with versioning.",
+  "database-backup": "Creates comprehensive database backups including all 60 database tables, schema, and configurations. Uploads to AWS S3 with versioning.",
   "verify-backup": "Validates backup integrity by checking file existence and structure in S3.",
   "send-notification-email": "Sends all transactional emails via SendGrid for bookings, disputes, payments, approvals, etc.",
   "send-platform-update": "Broadcasts platform updates/announcements to all users by role.",
+  "send-mass-message": "Send bulk messages/campaign invites to multiple creators.",
   "check-dispute-deadlines": "Hourly job to monitor disputes, send reminders, auto-escalate, and auto-release payments after 72h.",
   "check-content-expiration": "Daily job to send usage rights expiration reminders for Content Library.",
   "check-ad-expiration": "Hourly job to auto-reset expired ad placements to available state.",
+  "check-subscription-renewal": "Checks and processes brand subscription renewals.",
   "get-cron-status": "Returns scheduled cron job status for admin dashboard.",
   "get-storage-stats": "Returns storage bucket statistics for monitoring.",
   "improve-bio": "AI-powered text improvement suggestions using Gemini.",
   "optimize-image": "Image optimization for uploads.",
   "upload-content": "Handle Content Library uploads to Cloudflare R2.",
   "upload-deliverable": "Handle booking deliverable uploads to R2.",
-  "delete-content": "Remove content from R2 and database.",
+  "upload-profile-image": "Handle profile image uploads to Supabase storage.",
+  "upload-portfolio-media": "Handle portfolio media uploads to R2/Supabase storage.",
   "upload-ad-image": "Handle ad placement image uploads.",
-  "send-mass-message": "Send bulk messages/campaign invites to multiple creators.",
+  "upload-site-asset": "Handle site branding asset uploads (logos, favicons, etc.).",
+  "delete-content": "Remove content from R2 and database.",
+  "delete-user": "Permanently delete a user account and all associated data.",
+  "send-push-notification": "Send push notifications to individual user devices.",
+  "send-push-to-creators": "Broadcast push notifications to all creators.",
+  "process-scheduled-push": "Process and send scheduled push notifications.",
+  "send-calendar-reminders": "Send calendar event reminder notifications.",
+  "send-career-application-email": "Send email notifications for career applications.",
+  "draft-agreement": "AI-powered agreement drafting between brands and creators.",
 };
 
 Deno.serve(async (req) => {
@@ -338,7 +382,7 @@ Deno.serve(async (req) => {
     // Collect all backup data
     const backupData: BackupData = {
       metadata: {
-        version: "2.0",
+        version: "3.0",
         created_at: new Date().toISOString(),
         backup_type: backupType,
         supabase_project_id: "olcygpkghmaqkezmunyu",
@@ -479,16 +523,22 @@ LOVABLE_API_KEY
 
 ---
 
-## Database Tables (31 total)
+## Database Tables (60 total)
 
-User Management: profiles, user_roles, brand_profiles, creator_profiles
-Creator Data: creator_services, creator_social_accounts, creator_portfolio_media, creator_payout_settings, creator_notes
-Brand Data: brand_subscriptions, brand_storage_usage, saved_creators, storage_purchases
-Transactions: bookings, booking_deliverables, booking_disputes, payouts, reviews
-Campaigns: campaigns, campaign_applications
-Messaging: conversations, messages, notifications, mass_message_templates, mass_messages_log
-Content: content_library, content_folders
-System: profile_views, backup_history, platform_changelog, ad_placements
+User Management (5): profiles, user_roles, brand_profiles, brand_profiles_public, creator_profiles
+Creator Data (8): creator_services, creator_social_accounts, creator_portfolio_media, creator_payout_settings, creator_notes, creator_agreements, creator_featuring, service_price_ranges, service_price_tiers
+Brand Data (5): brand_subscriptions, brand_storage_usage, saved_creators, storage_purchases, brand_opportunities
+Transactions (5): bookings, booking_deliverables, booking_disputes, booking_offers, payouts
+Payments (2): escrow_transactions, reviews
+Campaigns (3): campaigns, campaign_applications, opportunity_applications
+Events (4): events, event_registrations, event_reviews, event_gallery
+Messaging (7): conversations, messages, notifications, mass_message_templates, mass_messages_log, device_tokens, scheduled_push_notifications
+Content (2): content_library, content_folders
+Careers (2): career_positions, career_applications
+Affiliates (4): affiliates, affiliate_earnings, affiliate_payout_requests, referrals
+Franchises (4): franchise_owners, franchise_countries, franchise_earnings, franchise_payout_requests
+System (5): profile_views, backup_history, platform_changelog, ad_placements, site_settings
+Admin (2): admin_feature_overrides, calendar_events
 
 ---
 
