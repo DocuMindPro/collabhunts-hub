@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, Database, FlaskConical, Phone, X, Gavel, BookOpen, BadgeCheck, ImageIcon, MapPin, CalendarDays, Crown } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, Database, FlaskConical, Phone, X, Gavel, BookOpen, BadgeCheck, ImageIcon, MapPin, CalendarDays, Crown, Briefcase } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AdminTestingTab from "@/components/admin/AdminTestingTab";
 import AdminCreatorsTab from "@/components/admin/AdminCreatorsTab";
@@ -29,6 +29,7 @@ import AdminVerificationsTab from "@/components/admin/AdminVerificationsTab";
 import AdminBrandingSeoTab from "@/components/admin/AdminBrandingSeoTab";
 import AdminFeatureOverridesTab from "@/components/admin/AdminFeatureOverridesTab";
 import AdminAnnouncementsTab from "@/components/admin/AdminAnnouncementsTab";
+import AdminCareersTab from "@/components/admin/AdminCareersTab";
 import AdminQuickActions from "@/components/admin/AdminQuickActions";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
@@ -918,6 +919,10 @@ const Admin = () => {
                 <Phone className="h-4 w-4" />
                 <span className="hidden sm:inline">Announcements</span>
               </TabsTrigger>
+              <TabsTrigger value="careers" className="gap-2 shrink-0">
+                <Briefcase className="h-4 w-4" />
+                <span className="hidden sm:inline">Careers</span>
+              </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -1462,6 +1467,11 @@ const Admin = () => {
             {/* Announcements Tab */}
             <TabsContent value="announcements">
               <AdminAnnouncementsTab />
+            </TabsContent>
+
+            {/* Careers Tab */}
+            <TabsContent value="careers">
+              <AdminCareersTab />
             </TabsContent>
           </Tabs>
         </div>

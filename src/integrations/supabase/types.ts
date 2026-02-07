@@ -1201,6 +1201,104 @@ export type Database = {
           },
         ]
       }
+      career_applications: {
+        Row: {
+          admin_notes: string | null
+          cover_letter: string | null
+          created_at: string
+          cv_url: string
+          email: string
+          full_name: string
+          id: string
+          linkedin_url: string | null
+          phone: string | null
+          portfolio_url: string | null
+          position_id: string
+          status: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          cover_letter?: string | null
+          created_at?: string
+          cv_url: string
+          email: string
+          full_name: string
+          id?: string
+          linkedin_url?: string | null
+          phone?: string | null
+          portfolio_url?: string | null
+          position_id: string
+          status?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          cover_letter?: string | null
+          created_at?: string
+          cv_url?: string
+          email?: string
+          full_name?: string
+          id?: string
+          linkedin_url?: string | null
+          phone?: string | null
+          portfolio_url?: string | null
+          position_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "career_applications_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "career_positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      career_positions: {
+        Row: {
+          created_at: string
+          department: string | null
+          description: string
+          employment_type: string
+          id: string
+          is_active: boolean
+          location: string | null
+          requirements: string
+          responsibilities: string | null
+          salary_range: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          description: string
+          employment_type?: string
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          requirements: string
+          responsibilities?: string | null
+          salary_range?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          description?: string
+          employment_type?: string
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          requirements?: string
+          responsibilities?: string | null
+          salary_range?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       content_folders: {
         Row: {
           brand_profile_id: string

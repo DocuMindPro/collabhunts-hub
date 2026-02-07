@@ -51,6 +51,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Events = lazy(() => import("./pages/Events"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
 const Opportunities = lazy(() => import("./pages/Opportunities"));
+const Careers = lazy(() => import("./pages/Careers"));
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,7 @@ const WebAppRoutes = () => (
       <Route path="/events" element={<Events />} />
       <Route path="/event/:id" element={<EventDetail />} />
       <Route path="/opportunities" element={<Opportunities />} />
+      <Route path="/careers" element={<Careers />} />
       <Route path="/brand-signup" element={<BrandSignup />} />
       <Route path="/brand-onboarding" element={<BrandOnboarding />} />
       <Route path="/brand-welcome" element={<BrandWelcome />} />
