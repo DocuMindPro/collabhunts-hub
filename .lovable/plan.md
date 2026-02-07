@@ -1,73 +1,52 @@
 
 
-## Full Disaster Recovery: Add Media File Backup
+## Compact and Clean Up Backup History Page
 
-### Current State
+### Issues Found
 
-Your backup system currently covers:
-- **Database**: All 60 tables backed up daily to AWS S3 (working)
-- **Code**: Git/Lovable handles source code and edge functions
-- **Recovery docs**: Uploaded to S3 with each backup
+1. **Outdated failed records**: 19 failed backup records (mostly `InvalidAccessKeyId` errors from old AWS credentials) are cluttering the table. These are no longer relevant since the keys were just updated and backups are working.
 
-**What's NOT backed up (the gap):**
+2. **Too much vertical space**: The page has 4 separate sections stacked vertically (Cron Status, 4 Stat Cards, 3 Storage Cards + Total Card, Backup Table) requiring excessive scrolling.
 
-| Storage | Files | What's at Risk |
-|---------|-------|---------------|
-| Supabase Storage: profile-images | 36 files | User profile photos |
-| Supabase Storage: portfolio-media | 7 files | Creator portfolio images |
-| Supabase Storage: brand-logos | 0 files | Brand logo uploads |
-| Supabase Storage: career-cvs | 0 files | Job application CVs |
-| Cloudflare R2 | Unknown count | Content Library, deliverables, portfolio CDN copies |
+3. **Redundant stat cards**: The "Backup Storage (S3)" stat card duplicates info already shown in the StorageMonitorCard's "AWS S3 Backups" card below it.
 
-If Supabase Storage or Cloudflare R2 has an outage, your database would have URLs pointing to files that no longer exist.
+4. **Header buttons are bulky**: 4 action buttons with long labels wrap on smaller screens and take up significant header space.
 
-### What We'll Build
+5. **Table shows all 50+ records** with no filtering or pagination.
 
-A new edge function `backup-media` that:
-1. Lists all files in all 4 Supabase Storage buckets
-2. Downloads each file and re-uploads it to AWS S3 under a `media-backups/` prefix
-3. Optionally copies R2 file inventory metadata to S3 (actual R2-to-S3 file copy would be very slow for large media, so we catalog what exists in R2)
-4. Records the media backup status in `backup_history`
+### Plan
 
-The daily backup cron job will call this after the database backup.
+**1. Clean up old failed records from the database**
+- Delete the 19 failed backup records that have `InvalidAccessKeyId` errors -- they're historical noise from the old credentials and serve no purpose.
 
-### Changes
+**2. Make the stat cards inline and smaller**
+- Merge the 4 stat cards (Total, Successful, Failed, S3 Size) into a single compact horizontal bar instead of 4 separate cards. Display as inline badges/chips in one row.
 
-**New file: `supabase/functions/backup-media/index.ts`**
-- Lists all objects in Supabase Storage buckets (profile-images, portfolio-media, brand-logos, career-cvs)
-- Downloads each file using the service role key
-- Uploads each file to S3 at `media-backups/{bucket-name}/{file-path}`
-- Generates a manifest JSON listing all files backed up (with sizes, timestamps)
-- Also queries `content_library` and `booking_deliverables` tables to create an R2 inventory manifest (file paths, URLs, sizes) and uploads that to S3 as `media-backups/r2-inventory.json`
-- Records results in `backup_history` table
+**3. Consolidate the Storage Overview**
+- Collapse the 3 StorageMonitorCard cards + Total card into a single collapsible card (collapsed by default) since this info is secondary to the backup table.
 
-**Update: `supabase/config.toml`**
-- Add `[functions.backup-media]` with `verify_jwt = false`
+**4. Compact the header action buttons**
+- Move the testing/debug buttons (Test R2 Upload, Test Failure Email) into a dropdown menu labeled "Tests". Keep only "Backup Media" and "Full Backup" as primary buttons.
 
-**Update: `supabase/functions/database-backup/index.ts`**
-- After the database backup completes successfully, trigger the `backup-media` function automatically
-- Add media backup status to the success email notification
+**5. Add status filter tabs to the backup table**
+- Add compact filter tabs (All / Success / Failed) above the table so you can quickly filter records.
+- Reduce default limit from 50 to 20 records.
 
-**Update: `src/pages/BackupHistory.tsx`**
-- Add a "Backup Media" button alongside the existing "Trigger Backup" button
-- Show media backup stats (files backed up, total size) in the backup details
+**6. Reduce padding throughout**
+- Change outer padding from `p-6` to `p-4`, reduce `space-y-6` to `space-y-4`, and tighten card padding per the compact UI design policy.
 
-**Update: `public/DISASTER_RECOVERY.md`**
-- Add media file restoration steps
-- Document the S3 `media-backups/` folder structure
-- Add Supabase Storage file restoration procedure
+### Technical Details
 
-### How Media Restoration Would Work
+**Database cleanup (one-time):**
+```sql
+DELETE FROM backup_history 
+WHERE status = 'failed' 
+AND error_message LIKE '%InvalidAccessKeyId%';
+```
 
-In a disaster scenario:
-1. Database backup restores all table data (including file URL references)
-2. Supabase Storage files: Download from S3 `media-backups/{bucket}/` and re-upload to new Supabase Storage buckets
-3. Cloudflare R2 files: Use the R2 inventory manifest to identify what needs re-uploading; source files from R2 backup or request re-upload from users
+**Files modified:**
+- `src/pages/BackupHistory.tsx` -- compact layout, dropdown for test buttons, filter tabs, tighter spacing
+- `src/components/backup/StorageMonitorCard.tsx` -- wrap in a Collapsible component, collapsed by default
 
-### Technical Considerations
-
-- **Supabase Storage files are small** (profile images, portfolio photos) -- around 43 files currently, so backing them all up to S3 is fast and cheap
-- **R2 files can be large** (video content, deliverables) -- copying them to S3 would be expensive and slow, so we only catalog them. R2 itself has built-in redundancy
-- **Edge function timeout**: The media backup runs as a separate function to avoid timeout issues with the main database backup
-- **S3 costs**: Minimal -- storing ~43 small image files costs fractions of a cent
+**No new files or dependencies needed.** Uses existing `Collapsible`, `DropdownMenu`, and `Tabs` components from the UI library.
 
