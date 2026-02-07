@@ -1,25 +1,31 @@
 
+## Fix: Announcement Banner Should Reappear for New Announcements
 
-## Make Announcement Banner Stick with Navbar on Scroll
+### Problem
+The dismiss tracking uses a hash of the announcement **text**. So if you:
+1. Dismiss the banner
+2. Turn it off, then back on (with the same or similar text)
+3. The old localStorage key still matches, keeping it hidden
 
-Currently the announcement banner sits above the navbar but scrolls away, while the navbar alone is sticky. The goal is to keep both the banner and navbar pinned together at the top when scrolling.
+Even with different text, stale dismissed keys accumulate in localStorage.
 
-### Approach
-
-Move the `AnnouncementBanner` inside the navbar's sticky container so they scroll together as one unit.
+### Solution
+Use the `updated_at` timestamp from the `site_settings` table as the dismiss key instead of the text hash. Every time you save banner settings in admin, `updated_at` changes, which invalidates all previous dismissals automatically.
 
 ### Changes
 
-**1. `src/components/Navbar.tsx`**
-- Import and render `AnnouncementBanner` above the existing nav content, but inside the sticky `<nav>` wrapper
-- This way both elements share the same `sticky top-0 z-50` behavior
+**`src/components/AnnouncementBanner.tsx`**
+- Fetch `updated_at` along with the announcement settings (from the `announcement_text` row)
+- Use `updated_at` as the localStorage dismiss key instead of `btoa(text)`
+- When a user dismisses, store against the current `updated_at` value
+- When admin saves new settings (even same text), `updated_at` changes, so the banner reappears for everyone
 
-**2. `src/App.tsx`**
-- Remove the standalone `<AnnouncementBanner />` from the top-level layout since it will now live inside Navbar
+**`src/components/admin/AdminAnnouncementsTab.tsx`**
+- No changes needed -- it already sets `updated_at: new Date().toISOString()` on every save, which is exactly what we need
 
-This is the cleanest approach -- it keeps both elements in a single sticky block without needing to calculate dynamic offsets or manage multiple sticky layers.
-
-### Technical Details
-
-In `Navbar.tsx`, the banner will render as the first child inside the `<nav>` tag (before the container div), so visually it appears above the nav links but scrolls with them as one sticky unit. No design or UX changes -- just the scroll behavior improvement.
-
+### How It Works
+1. Admin saves announcement settings -- `updated_at` gets a new timestamp
+2. User visits site -- banner fetches settings including `updated_at`
+3. User dismisses -- localStorage stores `announcement_dismissed_{timestamp}`
+4. Admin saves again (new announcement or re-enables) -- new `updated_at` value
+5. User visits again -- old dismiss key no longer matches, banner reappears
