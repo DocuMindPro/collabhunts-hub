@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { HardDrive, Image, Cloud, Database, RefreshCw, FolderOpen, Package, FileVideo } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { HardDrive, Image, Cloud, Database, RefreshCw, FolderOpen, Package, FileVideo, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface BucketStats {
   name: string;
@@ -61,25 +63,17 @@ interface StorageStats {
 }
 
 const StorageMonitorCard = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
   const { data: storageStats, isLoading, error } = useQuery({
     queryKey: ["storage-stats"],
     queryFn: async () => {
       const { data: session } = await supabase.auth.getSession();
-      
-      if (!session?.session?.access_token) {
-        throw new Error("Not authenticated");
-      }
-
+      if (!session?.session?.access_token) throw new Error("Not authenticated");
       const response = await supabase.functions.invoke("get-storage-stats", {
-        headers: {
-          Authorization: `Bearer ${session.session.access_token}`,
-        },
+        headers: { Authorization: `Bearer ${session.session.access_token}` },
       });
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
+      if (response.error) throw new Error(response.error.message);
       return response.data as StorageStats;
     },
     retry: false,
@@ -89,16 +83,10 @@ const StorageMonitorCard = () => {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <HardDrive className="h-4 w-4" />
-            Storage Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="py-3">
           <div className="flex items-center gap-2 text-muted-foreground">
             <RefreshCw className="h-4 w-4 animate-spin" />
-            <span className="text-sm">Loading...</span>
+            <span className="text-sm">Loading storage stats...</span>
           </div>
         </CardContent>
       </Card>
@@ -108,191 +96,99 @@ const StorageMonitorCard = () => {
   if (error || !storageStats?.success) {
     return (
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <HardDrive className="h-4 w-4" />
-            Storage Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-sm text-muted-foreground">
-            Unable to fetch storage stats
-          </div>
+        <CardContent className="py-3">
+          <div className="text-sm text-muted-foreground">Unable to fetch storage stats</div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      {/* Supabase Storage Card */}
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Database className="h-4 w-4 text-green-500" />
-            Supabase Storage
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold">
-              {storageStats.supabase.formattedTotalSize}
-            </span>
-            <Badge variant="outline" className="text-xs">
-              {storageStats.supabase.totalFiles} files
-            </Badge>
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            Profile images & portfolio media
-          </p>
-
-          {storageStats.supabase.buckets.length > 0 && (
-            <div className="pt-2 border-t border-border/50 space-y-2">
-              {storageStats.supabase.buckets.map((bucket) => (
-                <div key={bucket.name} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1">
-                    <FolderOpen className="h-3 w-3 text-muted-foreground" />
-                    <span>{bucket.name}</span>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" className="w-full justify-between px-4 py-3 h-auto">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <HardDrive className="h-4 w-4 text-muted-foreground" />
+              Storage Overview
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Badge variant="outline" className="text-xs font-normal">
+                  {storageStats.combined.formattedTotalSize} · {storageStats.combined.totalFiles} files
+                </Badge>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+            </div>
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="pt-0 pb-4">
+            <div className="grid gap-3 md:grid-cols-3">
+              {/* Supabase Storage */}
+              <div className="rounded-lg border border-border/50 p-3 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-medium">
+                  <Database className="h-3.5 w-3.5 text-green-500" />
+                  Supabase Storage
+                  <Badge variant="outline" className="text-xs ml-auto">{storageStats.supabase.totalFiles} files</Badge>
+                </div>
+                <p className="text-lg font-bold">{storageStats.supabase.formattedTotalSize}</p>
+                {storageStats.supabase.buckets.length > 0 && (
+                  <div className="space-y-1 pt-1 border-t border-border/30">
+                    {storageStats.supabase.buckets.map((bucket) => (
+                      <div key={bucket.name} className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><FolderOpen className="h-3 w-3" />{bucket.name}</span>
+                        <span>{bucket.fileCount}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">{bucket.fileCount} files</span>
+                )}
+              </div>
+
+              {/* Cloudflare R2 */}
+              <div className="rounded-lg border border-border/50 p-3 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-medium">
+                  <Cloud className="h-3.5 w-3.5 text-orange-500" />
+                  Cloudflare R2
+                  <Badge variant="outline" className="text-xs ml-auto">{storageStats.r2.totalFiles} files</Badge>
+                </div>
+                <p className="text-lg font-bold">{storageStats.r2.formattedTotalSize}</p>
+                <div className="space-y-1 pt-1 border-t border-border/30">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Package className="h-3 w-3" />Content Library</span>
+                    <span>{storageStats.r2.contentLibrary.fileCount} · {storageStats.r2.contentLibrary.formattedSize}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><FileVideo className="h-3 w-3" />Deliverables</span>
+                    <span>{storageStats.r2.deliverables.fileCount} · {storageStats.r2.deliverables.formattedSize}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Image className="h-3 w-3" />Portfolio</span>
+                    <span>{storageStats.r2.portfolioMedia?.fileCount || 0} · {storageStats.r2.portfolioMedia?.formattedSize || '0 B'}</span>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              {/* AWS S3 */}
+              <div className="rounded-lg border border-border/50 p-3 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-medium">
+                  <HardDrive className="h-3.5 w-3.5 text-yellow-500" />
+                  AWS S3 Backups
+                  <Badge variant="outline" className="text-xs ml-auto">{storageStats.s3.backupCount} backups</Badge>
+                </div>
+                <p className="text-lg font-bold">{storageStats.s3.formattedTotalSize}</p>
+                <div className="space-y-1 pt-1 border-t border-border/30">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Latest backup</span>
+                    <span>{storageStats.s3.formattedLatestBackupSize}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
-        </CardContent>
+          </CardContent>
+        </CollapsibleContent>
       </Card>
-
-      {/* Cloudflare R2 Card */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Cloud className="h-4 w-4 text-orange-500" />
-            Cloudflare R2
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold">
-              {storageStats.r2.formattedTotalSize}
-            </span>
-            <Badge variant="outline" className="text-xs">
-              {storageStats.r2.totalFiles} files
-            </Badge>
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            Content Library, deliverables & portfolio media
-          </p>
-
-          <div className="pt-2 border-t border-border/50 space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1">
-                <Package className="h-3 w-3 text-muted-foreground" />
-                <span>Content Library</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">{storageStats.r2.contentLibrary.fileCount} files</span>
-                <Badge variant="secondary" className="text-xs">
-                  {storageStats.r2.contentLibrary.formattedSize}
-                </Badge>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1">
-                <FileVideo className="h-3 w-3 text-muted-foreground" />
-                <span>Deliverables</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">{storageStats.r2.deliverables.fileCount} files</span>
-                <Badge variant="secondary" className="text-xs">
-                  {storageStats.r2.deliverables.formattedSize}
-                </Badge>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1">
-                <Image className="h-3 w-3 text-muted-foreground" />
-                <span>Portfolio Media</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">{storageStats.r2.portfolioMedia?.fileCount || 0} files</span>
-                <Badge variant="secondary" className="text-xs">
-                  {storageStats.r2.portfolioMedia?.formattedSize || '0 B'}
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* AWS S3 Backups Card */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <HardDrive className="h-4 w-4 text-yellow-500" />
-            AWS S3 Backups
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold">
-              {storageStats.s3.formattedTotalSize}
-            </span>
-            <Badge variant="outline" className="text-xs">
-              {storageStats.s3.backupCount} backups
-            </Badge>
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            Database backups & recovery docs
-          </p>
-
-          <div className="pt-2 border-t border-border/50 space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Latest backup:</span>
-              <Badge variant="secondary" className="text-xs">
-                {storageStats.s3.formattedLatestBackupSize}
-              </Badge>
-            </div>
-            {storageStats.s3.latestBackupDate && (
-              <div className="text-xs text-muted-foreground">
-                {new Date(storageStats.s3.latestBackupDate).toLocaleDateString()}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Combined Total Card */}
-      <Card className={`md:col-span-3 ${storageStats.recommendations.storageWarning ? "border-amber-500/50" : ""}`}>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Image className="h-4 w-4" />
-            Total Platform Storage
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span className="text-3xl font-bold">
-                {storageStats.combined.formattedTotalSize}
-              </span>
-              <Badge variant="outline">
-                {storageStats.combined.totalFiles} total files
-              </Badge>
-            </div>
-            {storageStats.recommendations.storageWarning && (
-              <p className="text-xs text-amber-600">
-                Consider enabling image optimization
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    </Collapsible>
   );
 };
 
