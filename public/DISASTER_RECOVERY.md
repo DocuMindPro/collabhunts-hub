@@ -301,12 +301,24 @@ console.log('Database restoration complete!');
 
 #### Supabase Storage Buckets
 
-The following buckets need to be recreated:
+Supabase Storage files are backed up to S3 under `media-backups/{timestamp}/{bucket-name}/`.
 
+**Restore from S3 backup:**
+```bash
+# List available media backups
+aws s3 ls s3://collabhunts-backups/media-backups/ --recursive | head -20
+
+# Download all media files from latest backup
+aws s3 sync s3://collabhunts-backups/media-backups/{latest-timestamp}/ ./media-restore/
+```
+
+**Recreate buckets and re-upload:**
 ```sql
 -- Create buckets
 INSERT INTO storage.buckets (id, name, public) VALUES ('profile-images', 'profile-images', true);
 INSERT INTO storage.buckets (id, name, public) VALUES ('portfolio-media', 'portfolio-media', true);
+INSERT INTO storage.buckets (id, name, public) VALUES ('brand-logos', 'brand-logos', true);
+INSERT INTO storage.buckets (id, name, public) VALUES ('career-cvs', 'career-cvs', false);
 
 -- Recreate RLS policies for profile-images
 CREATE POLICY "Public read access for profile images"
@@ -327,18 +339,47 @@ ON storage.objects FOR INSERT
 WITH CHECK (bucket_id = 'portfolio-media' AND auth.uid()::text = (storage.foldername(name))[1]);
 ```
 
-**Note:** Actual image/video files must be re-uploaded by users or restored from a separate file backup if available.
+Then upload restored files using the Supabase client:
+```javascript
+import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
+
+const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+// For each bucket, upload files from the backup
+const buckets = ['profile-images', 'portfolio-media', 'brand-logos', 'career-cvs'];
+for (const bucket of buckets) {
+  const dir = `./media-restore/${bucket}`;
+  if (!fs.existsSync(dir)) continue;
+  
+  const files = fs.readdirSync(dir, { recursive: true });
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    if (fs.statSync(filePath).isDirectory()) continue;
+    
+    const fileBuffer = fs.readFileSync(filePath);
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(file, fileBuffer, { upsert: true });
+    
+    if (error) console.error(`Failed to restore ${bucket}/${file}:`, error);
+    else console.log(`✓ Restored ${bucket}/${file}`);
+  }
+}
+```
 
 #### Cloudflare R2 Content
 
-Content Library files and deliverables stored in R2 require separate restoration:
+R2 file metadata is backed up as an inventory manifest at `media-backups/{timestamp}/r2-inventory.json`.
 
-1. Access Cloudflare R2 dashboard
-2. Navigate to `collab-hunts-backup-storage` bucket
-3. Verify content structure:
-   - `/content-library/{brand_id}/{timestamp}-{filename}`
-   - `/deliverables/{booking_id}/{filename}`
-   - `/backups/{date}/backup-{timestamp}.json`
+**To restore R2 content:**
+1. Download the R2 inventory: `aws s3 cp s3://collabhunts-backups/media-backups/{latest}/r2-inventory.json ./`
+2. Review the inventory to identify all files that need recovery
+3. If R2 is still accessible, files can be served directly (R2 has built-in redundancy)
+4. If R2 data is lost, use the inventory to identify which users need to re-upload content
+5. Content Library files: `content-library/{brand_id}/{timestamp}-{filename}`
+6. Deliverables: `deliverables/{booking_id}/{filename}`
 
 ---
 
@@ -492,6 +533,7 @@ For disaster recovery assistance:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v5.0 | 2026-02 | Added full media backup to S3, R2 inventory manifest, automated media backup chaining |
 | v4.0 | 2026-02 | Expanded to 60 tables, 28 edge functions, added affiliates/franchises/events/careers |
 | v3.0 | 2024-12 | Added all 31 tables, complete secrets list, storage recovery, verification checklist |
 | v2.0 | 2024 | Full backup system with S3 integration |

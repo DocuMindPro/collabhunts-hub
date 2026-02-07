@@ -618,6 +618,32 @@ Generated with backup: ${fileName}
       throw new Error(uploadResult.error);
     }
     
+    // Chain media backup automatically after successful database backup
+    let mediaBackupResult = null;
+    try {
+      console.log("Triggering chained media backup...");
+      const mediaResponse = await fetch(
+        `${supabaseUrl}/functions/v1/backup-media`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            type: "media-auto",
+            triggered_by: triggeredBy,
+            chained_from_db_backup: true,
+          }),
+        }
+      );
+      mediaBackupResult = await mediaResponse.json();
+      console.log(`Media backup result: ${mediaBackupResult.success ? "success" : "failed"} - ${mediaBackupResult.files_backed_up || 0} files`);
+    } catch (mediaErr) {
+      console.error("Media backup chain failed (non-critical):", mediaErr);
+      mediaBackupResult = { success: false, error: (mediaErr as Error).message };
+    }
+    
     console.log(`Backup completed successfully in ${executionTime}ms`);
     
     // Send success email notification
@@ -662,7 +688,7 @@ Generated with backup: ${fileName}
                 <div class="content">
                   <p>Your database backup has completed successfully.</p>
                   
-                  <div class="stats">
+                   <div class="stats">
                     <div class="stat">
                       <div class="stat-value">${tablesBackedUp.length}</div>
                       <div class="stat-label">Tables</div>
@@ -675,6 +701,11 @@ Generated with backup: ${fileName}
                       <div class="stat-value">${(fileSize / 1024).toFixed(1)}KB</div>
                       <div class="stat-label">Size</div>
                     </div>
+                    ${mediaBackupResult ? `
+                    <div class="stat">
+                      <div class="stat-value">${mediaBackupResult.success ? mediaBackupResult.files_backed_up || 0 : '❌'}</div>
+                      <div class="stat-label">Media Files</div>
+                    </div>` : ''}
                   </div>
                   
                   <div class="detail">
