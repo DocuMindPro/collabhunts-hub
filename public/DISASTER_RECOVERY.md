@@ -37,56 +37,94 @@ Administrators can trigger manual backups from the Backup History page (`/backup
 
 ### What's Included in Each Backup
 
-#### Database Tables (31 tables)
+#### Database Tables (60 tables)
 
-**User Management (4):**
+**User Management (5):**
 - `profiles` - User profile information
 - `user_roles` - Role assignments (admin, brand, creator)
 - `brand_profiles` - Brand company information
+- `brand_profiles_public` - Public brand profile view
 - `creator_profiles` - Creator portfolio data
 
-**Creator Data (5):**
+**Creator Data (8):**
 - `creator_services` - Service offerings with pricing
 - `creator_social_accounts` - Social media connections
 - `creator_portfolio_media` - Portfolio images/videos metadata
 - `creator_payout_settings` - Payout configurations
 - `creator_notes` - Brand's private notes about creators
+- `creator_agreements` - Agreements between brands and creators
+- `creator_featuring` - Featured creator placements
+- `service_price_ranges` - Service price range definitions
+- `service_price_tiers` - Service price tier definitions
 
-**Brand Data (4):**
+**Brand Data (5):**
 - `brand_subscriptions` - Brand subscription tiers
 - `brand_storage_usage` - Content Library storage tracking
 - `saved_creators` - Saved/favorited creators (CRM)
 - `storage_purchases` - Extra storage purchases
+- `brand_opportunities` - Brand opportunity listings
 
 **Transactions (5):**
 - `bookings` - Service bookings
 - `booking_deliverables` - Deliverable file metadata
 - `booking_disputes` - Dispute cases
+- `booking_offers` - Negotiation offers within conversations
 - `payouts` - Payout records
+
+**Payments (2):**
+- `escrow_transactions` - Escrow payment transactions
 - `reviews` - Creator reviews
 
-**Campaigns (2):**
+**Campaigns (3):**
 - `campaigns` - Brand campaigns
-- `campaign_applications` - Creator applications
+- `campaign_applications` - Creator applications to campaigns
+- `opportunity_applications` - Creator applications to opportunities
 
-**Messaging (5):**
+**Events (4):**
+- `events` - Platform events
+- `event_registrations` - Event registrations
+- `event_reviews` - Event reviews
+- `event_gallery` - Event gallery media
+
+**Messaging (7):**
 - `conversations` - Message threads
 - `messages` - Individual messages
 - `notifications` - System notifications
 - `mass_message_templates` - Saved bulk message templates
 - `mass_messages_log` - Mass message history
+- `device_tokens` - Push notification device tokens
+- `scheduled_push_notifications` - Scheduled push notifications
 
 **Content Management (2):**
 - `content_library` - Stored UGC content metadata
 - `content_folders` - Folder organization
 
-**Analytics & System (3):**
+**Careers (2):**
+- `career_positions` - Job listings
+- `career_applications` - Job applications
+
+**Affiliates (4):**
+- `affiliates` - Affiliate accounts
+- `affiliate_earnings` - Affiliate earning records
+- `affiliate_payout_requests` - Affiliate payout requests
+- `referrals` - Referral tracking
+
+**Franchises (4):**
+- `franchise_owners` - Franchise owner accounts
+- `franchise_countries` - Franchise country assignments
+- `franchise_earnings` - Franchise earning records
+- `franchise_payout_requests` - Franchise payout requests
+
+**System (5):**
 - `profile_views` - Analytics data
 - `backup_history` - Backup records
 - `platform_changelog` - Platform updates
-
-**Advertising (1):**
 - `ad_placements` - Ad placement configurations
+- `site_settings` - Site branding and configuration
+
+**Admin (2):**
+- `admin_feature_overrides` - Feature flag overrides per user
+- `calendar_events` - Calendar event entries
 
 #### Schema Information
 - Enum types (`app_role`)
@@ -95,7 +133,7 @@ Administrators can trigger manual backups from the Backup History page (`/backup
 - RLS policies
 
 #### Edge Function Documentation
-- 17 edge functions with descriptions
+- 28 edge functions with descriptions
 
 ---
 
@@ -454,6 +492,7 @@ For disaster recovery assistance:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v4.0 | 2026-02 | Expanded to 60 tables, 28 edge functions, added affiliates/franchises/events/careers |
 | v3.0 | 2024-12 | Added all 31 tables, complete secrets list, storage recovery, verification checklist |
 | v2.0 | 2024 | Full backup system with S3 integration |
 | v1.0 | 2024 | Initial backup implementation |
