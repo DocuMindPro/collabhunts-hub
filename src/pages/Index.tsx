@@ -230,13 +230,17 @@ const Index = () => {
 
             {/* Hero Image with Parallax */}
             <AnimatedSection animation="slide-right" delay={200}>
-              <ParallaxImage
-                src={heroImageSm}
-                alt="Creators hosting live events"
-                className="rounded-2xl shadow-hover overflow-hidden"
-                srcSet={`${heroImageSm} 800w, ${heroImage} 1920w`}
-                sizes="(max-width: 768px) 100vw, 50vw"
-              >
+              <div className="relative">
+                <div className="rounded-2xl shadow-hover overflow-hidden">
+                  <img
+                    src={heroImageSm}
+                    alt="Creators hosting live events"
+                    srcSet={`${heroImageSm} 800w, ${heroImage} 1920w`}
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="w-full h-full object-cover"
+                    fetchPriority="high"
+                  />
+                </div>
                 {/* Floating badge overlay */}
                 <div className="absolute -bottom-4 -right-4 md:-bottom-6 md:-right-6 bg-card p-4 md:p-6 rounded-xl shadow-card border border-border animate-float z-10">
                   <div className="flex items-center gap-3 md:gap-4">
@@ -249,7 +253,7 @@ const Index = () => {
                     </div>
                   </div>
                 </div>
-              </ParallaxImage>
+              </div>
             </AnimatedSection>
           </div>
         </div>
