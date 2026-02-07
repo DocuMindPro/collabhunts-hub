@@ -33,26 +33,34 @@ const ParallaxImage = ({
   useEffect(() => {
     if (isReducedMotion) return;
 
+    let rafId: number | null = null;
+
     const handleScroll = () => {
-      if (!containerRef.current) return;
-      
-      const rect = containerRef.current.getBoundingClientRect();
-      const scrollY = window.scrollY;
-      const windowHeight = window.innerHeight;
-      
-      // Only apply parallax when element is in view
-      if (rect.top < windowHeight && rect.bottom > 0) {
-        const elementCenter = rect.top + rect.height / 2;
-        const windowCenter = windowHeight / 2;
-        const distance = elementCenter - windowCenter;
-        setOffset(distance * speed);
-      }
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (!containerRef.current) return;
+        
+        const rect = containerRef.current.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        
+        // Only apply parallax when element is in view
+        if (rect.top < windowHeight && rect.bottom > 0) {
+          const elementCenter = rect.top + rect.height / 2;
+          const windowCenter = windowHeight / 2;
+          const distance = elementCenter - windowCenter;
+          setOffset(distance * speed);
+        }
+      });
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Initial calculation
     
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, [speed, isReducedMotion]);
 
   return (
