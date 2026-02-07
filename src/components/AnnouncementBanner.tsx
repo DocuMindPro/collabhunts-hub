@@ -17,11 +17,11 @@ const AnnouncementBanner = () => {
   const [text, setText] = useState("");
   const [link, setLink] = useState("");
   const [style, setStyle] = useState<BannerStyle>("info");
+  const [updatedAt, setUpdatedAt] = useState("");
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Skip on native
     if (Capacitor.isNativePlatform()) {
       setLoading(false);
       return;
@@ -30,28 +30,30 @@ const AnnouncementBanner = () => {
     const fetchAnnouncement = async () => {
       const { data } = await supabase
         .from("site_settings")
-        .select("key, value")
+        .select("key, value, updated_at")
         .in("key", ["announcement_enabled", "announcement_text", "announcement_link", "announcement_style"]);
 
       if (data) {
         const settings: Record<string, string> = {};
-        data.forEach(item => { settings[item.key] = item.value || ""; });
+        let latestUpdatedAt = "";
+        data.forEach(item => {
+          settings[item.key] = item.value || "";
+          if (item.updated_at && item.updated_at > latestUpdatedAt) {
+            latestUpdatedAt = item.updated_at;
+          }
+        });
 
         const isEnabled = settings.announcement_enabled === "true";
         const announcementText = settings.announcement_text || "";
-        const announcementLink = settings.announcement_link || "";
-        const announcementStyle = (settings.announcement_style || "info") as BannerStyle;
 
         setEnabled(isEnabled);
         setText(announcementText);
-        setLink(announcementLink);
-        setStyle(announcementStyle);
+        setLink(settings.announcement_link || "");
+        setStyle((settings.announcement_style || "info") as BannerStyle);
+        setUpdatedAt(latestUpdatedAt);
 
-        // Check if this specific announcement was dismissed
-        if (isEnabled && announcementText) {
-          const hash = btoa(announcementText).slice(0, 16);
-          const dismissedKey = `announcement_dismissed_${hash}`;
-          if (localStorage.getItem(dismissedKey) === "true") {
+        if (isEnabled && announcementText && latestUpdatedAt) {
+          if (localStorage.getItem(`announcement_dismissed_${latestUpdatedAt}`) === "true") {
             setDismissed(true);
           }
         }
@@ -65,8 +67,9 @@ const AnnouncementBanner = () => {
 
   const handleDismiss = () => {
     setDismissed(true);
-    const hash = btoa(text).slice(0, 16);
-    localStorage.setItem(`announcement_dismissed_${hash}`, "true");
+    if (updatedAt) {
+      localStorage.setItem(`announcement_dismissed_${updatedAt}`, "true");
+    }
   };
 
   if (loading || !enabled || !text || dismissed || Capacitor.isNativePlatform()) {
