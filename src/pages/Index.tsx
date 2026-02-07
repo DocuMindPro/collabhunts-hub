@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import heroImage from "@/assets/hero-creators-brand.jpg";
+import heroImageSm from "@/assets/hero-creators-brand-sm.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import RotatingText from "@/components/RotatingText";
 import AnimatedSection from "@/components/AnimatedSection";
@@ -232,9 +233,11 @@ const Index = () => {
             {/* Hero Image with Parallax */}
             <AnimatedSection animation="slide-right" delay={200}>
               <ParallaxImage
-                src={heroImage}
+                src={heroImageSm}
                 alt="Creators hosting live events"
                 className="rounded-2xl shadow-hover overflow-hidden"
+                srcSet={`${heroImageSm} 800w, ${heroImage} 1920w`}
+                sizes="(max-width: 768px) 100vw, 50vw"
               >
                 {/* Floating badge overlay */}
                 <div className="absolute -bottom-4 -right-4 md:-bottom-6 md:-right-6 bg-card p-4 md:p-6 rounded-xl shadow-card border border-border animate-float z-10">

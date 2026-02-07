@@ -7,6 +7,8 @@ interface ParallaxImageProps {
   className?: string;
   speed?: number;
   children?: React.ReactNode;
+  sizes?: string;
+  srcSet?: string;
 }
 
 const ParallaxImage = ({ 
@@ -14,7 +16,9 @@ const ParallaxImage = ({
   alt, 
   className = "",
   speed = 0.3,
-  children
+  children,
+  sizes,
+  srcSet,
 }: ParallaxImageProps) => {
   const [offset, setOffset] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -71,6 +75,8 @@ const ParallaxImage = ({
       <img
         src={src}
         alt={alt}
+        sizes={sizes}
+        srcSet={srcSet}
         className={cn(
           "w-full h-full object-cover transition-transform duration-100 ease-out will-change-transform",
           isReducedMotion ? "" : "scale-110"
