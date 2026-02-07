@@ -74,6 +74,7 @@ const BackupHistory = () => {
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isTestingFailure, setIsTestingFailure] = useState(false);
   const [isTestingR2, setIsTestingR2] = useState(false);
+  const [isBackingUpMedia, setIsBackingUpMedia] = useState(false);
 
   // Fetch backup history
   const { data: backups, isLoading } = useQuery({
@@ -288,6 +289,52 @@ const BackupHistory = () => {
     },
   });
 
+  // Trigger manual media backup
+  const triggerMediaBackup = useMutation({
+    mutationFn: async () => {
+      setIsBackingUpMedia(true);
+      
+      const { data: session } = await supabase.auth.getSession();
+      
+      if (!session?.session?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await supabase.functions.invoke("backup-media", {
+        body: {
+          type: "media-manual",
+          triggered_by: session.session.user?.id,
+        },
+        headers: {
+          Authorization: `Bearer ${session.session.access_token}`,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Media backup completed",
+        description: `Backed up ${data.files_backed_up} files (${formatBytes(data.total_bytes)})`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["backup-history"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Media backup failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setIsBackingUpMedia(false);
+    },
+  });
+
   // Calculate statistics
   const stats = {
     total: backups?.length || 0,
@@ -322,10 +369,23 @@ const BackupHistory = () => {
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              onClick={() => triggerMediaBackup.mutate()}
+              disabled={isBackingUpMedia || isBackingUp || isTestingFailure || isTestingR2}
+              variant="outline"
+              className="gap-2 border-green-500/50 text-green-600 hover:bg-green-500/10"
+            >
+              {isBackingUpMedia ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4" />
+              )}
+              {isBackingUpMedia ? "Backing up media..." : "Backup Media"}
+            </Button>
             <Button
               onClick={() => testR2Upload.mutate()}
-              disabled={isTestingR2 || isBackingUp || isTestingFailure}
+              disabled={isTestingR2 || isBackingUp || isTestingFailure || isBackingUpMedia}
               variant="outline"
               className="gap-2 border-blue-500/50 text-blue-600 hover:bg-blue-500/10"
             >
@@ -338,7 +398,7 @@ const BackupHistory = () => {
             </Button>
             <Button
               onClick={() => testFailure.mutate()}
-              disabled={isTestingFailure || isBackingUp || isTestingR2}
+              disabled={isTestingFailure || isBackingUp || isTestingR2 || isBackingUpMedia}
               variant="outline"
               className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10"
             >
@@ -351,7 +411,7 @@ const BackupHistory = () => {
             </Button>
             <Button
               onClick={() => triggerBackup.mutate()}
-              disabled={isBackingUp || isTestingFailure || isTestingR2}
+              disabled={isBackingUp || isTestingFailure || isTestingR2 || isBackingUpMedia}
               className="gap-2"
             >
               {isBackingUp ? (
@@ -359,7 +419,7 @@ const BackupHistory = () => {
               ) : (
                 <Database className="h-4 w-4" />
               )}
-              {isBackingUp ? "Backing up..." : "Trigger Backup"}
+              {isBackingUp ? "Backing up..." : "Full Backup"}
             </Button>
           </div>
         </div>

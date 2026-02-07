@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.process-scheduled-push]
 verify_jwt = false
+
+[functions.backup-media]
+verify_jwt = false
