@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,42 +12,45 @@ import PushNotificationProvider from "./components/PushNotificationProvider";
 import NativeErrorBoundary from "./components/NativeErrorBoundary";
 import NativeAppGate from "./components/NativeAppGate";
 import AnnouncementBanner from "./components/AnnouncementBanner";
+import PageLoader from "./components/PageLoader";
 
-// Eager load all pages for native compatibility
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Influencers from "./pages/Influencers";
-import AboutUs from "./pages/AboutUs";
-import Contact from "./pages/Contact";
-import TermsOfService from "./pages/TermsOfService";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import RefundPolicy from "./pages/RefundPolicy";
-import Brand from "./pages/Brand";
-import Creator from "./pages/Creator";
-import BrandSignup from "./pages/BrandSignup";
-import BrandOnboarding from "./pages/BrandOnboarding";
-import BrandWelcome from "./pages/BrandWelcome";
-import CreatorSignup from "./pages/CreatorSignup";
-import CreatorProfile from "./pages/CreatorProfile";
+// Eager load pages used by native app
 import CreatorDashboard from "./pages/CreatorDashboard";
-import BrandDashboard from "./pages/BrandDashboard";
-import Admin from "./pages/Admin";
-import BackupHistory from "./pages/BackupHistory";
-import KnowledgeBase from "./pages/KnowledgeBase";
-import KnowledgeBaseCategory from "./pages/KnowledgeBaseCategory";
-import KnowledgeBaseArticle from "./pages/KnowledgeBaseArticle";
-import WhatsNew from "./pages/WhatsNew";
-import Changelog from "./pages/Changelog";
-import Download from "./pages/Download";
-import NotFound from "./pages/NotFound";
-import Events from "./pages/Events";
-import EventDetail from "./pages/EventDetail";
-import Opportunities from "./pages/Opportunities";
+import CreatorProfile from "./pages/CreatorProfile";
 
-// Protected route components
+// Protected route components (small, used immediately)
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorProtectedRoute from "./components/CreatorProtectedRoute";
 import BrandProtectedRoute from "./components/BrandProtectedRoute";
+
+// Lazy load web-only pages for code splitting
+const Index = lazy(() => import("./pages/Index"));
+const Login = lazy(() => import("./pages/Login"));
+const Influencers = lazy(() => import("./pages/Influencers"));
+const AboutUs = lazy(() => import("./pages/AboutUs"));
+const Contact = lazy(() => import("./pages/Contact"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
+const Brand = lazy(() => import("./pages/Brand"));
+const Creator = lazy(() => import("./pages/Creator"));
+const BrandSignup = lazy(() => import("./pages/BrandSignup"));
+const BrandOnboarding = lazy(() => import("./pages/BrandOnboarding"));
+const BrandWelcome = lazy(() => import("./pages/BrandWelcome"));
+const CreatorSignup = lazy(() => import("./pages/CreatorSignup"));
+const BrandDashboard = lazy(() => import("./pages/BrandDashboard"));
+const Admin = lazy(() => import("./pages/Admin"));
+const BackupHistory = lazy(() => import("./pages/BackupHistory"));
+const KnowledgeBase = lazy(() => import("./pages/KnowledgeBase"));
+const KnowledgeBaseCategory = lazy(() => import("./pages/KnowledgeBaseCategory"));
+const KnowledgeBaseArticle = lazy(() => import("./pages/KnowledgeBaseArticle"));
+const WhatsNew = lazy(() => import("./pages/WhatsNew"));
+const Changelog = lazy(() => import("./pages/Changelog"));
+const Download = lazy(() => import("./pages/Download"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Events = lazy(() => import("./pages/Events"));
+const EventDetail = lazy(() => import("./pages/EventDetail"));
+const Opportunities = lazy(() => import("./pages/Opportunities"));
 
 const queryClient = new QueryClient();
 
@@ -62,123 +66,117 @@ const SiteSettingsProvider = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Native App Routes - Focused creator experience with auth gate
+// Native App Routes - Focused creator experience with auth gate (no lazy loading needed)
 const NativeAppRoutes = () => (
   <NativeAppGate>
     <Routes>
-      {/* Default route redirects to creator dashboard */}
       <Route path="/" element={<Navigate to="/creator-dashboard" replace />} />
-      
-      {/* Creator Dashboard - main app screen */}
       <Route path="/creator-dashboard" element={<CreatorDashboard />} />
-      
-      {/* Creator profile viewing */}
       <Route path="/creator/:id" element={<CreatorProfile />} />
-      
-      
-      {/* Catch all - redirect to dashboard */}
       <Route path="*" element={<Navigate to="/creator-dashboard" replace />} />
     </Routes>
   </NativeAppGate>
 );
 
-// Web App Routes - Full website experience
+// Web App Routes - Full website experience with lazy loading
 const WebAppRoutes = () => (
-  <Routes>
-    <Route path="/" element={<Index />} />
-    <Route path="/login" element={<Login />} />
-    <Route path="/influencers" element={<Influencers />} />
-    <Route path="/about" element={<AboutUs />} />
-    <Route path="/contact" element={<Contact />} />
-    <Route path="/terms" element={<TermsOfService />} />
-    <Route path="/privacy" element={<PrivacyPolicy />} />
-    <Route path="/refund" element={<RefundPolicy />} />
-    <Route path="/brand" element={<Brand />} />
-    <Route path="/creator" element={<Creator />} />
-    <Route path="/events" element={<Events />} />
-    <Route path="/event/:id" element={<EventDetail />} />
-    <Route path="/opportunities" element={<Opportunities />} />
-    <Route path="/brand-signup" element={<BrandSignup />} />
-    <Route path="/brand-onboarding" element={<BrandOnboarding />} />
-    <Route path="/brand-welcome" element={<BrandWelcome />} />
-    <Route path="/creator-signup" element={<CreatorSignup />} />
-    <Route path="/creator/:id" element={<CreatorProfile />} />
-    <Route 
-      path="/creator-dashboard" 
-      element={
-        <CreatorProtectedRoute>
-          <CreatorDashboard />
-        </CreatorProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/brand-dashboard" 
-      element={
-        <BrandProtectedRoute>
-          <BrandDashboard />
-        </BrandProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/admin" 
-      element={
-        <ProtectedRoute requireAdmin>
-          <Admin />
-        </ProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/backup-history" 
-      element={
-        <ProtectedRoute requireAdmin>
-          <BackupHistory />
-        </ProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/knowledge-base" 
-      element={
-        <ProtectedRoute>
-          <KnowledgeBase />
-        </ProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/knowledge-base/:categorySlug" 
-      element={
-        <ProtectedRoute>
-          <KnowledgeBaseCategory />
-        </ProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/knowledge-base/:categorySlug/:articleSlug" 
-      element={
-        <ProtectedRoute>
-          <KnowledgeBaseArticle />
-        </ProtectedRoute>
-      } 
-    />
-    <Route path="/whats-new" element={<WhatsNew />} />
-    <Route 
-      path="/knowledge-base/whats-new" 
-      element={
-        <ProtectedRoute>
-          <WhatsNew />
-        </ProtectedRoute>
-      } 
-    />
-    <Route 
-      path="/knowledge-base/changelog" 
-      element={
-        <ProtectedRoute>
-          <Changelog />
-        </ProtectedRoute>
-      } 
-    />
-    <Route path="/download" element={<Download />} />
-    <Route path="*" element={<NotFound />} />
-  </Routes>
+  <Suspense fallback={<PageLoader />}>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/influencers" element={<Influencers />} />
+      <Route path="/about" element={<AboutUs />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/terms" element={<TermsOfService />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/refund" element={<RefundPolicy />} />
+      <Route path="/brand" element={<Brand />} />
+      <Route path="/creator" element={<Creator />} />
+      <Route path="/events" element={<Events />} />
+      <Route path="/event/:id" element={<EventDetail />} />
+      <Route path="/opportunities" element={<Opportunities />} />
+      <Route path="/brand-signup" element={<BrandSignup />} />
+      <Route path="/brand-onboarding" element={<BrandOnboarding />} />
+      <Route path="/brand-welcome" element={<BrandWelcome />} />
+      <Route path="/creator-signup" element={<CreatorSignup />} />
+      <Route path="/creator/:id" element={<CreatorProfile />} />
+      <Route 
+        path="/creator-dashboard" 
+        element={
+          <CreatorProtectedRoute>
+            <CreatorDashboard />
+          </CreatorProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/brand-dashboard" 
+        element={
+          <BrandProtectedRoute>
+            <BrandDashboard />
+          </BrandProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin" 
+        element={
+          <ProtectedRoute requireAdmin>
+            <Admin />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/backup-history" 
+        element={
+          <ProtectedRoute requireAdmin>
+            <BackupHistory />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/knowledge-base" 
+        element={
+          <ProtectedRoute>
+            <KnowledgeBase />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/knowledge-base/:categorySlug" 
+        element={
+          <ProtectedRoute>
+            <KnowledgeBaseCategory />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/knowledge-base/:categorySlug/:articleSlug" 
+        element={
+          <ProtectedRoute>
+            <KnowledgeBaseArticle />
+          </ProtectedRoute>
+        } 
+      />
+      <Route path="/whats-new" element={<WhatsNew />} />
+      <Route 
+        path="/knowledge-base/whats-new" 
+        element={
+          <ProtectedRoute>
+            <WhatsNew />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/knowledge-base/changelog" 
+        element={
+          <ProtectedRoute>
+            <Changelog />
+          </ProtectedRoute>
+        } 
+      />
+      <Route path="/download" element={<Download />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  </Suspense>
 );
 
 const App = () => (
