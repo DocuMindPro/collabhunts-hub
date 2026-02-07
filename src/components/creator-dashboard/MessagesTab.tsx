@@ -365,7 +365,7 @@ const MessagesTab = () => {
     );
   }
 
-  const ConversationList = () => (
+  const renderConversationList = () => (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b">
         <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -435,7 +435,7 @@ const MessagesTab = () => {
     </div>
   );
 
-  const ChatView = () => {
+  const renderChatView = () => {
     if (!selectedConvo) return null;
     
     const brandUserId = selectedConvo.brand_profiles.user_id;
@@ -662,7 +662,7 @@ const MessagesTab = () => {
         className="fixed inset-0 bg-background flex flex-col"
         style={{ paddingBottom: keyboardHeight > 0 ? keyboardHeight : 80 }}
       >
-        {selectedConversation ? <ChatView /> : <ConversationList />}
+        {selectedConversation ? renderChatView() : renderConversationList()}
       </div>
     );
   }
@@ -670,7 +670,7 @@ const MessagesTab = () => {
   if (isMobile) {
     return (
       <Card className="h-[calc(100vh-180px)] overflow-hidden">
-        {selectedConversation ? <ChatView /> : <ConversationList />}
+        {selectedConversation ? renderChatView() : renderConversationList()}
       </Card>
     );
   }
@@ -678,11 +678,11 @@ const MessagesTab = () => {
   return (
     <div className="grid md:grid-cols-3 gap-4 h-[600px]">
       <Card className="md:col-span-1 overflow-hidden">
-        <ConversationList />
+        {renderConversationList()}
       </Card>
       <Card className="md:col-span-2 overflow-hidden">
         {selectedConversation ? (
-          <ChatView />
+          renderChatView()
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">

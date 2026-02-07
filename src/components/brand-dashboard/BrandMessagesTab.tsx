@@ -435,8 +435,7 @@ const BrandMessagesTab = () => {
     );
   }
 
-  // Conversation List Component
-  const ConversationList = () => (
+  const renderConversationList = () => (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b">
         <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -670,7 +669,7 @@ const BrandMessagesTab = () => {
             {renderMessageInput()}
           </div>
         ) : (
-          <ConversationList />
+          renderConversationList()
         )}
       </Card>
     );
@@ -680,7 +679,7 @@ const BrandMessagesTab = () => {
   return (
     <div className="grid md:grid-cols-3 gap-4 h-[600px]">
       <Card className="md:col-span-1 overflow-hidden">
-        <ConversationList />
+        {renderConversationList()}
       </Card>
       <Card className="md:col-span-2 overflow-hidden">
         {selectedConversation ? (
