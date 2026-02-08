@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Crown, BadgeCheck, Sparkles, Star, TrendingUp, Zap, Building2, Palette, Loader2, Copy } from "lucide-react";
-import type { PlanType } from "@/config/plans";
+import type { PlanType } from "@/lib/stripe-mock";
 
 interface CreatorResult {
   id: string;
