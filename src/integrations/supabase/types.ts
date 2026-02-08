@@ -803,6 +803,7 @@ export type Database = {
         Row: {
           accessibility_info: string | null
           amenities: string[] | null
+          brand_plan: string
           company_name: string
           company_size: string | null
           contact_position: string | null
@@ -848,6 +849,7 @@ export type Database = {
         Insert: {
           accessibility_info?: string | null
           amenities?: string[] | null
+          brand_plan?: string
           company_name: string
           company_size?: string | null
           contact_position?: string | null
@@ -893,6 +895,7 @@ export type Database = {
         Update: {
           accessibility_info?: string | null
           amenities?: string[] | null
+          brand_plan?: string
           company_name?: string
           company_size?: string | null
           contact_position?: string | null

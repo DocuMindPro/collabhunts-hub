@@ -44,6 +44,7 @@ const CreateOpportunityDialog = ({
   const [pendingOpportunityData, setPendingOpportunityData] = useState<any>(null);
   const [freePostsRemaining, setFreePostsRemaining] = useState(0);
   const [hasActiveVerification, setHasActiveVerification] = useState(false);
+  const [brandPlan, setBrandPlan] = useState<string>("free");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -65,16 +66,25 @@ const CreateOpportunityDialog = ({
   const checkFreePostEligibility = useCallback(async () => {
     const { data, error } = await supabase
       .from("brand_profiles")
-      .select("is_verified, verification_expires_at, free_posts_used_this_month, free_posts_reset_at")
+      .select("is_verified, verification_expires_at, free_posts_used_this_month, free_posts_reset_at, brand_plan")
       .eq("id", brandProfileId)
       .single();
 
     if (error || !data) return;
 
+    const plan = data.brand_plan || "free";
+    setBrandPlan(plan);
+
     const isVerified = data.is_verified === true;
     const notExpired = data.verification_expires_at && new Date(data.verification_expires_at) > new Date();
     const active = isVerified && notExpired;
     setHasActiveVerification(!!active);
+
+    // Pro plan = unlimited posts
+    if (plan === "pro") {
+      setFreePostsRemaining(Infinity);
+      return;
+    }
 
     if (!active) {
       setFreePostsRemaining(0);
@@ -191,8 +201,9 @@ const CreateOpportunityDialog = ({
       location_country: selectedCountryName || null,
     };
 
-    // If verified and has free posts, post directly without payment
-    if (hasActiveVerification && freePostsRemaining > 0) {
+    // If pro plan or verified with free posts remaining, post directly
+    const canPostFree = brandPlan === "pro" || (hasActiveVerification && freePostsRemaining > 0);
+    if (canPostFree) {
       setSubmitting(true);
       const { error } = await supabase
         .from("brand_opportunities")
@@ -206,20 +217,24 @@ const CreateOpportunityDialog = ({
           variant: "destructive",
         });
       } else {
-        // Increment free posts used
-        const { data: current } = await supabase
-          .from("brand_profiles")
-          .select("free_posts_used_this_month")
-          .eq("id", brandProfileId)
-          .single();
-        await supabase
-          .from("brand_profiles")
-          .update({ free_posts_used_this_month: (current?.free_posts_used_this_month ?? 0) + 1 })
-          .eq("id", brandProfileId);
+        // Increment free posts used (skip for Pro — unlimited)
+        if (brandPlan !== "pro") {
+          const { data: current } = await supabase
+            .from("brand_profiles")
+            .select("free_posts_used_this_month")
+            .eq("id", brandProfileId)
+            .single();
+          await supabase
+            .from("brand_profiles")
+            .update({ free_posts_used_this_month: (current?.free_posts_used_this_month ?? 0) + 1 })
+            .eq("id", brandProfileId);
+        }
 
         toast({
           title: "Opportunity Posted!",
-          description: `Posted for free (${freePostsRemaining - 1} free posts remaining this month).`,
+          description: brandPlan === "pro"
+            ? "Your opportunity is now live (unlimited posts on Pro)."
+            : `Posted for free (${freePostsRemaining - 1} free posts remaining this month).`,
         });
         setFormData({
           title: "", description: "", package_type: "", event_date: "",
@@ -607,9 +622,11 @@ const CreateOpportunityDialog = ({
             <Button onClick={handleSubmit} disabled={submitting} className="w-full sm:w-auto">
               {submitting 
                 ? "Creating..." 
-                : hasActiveVerification && freePostsRemaining > 0
-                  ? `Post Free (${freePostsRemaining}/3 remaining)`
-                  : "Continue to Payment ($15)"}
+                : brandPlan === "pro"
+                  ? "Post Free (Unlimited)"
+                  : hasActiveVerification && freePostsRemaining > 0
+                    ? `Post Free (${freePostsRemaining}/3 remaining)`
+                    : "Continue to Payment ($15)"}
             </Button>
           </div>
         </DialogFooter>

@@ -2,28 +2,50 @@
 // This simulates Stripe functionality until real integration is set up
 
 export const SUBSCRIPTION_PLANS = {
-  none: {
-    name: 'No Plan',
+  free: {
+    name: 'Free',
     price: 0,
-    priceId: 'price_none_free',
+    priceId: 'price_free',
     features: [
-      'Search influencers on the marketplace',
+      'Browse creators on the marketplace',
+      'Direct messaging',
+      'AI-drafted agreements',
       'Pay $15 per opportunity post',
     ],
     lockedFeatures: [
       'Verified Business Badge',
-      '3 free opportunity posts/month',
+      'Free opportunity posts',
+      'Dedicated CSM',
     ]
   },
-  verified: {
-    name: 'Verified Business',
+  basic: {
+    name: 'Basic',
     price: 9900,
-    priceId: 'price_verified_annual',
+    priceId: 'price_basic_annual',
     features: [
       'Verified Business Badge for 1 year',
       '3 free opportunity posts per month',
       'Priority visibility with creators',
-      'Search influencers on the marketplace',
+      'Browse creators on the marketplace',
+      'Direct messaging',
+      'AI-drafted agreements',
+    ],
+    lockedFeatures: [
+      'Dedicated CSM',
+    ]
+  },
+  pro: {
+    name: 'Pro',
+    price: 0, // Custom pricing
+    priceId: 'price_pro_custom',
+    features: [
+      'Verified Business Badge',
+      'Unlimited opportunity posts',
+      'Dedicated Customer Success Manager',
+      'Priority visibility with creators',
+      'Browse creators on the marketplace',
+      'Direct messaging',
+      'AI-drafted agreements',
     ],
     lockedFeatures: []
   }

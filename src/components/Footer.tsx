@@ -150,6 +150,11 @@ const Footer = () => {
                           My Messages
                         </Link>
                       </li>
+                      <li>
+                        <Link to="/brand#pricing" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                          Plans & Pricing
+                        </Link>
+                      </li>
                     </>
                   )}
                   {hasCreatorProfile && (
@@ -217,6 +222,11 @@ const Footer = () => {
                   <li>
                     <Link to="/brand" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                       Register Your Brand
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/brand#pricing" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                      Brand Pricing
                     </Link>
                   </li>
                 </ul>

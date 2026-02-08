@@ -25,6 +25,7 @@ import MouseGlow from "@/components/home/MouseGlow";
 import GlowCard from "@/components/home/GlowCard";
 import TestimonialCarousel from "@/components/home/TestimonialCarousel";
 import { cn } from "@/lib/utils";
+import BrandPricingSection from "@/components/brand/BrandPricingSection";
 
 const Brand = () => {
   const navigate = useNavigate();
@@ -364,6 +365,9 @@ const Brand = () => {
           </AnimatedSection>
         </div>
       </section>
+
+      {/* Pricing */}
+      <BrandPricingSection />
 
       {/* Venue Types */}
       <section className="py-20">
