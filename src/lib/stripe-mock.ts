@@ -36,7 +36,7 @@ export const SUBSCRIPTION_PLANS = {
   },
   pro: {
     name: 'Pro',
-    price: 0, // Custom pricing
+    price: 29900,
     priceId: 'price_pro_custom',
     features: [
       'Verified Business Badge',
