@@ -11,7 +11,7 @@ import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-brand-page.jpg";
 import { VENUE_TYPES, EVENT_PACKAGES, PACKAGE_ORDER } from "@/config/packages";
-import PackageCard from "@/components/brand/PackageCard";
+import CollaborationSection, { SLUG_MAP } from "@/components/brand/CollaborationSection";
 import { LEBANESE_CITIES } from "@/config/lebanese-market";
 import {
   Accordion,
@@ -297,31 +297,6 @@ const Brand = () => {
         </div>
       </section>
 
-      {/* Event Packages */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <AnimatedSection animation="fade-up" className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-              Collaboration Options
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Choose the right experience for your brand — all pricing is custom
-            </p>
-          </AnimatedSection>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {PACKAGE_ORDER.map((pkgType, index) => {
-              const pkg = EVENT_PACKAGES[pkgType];
-              return (
-                <AnimatedSection key={pkgType} animation="fade-up" delay={index * 100}>
-                  <PackageCard pkgType={pkgType} pkg={pkg} />
-                </AnimatedSection>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* How It Works - Bento Style */}
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
@@ -368,6 +343,32 @@ const Brand = () => {
 
       {/* Pricing */}
       <BrandPricingSection />
+
+      {/* Collaboration Options - Individual Sections */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <AnimatedSection animation="fade-up" className="text-center mb-4">
+            <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
+              Collaboration Options
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Explore each collaboration type in detail — find the right fit for your brand
+            </p>
+          </AnimatedSection>
+
+          <div className="max-w-5xl mx-auto">
+            {PACKAGE_ORDER.map((pkgType, index) => (
+              <CollaborationSection
+                key={pkgType}
+                pkg={EVENT_PACKAGES[pkgType]}
+                pkgType={pkgType}
+                slug={SLUG_MAP[pkgType]}
+                index={index}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Venue Types */}
       <section className="py-20">
