@@ -65,6 +65,7 @@ const AdminFeatureOverridesTab = () => {
   const { toast } = useToast();
 
   const isUUID = (str: string) => /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(str);
+  const isHexFragment = (str: string) => /^[0-9a-f]{4,}$/i.test(str.replace(/-/g, ''));
 
   const copyId = (id: string) => {
     navigator.clipboard.writeText(id);
@@ -79,19 +80,33 @@ const AdminFeatureOverridesTab = () => {
     try {
       const query = search.trim();
       const isId = isUUID(query);
+      const isPartial = !isId && isHexFragment(query);
+
+      // Build OR filter
+      const creatorFilter = isId
+        ? `id.eq.${query},user_id.eq.${query}`
+        : isPartial
+          ? `id.ilike.%${query}%,user_id.ilike.%${query}%`
+          : `display_name.ilike.%${query}%`;
+
+      const brandFilter = isId
+        ? `id.eq.${query},user_id.eq.${query}`
+        : isPartial
+          ? `id.ilike.%${query}%,user_id.ilike.%${query}%`
+          : `company_name.ilike.%${query}%`;
 
       // Search creators
       const { data: creators } = await supabase
         .from("creator_profiles")
         .select("id, user_id, display_name, verification_payment_status, verification_expires_at, is_featured, featuring_priority")
-        .or(isId ? `id.eq.${query},user_id.eq.${query}` : `display_name.ilike.%${query}%`)
+        .or(creatorFilter)
         .limit(10);
 
       // Search brands
       const { data: brands } = await supabase
         .from("brand_profiles")
         .select("id, user_id, company_name, is_verified, verification_payment_status, verification_expires_at")
-        .or(isId ? `id.eq.${query},user_id.eq.${query}` : `company_name.ilike.%${query}%`)
+        .or(brandFilter)
         .limit(10);
 
       // Also search by email via profiles table
@@ -285,6 +300,67 @@ const AdminFeatureOverridesTab = () => {
     }
   };
 
+  const toggleBrandSubscription = async (planType: string) => {
+    if (!selected || selected.type !== "brand") return;
+    setToggling("subscription_plan");
+    const profileId = selected.data.id;
+
+    try {
+      // Cancel all existing active subscriptions
+      await supabase
+        .from("brand_subscriptions")
+        .update({ status: "canceled" })
+        .eq("brand_profile_id", profileId)
+        .eq("status", "active");
+
+      let newSub: ActiveSubscription | null = null;
+
+      if (planType !== "none") {
+        const now = new Date();
+        const endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+        const { data: inserted, error } = await supabase
+          .from("brand_subscriptions")
+          .insert({
+            brand_profile_id: profileId,
+            plan_type: planType,
+            status: "active",
+            current_period_start: now.toISOString(),
+            current_period_end: endDate.toISOString(),
+          })
+          .select("id, plan_type, status")
+          .single();
+        if (error) throw error;
+        newSub = inserted;
+      }
+
+      // Update brand_plan on profile
+      await supabase
+        .from("brand_profiles")
+        .update({ brand_plan: planType === "none" ? "free" : planType })
+        .eq("id", profileId);
+
+      // Log override
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("admin_feature_overrides").upsert({
+        target_type: "brand",
+        target_profile_id: profileId,
+        feature_key: "subscription_plan",
+        is_enabled: planType !== "none",
+        granted_by: user?.id,
+        granted_at: new Date().toISOString(),
+        notes: `Plan set to ${planType}`,
+        expires_at: planType !== "none" ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() : null,
+      }, { onConflict: "target_type,target_profile_id,feature_key" });
+
+      toast({ title: `Subscription ${planType === "none" ? "removed" : `set to ${planType}`}` });
+      setSelected({ ...selected, subscription: newSub });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setToggling(null);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -440,6 +516,38 @@ const AdminFeatureOverridesTab = () => {
                     checked={!!selected.data.is_verified}
                     onCheckedChange={(val) => toggleBrandVerification(val)}
                   />
+                )}
+              </div>
+            </div>
+
+            {/* Subscription Plan */}
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div className="flex items-center gap-3">
+                <Crown className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <Label className="font-medium">Subscription Plan</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Current: {selected.subscription ? `${selected.subscription.plan_type} (${selected.subscription.status})` : "Free (no subscription)"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {toggling === "subscription_plan" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Select
+                    value={selected.subscription?.plan_type || "none"}
+                    onValueChange={(val) => toggleBrandSubscription(val)}
+                  >
+                    <SelectTrigger className="w-[120px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None (Free)</SelectItem>
+                      <SelectItem value="basic">Basic</SelectItem>
+                      <SelectItem value="pro">Pro</SelectItem>
+                    </SelectContent>
+                  </Select>
                 )}
               </div>
             </div>
