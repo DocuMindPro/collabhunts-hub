@@ -18,6 +18,7 @@ import OfferMessage, { isOfferMessage } from "@/components/chat/OfferMessage";
 import CounterOfferDialog from "@/components/chat/CounterOfferDialog";
 import { type NegotiationData } from "@/components/chat/NegotiationMessage";
 import { getMessagePreview } from "@/lib/message-preview";
+import MessagingLimitBanner from "./MessagingLimitBanner";
 
 interface Conversation {
   id: string;
@@ -437,11 +438,12 @@ const BrandMessagesTab = () => {
 
   const renderConversationList = () => (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b">
+      <div className="p-4 border-b space-y-3">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />
           Messages
         </h2>
+        <MessagingLimitBanner />
       </div>
       <div className="flex-1 overflow-y-auto">
         {conversations.length === 0 ? (
