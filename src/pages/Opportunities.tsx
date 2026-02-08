@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Calendar, MapPin, Users, DollarSign, Clock, Search, Gift, Briefcase, AlertCircle, BarChart3 } from "lucide-react";
+import { Calendar, MapPin, Users, DollarSign, Clock, Search, Gift, Briefcase, AlertCircle, BarChart3, Sparkles } from "lucide-react";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import { EVENT_PACKAGES, PackageType } from "@/config/packages";
 import { FOLLOWER_RANGES, checkFollowerEligibility, formatFollowerRanges, formatFollowerCount, getCombinedRange } from "@/config/follower-ranges";
@@ -178,7 +178,16 @@ const Opportunities = () => {
     fetchOpportunities();
   };
 
-  const filteredOpportunities = opportunities.filter(opp => {
+  // Sort featured opportunities to the top, then by date
+  const sortedOpportunities = [...opportunities].sort((a, b) => {
+    const aFeatured = (a as any).is_featured === true;
+    const bFeatured = (b as any).is_featured === true;
+    if (aFeatured && !bFeatured) return -1;
+    if (!aFeatured && bFeatured) return 1;
+    return 0;
+  });
+
+  const filteredOpportunities = sortedOpportunities.filter(opp => {
     const matchesSearch = 
       opp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       opp.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -364,7 +373,7 @@ const Opportunities = () => {
                 const combinedRange = getCombinedRange(opportunity.follower_ranges);
 
                 return (
-                  <Card key={opportunity.id} className="flex flex-col hover:shadow-md transition-shadow">
+                  <Card key={opportunity.id} className={`flex flex-col hover:shadow-md transition-shadow ${(opportunity as any).is_featured ? 'ring-1 ring-amber-400/50 border-amber-400/30' : ''}`}>
                     <CardHeader className="p-4 pb-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -382,6 +391,12 @@ const Opportunities = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
+                          {(opportunity as any).is_featured && (
+                            <Badge className="text-[10px] px-1.5 py-0 bg-gradient-to-r from-amber-400 to-yellow-500 text-white border-0">
+                              <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                              Featured
+                            </Badge>
+                          )}
                           {packageInfo && (
                             <Badge 
                               variant="outline" 

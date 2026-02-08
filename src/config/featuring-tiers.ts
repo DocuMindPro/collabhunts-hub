@@ -7,6 +7,7 @@ export interface FeaturingTier {
   pricePerWeek: number; // in cents
   benefits: string[];
   icon: string;
+  comingSoon?: boolean;
 }
 
 export const CREATOR_CATEGORIES = [
@@ -69,7 +70,8 @@ export const FEATURING_TIERS: FeaturingTier[] = [
       'Highest visibility option',
       'Includes all other features'
     ],
-    icon: 'Sparkles'
+    icon: 'Sparkles',
+    comingSoon: true
   }
 ];
 

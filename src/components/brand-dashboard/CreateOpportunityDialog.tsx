@@ -268,8 +268,7 @@ const CreateOpportunityDialog = ({
       .from("brand_opportunities")
       .insert({
         ...pendingOpportunityData,
-        // Add featured flag if selected (we'll need to add this column)
-        // is_featured: isFeatured,
+        is_featured: isFeatured,
       });
 
     if (error) {

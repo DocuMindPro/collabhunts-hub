@@ -718,6 +718,7 @@ export type Database = {
           event_date: string
           follower_ranges: string[] | null
           id: string
+          is_featured: boolean | null
           is_paid: boolean
           location_city: string | null
           location_country: string | null
@@ -743,6 +744,7 @@ export type Database = {
           event_date: string
           follower_ranges?: string[] | null
           id?: string
+          is_featured?: boolean | null
           is_paid?: boolean
           location_city?: string | null
           location_country?: string | null
@@ -768,6 +770,7 @@ export type Database = {
           event_date?: string
           follower_ranges?: string[] | null
           id?: string
+          is_featured?: boolean | null
           is_paid?: boolean
           location_city?: string | null
           location_country?: string | null
