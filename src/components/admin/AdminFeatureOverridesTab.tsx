@@ -9,7 +9,6 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Crown, BadgeCheck, Sparkles, Star, TrendingUp, Zap, Building2, Palette, Loader2, Copy } from "lucide-react";
-import type { PlanType } from "@/lib/stripe-mock";
 
 interface CreatorResult {
   id: string;
@@ -286,51 +285,6 @@ const AdminFeatureOverridesTab = () => {
     }
   };
 
-  const changeBrandPlan = async (plan: PlanType) => {
-    if (!selected || selected.type !== "brand") return;
-    setToggling("subscription");
-    const profileId = selected.data.id;
-
-    try {
-      // Cancel existing active subscriptions
-      await supabase
-        .from("brand_subscriptions")
-        .update({ status: "cancelled" })
-        .eq("brand_profile_id", profileId)
-        .eq("status", "active");
-
-      if (plan !== "none") {
-        const now = new Date();
-        const endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
-
-        await supabase.from("brand_subscriptions").insert({
-          brand_profile_id: profileId,
-          plan_type: plan,
-          status: "active",
-          current_period_start: now.toISOString(),
-          current_period_end: endDate.toISOString(),
-        });
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("admin_feature_overrides").upsert({
-        target_type: "brand",
-        target_profile_id: profileId,
-        feature_key: `subscription_${plan}`,
-        is_enabled: plan !== "none",
-        granted_by: user?.id,
-        granted_at: new Date().toISOString(),
-        expires_at: plan !== "none" ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() : null,
-      }, { onConflict: "target_type,target_profile_id,feature_key" });
-
-      toast({ title: `Subscription changed to ${plan}` });
-      await selectBrand(selected.data);
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-      setToggling(null);
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -466,44 +420,13 @@ const AdminFeatureOverridesTab = () => {
             <CardDescription>Toggle paid features for this brand</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Subscription Plan */}
-            <div className="flex items-center justify-between p-3 rounded-lg border">
-              <div className="flex items-center gap-3">
-                <Crown className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <Label className="font-medium">Subscription Plan</Label>
-                  <p className="text-xs text-muted-foreground">Current: {selected.subscription?.plan_type || "none"}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {toggling === "subscription" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Select
-                    value={selected.subscription?.plan_type || "none"}
-                    onValueChange={(val) => changeBrandPlan(val as PlanType)}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      <SelectItem value="basic">Basic</SelectItem>
-                      <SelectItem value="pro">Pro</SelectItem>
-                      <SelectItem value="premium">Premium</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-            </div>
-
             {/* Verified Badge */}
             <div className="flex items-center justify-between p-3 rounded-lg border">
               <div className="flex items-center gap-3">
                 <BadgeCheck className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <Label className="font-medium">Verified Business Badge</Label>
-                  <p className="text-xs text-muted-foreground">$99/year verified badge</p>
+                  <p className="text-xs text-muted-foreground">$99/year bundle: verified badge + 3 free posts/month</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">

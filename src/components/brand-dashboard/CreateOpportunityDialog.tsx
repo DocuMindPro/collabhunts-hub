@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import LocationSelect from "@/components/LocationSelect";
 import { hasLocationData, getStatesForCountry } from "@/config/country-locations";
 import { COUNTRIES } from "@/components/PhoneInput";
 import MockPaymentDialog from "@/components/payments/MockPaymentDialog";
+import { isSameMonth } from "date-fns";
 
 // Opportunity posting pricing (in cents)
 const OPPORTUNITY_POSTING_FEE = 1500; // $15 to post
@@ -41,6 +42,8 @@ const CreateOpportunityDialog = ({
   const [wantsFeatured, setWantsFeatured] = useState(false);
   const [enforceFollowerRange, setEnforceFollowerRange] = useState(true);
   const [pendingOpportunityData, setPendingOpportunityData] = useState<any>(null);
+  const [freePostsRemaining, setFreePostsRemaining] = useState(0);
+  const [hasActiveVerification, setHasActiveVerification] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -57,6 +60,49 @@ const CreateOpportunityDialog = ({
     location_state: "",
     location_country: "LB",
   });
+
+  // Check brand verification status and free posts
+  const checkFreePostEligibility = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("brand_profiles")
+      .select("is_verified, verification_expires_at, free_posts_used_this_month, free_posts_reset_at")
+      .eq("id", brandProfileId)
+      .single();
+
+    if (error || !data) return;
+
+    const isVerified = data.is_verified === true;
+    const notExpired = data.verification_expires_at && new Date(data.verification_expires_at) > new Date();
+    const active = isVerified && notExpired;
+    setHasActiveVerification(!!active);
+
+    if (!active) {
+      setFreePostsRemaining(0);
+      return;
+    }
+
+    // Reset monthly counter if needed
+    let usedThisMonth = data.free_posts_used_this_month ?? 0;
+    const resetAt = data.free_posts_reset_at ? new Date(data.free_posts_reset_at) : null;
+    const now = new Date();
+
+    if (!resetAt || !isSameMonth(resetAt, now)) {
+      // Different month — reset counter
+      usedThisMonth = 0;
+      await supabase
+        .from("brand_profiles")
+        .update({ free_posts_used_this_month: 0, free_posts_reset_at: now.toISOString() })
+        .eq("id", brandProfileId);
+    }
+
+    setFreePostsRemaining(Math.max(0, 3 - usedThisMonth));
+  }, [brandProfileId]);
+
+  useEffect(() => {
+    if (open) {
+      checkFreePostEligibility();
+    }
+  }, [open, checkFreePostEligibility]);
 
   const handleFollowerRangeToggle = (rangeKey: string) => {
     setFormData(prev => ({
@@ -124,8 +170,8 @@ const CreateOpportunityDialog = ({
       }
     }
 
-    // Store pending data and show payment dialog
-    setPendingOpportunityData({
+    // Store pending data
+    const opportunityData = {
       brand_profile_id: brandProfileId,
       title: formData.title,
       description: finalDescription || null,
@@ -143,8 +189,55 @@ const CreateOpportunityDialog = ({
       enforce_follower_range: enforceFollowerRange,
       location_city: formData.location_city || null,
       location_country: selectedCountryName || null,
-    });
+    };
+
+    // If verified and has free posts, post directly without payment
+    if (hasActiveVerification && freePostsRemaining > 0) {
+      setSubmitting(true);
+      const { error } = await supabase
+        .from("brand_opportunities")
+        .insert(opportunityData);
+
+      if (error) {
+        console.error("Error creating opportunity:", error);
+        toast({
+          title: "Error",
+          description: "Failed to create opportunity. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        // Increment free posts used
+        const { data: current } = await supabase
+          .from("brand_profiles")
+          .select("free_posts_used_this_month")
+          .eq("id", brandProfileId)
+          .single();
+        await supabase
+          .from("brand_profiles")
+          .update({ free_posts_used_this_month: (current?.free_posts_used_this_month ?? 0) + 1 })
+          .eq("id", brandProfileId);
+
+        toast({
+          title: "Opportunity Posted!",
+          description: `Posted for free (${freePostsRemaining - 1} free posts remaining this month).`,
+        });
+        setFormData({
+          title: "", description: "", package_type: "", event_date: "",
+          start_time: "", end_time: "", is_paid: true, budget: "",
+          spots_available: "1", requirements: "", follower_ranges: [],
+          location_city: "", location_state: "", location_country: "LB",
+        });
+        setPendingOpportunityData(null);
+        setWantsFeatured(false);
+        setEnforceFollowerRange(true);
+        onSuccess();
+      }
+      setSubmitting(false);
+      return;
+    }
     
+    // Otherwise, show payment dialog
+    setPendingOpportunityData(opportunityData);
     setShowPaymentDialog(true);
   };
 
@@ -512,7 +605,11 @@ const CreateOpportunityDialog = ({
               Cancel
             </Button>
             <Button onClick={handleSubmit} disabled={submitting} className="w-full sm:w-auto">
-              {submitting ? "Creating..." : "Continue to Payment"}
+              {submitting 
+                ? "Creating..." 
+                : hasActiveVerification && freePostsRemaining > 0
+                  ? `Post Free (${freePostsRemaining}/3 remaining)`
+                  : "Continue to Payment ($15)"}
             </Button>
           </div>
         </DialogFooter>

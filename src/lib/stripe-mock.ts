@@ -3,123 +3,44 @@
 
 export const SUBSCRIPTION_PLANS = {
   none: {
-    name: 'No Package',
+    name: 'No Plan',
     price: 0,
     priceId: 'price_none_free',
-    campaignLimit: 0,
-    canContactCreators: false,
-    canBookCreators: false,
-    canMessageAfterDelivery: false,
-    hasAdvancedFilters: false,
-    hasCRM: false,
-    hasContentLibrary: false,
-    storageLimit: 0,
-    canRequestVerifiedBadge: false,
-    massMessageLimit: 0,
-    canViewCreatorPricing: false,
     features: [
       'Search influencers on the marketplace',
+      'Pay $15 per opportunity post',
     ],
     lockedFeatures: [
-      'Chat & negotiate with creators',
-      'View all creator package pricing',
-      'Post campaigns',
-      'Advanced filters for age, language, and more',
-      'Save creators & add notes (CRM)',
-      'Mass message creators',
-      'Content Library',
       'Verified Business Badge',
+      '3 free opportunity posts/month',
     ]
   },
-  basic: {
-    name: 'Basic',
-    price: 1000,
-    priceId: 'price_basic_monthly',
-    campaignLimit: 0,
-    canContactCreators: true,
-    canBookCreators: true,
-    canMessageAfterDelivery: true,
-    hasAdvancedFilters: false,
-    hasCRM: false,
-    hasContentLibrary: true,
-    storageLimit: 10 * 1024 * 1024 * 1024,
-    canRequestVerifiedBadge: false,
-    massMessageLimit: 0,
-    canViewCreatorPricing: true,
-    features: [
-      'Search influencers on the marketplace',
-      'Chat & negotiate with creators',
-      'View all creator package pricing',
-      'Content Library with 10 GB storage',
-    ],
-    lockedFeatures: [
-      'Post campaigns',
-      'Advanced filters for age, language, and more',
-      'Save creators & add notes (CRM)',
-      'Mass message creators',
-      'Verified Business Badge',
-    ]
-  },
-  pro: {
-    name: 'Pro',
-    price: 4900,
-    priceId: 'price_pro_monthly',
-    campaignLimit: 1,
-    canContactCreators: true,
-    canBookCreators: true,
-    canMessageAfterDelivery: true,
-    hasAdvancedFilters: true,
-    hasCRM: true,
-    hasContentLibrary: true,
-    storageLimit: 10 * 1024 * 1024 * 1024,
-    canRequestVerifiedBadge: true,
-    massMessageLimit: 50,
-    canViewCreatorPricing: true,
-    features: [
-      'Everything in Basic',
-      'Post 1 campaign per month',
-      'Advanced filters for age, ethnicity, language and more',
-      'Save creators & add private notes (CRM)',
-      'Mass message up to 50 creators/day',
-      'Verified Business Badge (upon approval)',
-    ],
-    lockedFeatures: [
-      'Unlimited campaigns',
-      '50 GB storage',
-      '100 mass messages/day',
-    ]
-  },
-  premium: {
-    name: 'Premium',
+  verified: {
+    name: 'Verified Business',
     price: 9900,
-    priceId: 'price_premium_monthly',
-    campaignLimit: Infinity,
-    canContactCreators: true,
-    canBookCreators: true,
-    canMessageAfterDelivery: true,
-    hasAdvancedFilters: true,
-    hasCRM: true,
-    hasContentLibrary: true,
-    storageLimit: 50 * 1024 * 1024 * 1024,
-    canRequestVerifiedBadge: true,
-    massMessageLimit: 100,
-    canViewCreatorPricing: true,
+    priceId: 'price_verified_annual',
     features: [
-      'Everything in Pro',
-      'Post unlimited campaigns',
-      'Content Library with 50 GB storage',
-      'Mass message up to 100 creators/day',
-      'Priority customer support (Coming Soon)',
-      'Dedicated account manager (Coming Soon)',
+      'Verified Business Badge for 1 year',
+      '3 free opportunity posts per month',
+      'Priority visibility with creators',
+      'Search influencers on the marketplace',
     ],
     lockedFeatures: []
   }
 } as const;
 
-// Helper function to check if user can view creator pricing
-export const canViewCreatorPricing = (planType: PlanType): boolean => {
-  return SUBSCRIPTION_PLANS[planType].canViewCreatorPricing;
-};
+export type PlanType = keyof typeof SUBSCRIPTION_PLANS;
+
+// Legacy helpers - kept for backward compatibility, all return permissive defaults
+// since the old tiered subscription system has been replaced with a single $99/year bundle
+export const canViewCreatorPricing = (_planType: PlanType): boolean => true;
+export const canContactCreators = (_planType: PlanType): boolean => true;
+export const getCampaignLimit = (_planType: PlanType): number => Infinity;
+export const hasAdvancedFilters = (_planType: PlanType): boolean => true;
+export const hasCRM = (_planType: PlanType): boolean => true;
+export const hasContentLibrary = (_planType: PlanType): boolean => true;
+export const getStorageLimit = (_planType: PlanType): number => 10 * 1024 * 1024 * 1024;
+export const canRequestVerifiedBadge = (_planType: PlanType): boolean => true;
 
 // Storage add-on configuration
 export const STORAGE_ADDON = {
@@ -127,36 +48,6 @@ export const STORAGE_ADDON = {
   priceCents: 1000, // $10
   name: '100 GB Storage Add-on',
 } as const;
-
-export type PlanType = keyof typeof SUBSCRIPTION_PLANS;
-
-export const canContactCreators = (planType: PlanType): boolean => {
-  return SUBSCRIPTION_PLANS[planType].canContactCreators;
-};
-
-export const getCampaignLimit = (planType: PlanType): number => {
-  return SUBSCRIPTION_PLANS[planType].campaignLimit;
-};
-
-export const hasAdvancedFilters = (planType: PlanType): boolean => {
-  return SUBSCRIPTION_PLANS[planType].hasAdvancedFilters;
-};
-
-export const hasCRM = (planType: PlanType): boolean => {
-  return SUBSCRIPTION_PLANS[planType].hasCRM;
-};
-
-export const hasContentLibrary = (planType: PlanType): boolean => {
-  return SUBSCRIPTION_PLANS[planType].hasContentLibrary;
-};
-
-export const getStorageLimit = (planType: PlanType): number => {
-  return SUBSCRIPTION_PLANS[planType].storageLimit;
-};
-
-export const canRequestVerifiedBadge = (planType: PlanType): boolean => {
-  return SUBSCRIPTION_PLANS[planType].canRequestVerifiedBadge;
-};
 
 export const formatPrice = (cents: number): string => {
   return `$${(cents / 100).toFixed(2)}`;
