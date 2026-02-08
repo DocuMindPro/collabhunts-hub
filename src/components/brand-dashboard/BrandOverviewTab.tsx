@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Users, Briefcase, MessageSquare, Calendar, ArrowRight } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import MessagingQuotaCard from "./MessagingQuotaCard";
 
 interface RecentActivity {
   id: string;
@@ -151,6 +152,9 @@ const BrandOverviewTab = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Messaging Quota */}
+      <MessagingQuotaCard />
 
       {/* Recent Activity */}
       <Card>
