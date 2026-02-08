@@ -296,7 +296,10 @@ const Admin = () => {
       profile.email.toLowerCase().includes(userSearch.toLowerCase()) ||
       profile.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
       profile.brand_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
-      profile.creator_display_name?.toLowerCase().includes(userSearch.toLowerCase())
+      profile.creator_display_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
+      profile.id.toLowerCase().includes(userSearch.toLowerCase()) ||
+      profile.creator_profile_id?.toLowerCase().includes(userSearch.toLowerCase()) ||
+      profile.brand_profile_id?.toLowerCase().includes(userSearch.toLowerCase())
     );
     setFilteredProfiles(filtered);
   }, [userSearch, profiles]);
@@ -938,7 +941,7 @@ const Admin = () => {
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
-                          placeholder="Search users..."
+                          placeholder="Search name, email, ID..."
                           value={userSearch}
                           onChange={(e) => setUserSearch(e.target.value)}
                           className="pl-9"
