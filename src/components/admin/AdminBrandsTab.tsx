@@ -142,10 +142,13 @@ const AdminBrandsTab = () => {
     let filtered = brands;
 
     if (search) {
+      const s = search.toLowerCase();
       filtered = filtered.filter(b =>
-        b.company_name.toLowerCase().includes(search.toLowerCase()) ||
-        b.email?.toLowerCase().includes(search.toLowerCase()) ||
-        b.phone_number?.includes(search)
+        b.company_name.toLowerCase().includes(s) ||
+        b.email?.toLowerCase().includes(s) ||
+        b.phone_number?.includes(search) ||
+        b.id?.toLowerCase().includes(s) ||
+        b.user_id?.toLowerCase().includes(s)
       );
     }
 
