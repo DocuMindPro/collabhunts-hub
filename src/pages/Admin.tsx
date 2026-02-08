@@ -30,6 +30,7 @@ import AdminBrandingSeoTab from "@/components/admin/AdminBrandingSeoTab";
 import AdminFeatureOverridesTab from "@/components/admin/AdminFeatureOverridesTab";
 import AdminAnnouncementsTab from "@/components/admin/AdminAnnouncementsTab";
 import AdminCareersTab from "@/components/admin/AdminCareersTab";
+import AdminSubscriptionsTab from "@/components/admin/AdminSubscriptionsTab";
 import AdminQuickActions from "@/components/admin/AdminQuickActions";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
@@ -926,6 +927,10 @@ const Admin = () => {
                 <Briefcase className="h-4 w-4" />
                 <span className="hidden sm:inline">Careers</span>
               </TabsTrigger>
+              <TabsTrigger value="subscriptions" className="gap-2 shrink-0">
+                <DollarSign className="h-4 w-4" />
+                <span className="hidden sm:inline">Subscriptions</span>
+              </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -1475,6 +1480,11 @@ const Admin = () => {
             {/* Careers Tab */}
             <TabsContent value="careers">
               <AdminCareersTab />
+            </TabsContent>
+
+            {/* Subscriptions Tab */}
+            <TabsContent value="subscriptions">
+              <AdminSubscriptionsTab />
             </TabsContent>
           </Tabs>
         </div>
