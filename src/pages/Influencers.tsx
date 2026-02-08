@@ -108,6 +108,7 @@ const Influencers = () => {
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
+  const [categoryBoostMap, setCategoryBoostMap] = useState<Map<string, Set<string>>>(new Map());
   const navigate = useNavigate();
 
   const platforms = ["All", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch"];
@@ -251,7 +252,7 @@ const Influencers = () => {
       const now = new Date().toISOString();
       const { data: featuringData } = await supabase
         .from("creator_featuring")
-        .select("creator_profile_id, feature_type")
+        .select("creator_profile_id, feature_type, category")
         .eq("is_active", true)
         .gt("end_date", now);
 
@@ -259,6 +260,20 @@ const Influencers = () => {
       const featuredCreatorIds = new Set(
         (featuringData || []).map(f => f.creator_profile_id)
       );
+
+      // Create a map of category_boost creators by category
+      const categoryBoostMapLocal = new Map<string, Set<string>>();
+      (featuringData || []).forEach(f => {
+        if (f.feature_type === 'category_boost' && f.category) {
+          if (!categoryBoostMapLocal.has(f.category)) {
+            categoryBoostMapLocal.set(f.category, new Set());
+          }
+          categoryBoostMapLocal.get(f.category)!.add(f.creator_profile_id);
+        }
+      });
+
+      // Store the category boost map for use in sorting
+      setCategoryBoostMap(categoryBoostMapLocal);
 
       const formattedCreators: CreatorWithDetails[] = (data || []).map((creator) => ({
         id: creator.id,
@@ -410,6 +425,21 @@ const Influencers = () => {
 
     return matchesSearch && matchesPlatform && matchesCategory && matchesAdvanced;
   });
+
+  // When a category filter is active, sort creators with category_boost for that category to the top
+  if (selectedCategory !== "all") {
+    const categoryKey = selectedCategory.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_');
+    const boostedIds = categoryBoostMap.get(categoryKey);
+    if (boostedIds && boostedIds.size > 0) {
+      filteredCreators.sort((a, b) => {
+        const aBoosted = boostedIds.has(a.id);
+        const bBoosted = boostedIds.has(b.id);
+        if (aBoosted && !bBoosted) return -1;
+        if (!aBoosted && bBoosted) return 1;
+        return 0;
+      });
+    }
+  }
 
   const getMainPlatform = (socialAccounts: CreatorWithDetails['social_accounts']) => {
     if (socialAccounts.length === 0) return { platform: "Creator", followers: 0 };

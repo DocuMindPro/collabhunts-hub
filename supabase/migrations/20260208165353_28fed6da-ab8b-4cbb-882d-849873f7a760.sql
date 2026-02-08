@@ -1,0 +1,1 @@
+ALTER TABLE public.brand_opportunities ADD COLUMN is_featured BOOLEAN DEFAULT false;

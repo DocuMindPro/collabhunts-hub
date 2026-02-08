@@ -97,12 +97,23 @@ const CreatorSpotlight = () => {
         .select('id, display_name, profile_image_url, categories, is_featured, featuring_priority, status, avg_response_minutes')
         .eq('status', 'approved')
         .order('featuring_priority', { ascending: false, nullsFirst: false })
-        .limit(8);
+        .limit(20); // fetch more to allow re-sorting
 
       if (creatorError || !creatorData) {
         setLoading(false);
         return;
       }
+
+      // Fetch active homepage_spotlight featuring records
+      const now = new Date().toISOString();
+      const { data: spotlightData } = await supabase
+        .from('creator_featuring')
+        .select('creator_profile_id')
+        .eq('feature_type', 'homepage_spotlight')
+        .eq('is_active', true)
+        .gt('end_date', now);
+
+      const spotlightIds = new Set((spotlightData || []).map(s => s.creator_profile_id));
 
       // Fetch social accounts for these creators
       const creatorIds = creatorData.map(c => c.id);
@@ -119,7 +130,16 @@ const CreatorSpotlight = () => {
           .map(s => ({ platform: s.platform, follower_count: s.follower_count }))
       }));
 
-      setCreators(creatorsWithSocial);
+      // Sort: homepage_spotlight first, then by featuring_priority
+      creatorsWithSocial.sort((a, b) => {
+        const aSpotlight = spotlightIds.has(a.id);
+        const bSpotlight = spotlightIds.has(b.id);
+        if (aSpotlight && !bSpotlight) return -1;
+        if (!aSpotlight && bSpotlight) return 1;
+        return (b.featuring_priority || 0) - (a.featuring_priority || 0);
+      });
+
+      setCreators(creatorsWithSocial.slice(0, 8));
       setLoading(false);
     };
 
