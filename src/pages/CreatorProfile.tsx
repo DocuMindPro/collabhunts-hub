@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { canBrandMessageCreator, incrementMessagingCounter } from "@/lib/subscription-utils";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -167,7 +168,7 @@ const CreatorProfile = () => {
         return;
       }
 
-      // Messaging is now FREE for all brands - no subscription check needed
+      // Messaging is now limited by plan — check before creating new conversations
 
       // Build URL params for package context
       let packageParams = "";
@@ -195,6 +196,17 @@ const CreatorProfile = () => {
         return;
       }
 
+      // Check messaging limit before creating new conversation
+      const { canMessage, reason } = await canBrandMessageCreator(brandProfile.id, id!);
+      if (!canMessage) {
+        toast({
+          title: "Messaging Limit Reached",
+          description: reason || "You've reached your monthly messaging limit. Upgrade your plan to message more creators.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Create new conversation
       const { data: newConversation, error: conversationError } = await supabase
         .from("conversations")
@@ -206,6 +218,9 @@ const CreatorProfile = () => {
         .single();
 
       if (conversationError) throw conversationError;
+
+      // Increment the messaging counter
+      await incrementMessagingCounter(brandProfile.id);
 
       // Navigate to messages tab with new conversation
       navigate(`/brand-dashboard?tab=messages&conversation=${newConversation.id}${packageParams}`);

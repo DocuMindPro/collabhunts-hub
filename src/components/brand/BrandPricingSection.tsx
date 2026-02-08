@@ -16,7 +16,7 @@ const plans = [
     ctaLink: "/brand-signup",
     features: [
       { text: "Browse creators", included: true },
-      { text: "Direct messaging", included: true },
+      { text: "Message 1 creator/month", included: true },
       { text: "AI-drafted agreements", included: true },
       { text: "$15 per opportunity post", included: true },
       { text: "Verified Business Badge", included: false },
@@ -35,7 +35,7 @@ const plans = [
     ctaLink: "/brand-signup",
     features: [
       { text: "Browse creators", included: true },
-      { text: "Direct messaging", included: true },
+      { text: "Message 10 creators/month", included: true },
       { text: "AI-drafted agreements", included: true },
       { text: "3 free opportunity posts/month", included: true },
       { text: "Verified Business Badge", included: true },
@@ -53,7 +53,7 @@ const plans = [
     ctaLink: "/contact",
     features: [
       { text: "Browse creators", included: true },
-      { text: "Direct messaging", included: true },
+      { text: "Unlimited creator messaging", included: true },
       { text: "AI-drafted agreements", included: true },
       { text: "Unlimited opportunity posts", included: true },
       { text: "Verified Business Badge", included: true },
