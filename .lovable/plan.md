@@ -1,35 +1,80 @@
 
 
-## Add Upgrade Prompt Banner in Messages Tab + E2E Testing
+## Collaboration Options Redesign + Dedicated Guide Pages
 
-### Part 1: Messaging Limit Banner
+### Overview
 
-**New Component: `src/components/brand-dashboard/MessagingLimitBanner.tsx`**
+Restructure the `/brand` page to move collaboration options below pricing, give each option its own section with rich explanations, and create dedicated guide pages for each collaboration type.
 
-A compact alert banner that appears at the top of the Messages tab when the brand is near (70%+) or at their monthly messaging limit.
+### Changes
 
-- **Near limit (e.g. 7/10)**: Yellow/warning banner -- "You've messaged 7 of 10 new creators this month. Upgrade for unlimited messaging."
-- **At limit (e.g. 10/10)**: Red/destructive banner -- "You've reached your monthly limit of 10 new creators. Upgrade to keep connecting."
-- **Pro plan or under 70%**: Banner hidden entirely.
-- Includes a dismiss button and an "Upgrade" link pointing to `/brand`.
-- Reuses the same data-fetching pattern from `MessagingQuotaCard` (calls `getCurrentPlanType`, `getMessageLimit`, reads `brand_profiles` counters).
+**1. Restructure `/brand` page layout (Brand.tsx)**
 
-**Modify: `src/components/brand-dashboard/BrandMessagesTab.tsx`**
+Current section order:
+```
+Hero > Benefits > Collaboration Options (cards grid) > How It Works > Pricing > Venue Types > ...
+```
 
-- Import and render `<MessagingLimitBanner />` at the top of the messages layout, just below the "Messages" heading (line ~444), so it's visible regardless of which conversation is selected.
+New section order:
+```
+Hero > Benefits > How It Works > Pricing > Collaboration Options (individual sections) > Venue Types > ...
+```
 
-### Part 2: End-to-End Testing
+Remove the current 4-column card grid. Replace with individual, alternating-layout sections for each collaboration type (Unbox & Review, Social Boost, Meet & Greet, Live PK Battle, Custom Experience). Each section includes:
+- Package name and short tagline
+- 2-3 sentence explanation of the collaboration
+- Key highlights (3-4 bullet points from the package phases)
+- "Ideal for" tags
+- A "Learn More" link that navigates to `/collaborations/{type-slug}`
 
-After implementation, manually test via the browser tool:
+Sections alternate left/right text alignment for visual variety (similar to feature showcase patterns).
 
-1. Open the app and navigate to the brand dashboard messages tab
-2. Verify the banner renders correctly based on the current quota state
-3. Check that the upgrade link navigates to `/brand`
-4. Verify the banner does not appear for Pro plans or when usage is low
+**2. Create 5 new guide pages**
+
+New route pages under `/collaborations/:slug`:
+- `/collaborations/unbox-review`
+- `/collaborations/social-boost`
+- `/collaborations/meet-greet`
+- `/collaborations/live-pk-battle`
+- `/collaborations/custom-experience`
+
+Each page covers the full process in a user-friendly, step-by-step format:
+
+- **What is it?** - Clear explanation of the collaboration type
+- **How it works** - Step-by-step process (browse creators, message, negotiate, sign agreement, execute, review)
+- **What to expect** - Deliverables breakdown (pre/during/post phases from package config)
+- **Best practices** - Tips for brands (e.g., "Always request a signed agreement so bookings appear on your Calendar", "Be clear about deliverables upfront", "Check creator reviews before booking")
+- **Platform features to use** - Highlights of AI agreements, Calendar tracking, messaging
+- **CTA** - "Find Creators" or "Contact Us" button depending on package type
+
+**3. New shared component: CollaborationSection**
+
+A reusable component for rendering each collaboration's section on the `/brand` page. Props: package data, index (for alternating layout), slug (for Learn More link).
+
+**4. New page component: CollaborationGuide**
+
+A single page component (`src/pages/CollaborationGuide.tsx`) that reads the `:slug` param, maps it to the package config, and renders the full guide content. Uses static content objects for best practices and process steps per collaboration type.
+
+**5. Router update (App.tsx)**
+
+Add route: `/collaborations/:slug` pointing to `CollaborationGuide`.
 
 ### Technical Details
 
-- The banner component follows the same pattern as `MessagingQuotaCard`: fetch user, get plan type, get limit, read counters from `brand_profiles`, handle monthly reset logic.
-- Uses the existing `Alert` UI component with `AlertTitle` and `AlertDescription` for consistent styling.
-- No database changes needed -- all data already exists from the previous migration.
+**Files to create:**
+- `src/components/brand/CollaborationSection.tsx` - Reusable section for each collab type on `/brand` page
+- `src/pages/CollaborationGuide.tsx` - Full guide page with slug-based routing
+
+**Files to modify:**
+- `src/pages/Brand.tsx` - Remove card grid, add individual `CollaborationSection` components below `BrandPricingSection`, reorder sections
+- `src/App.tsx` - Add `/collaborations/:slug` route
+
+**Data approach:**
+- Leverage existing `EVENT_PACKAGES` and `PACKAGE_ORDER` from `src/config/packages.ts` for deliverables and phase data
+- Define guide-specific content (best practices, process steps, tips) as a static config object within `CollaborationGuide.tsx`, keyed by slug
+- Map slugs to `PackageType`: `unbox-review` to `unbox_review`, `social-boost` to `social_boost`, etc.
+
+**Design patterns:**
+- Reuse existing `AnimatedSection`, `GlowCard`, and design tokens for consistency with the rest of the `/brand` page
+- Guide pages use `Navbar`/`Footer` wrapper, accordion or vertical step layout for the process, and a final CTA section
 
