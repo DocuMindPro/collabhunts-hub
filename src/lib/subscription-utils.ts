@@ -103,7 +103,9 @@ export const getBrandSubscription = async (userId: string): Promise<BrandSubscri
 
 export const getCurrentPlanType = async (userId: string): Promise<PlanType> => {
   const subscription = await getBrandSubscription(userId);
-  return (subscription?.plan_type as PlanType) || 'none';
+  const planType = subscription?.plan_type;
+  if (planType === 'basic' || planType === 'pro') return planType;
+  return 'free';
 };
 
 // Legacy helpers - kept for backward compatibility
