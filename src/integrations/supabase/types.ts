@@ -808,6 +808,8 @@ export type Database = {
           company_size: string | null
           contact_position: string | null
           created_at: string | null
+          creators_messaged_reset_at: string
+          creators_messaged_this_month: number
           first_name: string | null
           free_posts_reset_at: string | null
           free_posts_used_this_month: number
@@ -854,6 +856,8 @@ export type Database = {
           company_size?: string | null
           contact_position?: string | null
           created_at?: string | null
+          creators_messaged_reset_at?: string
+          creators_messaged_this_month?: number
           first_name?: string | null
           free_posts_reset_at?: string | null
           free_posts_used_this_month?: number
@@ -900,6 +904,8 @@ export type Database = {
           company_size?: string | null
           contact_position?: string | null
           created_at?: string | null
+          creators_messaged_reset_at?: string
+          creators_messaged_this_month?: number
           first_name?: string | null
           free_posts_reset_at?: string | null
           free_posts_used_this_month?: number

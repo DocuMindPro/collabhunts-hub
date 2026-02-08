@@ -8,7 +8,7 @@ export const SUBSCRIPTION_PLANS = {
     priceId: 'price_free',
     features: [
       'Browse creators on the marketplace',
-      'Direct messaging',
+      'Message 1 creator/month',
       'AI-drafted agreements',
       'Pay $15 per opportunity post',
     ],
@@ -27,7 +27,7 @@ export const SUBSCRIPTION_PLANS = {
       '3 free opportunity posts per month',
       'Priority visibility with creators',
       'Browse creators on the marketplace',
-      'Direct messaging',
+      'Message 10 creators/month',
       'AI-drafted agreements',
     ],
     lockedFeatures: [
@@ -44,7 +44,7 @@ export const SUBSCRIPTION_PLANS = {
       'Dedicated Customer Success Manager',
       'Priority visibility with creators',
       'Browse creators on the marketplace',
-      'Direct messaging',
+      'Unlimited creator messaging',
       'AI-drafted agreements',
     ],
     lockedFeatures: []

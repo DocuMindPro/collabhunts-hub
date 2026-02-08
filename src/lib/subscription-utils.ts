@@ -127,10 +127,86 @@ export const getUserSubscriptionTier = async (userId: string): Promise<string> =
   return planType;
 };
 
-// Brands can always message creators (no tier restriction)
+// Get the messaging limit for a given plan
+export const getMessageLimit = (planType: PlanType | string): number => {
+  switch (planType) {
+    case 'pro': return Infinity;
+    case 'basic': return 10;
+    default: return 1; // free / none
+  }
+};
+
+// Check if a brand can message a new creator (enforces monthly limit)
 export const canBrandMessageCreator = async (
-  _brandProfileId: string,
-  _creatorProfileId: string
+  brandProfileId: string,
+  creatorProfileId: string
 ): Promise<{ canMessage: boolean; reason?: string }> => {
-  return { canMessage: true };
+  try {
+    // Check if conversation already exists — always allowed
+    const { data: existing } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('brand_profile_id', brandProfileId)
+      .eq('creator_profile_id', creatorProfileId)
+      .maybeSingle();
+
+    if (existing) return { canMessage: true };
+
+    // Get brand profile with messaging counters
+    const { data: brand } = await supabase
+      .from('brand_profiles')
+      .select('id, user_id, creators_messaged_this_month, creators_messaged_reset_at')
+      .eq('id', brandProfileId)
+      .single();
+
+    if (!brand) return { canMessage: false, reason: 'Brand profile not found' };
+
+    // Get current plan
+    const planType = await getCurrentPlanType(brand.user_id);
+    const limit = getMessageLimit(planType);
+    if (limit === Infinity) return { canMessage: true };
+
+    // Auto-reset if we're in a new month
+    const resetAt = new Date(brand.creators_messaged_reset_at);
+    const now = new Date();
+    let currentCount = brand.creators_messaged_this_month;
+
+    if (now.getMonth() !== resetAt.getMonth() || now.getFullYear() !== resetAt.getFullYear()) {
+      // Reset the counter
+      await supabase
+        .from('brand_profiles')
+        .update({ creators_messaged_this_month: 0, creators_messaged_reset_at: now.toISOString() })
+        .eq('id', brandProfileId);
+      currentCount = 0;
+    }
+
+    if (currentCount >= limit) {
+      const planName = planType === 'basic' ? 'Basic' : 'Free';
+      return {
+        canMessage: false,
+        reason: `You've reached your ${planName} plan limit of ${limit} new creator${limit === 1 ? '' : 's'} per month. Upgrade your plan to message more creators.`
+      };
+    }
+
+    return { canMessage: true };
+  } catch (error) {
+    console.error('Error checking message limit:', error);
+    return { canMessage: true }; // fail open
+  }
+};
+
+// Increment the messaging counter after a new conversation is created
+export const incrementMessagingCounter = async (brandProfileId: string): Promise<void> => {
+  const { data: brand } = await supabase
+    .from('brand_profiles')
+    .select('creators_messaged_this_month')
+    .eq('id', brandProfileId)
+    .single();
+
+  if (brand) {
+    await supabase
+      .from('brand_profiles')
+      .update({ creators_messaged_this_month: brand.creators_messaged_this_month + 1 })
+      .eq('id', brandProfileId);
+  }
 };
