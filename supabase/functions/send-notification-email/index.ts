@@ -1027,7 +1027,7 @@ function getEmailContent(type: EmailType, data: Record<string, any>, toName?: st
             Your saved creators, CRM notes, and content library are waiting for you.
           </p>
           <div style="text-align: center;">
-            ${getCtaButton('View Plans', `${baseUrl}/pricing`)}
+            ${getCtaButton('Get Started', `${baseUrl}/brand-signup`)}
           </div>
         `)
       };
