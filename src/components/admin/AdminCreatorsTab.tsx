@@ -157,7 +157,8 @@ const AdminCreatorsTab = () => {
       filtered = filtered.filter(c =>
         c.display_name.toLowerCase().includes(search.toLowerCase()) ||
         c.email?.toLowerCase().includes(search.toLowerCase()) ||
-        c.phone_number?.includes(search)
+        c.phone_number?.includes(search) ||
+        c.id.toLowerCase().includes(search.toLowerCase())
       );
     }
 
@@ -428,7 +429,7 @@ const AdminCreatorsTab = () => {
             <div className="col-span-2 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search name, email, phone..."
+                placeholder="Search name, email, phone, ID..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
