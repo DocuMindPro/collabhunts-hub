@@ -808,6 +808,8 @@ export type Database = {
           contact_position: string | null
           created_at: string | null
           first_name: string | null
+          free_posts_reset_at: string | null
+          free_posts_used_this_month: number
           id: string
           industry: string | null
           is_verified: boolean | null
@@ -851,6 +853,8 @@ export type Database = {
           contact_position?: string | null
           created_at?: string | null
           first_name?: string | null
+          free_posts_reset_at?: string | null
+          free_posts_used_this_month?: number
           id?: string
           industry?: string | null
           is_verified?: boolean | null
@@ -894,6 +898,8 @@ export type Database = {
           contact_position?: string | null
           created_at?: string | null
           first_name?: string | null
+          free_posts_reset_at?: string | null
+          free_posts_used_this_month?: number
           id?: string
           industry?: string | null
           is_verified?: boolean | null

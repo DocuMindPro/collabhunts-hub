@@ -106,104 +106,29 @@ export const getCurrentPlanType = async (userId: string): Promise<PlanType> => {
   return (subscription?.plan_type as PlanType) || 'none';
 };
 
-export const canUserContactCreators = async (userId: string): Promise<boolean> => {
-  const planType = await getCurrentPlanType(userId);
-  return SUBSCRIPTION_PLANS[planType].canContactCreators;
+// Legacy helpers - kept for backward compatibility
+// The old tiered plan system is replaced; all features are now open
+export const canUserContactCreators = async (_userId: string): Promise<boolean> => true;
+
+export const canUserPostCampaigns = async (_userId: string): Promise<{ allowed: boolean; limit: number; used: number }> => {
+  return { allowed: true, limit: Infinity, used: 0 };
 };
 
-export const canUserPostCampaigns = async (userId: string): Promise<{ allowed: boolean; limit: number; used: number }> => {
-  const planType = await getCurrentPlanType(userId);
-  const limit = SUBSCRIPTION_PLANS[planType].campaignLimit;
-  
-  if (limit === 0) {
-    return { allowed: false, limit: 0, used: 0 };
-  }
+export const userHasAdvancedFilters = async (_userId: string): Promise<boolean> => true;
 
-  // Get brand profile
-  const { data: brandProfile } = await supabase
-    .from('brand_profiles')
-    .select('id')
-    .eq('user_id', userId)
-    .maybeSingle();
+export const canUserUseCRM = async (_userId: string): Promise<boolean> => true;
 
-  if (!brandProfile) {
-    return { allowed: false, limit: 0, used: 0 };
-  }
-
-  // Count campaigns created this month
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-
-  const { count } = await supabase
-    .from('campaigns')
-    .select('*', { count: 'exact', head: true })
-    .eq('brand_profile_id', brandProfile.id)
-    .gte('created_at', startOfMonth.toISOString());
-
-  const used = count || 0;
-  
-  if (limit === Infinity) {
-    return { allowed: true, limit: Infinity, used };
-  }
-
-  return { allowed: used < limit, limit, used };
-};
-
-export const userHasAdvancedFilters = async (userId: string): Promise<boolean> => {
-  const planType = await getCurrentPlanType(userId);
-  return SUBSCRIPTION_PLANS[planType].hasAdvancedFilters;
-};
-
-export const canUserUseCRM = async (userId: string): Promise<boolean> => {
-  const planType = await getCurrentPlanType(userId);
-  return SUBSCRIPTION_PLANS[planType].hasCRM;
-};
-
-export const canUserRequestVerifiedBadge = async (userId: string): Promise<boolean> => {
-  const planType = await getCurrentPlanType(userId);
-  return SUBSCRIPTION_PLANS[planType].canRequestVerifiedBadge;
-};
+export const canUserRequestVerifiedBadge = async (_userId: string): Promise<boolean> => true;
 
 export const getUserSubscriptionTier = async (userId: string): Promise<string> => {
   const planType = await getCurrentPlanType(userId);
   return planType;
 };
 
-// Check if brand can continue messaging a creator after booking completion
+// Brands can always message creators (no tier restriction)
 export const canBrandMessageCreator = async (
-  brandProfileId: string,
-  creatorProfileId: string
+  _brandProfileId: string,
+  _creatorProfileId: string
 ): Promise<{ canMessage: boolean; reason?: string }> => {
-  const { data: subscription } = await supabase
-    .from('brand_subscriptions')
-    .select('plan_type')
-    .eq('brand_profile_id', brandProfileId)
-    .eq('status', 'active')
-    .maybeSingle();
-
-  const planType = (subscription?.plan_type || 'none') as PlanType;
-
-  // If paid tier, can always message
-  if (SUBSCRIPTION_PLANS[planType].canMessageAfterDelivery) {
-    return { canMessage: true };
-  }
-
-  // For 'none' tier, check if there's an active booking
-  const { data: activeBooking } = await supabase
-    .from('bookings')
-    .select('id, status, delivery_status')
-    .eq('brand_profile_id', brandProfileId)
-    .eq('creator_profile_id', creatorProfileId)
-    .not('delivery_status', 'eq', 'confirmed')
-    .maybeSingle();
-
-  if (activeBooking) {
-    return { canMessage: true };
-  }
-
-  return { 
-    canMessage: false, 
-    reason: 'Your booking is complete. Subscribe to continue messaging.' 
-  };
+  return { canMessage: true };
 };
