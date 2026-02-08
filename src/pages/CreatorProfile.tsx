@@ -580,7 +580,7 @@ const CreatorProfile = () => {
                     {creator.display_name}
                   </h1>
                   <button
-                    onClick={() => { navigator.clipboard.writeText(creator.id); toast({ title: "ID copied" }); }}
+                    onClick={() => { navigator.clipboard.writeText(creator.id.slice(0, 8)); toast({ title: "ID copied" }); }}
                     className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <span className="font-mono">ID: {creator.id.slice(0, 8)}...</span>
@@ -660,7 +660,7 @@ const CreatorProfile = () => {
                       {creator.display_name}
                     </h1>
                     <button
-                      onClick={() => { navigator.clipboard.writeText(creator.id); toast({ title: "ID copied" }); }}
+                      onClick={() => { navigator.clipboard.writeText(creator.id.slice(0, 8)); toast({ title: "ID copied" }); }}
                       className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <span className="font-mono">ID: {creator.id.slice(0, 8)}...</span>
