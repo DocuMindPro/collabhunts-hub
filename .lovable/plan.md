@@ -1,69 +1,35 @@
 
 
-## Add Creator Messaging Limits per Plan
+## Add Upgrade Prompt Banner in Messages Tab + E2E Testing
 
-### Overview
+### Part 1: Messaging Limit Banner
 
-Add monthly messaging limits to each brand plan tier. The limit tracks how many **unique creators** a brand can start conversations with per month (not total messages).
+**New Component: `src/components/brand-dashboard/MessagingLimitBanner.tsx`**
 
-- **Free**: 1 creator/month
-- **Basic**: 10 creators/month  
-- **Pro**: Unlimited
+A compact alert banner that appears at the top of the Messages tab when the brand is near (70%+) or at their monthly messaging limit.
 
-### Database Changes
+- **Near limit (e.g. 7/10)**: Yellow/warning banner -- "You've messaged 7 of 10 new creators this month. Upgrade for unlimited messaging."
+- **At limit (e.g. 10/10)**: Red/destructive banner -- "You've reached your monthly limit of 10 new creators. Upgrade to keep connecting."
+- **Pro plan or under 70%**: Banner hidden entirely.
+- Includes a dismiss button and an "Upgrade" link pointing to `/brand`.
+- Reuses the same data-fetching pattern from `MessagingQuotaCard` (calls `getCurrentPlanType`, `getMessageLimit`, reads `brand_profiles` counters).
 
-Add two columns to `brand_profiles`:
-- `creators_messaged_this_month` (integer, default 0) -- counter for unique creators messaged
-- `creators_messaged_reset_at` (timestamptz, default now()) -- tracks when to reset the counter
+**Modify: `src/components/brand-dashboard/BrandMessagesTab.tsx`**
 
-### Code Changes
+- Import and render `<MessagingLimitBanner />` at the top of the messages layout, just below the "Messages" heading (line ~444), so it's visible regardless of which conversation is selected.
 
-**1. `src/components/brand/BrandPricingSection.tsx`**
-- Update feature lists:
-  - Free: Change "Direct messaging" to "Message 1 creator/month"
-  - Basic: Change "Direct messaging" to "Message 10 creators/month"
-  - Pro: Change "Direct messaging" to "Unlimited creator messaging"
+### Part 2: End-to-End Testing
 
-**2. `src/lib/stripe-mock.ts`**
-- Update the features arrays to reflect the new messaging limits
+After implementation, manually test via the browser tool:
 
-**3. `src/lib/subscription-utils.ts`**
-- Update `canBrandMessageCreator` to actually check the messaging limit based on brand plan
-- Add helper `getMessageLimit(plan)` returning 1 / 10 / Infinity
-- Add logic to auto-reset counter if current month differs from `creators_messaged_reset_at`
-- Check if the creator was already messaged (existing conversation) -- those don't count again
+1. Open the app and navigate to the brand dashboard messages tab
+2. Verify the banner renders correctly based on the current quota state
+3. Check that the upgrade link navigates to `/brand`
+4. Verify the banner does not appear for Pro plans or when usage is low
 
-**4. `src/pages/CreatorProfile.tsx`**
-- Before creating a new conversation, call `canBrandMessageCreator` to check the limit
-- If existing conversation already exists, allow messaging (no new count)
-- If limit reached, show a toast explaining the limit and suggesting an upgrade
-- On successful new conversation creation, increment `creators_messaged_this_month`
+### Technical Details
 
-**5. `src/components/brand-dashboard/BrandMessagesTab.tsx`**
-- No changes needed -- brands can always continue existing conversations. The limit only applies to **starting new** conversations.
-
-### Logic Flow
-
-```text
-Brand clicks "Message" on a Creator Profile
-  |
-  +-- Existing conversation? --> Allow (no limit check)
-  |
-  +-- New conversation:
-        |
-        +-- Reset counter if new month
-        |
-        +-- Pro plan? --> Allow (unlimited)
-        |
-        +-- Basic plan + messaged < 10? --> Allow, increment counter
-        |
-        +-- Free plan + messaged < 1? --> Allow, increment counter
-        |
-        +-- Limit reached --> Show upgrade prompt, block
-```
-
-### What counts toward the limit
-- Only **new unique creator conversations** count
-- Continuing an existing conversation does NOT count
-- Counter resets on the 1st of each month automatically (checked at time of use)
+- The banner component follows the same pattern as `MessagingQuotaCard`: fetch user, get plan type, get limit, read counters from `brand_profiles`, handle monthly reset logic.
+- Uses the existing `Alert` UI component with `AlertTitle` and `AlertDescription` for consistent styling.
+- No database changes needed -- all data already exists from the previous migration.
 
