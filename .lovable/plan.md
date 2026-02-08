@@ -1,42 +1,58 @@
 
 
-## Fix: Add ID Search to "All Users" Tab in Admin Panel
+## Brand Subscription Plan: $99/Year Bundle
 
-### Problem
-The previous fix only updated the **Creators** tab search. The **All Users** tab in `src/pages/Admin.tsx` has its own separate search filter (lines 293-300) that only checks `email`, `full_name`, `brand_name`, and `creator_display_name` -- it does not search by any ID fields.
+### What Changes
 
-### Solution
+Currently, the verification badge ($99/year) and opportunity posting ($15 each) are separate. You want to combine them into a single $99/year subscription that includes:
 
-**File: `src/pages/Admin.tsx`**
+- **Verified Business Badge** for 1 year
+- **3 free opportunity posts per month**
+- Non-subscribers pay $15 per post, no badge
 
-Update the search filter (lines 295-299) to also match against:
-- `profile.id` (the auth user UUID)
-- `profile.creator_profile_id` (the creator profile UUID -- the one copied from the public profile)
-- `profile.brand_profile_id` (the brand profile UUID)
+### Database Changes
 
-```tsx
-// Current (line 295-299):
-const filtered = profiles.filter(profile => 
-  profile.email.toLowerCase().includes(userSearch.toLowerCase()) ||
-  profile.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
-  profile.brand_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
-  profile.creator_display_name?.toLowerCase().includes(userSearch.toLowerCase())
-);
+Add two new columns to `brand_profiles`:
 
-// Updated:
-const filtered = profiles.filter(profile => 
-  profile.email.toLowerCase().includes(userSearch.toLowerCase()) ||
-  profile.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
-  profile.brand_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
-  profile.creator_display_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
-  profile.id.toLowerCase().includes(userSearch.toLowerCase()) ||
-  profile.creator_profile_id?.toLowerCase().includes(userSearch.toLowerCase()) ||
-  profile.brand_profile_id?.toLowerCase().includes(userSearch.toLowerCase())
-);
+- `free_posts_used_this_month` (integer, default 0) -- tracks how many free posts used this month
+- `free_posts_reset_at` (timestamp) -- when the counter was last reset
+
+### Files to Modify
+
+**1. `src/components/brand-dashboard/BrandVerificationBadgeCard.tsx`**
+- Update the marketing copy to mention "3 free opportunity posts/month" as a benefit of the $99/year plan
+- Add it to the features list in the "Not Started" state
+
+**2. `src/components/brand-dashboard/CreateOpportunityDialog.tsx`**
+- Before showing the payment dialog, check if the brand has an active verified subscription (`is_verified = true` and `verification_expires_at` in the future)
+- If subscribed: check `free_posts_used_this_month` -- if under 3, skip payment entirely and post for free; if 3 already used, show payment as normal
+- If not subscribed: show $15 payment as currently works
+- Reset the monthly counter if `free_posts_reset_at` is in a previous month
+- Update button text to reflect "Post Free (X/3 remaining)" vs "Continue to Payment ($15)"
+
+**3. `src/lib/stripe-mock.ts`**
+- Update the `SUBSCRIPTION_PLANS` to remove the old tiered plans (basic/pro/premium) and replace with a single $99/year brand plan description (or just clean up references)
+
+**4. `src/components/admin/AdminFeatureOverridesTab.tsx`**
+- Update the verification badge description to mention the bundle
+
+### Logic Flow
+
+```text
+Brand clicks "Post Opportunity"
+  |
+  +-- Has active verification? (is_verified + not expired)
+  |     |
+  |     +-- free_posts_used_this_month < 3?
+  |     |     YES --> Post for FREE, increment counter
+  |     |     NO  --> Show $15 payment dialog
+  |     |
+  +-- No active verification
+        |
+        +-- Show $15 payment dialog (no badge, pay per post)
 ```
 
-Also update the search placeholder (line 941) from `"Search users..."` to `"Search name, email, ID..."`.
+### Monthly Counter Reset Logic
 
-This way, pasting the short 8-character creator ID (e.g., `b7d30894`) in the All Users search will match the creator profile UUID and show the correct user.
+When checking free posts, compare `free_posts_reset_at` to the current month. If it's a different month, reset `free_posts_used_this_month` to 0 and update `free_posts_reset_at` to now -- all done client-side before the check.
 
-### No database changes needed.
