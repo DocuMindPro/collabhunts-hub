@@ -45,8 +45,8 @@ const plans = [
   },
   {
     name: "Pro",
-    price: "Custom",
-    period: "",
+    price: "$299",
+    period: "/year",
     icon: Crown,
     highlighted: false,
     cta: "Contact Us",
