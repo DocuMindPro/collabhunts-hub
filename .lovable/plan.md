@@ -1,55 +1,88 @@
 
 
-## Add Notification Badges to Admin Tab Headers
+## Update Admin Panel: Disputes, Testing, and Manual Tabs
 
-### What Changes
+### Overview
 
-Add real-time notification count badges on admin tabs that have pending/actionable items. When you click a tab, the badge clears (since you've "seen" those items). The badges auto-refresh periodically and show counts for items needing admin attention.
+Three admin tabs contain outdated information that doesn't match the platform's current identity and functionality. Here's what needs to change.
 
-### Tabs That Get Badges
+---
 
-| Tab | What's Counted | Database Query |
-|-----|---------------|----------------|
-| **Venues** | Pending quotation inquiries | `quotation_inquiries` where `status = 'pending'` |
-| **Approvals** | Pending creator profiles (already has badge) | `creator_profiles` where `status = 'pending'` |
-| **Careers** | Pending career applications | `career_applications` where `status = 'pending'` |
-| **Disputes** | Open/awaiting disputes | `booking_disputes` where status in `('open', 'awaiting_response', 'pending_response', 'pending_admin_review')` |
-| **Verifications** | Pending verification requests | `brand_profiles` where `verification_status = 'pending'` |
-| **Subscriptions** | No automatic pending count (search-based tab, no actionable queue) | -- |
-| **Events** | No status-based pending (events are creator-managed) | -- |
-| **Revenue** | Pending payout requests | `franchise_payout_requests` + `affiliate_payout_requests` where `status = 'pending'` |
+### 1. Remove Disputes Tab (Not Applicable)
 
-### How It Works
+The platform operates as a zero-fee marketplace -- no payments are processed, no escrow, no transaction fees. The dispute system (refund percentages, payment status updates, resolution deadlines) doesn't apply.
 
-1. When the Admin page loads, a single hook (`useAdminBadgeCounts`) fetches all pending counts in parallel
-2. Each tab trigger displays a small red badge with the count (if > 0)
-3. The counts auto-refresh every 2 minutes (same as the existing QuickActions widget)
-4. When clicking a tab, the badge for that tab is dismissed (stored in local state as "seen") until the count changes
-5. The existing Approvals badge stays as-is -- this system adds badges to the other tabs
+**Changes:**
+- Remove the Disputes `TabsTrigger` and `TabsContent` from `src/pages/Admin.tsx`
+- Remove the import of `AdminDisputesTab`
+- Remove `disputes` from the badge counts in `src/hooks/useAdminBadgeCounts.ts`
+- Optionally keep the `AdminDisputesTab.tsx` file (no harm), or delete it for cleanliness
 
-### Technical Details
+---
 
-**1. Create `src/hooks/useAdminBadgeCounts.ts`**
+### 2. Update Testing Tab -- Brand Onboarding Preview
 
-A custom hook that:
-- Fetches all pending counts in parallel from the database
-- Returns a map of `{ [tabName]: number }`
-- Tracks which tabs have been "seen" (clicked) to dismiss badges
-- Provides a `markSeen(tab)` function
-- Badge reappears if the count changes after being seen
-- Auto-refreshes every 2 minutes
+The `BrandOnboardingPreview` component still uses old campaign/marketing language that was already updated in the real onboarding flow.
 
-**2. Modify `src/pages/Admin.tsx`**
+**File: `src/components/admin/BrandOnboardingPreview.tsx`**
 
-- Import and use the new `useAdminBadgeCounts` hook
-- Call `markSeen(tab)` inside `handleTabChange`
-- Add badge rendering to each relevant `TabsTrigger` (venues, careers, disputes, verifications, revenue)
-- Keep the existing Approvals badge logic as-is (or unify it with this new system)
+| What's Wrong | Correct Value |
+|-------------|---------------|
+| Intent: "Brand Awareness", "Drive Sales", "User Generated Content", "Social Engagement" | "Book a one-time event", "Recurring collaborations", "Just exploring" |
+| Budget: "Under $1,000/mo", "$1,000-$5,000/mo", "$5,000-$10,000/mo", "$10,000+/mo" | "Under $200", "$200-$500", "$500-$1,500", "$1,500+" (per event, not monthly) |
+| 5 steps (with phone verification as step 1) | Keep same structure but update the content to match actual flow |
 
-### Files to Create/Modify
+---
+
+### 3. Update Platform Manual -- Outdated Pricing and Features
+
+**File: `src/data/platformManual.ts`**
+
+Multiple sections contain outdated information:
+
+| Section | What's Wrong | Fix |
+|---------|-------------|-----|
+| **Business Model** (line ~398-414) | Lists "Brand Basic $10/mo, Pro $49/mo, Premium $99/mo" and specific prices | Update to reflect that Basic and Pro prices are hidden (quotation-based), keep Premium pricing, add note about quotation inquiry system |
+| **Subscription Tiers** (line ~489-507) | Shows "$10/mo", "$49/mo", "$99/mo" columns with old feature matrix | Update to "Basic (Contact for pricing)", "Pro (Contact for pricing)", "Premium ($99/mo)" and update opportunity posts to 4/month for free tier |
+| **Dispute Edge Function** (line ~184) | Lists `check-dispute-deadlines` | Remove from the edge functions list |
+| **Dispute references** in Database Schema (line ~244-246) | Lists `booking_disputes`, `booking_offers` tables | Mark as legacy/unused or remove |
+| **Creator Featuring prices** (line ~684-688) | Shows specific dollar amounts for boost packages | Verify these are still accurate |
+| **Approval Workflows** | Generally fine but could mention quotation inquiry flow | Add a new article about the Quotation Inquiry workflow |
+| Missing: Quotation system | No documentation about the new quotation inquiry flow | Add new article documenting how quotation inquiries work |
+
+---
+
+### 4. Additional Admin Tab Check
+
+After reviewing all tabs, here are the other findings:
+
+| Tab | Status |
+|-----|--------|
+| Users | OK |
+| Creators | OK |
+| Venues (quotation inquiries) | OK (recently added) |
+| Approvals | OK |
+| Events | Placeholder ("coming soon") -- could note this but not critical |
+| Revenue | OK (tracks bookings for record-keeping) |
+| Testing | Needs update (brand preview -- see above) |
+| **Disputes** | **Remove** |
+| Manual | Needs content update (see above) |
+| Verifications | OK |
+| Branding | OK |
+| Features | OK |
+| Announcements | OK |
+| Careers | OK |
+| Subscriptions | OK |
+| **Campaigns** | The `AdminCampaignsTab` references "campaigns" -- verify if this is still used or if it's been replaced by "opportunities" |
+
+---
+
+### Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/hooks/useAdminBadgeCounts.ts` | New hook -- fetches all pending counts, tracks seen state |
-| `src/pages/Admin.tsx` | Use hook, add badges to tab triggers, call markSeen on tab change |
+| `src/pages/Admin.tsx` | Remove Disputes tab trigger, content, and import |
+| `src/hooks/useAdminBadgeCounts.ts` | Remove `disputes` from badge counts |
+| `src/components/admin/BrandOnboardingPreview.tsx` | Update intents and budgets to match actual onboarding flow |
+| `src/data/platformManual.ts` | Update Business Model pricing, Subscription Tiers, remove dispute references, add Quotation Inquiry documentation |
 
