@@ -54,7 +54,7 @@ const plans = [
       { text: "AI-drafted agreements", included: true },
       { text: "4 free opportunity posts/month", included: true },
       { text: "Verified Business Badge", included: true },
-      { text: "Team access (invite members)", included: true },
+      { text: "Team access (invite members)", included: false },
       { text: "Priority visibility", included: true },
       { text: "Dedicated CSM", included: false },
     ],
