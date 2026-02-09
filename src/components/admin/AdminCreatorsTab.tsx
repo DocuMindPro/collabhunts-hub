@@ -48,6 +48,9 @@ interface CreatorData {
   services_count?: number;
   total_earned_cents?: number;
   social_accounts?: SocialAccount[];
+  tiktok_goes_live?: boolean | null;
+  tiktok_monthly_revenue?: string | null;
+  tiktok_live_interest?: string | null;
 }
 
 const ITEMS_PER_PAGE = 20;
@@ -71,6 +74,7 @@ const AdminCreatorsTab = () => {
   const [dateTo, setDateTo] = useState<string>("");
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [minFollowers, setMinFollowers] = useState<string>("");
+  const [tiktokLiveFilter, setTiktokLiveFilter] = useState<string>("all");
   
   // Sorting
   const [sortField, setSortField] = useState<string>("created_at");
@@ -203,10 +207,23 @@ const AdminCreatorsTab = () => {
       }
     }
 
+    // TikTok Live filter
+    if (tiktokLiveFilter !== "all") {
+      if (tiktokLiveFilter === "goes_live") {
+        filtered = filtered.filter(c => c.tiktok_goes_live === true);
+      } else if (tiktokLiveFilter === "no_live") {
+        filtered = filtered.filter(c => c.tiktok_goes_live === false);
+      } else if (tiktokLiveFilter === "interested") {
+        filtered = filtered.filter(c => c.tiktok_goes_live === false && (c.tiktok_live_interest === 'yes_definitely' || c.tiktok_live_interest === 'maybe'));
+      } else if (tiktokLiveFilter === "not_interested") {
+        filtered = filtered.filter(c => c.tiktok_goes_live === false && c.tiktok_live_interest === 'not_now');
+      }
+    }
+
     setFilteredCreators(filtered);
     setCurrentPage(1);
     setSelectedIds(new Set());
-  }, [search, statusFilter, phoneFilter, countryFilter, categoryFilter, genderFilter, dateFrom, dateTo, platformFilter, minFollowers, creators]);
+  }, [search, statusFilter, phoneFilter, countryFilter, categoryFilter, genderFilter, dateFrom, dateTo, platformFilter, minFollowers, tiktokLiveFilter, creators]);
 
   const fetchCreators = async () => {
     try {
@@ -227,11 +244,12 @@ const AdminCreatorsTab = () => {
       const userIds = creatorsData.map(c => c.user_id);
       const creatorIds = creatorsData.map(c => c.id);
 
-      const [profilesRes, socialsRes, servicesRes, bookingsRes] = await Promise.all([
+      const [profilesRes, socialsRes, servicesRes, bookingsRes, tiktokRes] = await Promise.all([
         supabase.from("profiles").select("id, email").in("id", userIds),
         supabase.from("creator_social_accounts").select("creator_profile_id, platform, follower_count").in("creator_profile_id", creatorIds),
         supabase.from("creator_services").select("creator_profile_id").in("creator_profile_id", creatorIds),
-        supabase.from("bookings").select("creator_profile_id, total_price_cents, status").in("creator_profile_id", creatorIds)
+        supabase.from("bookings").select("creator_profile_id, total_price_cents, status").in("creator_profile_id", creatorIds),
+        supabase.from("creator_tiktok_live_insights").select("creator_profile_id, goes_live, monthly_revenue_range, interest_in_going_live").in("creator_profile_id", creatorIds)
       ]);
 
       const creatorsWithDetails = creatorsData.map(creator => {
@@ -241,6 +259,7 @@ const AdminCreatorsTab = () => {
         const completedBookings = bookingsRes.data?.filter(
           b => b.creator_profile_id === creator.id && b.status === "completed"
         ) || [];
+        const tiktokInsight = tiktokRes.data?.find(t => t.creator_profile_id === creator.id);
 
         return {
           ...creator,
@@ -248,7 +267,10 @@ const AdminCreatorsTab = () => {
           total_followers: socials.reduce((sum, s) => sum + (s.follower_count || 0), 0),
           services_count: services.length,
           total_earned_cents: completedBookings.reduce((sum, b) => sum + (b.total_price_cents * 0.85), 0),
-          social_accounts: socials.map(s => ({ platform: s.platform, follower_count: s.follower_count || 0 }))
+          social_accounts: socials.map(s => ({ platform: s.platform, follower_count: s.follower_count || 0 })),
+          tiktok_goes_live: tiktokInsight?.goes_live ?? null,
+          tiktok_monthly_revenue: tiktokInsight?.monthly_revenue_range ?? null,
+          tiktok_live_interest: tiktokInsight?.interest_in_going_live ?? null,
         };
       });
 
@@ -353,8 +375,28 @@ const AdminCreatorsTab = () => {
     }
   };
 
+  const getRevenueLabel = (range: string | null) => {
+    const labels: Record<string, string> = {
+      under_100: "Under $100",
+      "100_500": "$100-$500",
+      "500_1000": "$500-$1K",
+      "1000_5000": "$1K-$5K",
+      "5000_plus": "$5K+",
+    };
+    return range ? labels[range] || range : "—";
+  };
+
+  const getInterestLabel = (interest: string | null) => {
+    const labels: Record<string, string> = {
+      yes_definitely: "Yes, definitely",
+      maybe: "Maybe",
+      not_now: "Not right now",
+    };
+    return interest ? labels[interest] || interest : "—";
+  };
+
   const exportToCSV = () => {
-    const headers = ["Display Name", "Email", "Phone", "Phone Verified", "Status", "Location", "Gender", "Categories", "Total Followers", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch", "Earnings ($)", "Joined"];
+    const headers = ["Display Name", "Email", "Phone", "Phone Verified", "Status", "Location", "Gender", "Categories", "Total Followers", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch", "TikTok Goes Live", "TikTok Live Revenue", "TikTok Live Interest", "Earnings ($)", "Joined"];
     const rows = filteredCreators.map(c => {
       const getFollowers = (platform: string) => {
         const account = c.social_accounts?.find(s => s.platform.toLowerCase() === platform.toLowerCase());
@@ -375,6 +417,9 @@ const AdminCreatorsTab = () => {
         getFollowers("YouTube"),
         getFollowers("Twitter"),
         getFollowers("Twitch"),
+        c.tiktok_goes_live === true ? "Yes" : c.tiktok_goes_live === false ? "No" : "N/A",
+        c.tiktok_goes_live === true ? getRevenueLabel(c.tiktok_monthly_revenue) : "",
+        c.tiktok_goes_live === false ? getInterestLabel(c.tiktok_live_interest) : "",
         ((c.total_earned_cents || 0) / 100).toFixed(2),
         new Date(c.created_at).toLocaleDateString()
       ];
@@ -555,11 +600,25 @@ const AdminCreatorsTab = () => {
                 setDateTo("");
                 setPlatformFilter("all");
                 setMinFollowers("");
+                setTiktokLiveFilter("all");
               }}
               className="w-full"
             >
               Clear Filters
             </Button>
+
+            <Select value={tiktokLiveFilter} onValueChange={setTiktokLiveFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="TikTok Live" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All TikTok</SelectItem>
+                <SelectItem value="goes_live">Goes Live</SelectItem>
+                <SelectItem value="no_live">Doesn't Go Live</SelectItem>
+                <SelectItem value="interested">Interested</SelectItem>
+                <SelectItem value="not_interested">Not Interested</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Bulk Actions */}
@@ -788,6 +847,27 @@ const AdminCreatorsTab = () => {
               <div>
                 <h4 className="font-semibold text-sm mb-1">Bio</h4>
                 <p className="text-sm text-muted-foreground">{selectedCreator.bio || "No bio provided"}</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-sm mb-2">TikTok Live</h4>
+                {selectedCreator.tiktok_goes_live !== null ? (
+                  <div className="space-y-1 text-sm">
+                    <p>
+                      <span className="text-muted-foreground">Goes Live:</span>{" "}
+                      <Badge variant={selectedCreator.tiktok_goes_live ? "default" : "secondary"}>
+                        {selectedCreator.tiktok_goes_live ? "Yes" : "No"}
+                      </Badge>
+                    </p>
+                    {selectedCreator.tiktok_goes_live ? (
+                      <p><span className="text-muted-foreground">Monthly Revenue:</span> {getRevenueLabel(selectedCreator.tiktok_monthly_revenue)}</p>
+                    ) : (
+                      <p><span className="text-muted-foreground">Interest Level:</span> {getInterestLabel(selectedCreator.tiktok_live_interest)}</p>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">No TikTok Live data</span>
+                )}
               </div>
 
               <div>

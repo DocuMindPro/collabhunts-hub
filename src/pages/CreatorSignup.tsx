@@ -38,7 +38,7 @@ const bioSchema = z.string()
   .max(1000, "Bio must be less than 1000 characters");
 const usernameSchema = z.string().trim().min(3, "Username must be at least 3 characters").max(50);
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 interface SocialAccount {
   platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'twitch';
@@ -107,7 +107,12 @@ const CreatorSignup = () => {
   // Step 6: Portfolio (optional)
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
 
-  // Step 7: Terms acceptance
+  // Step 5: TikTok Live Insights (conditional)
+  const [goesLiveTiktok, setGoesLiveTiktok] = useState<boolean | null>(null);
+  const [tiktokMonthlyRevenue, setTiktokMonthlyRevenue] = useState("");
+  const [tiktokLiveInterest, setTiktokLiveInterest] = useState("");
+
+  // Step 8: Terms acceptance
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [autoReleaseAccepted, setAutoReleaseAccepted] = useState(false);
   const [metricsAccurate, setMetricsAccurate] = useState(false);
@@ -249,7 +254,13 @@ const CreatorSignup = () => {
     }
   }, [navigate, searchParams, toast]);
 
-  const progress = (step / 7) * 100;
+  const hasTiktokAccount = socialAccounts.some(a => a.platform === 'tiktok');
+  const totalSteps = hasTiktokAccount ? 8 : 7;
+  const getDisplayStep = () => {
+    if (!hasTiktokAccount && step >= 5) return step - 1; // Skip TikTok step numbering
+    return step;
+  };
+  const progress = (getDisplayStep() / (hasTiktokAccount ? 8 : 7)) * 100;
 
   const phoneSchema = z.string()
     .min(10, "Phone number must be at least 10 digits")
@@ -432,10 +443,44 @@ const CreatorSignup = () => {
       return;
     }
 
-    setStep(5);
+    // If TikTok is added, go to TikTok Live step, otherwise skip to services
+    if (socialAccounts.some(a => a.platform === 'tiktok')) {
+      setStep(5);
+    } else {
+      setStep(6);
+    }
   };
 
-  const handleStep5 = (e: React.FormEvent) => {
+  const handleStep5TikTok = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (goesLiveTiktok === null) {
+      toast({
+        title: "Please answer",
+        description: "Let us know if you go live on TikTok",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (goesLiveTiktok && !tiktokMonthlyRevenue) {
+      toast({
+        title: "Please select",
+        description: "Select your average monthly revenue range",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (!goesLiveTiktok && !tiktokLiveInterest) {
+      toast({
+        title: "Please select",
+        description: "Let us know your interest level in going live",
+        variant: "destructive"
+      });
+      return;
+    }
+    setStep(6);
+  };
+
+  const handleStep6Services = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (services.length === 0) {
@@ -447,12 +492,12 @@ const CreatorSignup = () => {
       return;
     }
 
-    setStep(6);
+    setStep(7);
   };
 
-  const handleStep6 = (e: React.FormEvent) => {
+  const handleStep7Portfolio = (e: React.FormEvent) => {
     e.preventDefault();
-    setStep(7);
+    setStep(8);
   };
 
   const handleProfileImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -589,6 +634,7 @@ const CreatorSignup = () => {
 
   const handleFinalSubmit = async () => {
     if (!termsAccepted || !autoReleaseAccepted || !metricsAccurate) {
+
       toast({
         title: "Agreement Required",
         description: "Please accept all terms and conditions to continue",
@@ -778,6 +824,21 @@ const CreatorSignup = () => {
         console.error("Failed to create social accounts/services, cleaning up profile:", insertError);
         await supabase.from("creator_profiles").delete().eq("id", profileData.id);
         throw new Error(`Failed to complete signup: ${insertError.message}. Please try again.`);
+      }
+
+      // Insert TikTok Live insights if applicable
+      if (hasTiktokAccount && goesLiveTiktok !== null) {
+        try {
+          await supabase.from("creator_tiktok_live_insights").insert({
+            creator_profile_id: profileData.id,
+            goes_live: goesLiveTiktok,
+            monthly_revenue_range: goesLiveTiktok ? tiktokMonthlyRevenue : null,
+            interest_in_going_live: !goesLiveTiktok ? tiktokLiveInterest : null,
+          });
+        } catch (tiktokError) {
+          console.error("Failed to save TikTok Live insights:", tiktokError);
+          // Non-critical, don't fail signup
+        }
       }
 
       // Upload portfolio items if any
@@ -1020,7 +1081,7 @@ const CreatorSignup = () => {
             <h1 className="text-4xl font-heading font-bold mb-2">Join as a Creator</h1>
             <p className="text-muted-foreground">Complete your profile to start earning</p>
             <Progress value={progress} className="mt-4" />
-            <p className="text-sm text-muted-foreground mt-2">Step {step} of 7</p>
+            <p className="text-sm text-muted-foreground mt-2">Step {getDisplayStep()} of {hasTiktokAccount ? 8 : 7}</p>
           </div>
 
           <Card>
@@ -1577,8 +1638,101 @@ const CreatorSignup = () => {
                 </form>
               )}
 
-              {step === 5 && (
-                <form onSubmit={handleStep5} className="space-y-4">
+              {step === 5 && hasTiktokAccount && (
+                <form onSubmit={handleStep5TikTok} className="space-y-6">
+                  <CardHeader className="px-0">
+                    <CardTitle>TikTok Live Insights</CardTitle>
+                    <CardDescription>Help us understand your TikTok Live activity</CardDescription>
+                  </CardHeader>
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Do you go live on TikTok?</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => { setGoesLiveTiktok(true); setTiktokLiveInterest(""); }}
+                        className={`p-4 rounded-lg border-2 text-left transition-all ${
+                          goesLiveTiktok === true
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <p className="font-medium">Yes, I go live</p>
+                        <p className="text-sm text-muted-foreground mt-1">I regularly broadcast on TikTok Live</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setGoesLiveTiktok(false); setTiktokMonthlyRevenue(""); }}
+                        className={`p-4 rounded-lg border-2 text-left transition-all ${
+                          goesLiveTiktok === false
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <p className="font-medium">No, I don't</p>
+                        <p className="text-sm text-muted-foreground mt-1">I haven't gone live yet</p>
+                      </button>
+                    </div>
+                  </div>
+
+                  {goesLiveTiktok === true && (
+                    <div className="space-y-3">
+                      <Label className="text-base font-semibold">What's your average monthly revenue from TikTok Live?</Label>
+                      <select
+                        value={tiktokMonthlyRevenue}
+                        onChange={(e) => setTiktokMonthlyRevenue(e.target.value)}
+                        className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                      >
+                        <option value="">Select range</option>
+                        <option value="under_100">Under $100</option>
+                        <option value="100_500">$100 - $500</option>
+                        <option value="500_1000">$500 - $1,000</option>
+                        <option value="1000_5000">$1,000 - $5,000</option>
+                        <option value="5000_plus">$5,000+</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {goesLiveTiktok === false && (
+                    <div className="space-y-3">
+                      <Label className="text-base font-semibold">Would you be interested in going live if it could generate income?</Label>
+                      <div className="space-y-2">
+                        {[
+                          { value: "yes_definitely", label: "Yes, definitely!", desc: "I'd love to start going live and earning" },
+                          { value: "maybe", label: "Maybe — I'd like to learn more", desc: "I'm curious but need more info" },
+                          { value: "not_now", label: "Not right now", desc: "I'm focused on other content for now" },
+                        ].map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setTiktokLiveInterest(option.value)}
+                            className={`w-full p-3 rounded-lg border-2 text-left transition-all ${
+                              tiktokLiveInterest === option.value
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                          >
+                            <p className="font-medium text-sm">{option.label}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{option.desc}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <Button type="button" variant="outline" onClick={() => setStep(4)} className="flex-1">
+                      Back
+                    </Button>
+                    <Button type="submit" className="flex-1 gradient-hero hover:opacity-90">
+                      Continue
+                    </Button>
+                  </div>
+                </form>
+              )}
+
+              {step === 6 && (
+                <form onSubmit={handleStep6Services} className="space-y-4">
                   <CardHeader className="px-0">
                     <CardTitle>Services & Pricing</CardTitle>
                     <CardDescription>What event experiences can brands book?</CardDescription>
@@ -1651,7 +1805,7 @@ const CreatorSignup = () => {
                   )}
 
                   <div className="flex gap-3">
-                    <Button type="button" variant="outline" onClick={() => setStep(4)} className="flex-1">
+                    <Button type="button" variant="outline" onClick={() => hasTiktokAccount ? setStep(5) : setStep(4)} className="flex-1">
                       Back
                     </Button>
                     <Button type="submit" className="flex-1 gradient-hero hover:opacity-90">
@@ -1661,8 +1815,8 @@ const CreatorSignup = () => {
                 </form>
               )}
 
-              {step === 6 && (
-                <form onSubmit={handleStep6} className="space-y-4">
+              {step === 7 && (
+                <form onSubmit={handleStep7Portfolio} className="space-y-4">
                   <CardHeader className="px-0">
                     <CardTitle>Upload Your Best Work</CardTitle>
                     <CardDescription>Showcase your content to brands (optional, max 3 videos)</CardDescription>
@@ -1730,7 +1884,7 @@ const CreatorSignup = () => {
                   </div>
 
                   <div className="flex gap-3">
-                    <Button type="button" variant="outline" onClick={() => setStep(5)} className="flex-1">
+                    <Button type="button" variant="outline" onClick={() => setStep(6)} className="flex-1">
                       Back
                     </Button>
                     <Button type="submit" className="flex-1 gradient-hero hover:opacity-90">
@@ -1740,7 +1894,7 @@ const CreatorSignup = () => {
                 </form>
               )}
 
-              {step === 7 && (
+              {step === 8 && (
                 <div className="space-y-6">
                   <CardHeader className="px-0">
                     <CardTitle>Review & Submit</CardTitle>
@@ -1904,7 +2058,7 @@ const CreatorSignup = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setStep(6)}
+                      onClick={() => setStep(7)}
                       disabled={isLoading}
                       className="flex-1"
                     >
