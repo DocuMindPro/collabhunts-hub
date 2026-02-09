@@ -378,8 +378,8 @@ const BrandAccountTab = () => {
         <TeamAccessCard
           profileId={brandProfile.id}
           accountType="brand"
-          locked={planType === "free"}
-          lockedMessage="Team access is available on Basic and Pro plans. Upgrade to invite team members."
+          locked={planType !== "pro"}
+          lockedMessage="Team access is available on the Pro plan. Upgrade to invite team members."
         />
       )}
 
