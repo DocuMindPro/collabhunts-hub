@@ -51,7 +51,7 @@ const Navbar = () => {
 
   const brandTabs = [
     { value: "overview", label: "Overview", icon: BarChart3 },
-    { value: "venue", label: "Venue Profile", icon: MapPin },
+    { value: "account", label: "Brand Profile", icon: UserIcon },
     { value: "bookings", label: "Events", icon: Calendar },
     { value: "messages", label: "Messages", icon: MessageSquare },
   ];
