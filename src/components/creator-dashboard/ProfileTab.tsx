@@ -447,73 +447,48 @@ const ProfileTab = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Consolidated Media Management Card */}
+    <div className="space-y-4 pb-20">
+      {/* ── Your Media ── */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Images className="h-5 w-5" />
+        <CardHeader className="p-4">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Images className="h-4 w-4" />
             Your Media
           </CardTitle>
-          <CardDescription>
-            Manage your profile image and portfolio in one place
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-8">
-          {/* Profile Image Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b">
-              <Camera className="h-4 w-4 text-primary" />
-              <h3 className="font-medium">Profile Image</h3>
-              <span className="text-xs text-muted-foreground ml-auto">Appears in search results</span>
+        <CardContent className="p-4 pt-0 space-y-4">
+          {/* Profile Image */}
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Avatar className="h-20 w-20 border-2 border-border">
+                <AvatarImage src={profile.profile_image_url} className="object-cover" />
+                <AvatarFallback className="text-2xl bg-gradient-accent text-white">
+                  {profile.display_name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <Label 
+                htmlFor="profile-image-upload" 
+                className="absolute -bottom-1 -right-1 p-1.5 bg-primary text-primary-foreground rounded-full cursor-pointer hover:bg-primary/90 transition-colors shadow-md"
+              >
+                {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+              </Label>
+              <Input id="profile-image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
             </div>
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <Avatar className="h-28 w-28 border-4 border-border">
-                  <AvatarImage src={profile.profile_image_url} className="object-cover" />
-                  <AvatarFallback className="text-3xl bg-gradient-accent text-white">
-                    {profile.display_name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <Label 
-                  htmlFor="profile-image-upload" 
-                  className="absolute -bottom-2 -right-2 p-2 bg-primary text-primary-foreground rounded-full cursor-pointer hover:bg-primary/90 transition-colors shadow-lg"
-                >
-                  {uploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Camera className="h-4 w-4" />
-                  )}
-                </Label>
-                <Input
-                  id="profile-image-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageUpload}
-                  disabled={uploading}
-                />
-              </div>
-              <div className="space-y-1">
-                <p className="font-medium">Main Profile Photo</p>
-                <p className="text-sm text-muted-foreground">
-                  This is the image brands see when browsing creators.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  JPG, PNG or WEBP. Max 5MB. Recommended: 400×500px
-                </p>
-              </div>
+            <div>
+              <p className="text-sm font-medium">Profile Photo</p>
+              <p className="text-xs text-muted-foreground">JPG, PNG or WEBP. Max 5MB.</p>
             </div>
           </div>
 
-          {/* Cover Images Section - 3 Slots */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b">
-              <ImagePlus className="h-4 w-4 text-primary" />
-              <h3 className="font-medium">Cover Images</h3>
-              <span className="text-xs text-muted-foreground ml-auto">Displayed on your profile page</span>
+          <Separator />
+
+          {/* Cover Images */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <ImagePlus className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Cover Images</span>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2">
               {[0, 1, 2].map((index) => {
                 const coverUrl = index === 0 ? profile.cover_image_url :
                                  index === 1 ? profile.cover_image_url_2 : 
@@ -524,472 +499,281 @@ const ProfileTab = () => {
                 return (
                   <div key={index} className="relative">
                     {coverUrl ? (
-                      <div className="relative aspect-[4/5] rounded-xl overflow-hidden border group">
-                        <img 
-                          src={coverUrl} 
-                          alt={`Cover ${index + 1}`} 
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                          <Label 
-                            htmlFor={inputId} 
-                            className="px-3 py-1.5 bg-white text-foreground rounded-lg cursor-pointer hover:bg-white/90 text-sm font-medium"
-                          >
-                            {isUploading ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              "Change"
-                            )}
+                      <div className="relative aspect-[4/5] rounded-lg overflow-hidden border group">
+                        <img src={coverUrl} alt={`Cover ${index + 1}`} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                          <Label htmlFor={inputId} className="px-2 py-1 bg-white text-foreground rounded cursor-pointer hover:bg-white/90 text-xs font-medium">
+                            {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Change"}
                           </Label>
                           {index > 0 && (
-                            <button
-                              onClick={() => removeCoverImage(index)}
-                              className="px-3 py-1.5 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 text-sm font-medium"
-                            >
+                            <button onClick={() => removeCoverImage(index)} className="px-2 py-1 bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 text-xs font-medium">
                               Remove
                             </button>
                           )}
                         </div>
-                        <div className="absolute top-2 left-2">
-                          <Badge variant={index === 0 ? "default" : "secondary"} className="text-xs">
-                            {index === 0 ? "Required" : "Optional"}
-                          </Badge>
-                        </div>
                       </div>
                     ) : (
-                      <Label 
-                        htmlFor={inputId} 
-                        className="flex flex-col items-center justify-center aspect-[4/5] rounded-xl border-2 border-dashed border-muted-foreground/30 cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
-                      >
+                      <Label htmlFor={inputId} className="flex flex-col items-center justify-center aspect-[4/5] rounded-lg border-2 border-dashed border-muted-foreground/25 cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors">
                         {isUploading ? (
-                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                         ) : (
                           <>
-                            <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
-                            <span className="text-sm text-muted-foreground font-medium text-center px-2">
-                              {index === 0 ? "Add Cover Image" : `Add Photo ${index + 1}`}
+                            <ImagePlus className="h-5 w-5 text-muted-foreground mb-1" />
+                            <span className="text-[10px] text-muted-foreground text-center px-1">
+                              {index === 0 ? "Cover" : `Photo ${index + 1}`}
                             </span>
-                            <Badge variant={index === 0 ? "default" : "outline"} className="mt-2 text-xs">
-                              {index === 0 ? "Required" : "Optional"}
-                            </Badge>
                           </>
                         )}
                       </Label>
                     )}
-                    <Input
-                      id={inputId}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleCoverImageUpload(e, index)}
-                      disabled={isUploading}
-                    />
+                    <Input id={inputId} type="file" accept="image/*" className="hidden" onChange={(e) => handleCoverImageUpload(e, index)} disabled={isUploading} />
                   </div>
                 );
               })}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Recommended: Portrait orientation (4:5 ratio). Max 5MB per image.
-            </p>
           </div>
 
-          {/* Portfolio Gallery Section - Embedded */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b">
-              <Images className="h-4 w-4 text-primary" />
-              <h3 className="font-medium">Portfolio Gallery</h3>
-              <span className="text-xs text-muted-foreground ml-auto">Appears on your profile page</span>
+          <Separator />
+
+          {/* Portfolio */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Images className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Portfolio Gallery</span>
             </div>
             <PortfolioUploadSection creatorProfileId={profile.id} compact />
           </div>
         </CardContent>
       </Card>
 
-      {/* Privacy Settings Card - Prominent placement */}
-      <Card className="border-2 border-primary/30 bg-primary/5">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Shield className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">Privacy & Visibility Settings</CardTitle>
-              <CardDescription>Control who can see your pricing and contact you</CardDescription>
-            </div>
-          </div>
+      {/* ── Profile Details (consolidated) ── */}
+      <Card>
+        <CardHeader className="p-4">
+          <CardTitle className="text-base">Profile Details</CardTitle>
+          <CardDescription className="text-xs">Your public profile information</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-background rounded-lg border">
-            <div className="space-y-1">
-              <Label htmlFor="show-pricing-to-public" className="text-base font-medium">Show Pricing to All Visitors</Label>
-              <p className="text-sm text-muted-foreground">
-                When disabled, only subscribed brands can see your package pricing. Non-subscribers will see dimmed prices.
-              </p>
+        <CardContent className="p-4 pt-0 space-y-3">
+          {/* Name & Bio */}
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="display_name" className="text-xs">Display Name *</Label>
+              <Input
+                id="display_name"
+                value={profile.display_name}
+                onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
+                placeholder="Your display name"
+                className="h-9"
+              />
             </div>
-            <Switch
-              id="show-pricing-to-public"
-              checked={profile.show_pricing_to_public}
-              onCheckedChange={(checked) => setProfile({ ...profile, show_pricing_to_public: checked })}
-            />
+            <div className="space-y-1.5">
+              <Label htmlFor="bio" className="text-xs">Bio</Label>
+              <Textarea
+                id="bio"
+                value={profile.bio}
+                onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                placeholder="Tell us about yourself..."
+                rows={3}
+                className="min-h-[70px]"
+              />
+              <AiBioSuggestions text={profile.bio} onSelect={(text) => setProfile({ ...profile, bio: text })} minLength={20} type="bio" />
+            </div>
           </div>
-          
+
           <Separator />
 
-          {/* Open to Invitations Toggle */}
-          <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-200 dark:border-green-800">
-            <div className="space-y-1">
-              <Label htmlFor="open-to-invitations" className="text-base font-medium flex items-center gap-2">
-                Open to Invitations
-                <Badge className="bg-green-500 text-white text-[10px] px-1.5">New</Badge>
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Show brands you're open to free collaborations in exchange for experiences (free meals, hotel stays, products, etc.)
-              </p>
-            </div>
-            <Switch
-              id="open-to-invitations"
-              checked={profile.open_to_invitations}
-              onCheckedChange={handleOpenToInvitationsChange}
-            />
-          </div>
-          
-          <Separator />
-          
-          <div className="flex items-center justify-between p-4 bg-background rounded-lg border">
-            <div className="space-y-1">
-              <Label htmlFor="allow-mass-messages" className="text-base font-medium">Allow Mass Messages</Label>
-              <p className="text-sm text-muted-foreground">
-                When enabled, brands can include you in mass outreach messages for collaboration opportunities
-              </p>
-            </div>
-            <Switch
-              id="allow-mass-messages"
-              checked={profile.allow_mass_messages}
-              onCheckedChange={(checked) => setProfile({ ...profile, allow_mass_messages: checked })}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Basic Information</CardTitle>
-          <CardDescription>Update your profile details</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          {/* Phone */}
           <div className="space-y-2">
-            <Label htmlFor="display_name">Display Name *</Label>
-            <Input
-              id="display_name"
-              value={profile.display_name}
-              onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
-              placeholder="Your display name"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              value={profile.bio}
-              onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-              placeholder="Tell us about yourself..."
-              rows={4}
-            />
-            <AiBioSuggestions
-              text={profile.bio}
-              onSelect={(text) => setProfile({ ...profile, bio: text })}
-              minLength={20}
-              type="bio"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Phone Number Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Phone className="h-5 w-5" />
-            Phone Number
-          </CardTitle>
-          <CardDescription>Your verified contact number</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {profile.phone_number && profile.phone_verified && !isEditingPhone ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="font-medium">{profile.phone_number}</span>
-                </div>
-                <Badge variant="secondary" className="bg-green-100 text-green-700">Verified</Badge>
+            <div className="flex items-center gap-2">
+              <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-sm font-medium">Phone Number</span>
+            </div>
+            {profile.phone_number && profile.phone_verified && !isEditingPhone ? (
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
+                <span className="text-sm font-medium">{profile.phone_number}</span>
+                <Badge variant="secondary" className="bg-green-100 text-green-700 text-[10px] h-5">Verified</Badge>
+                <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" onClick={() => { setIsEditingPhone(true); setNewPhoneNumber(""); setPhoneOtp(""); }}>
+                  Change
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsEditingPhone(true);
-                  setNewPhoneNumber("");
-                  setPhoneOtp("");
-                }}
-              >
-                Change Phone Number
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {!profile.phone_number && !isEditingPhone && (
-                <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                  <p className="text-sm text-amber-700 dark:text-amber-300">
-                    No phone number on file. Please add and verify your phone number.
-                  </p>
-                </div>
-              )}
-              
+            ) : (
               <div className="space-y-2">
-                <Label htmlFor="new_phone">Phone Number</Label>
+                {!profile.phone_number && !isEditingPhone && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">No phone number on file.</p>
+                )}
                 <div className="flex gap-2">
-                  <PhoneInput
-                    value={newPhoneNumber}
-                    onChange={setNewPhoneNumber}
-                    className="flex-1"
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={handleSendPhoneOtp}
-                    disabled={sendingOtp || newPhoneNumber.length < 10}
-                  >
-                    {sendingOtp ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Send Code"
-                    )}
+                  <PhoneInput value={newPhoneNumber} onChange={setNewPhoneNumber} className="flex-1" />
+                  <Button variant="outline" size="sm" onClick={handleSendPhoneOtp} disabled={sendingOtp || newPhoneNumber.length < 10} className="h-9">
+                    {sendingOtp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Send Code"}
                   </Button>
                 </div>
-              </div>
-
-              {newPhoneNumber.length >= 10 && (
-                <div className="space-y-2">
-                  <Label htmlFor="phone_otp">Verification Code</Label>
+                {newPhoneNumber.length >= 10 && (
                   <div className="flex gap-2">
-                    <Input
-                      id="phone_otp"
-                      value={phoneOtp}
-                      onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      placeholder="Enter 6-digit code"
-                      maxLength={6}
-                      className="flex-1"
-                    />
-                    <Button
-                      onClick={handleVerifyPhoneOtp}
-                      disabled={verifyingOtp || phoneOtp.length !== 6}
-                    >
-                      {verifyingOtp ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Verify"
-                      )}
+                    <Input id="phone_otp" value={phoneOtp} onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="6-digit code" maxLength={6} className="flex-1 h-9" />
+                    <Button size="sm" onClick={handleVerifyPhoneOtp} disabled={verifyingOtp || phoneOtp.length !== 6} className="h-9">
+                      {verifyingOtp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Verify"}
                     </Button>
                   </div>
-                </div>
-              )}
-
-              {isEditingPhone && (
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setIsEditingPhone(false);
-                    setNewPhoneNumber("");
-                    setPhoneOtp("");
-                  }}
-                >
-                  Cancel
-                </Button>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Location</CardTitle>
-          <CardDescription>Where are you based?</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                value={profile.location_city}
-                onChange={(e) => setProfile({ ...profile, location_city: e.target.value })}
-                placeholder="e.g. Los Angeles"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="state">State/Province</Label>
-              <Input
-                id="state"
-                value={profile.location_state}
-                onChange={(e) => setProfile({ ...profile, location_state: e.target.value })}
-                placeholder="e.g. California"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="country">Country</Label>
-              <Input
-                id="country"
-                value={profile.location_country}
-                onChange={(e) => setProfile({ ...profile, location_country: e.target.value })}
-                placeholder="e.g. United States"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Categories</CardTitle>
-          <CardDescription>Select the categories that best describe your content</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {AVAILABLE_CATEGORIES.map((category) => (
-              <Badge
-                key={category}
-                variant={profile.categories.includes(category) ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => toggleCategory(category)}
-              >
-                {profile.categories.includes(category) && (
-                  <X className="h-3 w-3 mr-1" />
                 )}
-                {category}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Demographics Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Demographics</CardTitle>
-          <CardDescription>Optional info that helps brands find you</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="birth_date">Date of Birth</Label>
-              <Input
-                id="birth_date"
-                type="date"
-                value={profile.birth_date}
-                onChange={(e) => setProfile({ ...profile, birth_date: e.target.value })}
-                max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="gender">Gender</Label>
-              <select
-                id="gender"
-                value={profile.gender}
-                onChange={(e) => setProfile({ ...profile, gender: e.target.value })}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-              >
-                <option value="">Select gender</option>
-                {GENDERS.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-              </select>
-            </div>
+                {isEditingPhone && (
+                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setIsEditingPhone(false); setNewPhoneNumber(""); setPhoneOtp(""); }}>Cancel</Button>
+                )}
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="ethnicity">Ethnicity</Label>
-              <select
-                id="ethnicity"
-                value={profile.ethnicity}
-                onChange={(e) => setProfile({ ...profile, ethnicity: e.target.value })}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-              >
-                <option value="">Select ethnicity</option>
-                {ETHNICITIES.map((e) => (
-                  <option key={e} value={e}>{e}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="primary_language">Primary Language</Label>
-              <select
-                id="primary_language"
-                value={profile.primary_language}
-                onChange={(e) => setProfile({ ...profile, primary_language: e.target.value })}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-              >
-                {LANGUAGES.map((lang) => (
-                  <option key={lang} value={lang}>{lang}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+          <Separator />
 
+          {/* Location */}
           <div className="space-y-2">
-            <Label>Secondary Languages</Label>
-            <div className="flex flex-wrap gap-2">
-              {LANGUAGES.filter(l => l !== profile.primary_language).map((lang) => (
+            <span className="text-sm font-medium">Location</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="city" className="text-xs">City</Label>
+                <Input id="city" value={profile.location_city} onChange={(e) => setProfile({ ...profile, location_city: e.target.value })} placeholder="e.g. Los Angeles" className="h-9" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="state" className="text-xs">State/Province</Label>
+                <Input id="state" value={profile.location_state} onChange={(e) => setProfile({ ...profile, location_state: e.target.value })} placeholder="e.g. California" className="h-9" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="country" className="text-xs">Country</Label>
+                <Input id="country" value={profile.location_country} onChange={(e) => setProfile({ ...profile, location_country: e.target.value })} placeholder="e.g. United States" className="h-9" />
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Categories */}
+          <div className="space-y-2">
+            <span className="text-sm font-medium">Categories</span>
+            <div className="flex flex-wrap gap-1.5">
+              {AVAILABLE_CATEGORIES.map((category) => (
                 <Badge
-                  key={lang}
-                  variant={profile.secondary_languages.includes(lang) ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => {
-                    if (profile.secondary_languages.includes(lang)) {
-                      setProfile({ 
-                        ...profile, 
-                        secondary_languages: profile.secondary_languages.filter(l => l !== lang) 
-                      });
-                    } else {
-                      setProfile({ 
-                        ...profile, 
-                        secondary_languages: [...profile.secondary_languages, lang] 
-                      });
-                    }
-                  }}
+                  key={category}
+                  variant={profile.categories.includes(category) ? "default" : "outline"}
+                  className="cursor-pointer text-xs h-6"
+                  onClick={() => toggleCategory(category)}
                 >
-                  {profile.secondary_languages.includes(lang) && (
-                    <X className="h-3 w-3 mr-1" />
-                  )}
-                  {lang}
+                  {profile.categories.includes(category) && <X className="h-3 w-3 mr-0.5" />}
+                  {category}
                 </Badge>
               ))}
             </div>
           </div>
+
+          <Separator />
+
+          {/* Demographics */}
+          <div className="space-y-2">
+            <span className="text-sm font-medium">Demographics</span>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="birth_date" className="text-xs">Date of Birth</Label>
+                <Input id="birth_date" type="date" value={profile.birth_date} onChange={(e) => setProfile({ ...profile, birth_date: e.target.value })} max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]} className="h-9" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="gender" className="text-xs">Gender</Label>
+                <select id="gender" value={profile.gender} onChange={(e) => setProfile({ ...profile, gender: e.target.value })} className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm">
+                  <option value="">Select</option>
+                  {GENDERS.map((g) => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="ethnicity" className="text-xs">Ethnicity</Label>
+                <select id="ethnicity" value={profile.ethnicity} onChange={(e) => setProfile({ ...profile, ethnicity: e.target.value })} className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm">
+                  <option value="">Select</option>
+                  {ETHNICITIES.map((e) => <option key={e} value={e}>{e}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="primary_language" className="text-xs">Primary Language</Label>
+                <select id="primary_language" value={profile.primary_language} onChange={(e) => setProfile({ ...profile, primary_language: e.target.value })} className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm">
+                  {LANGUAGES.map((lang) => <option key={lang} value={lang}>{lang}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="space-y-1 pt-1">
+              <Label className="text-xs">Secondary Languages</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {LANGUAGES.filter(l => l !== profile.primary_language).map((lang) => (
+                  <Badge
+                    key={lang}
+                    variant={profile.secondary_languages.includes(lang) ? "default" : "outline"}
+                    className="cursor-pointer text-xs h-6"
+                    onClick={() => {
+                      if (profile.secondary_languages.includes(lang)) {
+                        setProfile({ ...profile, secondary_languages: profile.secondary_languages.filter(l => l !== lang) });
+                      } else {
+                        setProfile({ ...profile, secondary_languages: [...profile.secondary_languages, lang] });
+                      }
+                    }}
+                  >
+                    {profile.secondary_languages.includes(lang) && <X className="h-3 w-3 mr-0.5" />}
+                    {lang}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
+      {/* ── Privacy & Visibility ── */}
+      <Card>
+        <CardHeader className="p-4">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Privacy & Visibility
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-0 space-y-0">
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <Label htmlFor="show-pricing-to-public" className="text-sm font-medium">Show Pricing to All</Label>
+              <p className="text-xs text-muted-foreground">Non-subscribers see dimmed prices when disabled</p>
+            </div>
+            <Switch id="show-pricing-to-public" checked={profile.show_pricing_to_public} onCheckedChange={(checked) => setProfile({ ...profile, show_pricing_to_public: checked })} />
+          </div>
+          <div className="flex items-center justify-between py-3 border-t">
+            <div>
+              <Label htmlFor="open-to-invitations" className="text-sm font-medium flex items-center gap-1.5">
+                Open to Invitations
+                <Badge className="bg-green-500 text-white text-[9px] px-1 h-4">New</Badge>
+              </Label>
+              <p className="text-xs text-muted-foreground">Show you're open to free collaborations</p>
+            </div>
+            <Switch id="open-to-invitations" checked={profile.open_to_invitations} onCheckedChange={handleOpenToInvitationsChange} />
+          </div>
+          <div className="flex items-center justify-between py-3 border-t">
+            <div>
+              <Label htmlFor="allow-mass-messages" className="text-sm font-medium">Allow Mass Messages</Label>
+              <p className="text-xs text-muted-foreground">Brands can include you in mass outreach</p>
+            </div>
+            <Switch id="allow-mass-messages" checked={profile.allow_mass_messages} onCheckedChange={(checked) => setProfile({ ...profile, allow_mass_messages: checked })} />
+          </div>
+        </CardContent>
+      </Card>
 
       <SocialAccountsSection creatorProfileId={profile.id} />
-
-      {/* Verification Badge Section */}
       <VerificationBadgeCard creatorProfileId={profile.id} />
-
-      {/* Team Access */}
       <TeamAccessCard profileId={profile.id} accountType="creator" />
 
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            "Save Changes"
-          )}
-        </Button>
+      {/* Sticky Save Button */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-t p-3 flex justify-end">
+        <div className="container mx-auto max-w-7xl flex justify-end px-4">
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
