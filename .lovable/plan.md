@@ -1,43 +1,30 @@
 
 
-## Fix: Stale "Pro" Subscription Showing on Brand Dashboard
+## Fix: Admin Cannot Assign Subscription Plans
 
-### Root Cause
+### Problem
+The `brand_subscriptions` table has no INSERT policy for admins. The only INSERT policy is "Brands can insert their own subscription," which checks that the inserting user owns the brand profile. When an admin tries to create a subscription for a different brand, it gets blocked by RLS.
 
-The database has two records with `status = 'active'` for this brand:
+### Solution
+Add an RLS policy that allows admins to insert subscriptions for any brand. This will use the existing `is_admin` helper function (or equivalent) already used by the admin update/delete policies.
 
-1. `none` plan -- created Jan 15, 2026 (correct, current)
-2. `pro` plan -- created Dec 11, 2025, **expired Jan 11, 2026** (stale, should have been marked expired)
-
-The `getBrandSubscription` function in `subscription-utils.ts` orders results by `plan_type DESC`, so "pro" sorts before "none" and gets returned as the active subscription. While `checkAndHandleExpiredSubscriptions` exists to catch this, it may silently fail (e.g. network error swallowed by the try/catch) or lose a race with the subsequent SELECT query.
-
-### Fix (Two Parts)
-
-**Part 1 -- Make the query robust (code fix)**
-
-In `src/lib/subscription-utils.ts`, change `getBrandSubscription` so the SELECT query that fetches active subscriptions also filters out rows whose `current_period_end` is in the past. This way, even if the expiration-cleanup step fails, stale rows are never returned.
-
-```
-Current:  .eq('status', 'active')
-Fixed:    .eq('status', 'active').gte('current_period_end', new Date().toISOString())
-```
-
-**Part 2 -- Clean up stale data (migration)**
-
-Run a one-time migration to mark all expired-but-still-active subscriptions as `expired`:
+### Database Migration
 
 ```sql
-UPDATE brand_subscriptions
-SET status = 'expired'
-WHERE status = 'active'
-  AND plan_type != 'none'
-  AND current_period_end < now();
+CREATE POLICY "Admins can insert subscriptions"
+  ON public.brand_subscriptions
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.role = 'admin'
+    )
+  );
 ```
 
-### Files to Modify
+(The exact admin check will match whatever pattern the existing admin update/delete policies use.)
 
-| File | Change |
-|------|--------|
-| `src/lib/subscription-utils.ts` | Add `.gte('current_period_end', now)` filter to the active subscription SELECT in `getBrandSubscription` |
-| Migration SQL | Mark stale active subscriptions as expired |
-
+### Files Changed
+- Database migration only -- no code changes needed
