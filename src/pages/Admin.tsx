@@ -32,6 +32,7 @@ import AdminAnnouncementsTab from "@/components/admin/AdminAnnouncementsTab";
 import AdminCareersTab from "@/components/admin/AdminCareersTab";
 import AdminSubscriptionsTab from "@/components/admin/AdminSubscriptionsTab";
 import AdminQuickActions from "@/components/admin/AdminQuickActions";
+import { useAdminBadgeCounts } from "@/hooks/useAdminBadgeCounts";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface Profile {
@@ -187,6 +188,7 @@ const Admin = () => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   
   const { toast } = useToast();
+  const { markSeen, getBadgeCount } = useAdminBadgeCounts();
 
   // Unified search results
   interface SearchResult {
@@ -283,6 +285,7 @@ const Admin = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setSearchParams({ tab: value });
+    markSeen(value);
   };
 
   useEffect(() => {
@@ -877,13 +880,18 @@ const Admin = () => {
               <TabsTrigger value="venues" className="gap-2 shrink-0">
                 <MapPin className="h-4 w-4" />
                 <span className="hidden sm:inline">Venues</span>
+                {getBadgeCount("venues") > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
+                    {getBadgeCount("venues")}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="approvals" className="gap-2 shrink-0">
                 <CheckCircle className="h-4 w-4" />
                 <span className="hidden sm:inline">Approvals</span>
-                {stats.pendingCreators > 0 && (
-                  <Badge variant="destructive" className="ml-1">
-                    {stats.pendingCreators}
+                {getBadgeCount("approvals") > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
+                    {getBadgeCount("approvals")}
                   </Badge>
                 )}
               </TabsTrigger>
@@ -894,6 +902,11 @@ const Admin = () => {
               <TabsTrigger value="revenue" className="gap-2 shrink-0">
                 <TrendingUp className="h-4 w-4" />
                 <span className="hidden sm:inline">Revenue</span>
+                {getBadgeCount("revenue") > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
+                    {getBadgeCount("revenue")}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="testing" className="gap-2 shrink-0">
                 <FlaskConical className="h-4 w-4" />
@@ -902,6 +915,11 @@ const Admin = () => {
               <TabsTrigger value="disputes" className="gap-2 shrink-0">
                 <Gavel className="h-4 w-4" />
                 <span className="hidden sm:inline">Disputes</span>
+                {getBadgeCount("disputes") > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
+                    {getBadgeCount("disputes")}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="manual" className="gap-2 shrink-0">
                 <BookOpen className="h-4 w-4" />
@@ -910,6 +928,11 @@ const Admin = () => {
               <TabsTrigger value="verifications" className="gap-2 shrink-0">
                 <BadgeCheck className="h-4 w-4" />
                 <span className="hidden sm:inline">Verifications</span>
+                {getBadgeCount("verifications") > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
+                    {getBadgeCount("verifications")}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="branding" className="gap-2 shrink-0">
                 <ImageIcon className="h-4 w-4" />
@@ -926,6 +949,11 @@ const Admin = () => {
               <TabsTrigger value="careers" className="gap-2 shrink-0">
                 <Briefcase className="h-4 w-4" />
                 <span className="hidden sm:inline">Careers</span>
+                {getBadgeCount("careers") > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
+                    {getBadgeCount("careers")}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="subscriptions" className="gap-2 shrink-0">
                 <DollarSign className="h-4 w-4" />
