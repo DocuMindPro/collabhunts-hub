@@ -1,68 +1,44 @@
 
 
-## World-Class Brand Account Tab Redesign
+## Fix Overlapping Badges on Mobile Creator Cards
 
-### Design Philosophy
+### Problem
 
-Inspired by premium SaaS account pages (Linear, Stripe, Vercel), this redesign focuses on: a bold brand identity hero, visual hierarchy through subtle gradients, and consolidated sections that reduce card count while increasing polish.
+On mobile, creator cards on the `/influencers` page stack all badges (Vetted, Featured, VIP, Responds Fast, Free Invites) using `flex-wrap`, which causes them to cover the entire creator image when a creator has 3+ badges. The same issue exists on the homepage CreatorSpotlight cards.
 
-### Changes (all in `src/components/brand-dashboard/BrandAccountTab.tsx`)
+### Solution
 
-**1. Premium Brand Identity Hero**
-Replace the current plain card with a visually striking header:
-- Subtle gradient background (`bg-gradient-to-r from-primary/5 via-primary/3 to-transparent`)
-- Larger logo (`h-16 w-16`) with a ring/border accent and shadow
-- Company name in `text-xl font-bold` with the plan badge inline
-- Email shown as secondary text directly under name (removes need from Account Details)
-- "Member since" as a subtle tertiary line
-- Upgrade button styled as a gradient pill (`bg-gradient-to-r from-primary to-primary/80 text-white`)
+Limit badges shown on mobile to max 2, with remaining count shown as a "+N" indicator. On desktop, all badges display normally.
 
-**2. Two-Column Grid for Status Cards**
-Place Phone Verification and Verification Badge side-by-side on desktop using `grid grid-cols-1 md:grid-cols-2 gap-3`. This cuts vertical height in half and looks more professional. Both cards get matching compact styling.
+### Changes
 
-**3. Refined Phone Verification Card**
-- Remove CardHeader entirely; use a single-line inline layout with icon + title + status + action button all in one row
-- Only expand to a multi-line form when editing
+**1. `src/pages/Influencers.tsx` (discovery cards, lines ~510-528)**
 
-**4. Streamlined Account Details**
-- Remove Company row (already shown in hero)
-- Remove Email row (already shown in hero) 
-- Remove Member Since (already shown in hero)
-- Keep only: Industry, Size, Website, Location as a minimal detail grid
-- Use a borderless design with alternating subtle backgrounds instead of border-b lines
+- Wrap the badge list in a mobile-aware container
+- On mobile (below `sm`): show only the follower count pill + first qualifying badge, then a "+N" overflow indicator if more exist
+- On desktop (`sm:` and up): show all badges as currently
+- Reduce badge gap from `gap-1.5` to `gap-1` on mobile
+- Reduce badge text/padding slightly on mobile: `px-1.5 py-0.5 text-[10px]` vs current `px-2.5 py-1 text-xs`
 
-**5. Team Access Card**
-- Compact header matching other cards (`p-4 pb-2`, `text-sm` title)
-- Reduce locked-state padding
+**2. `src/components/home/CreatorSpotlight.tsx` (homepage cards, lines ~199-208)**
 
-**6. Overall Spacing**
-- Container: `space-y-2.5` (tighter than current `space-y-3`)
-- Max width stays `max-w-3xl`
+- Apply the same mobile badge limiting logic
+- On the 2-column mobile grid, these cards are even smaller, so limit to follower count + 1 badge max on mobile
 
-### Visual Result
+### Technical Approach
+
+For both files, collect all badges into an array, then render conditionally:
 
 ```text
-+--------------------------------------------------+
-| [Logo 16x16]  CompanyName   [Free badge]         |
-|               email@email.com                     |
-|               Member since Feb 3, 2026   [Upgrade]|
-+--------------------------------------------------+
-| Phone Verification    | Verified Business Badge   |
-| No phone · [Add]      | Phone required first      |
-+--------------------------------------------------+
-| Team Access                                       |
-| Pro plan required · [View Plans]                  |
-+--------------------------------------------------+
-| Account Details                                   |
-| Industry ............ Tech                        |
-| Location ............ Lebanon                     |
-| Website ............. collabhunts.com             |
-+--------------------------------------------------+
+Mobile:  [Followers] [First Badge] [+3 more]
+Desktop: [Followers] [Vetted] [Featured] [VIP] [Fast] [Free Invites]
 ```
 
-### Technical Details
+The "+N" indicator will be a small `bg-black/60 backdrop-blur-sm rounded-full text-white text-[10px]` pill matching the existing badge style.
 
-- Single file change: `src/components/brand-dashboard/BrandAccountTab.tsx`
-- No new components, no database changes
-- Tailwind-only styling with existing utility classes
-- Child components (`BrandVerificationBadgeCard`, `TeamAccessCard`) remain unchanged; only wrapper layout and the main tab file change
+Badge sizes on mobile will use smaller padding (`px-1.5 py-0.5`) and font (`text-[10px]`) to fit better in the constrained card width.
+
+### Files to Edit
+
+- `src/pages/Influencers.tsx` -- mobile badge overflow logic for discovery cards
+- `src/components/home/CreatorSpotlight.tsx` -- same for homepage spotlight cards
