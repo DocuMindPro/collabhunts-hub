@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Building2, Phone, Mail, Globe, MapPin, Calendar, CheckCircle2, AlertCircle, Loader2, Camera } from "lucide-react";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import PhoneInput from "@/components/PhoneInput";
+import { getCurrentPlanType } from "@/lib/subscription-utils";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import BrandVerificationBadgeCard from "./BrandVerificationBadgeCard";
 import TeamAccessCard from "@/components/team/TeamAccessCard";
@@ -38,10 +39,20 @@ const BrandAccountTab = () => {
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [planType, setPlanType] = useState<string>("free");
 
   useEffect(() => {
     fetchBrandProfile();
+    fetchPlan();
   }, []);
+
+  const fetchPlan = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const plan = await getCurrentPlanType(user.id);
+      setPlanType(plan);
+    }
+  };
 
   const fetchBrandProfile = async () => {
     try {
@@ -364,7 +375,12 @@ const BrandAccountTab = () => {
       )}
       {/* Team Access Card */}
       {brandProfile && (
-        <TeamAccessCard profileId={brandProfile.id} accountType="brand" />
+        <TeamAccessCard
+          profileId={brandProfile.id}
+          accountType="brand"
+          locked={planType === "free"}
+          lockedMessage="Team access is available on Basic and Pro plans. Upgrade to invite team members."
+        />
       )}
 
       {/* Company Information Card */}
