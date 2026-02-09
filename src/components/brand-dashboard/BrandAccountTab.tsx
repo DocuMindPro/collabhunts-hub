@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, Phone, Mail, Globe, MapPin, Calendar, CheckCircle2, AlertCircle, Loader2, Camera } from "lucide-react";
+import { Building2, Phone, Mail, Globe, MapPin, Calendar, CheckCircle2, AlertCircle, Loader2, Camera, Crown, ArrowUpRight } from "lucide-react";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import PhoneInput from "@/components/PhoneInput";
 import { getCurrentPlanType } from "@/lib/subscription-utils";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import BrandVerificationBadgeCard from "./BrandVerificationBadgeCard";
 import TeamAccessCard from "@/components/team/TeamAccessCard";
+import UpgradePlanDialog from "./UpgradePlanDialog";
 
 interface BrandProfile {
   id: string;
@@ -40,6 +41,7 @@ const BrandAccountTab = () => {
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [planType, setPlanType] = useState<string>("free");
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   useEffect(() => {
     fetchBrandProfile();
@@ -193,6 +195,32 @@ const BrandAccountTab = () => {
 
   return (
     <div className="space-y-4 max-w-3xl">
+      {/* Subscription Plan Card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Crown className="h-4 w-4" />
+            Subscription Plan
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Badge variant={planType === "free" ? "secondary" : "default"}>
+                {planType.charAt(0).toUpperCase() + planType.slice(1)} Plan
+              </Badge>
+              {planType === "free" && (
+                <span className="text-sm text-muted-foreground">Upgrade for more features</span>
+              )}
+            </div>
+            <Button variant="outline" size="sm" className="gap-1" onClick={() => setUpgradeOpen(true)}>
+              {planType === "free" ? "Upgrade" : "Change Plan"} <ArrowUpRight className="h-3 w-3" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <UpgradePlanDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} currentPlan={planType} />
+
       {/* Brand Logo Card */}
       <Card>
         <CardHeader className="pb-3">
