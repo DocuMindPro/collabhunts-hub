@@ -402,10 +402,10 @@ const Brand = () => {
         <div className="container mx-auto px-4">
           <AnimatedSection animation="fade-up" className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-              Available Across the Middle East
+              Popular Locations
             </h2>
             <p className="text-lg text-muted-foreground">
-              Host events and collaborations across the region
+              Creators and brands are active in these cities — but you can host from anywhere
             </p>
           </AnimatedSection>
 
@@ -428,6 +428,13 @@ const Brand = () => {
                 </div>
               ))}
             </div>
+          </AnimatedSection>
+
+          <AnimatedSection animation="fade-up" delay={200} className="text-center mt-8">
+            <p className="text-sm text-muted-foreground inline-flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Don't see your city? No problem — CollabHunts works wherever you are.
+            </p>
           </AnimatedSection>
         </div>
       </section>
