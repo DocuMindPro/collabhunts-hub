@@ -1,42 +1,68 @@
 
-## Compact & Professional Brand Account Tab Redesign
 
-### Layout Changes
+## World-Class Brand Account Tab Redesign
 
-**1. Brand Identity Header (top of page)**
-Merge the current "Brand Logo" and "Subscription Plan" cards into a single hero-style header card at the top. This card will show:
-- Logo (left) with hover-to-change overlay
-- Company name + plan badge inline
-- "Upgrade" button on the right
-- This eliminates two separate cards and immediately communicates brand identity
+### Design Philosophy
 
-**2. Reduce Card Padding & Spacing**
-- Change `space-y-4` to `space-y-3` between cards
-- Use `p-4` instead of `p-6` on CardHeader/CardContent (matching the compact UI design policy)
-- Reduce `pb-3` headers to `pb-2`
+Inspired by premium SaaS account pages (Linear, Stripe, Vercel), this redesign focuses on: a bold brand identity hero, visual hierarchy through subtle gradients, and consolidated sections that reduce card count while increasing polish.
 
-**3. Reorder Sections**
-New order from top to bottom:
-1. Brand Identity Header (logo + name + plan -- merged)
-2. Phone Verification (compact inline)
-3. Verified Business Badge
-4. Team Access
-5. Company Information (collapsed/compact)
-6. Account Information (collapsed/compact)
+### Changes (all in `src/components/brand-dashboard/BrandAccountTab.tsx`)
 
-**4. Compact Company & Account Info**
-Merge "Company Information" and "Account Information" into a single "Account Details" card with tighter row spacing (`py-1.5` instead of `py-2`).
+**1. Premium Brand Identity Hero**
+Replace the current plain card with a visually striking header:
+- Subtle gradient background (`bg-gradient-to-r from-primary/5 via-primary/3 to-transparent`)
+- Larger logo (`h-16 w-16`) with a ring/border accent and shadow
+- Company name in `text-xl font-bold` with the plan badge inline
+- Email shown as secondary text directly under name (removes need from Account Details)
+- "Member since" as a subtle tertiary line
+- Upgrade button styled as a gradient pill (`bg-gradient-to-r from-primary to-primary/80 text-white`)
 
-### File to Edit
+**2. Two-Column Grid for Status Cards**
+Place Phone Verification and Verification Badge side-by-side on desktop using `grid grid-cols-1 md:grid-cols-2 gap-3`. This cuts vertical height in half and looks more professional. Both cards get matching compact styling.
 
-**`src/components/brand-dashboard/BrandAccountTab.tsx`**
-- Remove separate "Subscription Plan" and "Brand Logo" cards
-- Create a combined brand identity header card at the top with logo, name, plan badge, and upgrade button
-- Reduce all padding: CardHeader `p-4 pb-2`, CardContent `p-4 pt-0`
-- Merge Company + Account info into one card
-- Tighten spacing throughout (`space-y-3`, `py-1.5` on rows, `gap-2` instead of `gap-3`)
-- Smaller avatar in the header (`h-14 w-14` instead of `h-16 w-16`)
+**3. Refined Phone Verification Card**
+- Remove CardHeader entirely; use a single-line inline layout with icon + title + status + action button all in one row
+- Only expand to a multi-line form when editing
+
+**4. Streamlined Account Details**
+- Remove Company row (already shown in hero)
+- Remove Email row (already shown in hero) 
+- Remove Member Since (already shown in hero)
+- Keep only: Industry, Size, Website, Location as a minimal detail grid
+- Use a borderless design with alternating subtle backgrounds instead of border-b lines
+
+**5. Team Access Card**
+- Compact header matching other cards (`p-4 pb-2`, `text-sm` title)
+- Reduce locked-state padding
+
+**6. Overall Spacing**
+- Container: `space-y-2.5` (tighter than current `space-y-3`)
+- Max width stays `max-w-3xl`
+
+### Visual Result
+
+```text
++--------------------------------------------------+
+| [Logo 16x16]  CompanyName   [Free badge]         |
+|               email@email.com                     |
+|               Member since Feb 3, 2026   [Upgrade]|
++--------------------------------------------------+
+| Phone Verification    | Verified Business Badge   |
+| No phone · [Add]      | Phone required first      |
++--------------------------------------------------+
+| Team Access                                       |
+| Pro plan required · [View Plans]                  |
++--------------------------------------------------+
+| Account Details                                   |
+| Industry ............ Tech                        |
+| Location ............ Lebanon                     |
+| Website ............. collabhunts.com             |
++--------------------------------------------------+
+```
 
 ### Technical Details
 
-All changes are CSS/layout only within `BrandAccountTab.tsx`. No database, API, or component interface changes needed. The `UpgradePlanDialog`, `BrandVerificationBadgeCard`, and `TeamAccessCard` components remain unchanged -- only their wrapper spacing is tightened via the parent's `space-y-3`.
+- Single file change: `src/components/brand-dashboard/BrandAccountTab.tsx`
+- No new components, no database changes
+- Tailwind-only styling with existing utility classes
+- Child components (`BrandVerificationBadgeCard`, `TeamAccessCard`) remain unchanged; only wrapper layout and the main tab file change
