@@ -11,16 +11,36 @@ serve(async (req) => {
   }
 
   try {
-    const { templateType, currentContent, deliverables, priceCents, eventDate } = await req.json();
+    const {
+      templateType,
+      currentContent,
+      deliverables,
+      priceCents,
+      eventDate,
+      brandName,
+      creatorName,
+      productDescription,
+      platforms,
+      usageRights,
+      revisionRounds,
+      specialInstructions,
+    } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are a professional contract drafting assistant for an influencer/creator marketplace. Your job is to improve agreement drafts between creators and brands.
+    const usageRightsMap: Record<string, string> = {
+      creator_only: "Content remains on creator's channels only",
+      brand_repost: "Brand may repost/share with creator credit",
+      full_commercial: "Full commercial usage rights granted to brand",
+    };
+
+    const systemPrompt = `You are a professional contract drafting assistant for an influencer/creator marketplace. Your job is to generate polished, professional agreements between creators and brands.
 
 Guidelines:
+- Use the actual brand and creator names throughout (never generic "Creator" or "Brand")
 - Keep the tone professional but friendly
 - Ensure all key terms are clearly defined
 - Include appropriate disclaimers about FTC compliance for sponsored content
@@ -28,21 +48,30 @@ Guidelines:
 - Include timeline expectations
 - Clarify payment terms (note: payment happens directly between parties)
 - Add standard terms about content ownership and usage rights
-- Keep it concise - no more than 500 words
+- Keep it concise - no more than 600 words
+- Use **bold** markdown for section headers
+- Make it feel like a real, professional agreement document`;
 
-Do NOT add any new sections that weren't in the original. Only improve the existing content by making it clearer and more professional.`;
+    const platformsStr = platforms?.length ? platforms.join(', ') : 'Not specified';
+    const usageRightsStr = usageRightsMap[usageRights] || usageRights || 'Not specified';
 
-    const userPrompt = `Please improve this creator-brand agreement draft:
+    const userPrompt = `Generate a professional agreement between ${brandName || 'the Brand'} and ${creatorName || 'the Creator'}.
 
 Template Type: ${templateType || 'custom'}
+Brand Name: ${brandName || 'Not specified'}
+Creator Name: ${creatorName || 'Not specified'}
+Product/Service: ${productDescription || 'Not specified'}
 Proposed Price: $${(priceCents || 0) / 100}
-Event Date: ${eventDate || 'Not specified'}
+Event/Delivery Date: ${eventDate || 'Not specified'}
+Content Platforms: ${platformsStr}
+Usage Rights: ${usageRightsStr}
+Revision Rounds: ${revisionRounds || 1}
+Special Instructions: ${specialInstructions || 'None'}
 Deliverables: ${deliverables?.map((d: any) => `${d.description} (x${d.quantity})`).join(', ') || 'Not specified'}
 
-Current Draft:
-${currentContent}
+${currentContent ? `Use this as a starting point but improve and personalize it:\n${currentContent}` : 'Generate the full agreement from scratch based on the details above.'}
 
-Please return ONLY the improved agreement text, no additional commentary.`;
+Return ONLY the agreement text, no additional commentary.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -56,7 +85,7 @@ Please return ONLY the improved agreement text, no additional commentary.`;
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        max_tokens: 1500,
+        max_tokens: 2000,
         temperature: 0.7,
       }),
     });

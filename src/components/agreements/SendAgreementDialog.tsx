@@ -7,13 +7,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, Send, DollarSign, Clock, Loader2, Sparkles, Plus, X, FileText } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import {
+  CalendarIcon, Send, DollarSign, Clock, Loader2, Sparkles, Plus, X, FileText,
+  ArrowLeft, ArrowRight, Eye, Edit3, CheckCircle2
+} from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AGREEMENT_TEMPLATES, type AgreementTemplateType, type DeliverableItem } from "@/config/agreement-templates";
+import {
+  AGREEMENT_TEMPLATES,
+  type AgreementTemplateType,
+  type DeliverableItem,
+  type QuestionField,
+  fillTemplatePlaceholders,
+} from "@/config/agreement-templates";
 import { canBrandUseAiDraft, incrementAiDraftCounter } from "@/lib/subscription-utils";
 
 interface SendAgreementDialogProps {
@@ -23,7 +34,19 @@ interface SendAgreementDialogProps {
   creatorProfileId: string;
   brandProfileId: string;
   onAgreementSent: () => void;
+  brandName?: string;
+  creatorName?: string;
 }
+
+type WizardStep = 'template' | 'questions' | 'review';
+
+const PLATFORM_OPTIONS = ['Instagram', 'TikTok', 'YouTube', 'Facebook', 'X (Twitter)', 'Snapchat'];
+
+const USAGE_RIGHTS_OPTIONS = [
+  { value: 'creator_only', label: 'Creator channels only' },
+  { value: 'brand_repost', label: 'Brand can repost with credit' },
+  { value: 'full_commercial', label: 'Full commercial rights' },
+];
 
 const SendAgreementDialog = ({
   open,
@@ -32,8 +55,10 @@ const SendAgreementDialog = ({
   creatorProfileId,
   brandProfileId,
   onAgreementSent,
+  brandName = "Brand",
+  creatorName = "Creator",
 }: SendAgreementDialogProps) => {
-  const [step, setStep] = useState<'template' | 'details'>('template');
+  const [step, setStep] = useState<WizardStep>('template');
   const [selectedTemplate, setSelectedTemplate] = useState<AgreementTemplateType | null>(null);
   const [content, setContent] = useState("");
   const [deliverables, setDeliverables] = useState<DeliverableItem[]>([]);
@@ -45,30 +70,39 @@ const SendAgreementDialog = ({
   const [aiLoading, setAiLoading] = useState(false);
   const [newDeliverable, setNewDeliverable] = useState("");
 
+  // New question fields
+  const [productDescription, setProductDescription] = useState("");
+  const [platforms, setPlatforms] = useState<string[]>([]);
+  const [usageRights, setUsageRights] = useState("brand_repost");
+  const [revisionRounds, setRevisionRounds] = useState("1");
+  const [specialInstructions, setSpecialInstructions] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+
   useEffect(() => {
-    if (!open) {
-      resetForm();
-    }
+    if (!open) resetForm();
   }, [open]);
+
+  const currentTemplate = selectedTemplate ? AGREEMENT_TEMPLATES[selectedTemplate] : null;
+  const templateQuestions = currentTemplate?.questions || [];
+
+  const showField = (field: QuestionField) => templateQuestions.includes(field);
 
   const handleTemplateSelect = (templateId: AgreementTemplateType) => {
     const template = AGREEMENT_TEMPLATES[templateId];
     setSelectedTemplate(templateId);
-    setContent(template.suggestedContent);
     setDeliverables([...template.defaultDeliverables]);
-    setStep('details');
+    // Pre-fill content with placeholders replaced
+    setContent(fillTemplatePlaceholders(template.suggestedContent, brandName, creatorName));
+    setStep('questions');
   };
 
-  const handleAiImprove = async () => {
-    if (!content.trim()) {
-      toast.error("Please add some content first");
-      return;
-    }
-
+  const handleGenerateAgreement = async () => {
     // Check AI draft usage limit
     const { canUse, used, limit, reason } = await canBrandUseAiDraft(brandProfileId);
     if (!canUse) {
       toast.error(reason || "AI draft limit reached");
+      // Still proceed to review with template content
+      setStep('review');
       return;
     }
 
@@ -81,22 +115,34 @@ const SendAgreementDialog = ({
           deliverables,
           priceCents,
           eventDate: eventDate ? format(eventDate, "yyyy-MM-dd") : null,
+          brandName,
+          creatorName,
+          productDescription,
+          platforms,
+          usageRights,
+          revisionRounds: parseInt(revisionRounds),
+          specialInstructions,
         },
       });
 
       if (error) throw error;
-      
+
       if (data?.improvedContent) {
         setContent(data.improvedContent);
         await incrementAiDraftCounter(brandProfileId);
-        toast.success(`Agreement improved with AI! (${used + 1}/${limit} used this month)`);
+        toast.success(`Agreement generated with AI! (${used + 1}/${limit} used this month)`);
       }
     } catch (error: any) {
-      console.error("AI improvement error:", error);
-      toast.error("Failed to improve with AI. Please try again.");
+      console.error("AI generation error:", error);
+      toast.error("Failed to generate with AI. You can still edit manually.");
     } finally {
       setAiLoading(false);
+      setStep('review');
     }
+  };
+
+  const handleGoToReviewWithoutAI = () => {
+    setStep('review');
   };
 
   const addDeliverable = () => {
@@ -116,12 +162,17 @@ const SendAgreementDialog = ({
     setDeliverables(updated);
   };
 
+  const togglePlatform = (platform: string) => {
+    setPlatforms(prev =>
+      prev.includes(platform) ? prev.filter(p => p !== platform) : [...prev, platform]
+    );
+  };
+
   const handleSubmit = async () => {
     if (!content.trim()) {
       toast.error("Please add agreement content");
       return;
     }
-
     if (priceCents <= 0) {
       toast.error("Please set a price");
       return;
@@ -132,7 +183,6 @@ const SendAgreementDialog = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Create the agreement
       const { data: agreement, error: agreementError } = await supabase
         .from("creator_agreements")
         .insert({
@@ -153,9 +203,8 @@ const SendAgreementDialog = ({
 
       if (agreementError) throw agreementError;
 
-      // Create a message linking to the agreement
       const templateName = selectedTemplate ? AGREEMENT_TEMPLATES[selectedTemplate].name : 'Custom Agreement';
-      
+
       const messageContent = JSON.stringify({
         type: "agreement",
         agreement_id: agreement.id,
@@ -179,7 +228,6 @@ const SendAgreementDialog = ({
 
       if (messageError) throw messageError;
 
-      // Update agreement with message_id
       await supabase
         .from("creator_agreements")
         .update({ message_id: message.id })
@@ -206,6 +254,30 @@ const SendAgreementDialog = ({
     setEventTime("19:00");
     setDurationHours(2);
     setNewDeliverable("");
+    setProductDescription("");
+    setPlatforms([]);
+    setUsageRights("brand_repost");
+    setRevisionRounds("1");
+    setSpecialInstructions("");
+    setIsEditMode(false);
+  };
+
+  const stepTitle = () => {
+    switch (step) {
+      case 'template': return 'Choose Agreement Template';
+      case 'questions': return 'Agreement Details';
+      case 'review': return 'Review & Send';
+    }
+  };
+
+  // Render simple markdown-like bold text
+  const renderPreview = (text: string) => {
+    return text.split('\n').map((line, i) => {
+      // Bold
+      const rendered = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      if (line.trim() === '') return <br key={i} />;
+      return <p key={i} className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: rendered }} />;
+    });
   };
 
   return (
@@ -214,11 +286,28 @@ const SendAgreementDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
-            {step === 'template' ? 'Choose Agreement Template' : 'Draft Agreement'}
+            {stepTitle()}
           </DialogTitle>
+          {/* Progress indicator */}
+          {step !== 'template' && (
+            <div className="flex items-center gap-2 pt-2">
+              {(['template', 'questions', 'review'] as WizardStep[]).map((s, i) => (
+                <div key={s} className="flex items-center gap-1">
+                  <div className={cn(
+                    "h-2 w-2 rounded-full",
+                    step === s ? "bg-primary" : 
+                    (['template', 'questions', 'review'].indexOf(step) > i) ? "bg-primary/50" : "bg-muted"
+                  )} />
+                  <span className="text-xs text-muted-foreground capitalize">{s === 'questions' ? 'Details' : s}</span>
+                  {i < 2 && <div className="w-6 h-px bg-muted" />}
+                </div>
+              ))}
+            </div>
+          )}
         </DialogHeader>
 
-        {step === 'template' ? (
+        {/* STEP 1: Template Selection */}
+        {step === 'template' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-4">
             {Object.values(AGREEMENT_TEMPLATES).map((template) => (
               <button
@@ -232,100 +321,61 @@ const SendAgreementDialog = ({
               </button>
             ))}
           </div>
-        ) : (
-          <ScrollArea className="max-h-[70vh] pr-4">
-            <Tabs defaultValue="content" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="content">Content</TabsTrigger>
-                <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
-                <TabsTrigger value="details">Details</TabsTrigger>
-              </TabsList>
+        )}
 
-              <TabsContent value="content" className="space-y-4 mt-4">
-                <div className="flex justify-between items-center">
-                  <Label>Agreement Content</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAiImprove}
-                    disabled={aiLoading}
-                  >
-                    {aiLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <Sparkles className="h-4 w-4 mr-2" />
-                    )}
-                    Improve with AI
-                  </Button>
-                </div>
-                <Textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Describe the agreement terms..."
-                  rows={12}
-                  className="font-mono text-sm"
-                />
-              </TabsContent>
-
-              <TabsContent value="deliverables" className="space-y-4 mt-4">
-                <Label>Deliverables</Label>
-                <div className="space-y-2">
-                  {deliverables.map((item, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
-                      <span className="flex-1 text-sm">{item.description}</span>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={item.quantity}
-                        onChange={(e) => updateDeliverableQuantity(index, parseInt(e.target.value) || 1)}
-                        className="w-16 h-8"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeDeliverable(index)}
-                        className="h-8 w-8"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    value={newDeliverable}
-                    onChange={(e) => setNewDeliverable(e.target.value)}
-                    placeholder="Add a deliverable..."
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addDeliverable())}
-                  />
-                  <Button type="button" variant="outline" size="icon" onClick={addDeliverable}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="details" className="space-y-4 mt-4">
-                {/* Price */}
-                <div className="space-y-2">
-                  <Label>Price (USD)</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="number"
-                      min={0}
-                      value={priceCents / 100}
-                      onChange={(e) => setPriceCents(Math.round(parseFloat(e.target.value || "0") * 100))}
-                      className="pl-9"
-                      placeholder="0.00"
-                    />
+        {/* STEP 2: Quick Questions */}
+        {step === 'questions' && (
+          <ScrollArea className="max-h-[65vh] pr-4">
+            <div className="space-y-5 py-2">
+              {/* Names - always shown, read-only */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Brand</Label>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 border text-sm font-medium">
+                    {brandName}
                   </div>
                 </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Creator</Label>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 border text-sm font-medium">
+                    {creatorName}
+                  </div>
+                </div>
+              </div>
 
-                {/* Event Date */}
-                <div className="space-y-2">
-                  <Label>Event Date (optional)</Label>
+              {/* Product / Service Description */}
+              {showField('productDescription') && (
+                <div className="space-y-1.5">
+                  <Label>What product or service is this for?</Label>
+                  <Input
+                    value={productDescription}
+                    onChange={(e) => setProductDescription(e.target.value)}
+                    placeholder="e.g. New summer collection launch, Restaurant grand opening..."
+                  />
+                  <p className="text-xs text-muted-foreground">Briefly describe what the creator will be promoting</p>
+                </div>
+              )}
+
+              {/* Budget */}
+              <div className="space-y-1.5">
+                <Label>Proposed Budget (USD)</Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="number"
+                    min={0}
+                    value={priceCents / 100 || ""}
+                    onChange={(e) => setPriceCents(Math.round(parseFloat(e.target.value || "0") * 100))}
+                    className="pl-9"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              {/* Event / Delivery Date */}
+              {showField('eventDate') && (
+                <div className="space-y-1.5">
+                  <Label>{showField('eventTime') ? 'Event Date' : 'Delivery Deadline'}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -350,39 +400,190 @@ const SendAgreementDialog = ({
                     </PopoverContent>
                   </Popover>
                 </div>
+              )}
 
+              {/* Time & Duration (event templates) */}
+              {showField('eventTime') && (
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label>Start Time</Label>
-                    <Input
-                      type="time"
-                      value={eventTime}
-                      onChange={(e) => setEventTime(e.target.value)}
-                    />
+                    <Input type="time" value={eventTime} onChange={(e) => setEventTime(e.target.value)} />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Duration (hours)</Label>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="number"
-                        min={1}
-                        max={12}
-                        value={durationHours}
-                        onChange={(e) => setDurationHours(parseInt(e.target.value) || 2)}
-                        className="pl-9"
-                      />
+                  {showField('durationHours') && (
+                    <div className="space-y-1.5">
+                      <Label>Duration (hours)</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="number" min={1} max={12} value={durationHours}
+                          onChange={(e) => setDurationHours(parseInt(e.target.value) || 2)}
+                          className="pl-9"
+                        />
+                      </div>
                     </div>
+                  )}
+                </div>
+              )}
+
+              {/* Content Platforms */}
+              {showField('platforms') && (
+                <div className="space-y-2">
+                  <Label>Content Platforms</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {PLATFORM_OPTIONS.map(platform => (
+                      <button
+                        key={platform}
+                        type="button"
+                        onClick={() => togglePlatform(platform)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-full text-sm border transition-colors",
+                          platforms.includes(platform)
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background hover:bg-muted border-input"
+                        )}
+                      >
+                        {platform}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              </TabsContent>
-            </Tabs>
+              )}
 
-            {/* Summary */}
-            {priceCents > 0 && (
-              <div className="bg-muted/50 rounded-lg p-4 mt-4 space-y-2">
+              {/* Usage Rights */}
+              {showField('usageRights') && (
+                <div className="space-y-1.5">
+                  <Label>Usage Rights</Label>
+                  <Select value={usageRights} onValueChange={setUsageRights}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {USAGE_RIGHTS_OPTIONS.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Revision Rounds */}
+              {showField('revisionRounds') && (
+                <div className="space-y-1.5">
+                  <Label>Revision Rounds Included</Label>
+                  <Select value={revisionRounds} onValueChange={setRevisionRounds}>
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1</SelectItem>
+                      <SelectItem value="2">2</SelectItem>
+                      <SelectItem value="3">3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Special Instructions */}
+              {showField('specialInstructions') && (
+                <div className="space-y-1.5">
+                  <Label>Special Instructions (optional)</Label>
+                  <Textarea
+                    value={specialInstructions}
+                    onChange={(e) => setSpecialInstructions(e.target.value)}
+                    placeholder="Any additional requirements, dress code, hashtags to use..."
+                    rows={3}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 mt-6 pb-2">
+              <Button variant="outline" onClick={() => setStep('template')} className="gap-1.5">
+                <ArrowLeft className="h-4 w-4" /> Back
+              </Button>
+              <div className="flex-1" />
+              <Button variant="outline" onClick={handleGoToReviewWithoutAI} className="gap-1.5">
+                Skip AI <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button onClick={handleGenerateAgreement} disabled={aiLoading || priceCents <= 0} className="gap-1.5">
+                {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                Generate with AI
+              </Button>
+            </div>
+          </ScrollArea>
+        )}
+
+        {/* STEP 3: Review & Edit */}
+        {step === 'review' && (
+          <ScrollArea className="max-h-[65vh] pr-4">
+            <div className="space-y-4 py-2">
+              {/* Edit mode toggle */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {isEditMode ? <Edit3 className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {isEditMode ? "Editing" : "Preview"}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="edit-toggle" className="text-xs text-muted-foreground">Edit mode</Label>
+                  <Switch id="edit-toggle" checked={isEditMode} onCheckedChange={setIsEditMode} />
+                </div>
+              </div>
+
+              {/* Agreement content */}
+              {isEditMode ? (
+                <Textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={14}
+                  className="text-sm"
+                />
+              ) : (
+                <div className="rounded-lg border bg-card p-5 space-y-1">
+                  {renderPreview(content)}
+                </div>
+              )}
+
+              {/* Deliverables */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Deliverables</Label>
+                <div className="space-y-2">
+                  {deliverables.map((item, index) => (
+                    <div key={index} className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
+                      <CheckCircle2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="flex-1 text-sm">{item.description}</span>
+                      <Input
+                        type="number" min={1} value={item.quantity}
+                        onChange={(e) => updateDeliverableQuantity(index, parseInt(e.target.value) || 1)}
+                        className="w-16 h-8"
+                      />
+                      <Button type="button" variant="ghost" size="icon" onClick={() => removeDeliverable(index)} className="h-8 w-8">
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={newDeliverable}
+                    onChange={(e) => setNewDeliverable(e.target.value)}
+                    placeholder="Add a deliverable..."
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addDeliverable())}
+                  />
+                  <Button type="button" variant="outline" size="icon" onClick={addDeliverable}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Summary card */}
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
                 <p className="text-sm font-medium">Agreement Summary</p>
                 <div className="text-sm text-muted-foreground space-y-1">
+                  <div className="flex justify-between">
+                    <span>Between:</span>
+                    <span className="font-medium text-foreground">{brandName} & {creatorName}</span>
+                  </div>
                   <div className="flex justify-between">
                     <span>Template:</span>
                     <span className="font-medium text-foreground">
@@ -399,32 +600,39 @@ const SendAgreementDialog = ({
                   </div>
                   {eventDate && (
                     <div className="flex justify-between">
-                      <span>Event Date:</span>
+                      <span>Date:</span>
                       <span className="font-medium text-foreground">{format(eventDate, "PPP")}</span>
+                    </div>
+                  )}
+                  {platforms.length > 0 && (
+                    <div className="flex justify-between">
+                      <span>Platforms:</span>
+                      <span className="font-medium text-foreground">{platforms.join(', ')}</span>
                     </div>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground pt-2 border-t">
-                  💡 Payment will be arranged directly between you and the brand
+                  💡 Payment will be arranged directly between you and the creator
                 </p>
               </div>
-            )}
+            </div>
 
             {/* Actions */}
-            <div className="flex gap-2 mt-4">
-              <Button variant="outline" onClick={() => setStep('template')} className="flex-1">
-                Back
+            <div className="flex gap-2 mt-4 pb-2">
+              <Button variant="outline" onClick={() => setStep('questions')} className="gap-1.5">
+                <ArrowLeft className="h-4 w-4" /> Back
               </Button>
+              <div className="flex-1" />
               <Button
                 onClick={handleSubmit}
                 disabled={loading || !content.trim() || priceCents <= 0}
-                className="flex-1"
+                className="gap-1.5"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <>
-                    <Send className="h-4 w-4 mr-2" />
+                    <Send className="h-4 w-4" />
                     Send Agreement
                   </>
                 )}

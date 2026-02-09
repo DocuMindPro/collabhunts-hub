@@ -66,6 +66,7 @@ const BrandMessagesTab = () => {
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({});
   const [pendingPackage, setPendingPackage] = useState<PendingPackage | null>(null);
   const [brandProfileId, setBrandProfileId] = useState<string | null>(null);
+  const [brandCompanyName, setBrandCompanyName] = useState<string>("Brand");
   const [showCounterDialog, setShowCounterDialog] = useState(false);
   const [showAgreementDialog, setShowAgreementDialog] = useState(false);
   const [activeNegotiation, setActiveNegotiation] = useState<NegotiationData | null>(null);
@@ -256,12 +257,13 @@ const BrandMessagesTab = () => {
 
       const { data: profile } = await supabase
         .from("brand_profiles")
-        .select("id")
+        .select("id, company_name")
         .eq("user_id", user.id)
         .single();
 
        if (!profile) return;
        setBrandProfileId(profile.id);
+       setBrandCompanyName(profile.company_name || "Brand");
 
       const { data, error } = await supabase
         .from("conversations")
@@ -699,6 +701,8 @@ const BrandMessagesTab = () => {
           creatorProfileId={selectedConvo.creator_profile_id}
           brandProfileId={brandProfileId}
           onAgreementSent={() => fetchMessages(selectedConversation || "")}
+          brandName={brandCompanyName}
+          creatorName={selectedConvo.creator_profiles?.display_name || "Creator"}
         />
       )}
     </div>
