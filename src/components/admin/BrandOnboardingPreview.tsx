@@ -28,17 +28,16 @@ const BrandOnboardingPreview = ({ onClose }: BrandOnboardingPreviewProps) => {
   const progress = (step / totalSteps) * 100;
 
   const intents = [
-    { value: "awareness", label: "Brand Awareness", desc: "Get your brand in front of new audiences" },
-    { value: "sales", label: "Drive Sales", desc: "Convert viewers into customers" },
-    { value: "ugc", label: "User Generated Content", desc: "Get authentic content for your brand" },
-    { value: "engagement", label: "Social Engagement", desc: "Build community and engagement" }
+    { value: "one_time", label: "Book a one-time event", desc: "Find a creator for a single collaboration" },
+    { value: "recurring", label: "Recurring collaborations", desc: "Build ongoing partnerships with creators" },
+    { value: "exploring", label: "Just exploring", desc: "Browse creators and see what's available" }
   ];
 
   const budgets = [
-    { value: "under_1k", label: "Under $1,000/mo" },
-    { value: "1k_5k", label: "$1,000 - $5,000/mo" },
-    { value: "5k_10k", label: "$5,000 - $10,000/mo" },
-    { value: "10k_plus", label: "$10,000+/mo" }
+    { value: "under_200", label: "Under $200" },
+    { value: "200_500", label: "$200 - $500" },
+    { value: "500_1500", label: "$500 - $1,500" },
+    { value: "1500_plus", label: "$1,500+" }
   ];
 
   const categoryOptions = [
@@ -154,7 +153,7 @@ const BrandOnboardingPreview = ({ onClose }: BrandOnboardingPreviewProps) => {
         <div className="space-y-4">
           <div className="text-center">
             <DollarSign className="h-10 w-10 mx-auto text-primary mb-3" />
-            <h3 className="text-lg font-semibold">Monthly influencer budget?</h3>
+            <h3 className="text-lg font-semibold">Budget per event?</h3>
             <p className="text-sm text-muted-foreground">This helps us show relevant creators</p>
           </div>
 

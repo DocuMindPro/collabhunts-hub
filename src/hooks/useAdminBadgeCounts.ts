@@ -5,7 +5,6 @@ interface BadgeCounts {
   venues: number;
   approvals: number;
   careers: number;
-  disputes: number;
   verifications: number;
   revenue: number;
 }
@@ -14,7 +13,6 @@ const EMPTY_COUNTS: BadgeCounts = {
   venues: 0,
   approvals: 0,
   careers: 0,
-  disputes: 0,
   verifications: 0,
   revenue: 0,
 };
@@ -33,7 +31,6 @@ export function useAdminBadgeCounts() {
         { count: venues },
         { count: approvals },
         { count: careers },
-        { count: disputes },
         { count: verifications },
         { count: franchisePayouts },
         { count: affiliatePayouts },
@@ -41,7 +38,6 @@ export function useAdminBadgeCounts() {
         supabase.from("quotation_inquiries").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("creator_profiles").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("career_applications").select("*", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("booking_disputes").select("*", { count: "exact", head: true }).in("status", ["open", "awaiting_response", "pending_response", "pending_admin_review"]),
         supabase.from("brand_profiles").select("*", { count: "exact", head: true }).eq("verification_status", "pending"),
         supabase.from("franchise_payout_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("affiliate_payout_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
@@ -51,7 +47,6 @@ export function useAdminBadgeCounts() {
         venues: venues || 0,
         approvals: approvals || 0,
         careers: careers || 0,
-        disputes: disputes || 0,
         verifications: verifications || 0,
         revenue: (franchisePayouts || 0) + (affiliatePayouts || 0),
       });
