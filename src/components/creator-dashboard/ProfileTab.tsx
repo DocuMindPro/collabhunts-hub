@@ -447,7 +447,7 @@ const ProfileTab = () => {
   }
 
   return (
-    <div className="space-y-4 pb-20">
+    <div className="space-y-3 pb-20">
       {/* ── Your Media ── */}
       <Card>
         <CardHeader className="p-4">
@@ -499,7 +499,7 @@ const ProfileTab = () => {
                 return (
                   <div key={index} className="relative">
                     {coverUrl ? (
-                      <div className="relative aspect-[4/5] rounded-lg overflow-hidden border group">
+                      <div className="relative aspect-[3/2] rounded-lg overflow-hidden border group">
                         <img src={coverUrl} alt={`Cover ${index + 1}`} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
                           <Label htmlFor={inputId} className="px-2 py-1 bg-white text-foreground rounded cursor-pointer hover:bg-white/90 text-xs font-medium">
@@ -513,7 +513,7 @@ const ProfileTab = () => {
                         </div>
                       </div>
                     ) : (
-                      <Label htmlFor={inputId} className="flex flex-col items-center justify-center aspect-[4/5] rounded-lg border-2 border-dashed border-muted-foreground/25 cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors">
+                      <Label htmlFor={inputId} className="flex flex-col items-center justify-center aspect-[3/2] rounded-lg border-2 border-dashed border-muted-foreground/25 cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors">
                         {isUploading ? (
                           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                         ) : (

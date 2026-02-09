@@ -126,7 +126,7 @@ const CreatorDashboard = () => {
               <OverviewTab />
             </TabsContent>
 
-            <TabsContent value="profile" className="space-y-6">
+            <TabsContent value="profile" className="space-y-4">
               <ProfileTab />
             </TabsContent>
 
