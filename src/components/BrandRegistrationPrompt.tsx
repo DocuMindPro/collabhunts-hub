@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Building2, CheckCircle, ArrowRight } from "lucide-react";
+import { Building2, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,47 +23,41 @@ const BrandRegistrationPrompt = ({ open, onOpenChange }: BrandRegistrationPrompt
   };
 
   const benefits = [
-    "Free registration",
-    "Takes less than 2 minutes",
-    "Direct access to all influencers",
+    "Free registration — no credit card required",
+    "Set up in under 2 minutes",
+    "Direct access to vetted influencers",
   ];
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-[425px] p-0 overflow-hidden gap-0 [&>button]:hidden"
+        className="sm:max-w-[400px] p-6 gap-0 rounded-xl [&>button]:hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
-        {/* Gradient accent line */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
-
-        <div className="p-8 flex flex-col items-center text-center space-y-6">
+        <div className="flex flex-col space-y-4">
           {/* Icon */}
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
-            <Building2 className="h-8 w-8 text-primary-foreground" />
+          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+            <Building2 className="h-5 w-5 text-muted-foreground" />
           </div>
 
-          {/* Title */}
-          <DialogHeader className="space-y-2">
-            <DialogTitle className="text-2xl font-bold tracking-tight">
-              Register Your Brand
+          {/* Header */}
+          <DialogHeader className="space-y-1 text-left">
+            <DialogTitle className="text-xl font-bold tracking-tight">
+              Register your brand
             </DialogTitle>
-            <DialogDescription className="text-base text-muted-foreground">
-              Connect with top influencers and grow your business
+            <DialogDescription className="text-sm text-muted-foreground">
+              Start connecting with top creators today.
             </DialogDescription>
           </DialogHeader>
 
           {/* Benefits */}
-          <div className="flex flex-col gap-2.5 w-full">
+          <div className="flex flex-col gap-2 pt-1">
             {benefits.map((benefit) => (
-              <div
-                key={benefit}
-                className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-primary/5 border border-primary/10"
-              >
-                <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                <span className="text-sm font-medium">{benefit}</span>
+              <div key={benefit} className="flex items-center gap-2.5">
+                <Check className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                <span className="text-sm text-foreground">{benefit}</span>
               </div>
             ))}
           </div>
@@ -72,11 +66,18 @@ const BrandRegistrationPrompt = ({ open, onOpenChange }: BrandRegistrationPrompt
           <Button
             onClick={handleRegister}
             size="lg"
-            className="w-full h-12 text-base font-semibold gap-2"
+            className="w-full h-11 text-sm font-semibold bg-foreground text-background hover:bg-foreground/90 mt-2"
           >
-            Register Now
-            <ArrowRight className="h-4 w-4" />
+            Get Started
           </Button>
+
+          {/* Skip */}
+          <button
+            onClick={() => onOpenChange(false)}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors mx-auto"
+          >
+            Maybe later
+          </button>
         </div>
       </DialogContent>
     </Dialog>
