@@ -1,62 +1,56 @@
 
 
-## Enrich Quotation Inquiries with Full Brand Details
+## Add Social Media Accounts to Brand Onboarding
 
 ### What Changes
-When you view a quotation inquiry in the admin panel, each row will show an expandable detail section with all the brand's information so you can call them prepared.
+Brands will be asked for their Facebook, Instagram, and TikTok profile URLs during onboarding. This applies to both the real onboarding flow and the admin testing preview.
 
-### Layout
+### Database Migration
+Add 3 new columns to `brand_profiles`:
+- `facebook_url` (text, nullable)
+- `instagram_url` (text, nullable)
+- `tiktok_url` (text, nullable)
 
-Currently each row only shows: company name, email, phone, industry, plan, status, date, notes.
+### New Component: `SocialMediaStep.tsx`
+A new step component at `src/components/brand-onboarding/SocialMediaStep.tsx` with:
+- 3 input fields with platform icons (Facebook, Instagram, TikTok)
+- Placeholder URLs showing expected format (e.g., `https://instagram.com/yourbrand`)
+- URL validation: if a URL is entered, it must contain the correct platform domain
+  - Facebook: must contain `facebook.com/` or `fb.com/`
+  - Instagram: must contain `instagram.com/`
+  - TikTok: must contain `tiktok.com/@`
+- All fields are optional -- brands can skip or leave blank
+- Error messages shown inline for invalid URLs
+- Props: `value`, `onChange`, `onNext`, `onBack`, `onSkip`
 
-After the change, clicking a row will expand to show a detailed info card below the row with:
+### Real Onboarding Flow (`BrandOnboarding.tsx`)
+- Total steps increases from 4 to 5
+- New step order:
+  1. Intent
+  2. Budget
+  3. Categories
+  4. Platforms
+  5. Social Media Accounts (NEW)
+- Step 5 "Finish Setup" triggers `savePreferences`
+- `savePreferences` updated to also save `facebook_url`, `instagram_url`, `tiktok_url`
+- Add `socialMedia` object to preferences state
 
-**Contact Info:**
-- Full name (first + last)
-- Phone number (clickable)
-- Email (clickable)
-- Position/role in company
-
-**Company Info:**
-- Company name
-- Industry
-- Company size
-- Website URL (clickable link)
-- Monthly budget range
-- Marketing intent
-
-**Venue/Location Details:**
-- Venue name and type
-- Venue address and city
-- Country
-- Venue capacity
-- Parking available
-- Accessibility info
-- Amenities
-
-**Preferences:**
-- Preferred platforms
-- Preferred categories
-
-**Account Info:**
-- Current plan
-- Verification status
-- Phone verified status
-- Account created date
+### Admin Preview (`BrandOnboardingPreview.tsx`)
+- Total steps increases from 5 to 6
+- New step order:
+  1. Phone Verification
+  2. Intent
+  3. Budget
+  4. Categories
+  5. Platforms
+  6. Social Media Accounts (NEW) + Close Preview button
+- Purely visual preview, no data saved
 
 ### Technical Details
 
-**File: `src/components/admin/AdminQuotationsSection.tsx`**
+**Files:**
+1. **Database migration** -- Add 3 columns to `brand_profiles`
+2. **Create** `src/components/brand-onboarding/SocialMediaStep.tsx`
+3. **Edit** `src/pages/BrandOnboarding.tsx` -- Add step 5, update save logic
+4. **Edit** `src/components/admin/BrandOnboardingPreview.tsx` -- Add step 6
 
-1. **Expand the `brand` interface** to include all `brand_profiles` fields: `company_size`, `contact_position`, `website_url`, `monthly_budget_range`, `marketing_intent`, `venue_name`, `venue_type`, `venue_address`, `venue_city`, `location_country`, `venue_capacity`, `parking_available`, `accessibility_info`, `amenities`, `preferred_platforms`, `preferred_categories`, `brand_plan`, `verification_status`, `phone_verified`, `created_at`, `logo_url`
-
-2. **Update the Supabase query** to select all fields from `brand_profiles` instead of just `id, company_name, phone_number, first_name, last_name, industry, user_id`
-
-3. **Add expandable row state** -- track which inquiry ID is expanded via `expandedId` state
-
-4. **Add a collapsible detail panel** below each table row that shows all brand info in a clean grid layout when the row is clicked
-
-5. **Import additional icons** from Lucide: `Building2, Globe, MapPin, Users, ChevronDown, ChevronUp, DollarSign, Tag, Briefcase`
-
-### Single File Changed
-- `src/components/admin/AdminQuotationsSection.tsx`
