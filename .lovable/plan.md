@@ -1,21 +1,24 @@
 
 
-## Restrict Team Access to Pro Only
+## Reorder Basic Plan Features
 
-Three small changes needed:
+The Basic plan's feature list has "Priority visibility" (included) appearing after "Team access" (excluded), which looks inconsistent. The fix is to reorder so all included items come first, then all excluded items.
 
-### 1. Pricing feature cards (`BrandPricingSection.tsx`)
-- **Basic plan**: Change "Team access (invite members)" from `included: true` to `included: false`
-- **Pro plan**: Keep it as `included: true` (no change)
-- **Free plan**: Already `included: false` (no change)
+### Change in `src/components/brand/BrandPricingSection.tsx`
 
-### 2. Feature gating logic (`BrandAccountTab.tsx`)
-- Change the lock condition from `planType === "free"` to `planType !== "pro"`
-- This locks the feature for both Free and Basic plans
+Swap the order of "Team access (invite members)" and "Priority visibility" in the Basic plan:
 
-### 3. Locked message (`BrandAccountTab.tsx`)
-- Update the message from "Basic and Pro plans" to "Pro plan" only:
-  `"Team access is available on the Pro plan. Upgrade to invite team members."`
+**Before:**
+1. Verified Business Badge (included)
+2. Team access (invite members) (excluded)
+3. Priority visibility (included)
+4. Dedicated CSM (excluded)
 
-No database or edge function changes required.
+**After:**
+1. Verified Business Badge (included)
+2. Priority visibility (included)
+3. Team access (invite members) (excluded)
+4. Dedicated CSM (excluded)
+
+One line swap -- no other files affected.
 
