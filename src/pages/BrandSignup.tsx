@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { z } from "zod";
-import { Phone, CheckCircle, Loader2, AlertCircle, Camera } from "lucide-react";
+import { Phone, CheckCircle, Loader2, AlertCircle, Camera, Facebook, Instagram } from "lucide-react";
 import PhoneInput from "@/components/PhoneInput";
 import CountrySelect from "@/components/CountrySelect";
 import ProfileAvatar from "@/components/ProfileAvatar";
@@ -55,6 +55,11 @@ const BrandSignup = () => {
   const [companySize, setCompanySize] = useState("");
   const [locationCountry, setLocationCountry] = useState("LB");
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  // Social media
+  const [facebookUrl, setFacebookUrl] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [tiktokUrl, setTiktokUrl] = useState("");
 
   // Logo upload
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -301,6 +306,9 @@ const BrandSignup = () => {
           location_country: locationCountry || null,
           phone_number: phoneNumber,
           phone_verified: true,
+          facebook_url: facebookUrl || null,
+          instagram_url: instagramUrl || null,
+          tiktok_url: tiktokUrl || null,
           terms_accepted_at: new Date().toISOString(),
           terms_version: '1.0'
         });
@@ -689,6 +697,62 @@ const BrandSignup = () => {
                   </div>
                 </div>
 
+                {/* Social Media Accounts */}
+                <div className="border-t pt-4">
+                  <h3 className="font-semibold mb-3">Social Media Accounts (Optional)</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="facebookUrl" className="flex items-center gap-2">
+                        <Facebook className="h-4 w-4 text-[#1877F2]" /> Facebook
+                      </Label>
+                      <Input
+                        id="facebookUrl"
+                        placeholder="https://facebook.com/yourbrand"
+                        value={facebookUrl}
+                        onChange={(e) => setFacebookUrl(e.target.value)}
+                        maxLength={300}
+                        disabled={isLoading}
+                      />
+                      {facebookUrl && !facebookUrl.includes("facebook.com/") && !facebookUrl.includes("fb.com/") && (
+                        <p className="text-xs text-destructive mt-1">URL must contain facebook.com/ or fb.com/</p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="instagramUrl" className="flex items-center gap-2">
+                        <Instagram className="h-4 w-4 text-[#E4405F]" /> Instagram
+                      </Label>
+                      <Input
+                        id="instagramUrl"
+                        placeholder="https://instagram.com/yourbrand"
+                        value={instagramUrl}
+                        onChange={(e) => setInstagramUrl(e.target.value)}
+                        maxLength={300}
+                        disabled={isLoading}
+                      />
+                      {instagramUrl && !instagramUrl.includes("instagram.com/") && (
+                        <p className="text-xs text-destructive mt-1">URL must contain instagram.com/</p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="tiktokUrl" className="flex items-center gap-2">
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.61a8.21 8.21 0 0 0 4.76 1.52v-3.44h-1z"/></svg>
+                        TikTok
+                      </Label>
+                      <Input
+                        id="tiktokUrl"
+                        placeholder="https://tiktok.com/@yourbrand"
+                        value={tiktokUrl}
+                        onChange={(e) => setTiktokUrl(e.target.value)}
+                        maxLength={300}
+                        disabled={isLoading}
+                      />
+                      {tiktokUrl && !tiktokUrl.includes("tiktok.com/@") && (
+                        <p className="text-xs text-destructive mt-1">URL must contain tiktok.com/@</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Terms Agreement */}
                 <div className="border-t pt-4">
                   <label className="flex items-start gap-3 cursor-pointer">
@@ -700,9 +764,8 @@ const BrandSignup = () => {
                       disabled={isLoading}
                     />
                     <span className="text-sm text-muted-foreground">
-                      I agree to the <a href="/terms" target="_blank" className="text-primary hover:underline">Terms of Service</a>, 
-                      including the <strong>72-hour auto-release policy</strong> and <strong>binding arbitration clause</strong>. 
-                      I understand that inaction on deliverables for 72 hours constitutes acceptance.
+                      I agree to the <a href="/terms" target="_blank" className="text-primary hover:underline">Terms of Service</a> and 
+                      the <strong>binding arbitration clause</strong>.
                     </span>
                   </label>
                 </div>
