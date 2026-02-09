@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-brand-page.jpg";
 import { VENUE_TYPES, EVENT_PACKAGES, PACKAGE_ORDER } from "@/config/packages";
 import CollaborationSection, { SLUG_MAP } from "@/components/brand/CollaborationSection";
-import { LEBANESE_CITIES } from "@/config/lebanese-market";
+import { getMiddleEastCitiesByCountry } from "@/config/lebanese-market";
 import {
   Accordion,
   AccordionContent,
@@ -397,28 +397,35 @@ const Brand = () => {
         </div>
       </section>
 
-      {/* Lebanese Cities */}
+      {/* Middle East Cities */}
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <AnimatedSection animation="fade-up" className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-              Available Across Lebanon
+              Available Across the Middle East
             </h2>
             <p className="text-lg text-muted-foreground">
-              Host events in major cities
+              Host events and collaborations across the region
             </p>
           </AnimatedSection>
 
           <AnimatedSection animation="fade-up" delay={100}>
-            <div className="flex flex-wrap justify-center gap-3 max-w-3xl mx-auto">
-              {LEBANESE_CITIES.map((city) => (
-                <span 
-                  key={city.value}
-                  className="px-4 py-2 rounded-full bg-card border border-border text-sm flex items-center gap-2 hover:border-primary/30 hover:bg-primary/5 transition-colors duration-300"
-                >
-                  <MapPin className="h-3 w-3 text-primary" />
-                  {city.label}
-                </span>
+            <div className="max-w-4xl mx-auto space-y-6">
+              {getMiddleEastCitiesByCountry().map(({ country, cities }) => (
+                <div key={country}>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 ml-1">{country}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {cities.map((city) => (
+                      <span 
+                        key={city.value}
+                        className="px-4 py-2 rounded-full bg-card border border-border text-sm flex items-center gap-2 hover:border-primary/30 hover:bg-primary/5 transition-colors duration-300"
+                      >
+                        <MapPin className="h-3 w-3 text-primary" />
+                        {city.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </AnimatedSection>

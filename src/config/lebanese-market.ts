@@ -172,6 +172,53 @@ export const formatDualCurrency = (usdCents: number, exchangeRate: number = 8950
   };
 };
 
+// Middle East cities for regional coverage (Brand page)
+export interface MiddleEastCity {
+  value: string;
+  label: string;
+  country: string;
+}
+
+const COUNTRY_ORDER = ['Lebanon', 'UAE', 'Saudi Arabia', 'Qatar', 'Kuwait', 'Bahrain', 'Jordan', 'Egypt', 'Oman'];
+
+export const MIDDLE_EAST_CITIES: MiddleEastCity[] = [
+  // Lebanon
+  ...LEBANESE_CITIES.map(c => ({ value: c.value, label: c.label, country: 'Lebanon' })),
+  // UAE
+  { value: 'dubai', label: 'Dubai', country: 'UAE' },
+  { value: 'abu-dhabi', label: 'Abu Dhabi', country: 'UAE' },
+  { value: 'sharjah', label: 'Sharjah', country: 'UAE' },
+  // Saudi Arabia
+  { value: 'riyadh', label: 'Riyadh', country: 'Saudi Arabia' },
+  { value: 'jeddah', label: 'Jeddah', country: 'Saudi Arabia' },
+  { value: 'dammam', label: 'Dammam', country: 'Saudi Arabia' },
+  // Qatar
+  { value: 'doha', label: 'Doha', country: 'Qatar' },
+  // Kuwait
+  { value: 'kuwait-city', label: 'Kuwait City', country: 'Kuwait' },
+  // Bahrain
+  { value: 'manama', label: 'Manama', country: 'Bahrain' },
+  // Jordan
+  { value: 'amman', label: 'Amman', country: 'Jordan' },
+  // Egypt
+  { value: 'cairo', label: 'Cairo', country: 'Egypt' },
+  { value: 'alexandria', label: 'Alexandria', country: 'Egypt' },
+  // Oman
+  { value: 'muscat', label: 'Muscat', country: 'Oman' },
+];
+
+export const getMiddleEastCitiesByCountry = () => {
+  const grouped: Record<string, MiddleEastCity[]> = {};
+  for (const city of MIDDLE_EAST_CITIES) {
+    if (!grouped[city.country]) grouped[city.country] = [];
+    grouped[city.country].push(city);
+  }
+  return COUNTRY_ORDER.filter(c => grouped[c]).map(country => ({
+    country,
+    cities: grouped[country],
+  }));
+};
+
 // Helper to check if city is in Lebanon
 export const isLebanesCity = (city: string): boolean => {
   return LEBANESE_CITIES.some(c => 
