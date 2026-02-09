@@ -1,36 +1,42 @@
 
 
-## Creative Redesign: Brand Registration Prompt (Orange + Premium)
+## Add Zero Platform Fees Emphasis to /brand Page
 
 ### Problem
-The current version went too minimal — lost brand personality and feels generic/dull. Need to bring back the orange identity while keeping it polished and professional.
+The /brand page mentions "$0 Platform Fees" in a small floating card on the hero image and as one of four benefit cards, but it doesn't have a dedicated, high-impact section that really drives home the zero-fee value proposition -- the platform's strongest selling point.
 
-### Design Concept: "Warm Glow"
-A premium modal with orange accents used strategically — not overwhelming, but unmistakably branded. Inspired by Stripe's warmth + Linear's precision.
+### Solution
+Add a bold, standalone "Zero Fees" banner section between the Benefits and How It Works sections. This will be a visually striking, full-width section with:
 
-### Changes (single file: `src/components/BrandRegistrationPrompt.tsx`)
+### Design
 
-**1. Top gradient accent strip** — A thin 1px-height warm orange gradient bar at the very top of the card (from primary to primary/40), adds brand identity without being garish
-
-**2. Icon upgrade** — Replace the muted gray circle with a warm orange gradient icon container: `bg-gradient-to-br from-primary/20 to-primary/5` with the Building2 icon in `text-primary`. Subtle glow, not a loud block.
-
-**3. Benefit checkmarks in orange** — Change check icons from gray to `text-primary` so they pop with brand color. Each benefit gets a subtle left-accent feel.
-
-**4. CTA button goes orange** — Use the primary color: `bg-primary hover:bg-primary/90 text-white` with a subtle `shadow-lg shadow-primary/25` glow effect underneath. This is the hero element.
-
-**5. Add a sparkle/rocket emoji or micro-illustration** — Add a small `Sparkles` icon next to the title "Register your brand" for energy, or use `Zap` icon to convey speed.
-
-**6. Social proof micro-line** — Add a tiny line below benefits: "Trusted by 500+ brands in Lebanon" in `text-xs text-muted-foreground` with a subtle orange dot indicator — builds credibility.
-
-**7. "Maybe later" stays subtle** — Keep the skip link understated in gray, no orange.
-
-**8. Card styling** — Add `shadow-xl` for depth and keep `rounded-xl` for softness.
-
-### Result
-A warm, branded, confident modal that says "premium platform" — orange used as strategic accent (icon, checks, CTA glow) rather than overwhelming the design.
+A centered, compact callout with:
+- A large animated "$0" counter (using the existing `AnimatedCounter` component pattern) as the visual anchor
+- Bold headline: "Zero Platform Fees. Ever."
+- Subtext explaining the direct-payment model
+- Three inline trust pills: "No commissions", "No hidden charges", "Direct payments"
+- Subtle orange gradient background accent with a GlowCard wrapper for premium feel
 
 ### Technical Details
-- Single file: `src/components/BrandRegistrationPrompt.tsx`
-- No new dependencies (uses existing lucide icons: `Building2`, `Check`, `Sparkles`)
-- No database changes
+
+**File: `src/pages/Brand.tsx`**
+- Add a new section between the Benefits section (line ~298) and How It Works section (line ~300)
+- Import `AnimatedCounter` from `@/components/home/AnimatedCounter`
+- The section uses existing components: `AnimatedSection`, `GlowCard`
+- No new files, no new dependencies, no database changes
+
+### Visual Structure (approximate)
+
+```text
++--------------------------------------------------+
+|              $0                                   |
+|     Zero Platform Fees. Ever.                     |
+|  Negotiate directly with creators. No commissions,|
+|  no middleman, no hidden charges.                 |
+|                                                   |
+|  [No Commissions] [No Hidden Fees] [Direct Pay]  |
++--------------------------------------------------+
+```
+
+Also update the Final CTA section (line ~484) to reinforce "zero fees" in its subtitle text.
 
