@@ -841,6 +841,8 @@ export type Database = {
       brand_profiles: {
         Row: {
           accessibility_info: string | null
+          ai_drafts_reset_at: string
+          ai_drafts_used_this_month: number
           amenities: string[] | null
           brand_plan: string
           company_name: string
@@ -889,6 +891,8 @@ export type Database = {
         }
         Insert: {
           accessibility_info?: string | null
+          ai_drafts_reset_at?: string
+          ai_drafts_used_this_month?: number
           amenities?: string[] | null
           brand_plan?: string
           company_name: string
@@ -937,6 +941,8 @@ export type Database = {
         }
         Update: {
           accessibility_info?: string | null
+          ai_drafts_reset_at?: string
+          ai_drafts_used_this_month?: number
           amenities?: string[] | null
           brand_plan?: string
           company_name?: string

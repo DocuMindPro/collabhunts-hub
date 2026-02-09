@@ -78,8 +78,8 @@ const NegotiationMessage = ({
   // Show actions if this is a pending message and user is the recipient
   const showActions = data.status === "pending" && !isOwn;
   
-  // Show "Send Agreement" button when creator receives an accepted counter/inquiry
-  const showSendAgreement = data.status === "accepted" && isCreator && !isOwn;
+  // Send Agreement button removed - only brands can send agreements now
+  const showSendAgreement = false;
 
   return (
     <Card className={`overflow-hidden ${isOwn ? "border-primary/30 bg-primary/5" : "border-border"}`}>
