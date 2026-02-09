@@ -1,88 +1,43 @@
 
 
-## Update Admin Panel: Disputes, Testing, and Manual Tabs
+## Fix: Stale "Pro" Subscription Showing on Brand Dashboard
 
-### Overview
+### Root Cause
 
-Three admin tabs contain outdated information that doesn't match the platform's current identity and functionality. Here's what needs to change.
+The database has two records with `status = 'active'` for this brand:
 
----
+1. `none` plan -- created Jan 15, 2026 (correct, current)
+2. `pro` plan -- created Dec 11, 2025, **expired Jan 11, 2026** (stale, should have been marked expired)
 
-### 1. Remove Disputes Tab (Not Applicable)
+The `getBrandSubscription` function in `subscription-utils.ts` orders results by `plan_type DESC`, so "pro" sorts before "none" and gets returned as the active subscription. While `checkAndHandleExpiredSubscriptions` exists to catch this, it may silently fail (e.g. network error swallowed by the try/catch) or lose a race with the subsequent SELECT query.
 
-The platform operates as a zero-fee marketplace -- no payments are processed, no escrow, no transaction fees. The dispute system (refund percentages, payment status updates, resolution deadlines) doesn't apply.
+### Fix (Two Parts)
 
-**Changes:**
-- Remove the Disputes `TabsTrigger` and `TabsContent` from `src/pages/Admin.tsx`
-- Remove the import of `AdminDisputesTab`
-- Remove `disputes` from the badge counts in `src/hooks/useAdminBadgeCounts.ts`
-- Optionally keep the `AdminDisputesTab.tsx` file (no harm), or delete it for cleanliness
+**Part 1 -- Make the query robust (code fix)**
 
----
+In `src/lib/subscription-utils.ts`, change `getBrandSubscription` so the SELECT query that fetches active subscriptions also filters out rows whose `current_period_end` is in the past. This way, even if the expiration-cleanup step fails, stale rows are never returned.
 
-### 2. Update Testing Tab -- Brand Onboarding Preview
+```
+Current:  .eq('status', 'active')
+Fixed:    .eq('status', 'active').gte('current_period_end', new Date().toISOString())
+```
 
-The `BrandOnboardingPreview` component still uses old campaign/marketing language that was already updated in the real onboarding flow.
+**Part 2 -- Clean up stale data (migration)**
 
-**File: `src/components/admin/BrandOnboardingPreview.tsx`**
+Run a one-time migration to mark all expired-but-still-active subscriptions as `expired`:
 
-| What's Wrong | Correct Value |
-|-------------|---------------|
-| Intent: "Brand Awareness", "Drive Sales", "User Generated Content", "Social Engagement" | "Book a one-time event", "Recurring collaborations", "Just exploring" |
-| Budget: "Under $1,000/mo", "$1,000-$5,000/mo", "$5,000-$10,000/mo", "$10,000+/mo" | "Under $200", "$200-$500", "$500-$1,500", "$1,500+" (per event, not monthly) |
-| 5 steps (with phone verification as step 1) | Keep same structure but update the content to match actual flow |
-
----
-
-### 3. Update Platform Manual -- Outdated Pricing and Features
-
-**File: `src/data/platformManual.ts`**
-
-Multiple sections contain outdated information:
-
-| Section | What's Wrong | Fix |
-|---------|-------------|-----|
-| **Business Model** (line ~398-414) | Lists "Brand Basic $10/mo, Pro $49/mo, Premium $99/mo" and specific prices | Update to reflect that Basic and Pro prices are hidden (quotation-based), keep Premium pricing, add note about quotation inquiry system |
-| **Subscription Tiers** (line ~489-507) | Shows "$10/mo", "$49/mo", "$99/mo" columns with old feature matrix | Update to "Basic (Contact for pricing)", "Pro (Contact for pricing)", "Premium ($99/mo)" and update opportunity posts to 4/month for free tier |
-| **Dispute Edge Function** (line ~184) | Lists `check-dispute-deadlines` | Remove from the edge functions list |
-| **Dispute references** in Database Schema (line ~244-246) | Lists `booking_disputes`, `booking_offers` tables | Mark as legacy/unused or remove |
-| **Creator Featuring prices** (line ~684-688) | Shows specific dollar amounts for boost packages | Verify these are still accurate |
-| **Approval Workflows** | Generally fine but could mention quotation inquiry flow | Add a new article about the Quotation Inquiry workflow |
-| Missing: Quotation system | No documentation about the new quotation inquiry flow | Add new article documenting how quotation inquiries work |
-
----
-
-### 4. Additional Admin Tab Check
-
-After reviewing all tabs, here are the other findings:
-
-| Tab | Status |
-|-----|--------|
-| Users | OK |
-| Creators | OK |
-| Venues (quotation inquiries) | OK (recently added) |
-| Approvals | OK |
-| Events | Placeholder ("coming soon") -- could note this but not critical |
-| Revenue | OK (tracks bookings for record-keeping) |
-| Testing | Needs update (brand preview -- see above) |
-| **Disputes** | **Remove** |
-| Manual | Needs content update (see above) |
-| Verifications | OK |
-| Branding | OK |
-| Features | OK |
-| Announcements | OK |
-| Careers | OK |
-| Subscriptions | OK |
-| **Campaigns** | The `AdminCampaignsTab` references "campaigns" -- verify if this is still used or if it's been replaced by "opportunities" |
-
----
+```sql
+UPDATE brand_subscriptions
+SET status = 'expired'
+WHERE status = 'active'
+  AND plan_type != 'none'
+  AND current_period_end < now();
+```
 
 ### Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/pages/Admin.tsx` | Remove Disputes tab trigger, content, and import |
-| `src/hooks/useAdminBadgeCounts.ts` | Remove `disputes` from badge counts |
-| `src/components/admin/BrandOnboardingPreview.tsx` | Update intents and budgets to match actual onboarding flow |
-| `src/data/platformManual.ts` | Update Business Model pricing, Subscription Tiers, remove dispute references, add Quotation Inquiry documentation |
+| `src/lib/subscription-utils.ts` | Add `.gte('current_period_end', now)` filter to the active subscription SELECT in `getBrandSubscription` |
+| Migration SQL | Mark stale active subscriptions as expired |
 
