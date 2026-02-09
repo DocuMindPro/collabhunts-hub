@@ -1,50 +1,49 @@
 
 
-## Upgrade Template Selection Cards to Professional Design
+## Add Upgrade Plans Dialog for Brands
 
-### What Changes
-The template selection step (Step 1) in the agreement dialog gets a visual overhaul:
+### Problem
+The "Upgrade" buttons in `MessagingQuotaCard` and `MessagingLimitBanner` navigate to `/brand-dashboard?tab=account`, but the Account tab has no upgrade/plan selection UI. The user lands on profile settings with no way to upgrade.
 
-1. **Reorder templates** -- Custom Agreement moves to the top as a full-width featured card
-2. **Replace emoji icons with Lucide icons** -- Professional SVG icons instead of childish emojis
-3. **Elevated card design** -- Gradient accents, subtle shadows, and polished hover states
+### Solution
+Create a reusable `UpgradePlanDialog` component that shows the 3 brand plans (Free, Basic, Pro) in a professional dialog. Update all "Upgrade" buttons to open this dialog instead of navigating.
 
 ### Technical Details
 
-**File: `src/config/agreement-templates.ts`**
-- Remove the `icon` emoji field from each template (no longer used)
+**New File: `src/components/brand-dashboard/UpgradePlanDialog.tsx`**
+- A dialog component displaying 3 plan cards (reusing the plan data from `BrandPricingSection`)
+- Shows current plan highlighted with a "Current Plan" badge
+- Basic and Pro plans show "Get a Quotation" button (submits inquiry to `quotation_inquiries` table, same logic as `BrandPricingSection`)
+- Free plan shows "Current" if already on free
+- Thank-you confirmation after submitting inquiry
+- Props: `open`, `onOpenChange`, `currentPlan` (string)
 
-**File: `src/components/agreements/SendAgreementDialog.tsx`** (lines 310-323)
-- Import Lucide icons: `Package, Smartphone, Users, Video, PenTool`
-- Create an icon map: `{ custom: PenTool, unbox_review: Package, social_boost: Smartphone, meet_greet: Users, content_creation: Video }`
-- Reorder rendering: Custom first (full-width featured card with accent border), then the remaining 4 in a 2x2 grid
-- Card styling upgrade:
-  - Each card gets a colored icon container (rounded background with matching icon color)
-  - Subtle shadow on hover with smooth transition
-  - Custom Agreement card spans full width with a "Most Flexible" badge and a left accent border
-  - Small arrow indicator on hover
+**Modified: `src/components/brand-dashboard/MessagingQuotaCard.tsx`**
+- Add state for dialog open/close
+- Replace `navigate("/brand-dashboard?tab=account")` with `setUpgradeOpen(true)`
+- Render `UpgradePlanDialog` with current plan info
 
-### Visual Layout
+**Modified: `src/components/brand-dashboard/MessagingLimitBanner.tsx`**
+- Same changes: add dialog state, replace navigate with dialog open
+- Render `UpgradePlanDialog`
+
+**Modified: `src/components/brand-dashboard/BrandAccountTab.tsx`**
+- Add a "Subscription Plan" card at the top showing current plan with an "Upgrade" button
+- Render `UpgradePlanDialog` when clicked
+
+### Plan Card Layout (inside dialog)
 
 ```text
-+--------------------------------------------------+
-| [PenTool]  Custom Agreement     [Most Flexible]   |  <-- full width, accent border
-|            Start from scratch                      |
-+--------------------------------------------------+
-
-+------------------------+  +------------------------+
-| [Package]              |  | [Smartphone]           |
-| Unboxing & Review      |  | Social Media Boost     |
-| Product unboxing...    |  | Event attendance...    |
-+------------------------+  +------------------------+
-
-+------------------------+  +------------------------+
-| [Users]                |  | [Video]                |
-| Meet & Greet           |  | Content Creation       |
-| Fan interaction...     |  | Custom branded...      |
-+------------------------+  +------------------------+
++--------+  +-----------+  +--------+
+|  Free  |  |   Basic   |  |  Pro   |
+|  $0    |  | Quotation |  | Quota. |
+| [Curr] |  | [Inquire] |  | [Inq.] |
++--------+  +-----------+  +--------+
 ```
 
-### Files Changed
-- `src/components/agreements/SendAgreementDialog.tsx` -- Redesign template cards with Lucide icons, reorder, professional styling
-- `src/config/agreement-templates.ts` -- Keep `icon` field for backward compatibility but it won't be rendered in the dialog anymore
+### Files
+1. **Create** `src/components/brand-dashboard/UpgradePlanDialog.tsx` -- New dialog with 3 plan cards and quotation submission
+2. **Edit** `src/components/brand-dashboard/MessagingQuotaCard.tsx` -- Open dialog instead of navigating
+3. **Edit** `src/components/brand-dashboard/MessagingLimitBanner.tsx` -- Open dialog instead of navigating
+4. **Edit** `src/components/brand-dashboard/BrandAccountTab.tsx` -- Add subscription card with upgrade button
+
