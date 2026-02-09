@@ -18,9 +18,11 @@ interface Delegate {
 interface TeamAccessCardProps {
   profileId: string;
   accountType: "brand" | "creator";
+  locked?: boolean;
+  lockedMessage?: string;
 }
 
-const TeamAccessCard = ({ profileId, accountType }: TeamAccessCardProps) => {
+const TeamAccessCard = ({ profileId, accountType, locked, lockedMessage }: TeamAccessCardProps) => {
   const [delegates, setDelegates] = useState<Delegate[]>([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -101,6 +103,17 @@ const TeamAccessCard = ({ profileId, accountType }: TeamAccessCardProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {locked ? (
+          <div className="text-center py-4 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {lockedMessage || "Upgrade to Basic or Pro to invite team members."}
+            </p>
+            <a href="/brand#pricing">
+              <Button variant="outline" size="sm">View Plans</Button>
+            </a>
+          </div>
+        ) : (
+        <>
         <p className="text-sm text-muted-foreground">
           Invite team members or agencies to manage this account on your behalf.
         </p>
@@ -153,6 +166,8 @@ const TeamAccessCard = ({ profileId, accountType }: TeamAccessCardProps) => {
           <p className="text-xs text-muted-foreground text-center py-2">
             No team members yet. Invite someone to get started.
           </p>
+        )}
+        </>
         )}
       </CardContent>
     </Card>
