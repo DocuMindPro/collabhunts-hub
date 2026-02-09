@@ -12,8 +12,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import {
   CalendarIcon, Send, DollarSign, Clock, Loader2, Sparkles, Plus, X, FileText,
-  ArrowLeft, ArrowRight, Eye, Edit3, CheckCircle2
+  ArrowLeft, ArrowRight, Eye, Edit3, CheckCircle2,
+  Package, Smartphone, Users, Video, PenTool, ChevronRight,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -307,21 +309,74 @@ const SendAgreementDialog = ({
         </DialogHeader>
 
         {/* STEP 1: Template Selection */}
-        {step === 'template' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-4">
-            {Object.values(AGREEMENT_TEMPLATES).map((template) => (
-              <button
-                key={template.id}
-                onClick={() => handleTemplateSelect(template.id)}
-                className="flex flex-col items-start p-4 rounded-lg border hover:border-primary hover:bg-primary/5 transition-colors text-left"
-              >
-                <span className="text-2xl mb-2">{template.icon}</span>
-                <span className="font-medium">{template.name}</span>
-                <span className="text-sm text-muted-foreground">{template.description}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        {step === 'template' && (() => {
+          const TEMPLATE_ICONS: Record<string, React.ElementType> = {
+            custom: PenTool,
+            unbox_review: Package,
+            social_boost: Smartphone,
+            meet_greet: Users,
+            content_creation: Video,
+          };
+          const TEMPLATE_COLORS: Record<string, string> = {
+            custom: 'bg-primary/10 text-primary',
+            unbox_review: 'bg-orange-500/10 text-orange-600',
+            social_boost: 'bg-blue-500/10 text-blue-600',
+            meet_greet: 'bg-emerald-500/10 text-emerald-600',
+            content_creation: 'bg-violet-500/10 text-violet-600',
+          };
+          const allTemplates = Object.values(AGREEMENT_TEMPLATES);
+          const customTemplate = allTemplates.find(t => t.id === 'custom');
+          const otherTemplates = allTemplates.filter(t => t.id !== 'custom');
+
+          return (
+            <div className="space-y-3 py-4">
+              {/* Featured: Custom Agreement */}
+              {customTemplate && (() => {
+                const Icon = TEMPLATE_ICONS[customTemplate.id] || FileText;
+                return (
+                  <button
+                    onClick={() => handleTemplateSelect(customTemplate.id)}
+                    className="group w-full flex items-center gap-4 p-4 rounded-xl border-l-4 border-l-primary border border-border bg-card hover:shadow-md hover:border-primary/50 transition-all duration-200 text-left"
+                  >
+                    <div className={cn("shrink-0 w-11 h-11 rounded-lg flex items-center justify-center", TEMPLATE_COLORS[customTemplate.id])}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm">{customTemplate.name}</span>
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-medium">Most Flexible</Badge>
+                      </div>
+                      <span className="text-xs text-muted-foreground">{customTemplate.description}</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                  </button>
+                );
+              })()}
+
+              {/* Other templates in 2x2 grid */}
+              <div className="grid grid-cols-2 gap-2.5">
+                {otherTemplates.map((template) => {
+                  const Icon = TEMPLATE_ICONS[template.id] || FileText;
+                  return (
+                    <button
+                      key={template.id}
+                      onClick={() => handleTemplateSelect(template.id)}
+                      className="group flex flex-col items-start gap-3 p-4 rounded-xl border bg-card hover:shadow-md hover:border-primary/40 transition-all duration-200 text-left"
+                    >
+                      <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", TEMPLATE_COLORS[template.id])}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="font-medium text-sm block">{template.name}</span>
+                        <span className="text-xs text-muted-foreground line-clamp-2">{template.description}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* STEP 2: Quick Questions */}
         {step === 'questions' && (
