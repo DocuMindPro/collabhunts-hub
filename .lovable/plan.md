@@ -1,105 +1,55 @@
 
 
-## Hide Prices for Basic/Pro and Add Quotation Inquiry System
+## Add Notification Badges to Admin Tab Headers
 
 ### What Changes
 
-Currently, Basic ($99/year) and Pro ($299/year) prices are shown publicly. This plan hides those prices, replaces the CTA buttons with "Get a Quotation", and creates a full inquiry flow: non-logged-in brands must register first, then a quotation inquiry is recorded and admins are notified with the brand's full details so they can reach out by phone or email.
+Add real-time notification count badges on admin tabs that have pending/actionable items. When you click a tab, the badge clears (since you've "seen" those items). The badges auto-refresh periodically and show counts for items needing admin attention.
 
-### User Flow
+### Tabs That Get Badges
 
-1. Visitor sees the pricing section on /brand page
-2. Free plan still shows "$0/forever" with "Get Started Free" button
-3. Basic and Pro plans show features but **no price** -- just a "Get a Quotation" button
-4. Clicking "Get a Quotation":
-   - If not logged in as a brand: redirected to /brand-signup (or /login) with a query param like `?quotation=basic`
-   - After registration/login: the quotation inquiry is automatically submitted
-   - If already logged in as a brand: inquiry is submitted immediately and a confirmation message appears
-5. Admin receives a notification with brand details and the plan they inquired about
-6. Brand sees a "Thank you" dialog confirming the team will reach out soon
+| Tab | What's Counted | Database Query |
+|-----|---------------|----------------|
+| **Venues** | Pending quotation inquiries | `quotation_inquiries` where `status = 'pending'` |
+| **Approvals** | Pending creator profiles (already has badge) | `creator_profiles` where `status = 'pending'` |
+| **Careers** | Pending career applications | `career_applications` where `status = 'pending'` |
+| **Disputes** | Open/awaiting disputes | `booking_disputes` where status in `('open', 'awaiting_response', 'pending_response', 'pending_admin_review')` |
+| **Verifications** | Pending verification requests | `brand_profiles` where `verification_status = 'pending'` |
+| **Subscriptions** | No automatic pending count (search-based tab, no actionable queue) | -- |
+| **Events** | No status-based pending (events are creator-managed) | -- |
+| **Revenue** | Pending payout requests | `franchise_payout_requests` + `affiliate_payout_requests` where `status = 'pending'` |
+
+### How It Works
+
+1. When the Admin page loads, a single hook (`useAdminBadgeCounts`) fetches all pending counts in parallel
+2. Each tab trigger displays a small red badge with the count (if > 0)
+3. The counts auto-refresh every 2 minutes (same as the existing QuickActions widget)
+4. When clicking a tab, the badge for that tab is dismissed (stored in local state as "seen") until the count changes
+5. The existing Approvals badge stays as-is -- this system adds badges to the other tabs
 
 ### Technical Details
 
-**1. Database: Create `quotation_inquiries` table**
+**1. Create `src/hooks/useAdminBadgeCounts.ts`**
 
-New table to track all quotation requests:
+A custom hook that:
+- Fetches all pending counts in parallel from the database
+- Returns a map of `{ [tabName]: number }`
+- Tracks which tabs have been "seen" (clicked) to dismiss badges
+- Provides a `markSeen(tab)` function
+- Badge reappears if the count changes after being seen
+- Auto-refreshes every 2 minutes
 
-```sql
-CREATE TABLE public.quotation_inquiries (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  brand_profile_id UUID REFERENCES public.brand_profiles(id) ON DELETE CASCADE,
-  plan_type TEXT NOT NULL, -- 'basic' or 'pro'
-  status TEXT DEFAULT 'pending', -- 'pending', 'contacted', 'closed'
-  admin_notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-ALTER TABLE public.quotation_inquiries ENABLE ROW LEVEL SECURITY;
--- Brands can insert their own inquiries and read their own
-CREATE POLICY "Brands can insert own inquiries" ON public.quotation_inquiries
-  FOR INSERT WITH CHECK (brand_profile_id IN (
-    SELECT id FROM public.brand_profiles WHERE user_id = auth.uid()
-  ));
-CREATE POLICY "Brands can view own inquiries" ON public.quotation_inquiries
-  FOR SELECT USING (brand_profile_id IN (
-    SELECT id FROM public.brand_profiles WHERE user_id = auth.uid()
-  ));
--- Admins can do everything
-CREATE POLICY "Admins full access" ON public.quotation_inquiries
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
-  );
-```
+**2. Modify `src/pages/Admin.tsx`**
 
-**2. Modify `BrandPricingSection.tsx`**
-
-- Remove `price` and `period` display for Basic and Pro plans (keep them for Free)
-- Change CTA text for Basic from "Get Started" to "Get a Quotation"
-- Change CTA text for Pro from "Contact Us" to "Get a Quotation"
-- Instead of `<Link to={ctaLink}>`, clicking the button will:
-  - Check if user is logged in as a brand
-  - If yes: insert into `quotation_inquiries`, send admin notification, show thank-you dialog
-  - If no: navigate to `/brand-signup?quotation=basic` or `/brand-signup?quotation=pro`
-- Make the component stateful (add `useState` for auth check, dialog state, etc.)
-
-**3. Modify `BrandSignup.tsx`**
-
-- After successful registration, check for `?quotation=basic` or `?quotation=pro` query param
-- If present: automatically insert a `quotation_inquiries` record for the newly created brand
-- Also insert a notification for all admin users about the new quotation inquiry
-- Still navigate to brand-onboarding as usual
-
-**4. Admin notification on inquiry**
-
-When a quotation inquiry is created (either from BrandPricingSection for logged-in brands, or from BrandSignup for new registrations):
-- Query `user_roles` for all admin user IDs
-- Insert a notification for each admin:
-  - Title: "New Quotation Inquiry"
-  - Message: "[Company Name] is inquiring about the [Basic/Pro] plan"
-  - Type: "quotation_inquiry"
-  - Link: "/admin" (to the brands tab)
-
-**5. Thank-you confirmation dialog**
-
-A simple dialog shown after inquiry submission:
-- Title: "Thank You!"
-- Message: "Thank you for inquiring about our [Basic/Pro] plan. Our team will reach out to you very soon via phone or email."
-- Single "OK" button to dismiss
-
-**6. Admin panel: View quotation inquiries**
-
-Add a section or tab in the admin panel to see quotation inquiries with:
-- Brand name, email, phone number, plan inquired, date
-- Status (pending/contacted/closed) that admins can update
-- This could be a sub-section in the existing AdminBrandsTab or a new lightweight tab
+- Import and use the new `useAdminBadgeCounts` hook
+- Call `markSeen(tab)` inside `handleTabChange`
+- Add badge rendering to each relevant `TabsTrigger` (venues, careers, disputes, verifications, revenue)
+- Keep the existing Approvals badge logic as-is (or unify it with this new system)
 
 ### Files to Create/Modify
 
 | File | Change |
 |------|--------|
-| Migration SQL | Create `quotation_inquiries` table |
-| `src/components/brand/BrandPricingSection.tsx` | Hide prices for Basic/Pro, change CTAs to "Get a Quotation", add auth check + inquiry submission + thank-you dialog |
-| `src/pages/BrandSignup.tsx` | Auto-submit quotation inquiry after registration if `?quotation=` param present |
-| `src/pages/Login.tsx` | Pass through `?quotation=` param so returning brands can also trigger inquiry after login |
-| `src/components/admin/AdminBrandsTab.tsx` | Add quotation inquiries section showing brand details, phone, plan, status with update capability |
-| `src/lib/stripe-mock.ts` | Remove price display from Basic/Pro plan descriptions (optional, for consistency) |
+| `src/hooks/useAdminBadgeCounts.ts` | New hook -- fetches all pending counts, tracks seen state |
+| `src/pages/Admin.tsx` | Use hook, add badges to tab triggers, call markSeen on tab change |
 
