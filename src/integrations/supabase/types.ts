@@ -851,11 +851,13 @@ export type Database = {
           created_at: string | null
           creators_messaged_reset_at: string
           creators_messaged_this_month: number
+          facebook_url: string | null
           first_name: string | null
           free_posts_reset_at: string | null
           free_posts_used_this_month: number
           id: string
           industry: string | null
+          instagram_url: string | null
           is_verified: boolean | null
           last_name: string | null
           location_country: string | null
@@ -870,6 +872,7 @@ export type Database = {
           preferred_platforms: string[] | null
           terms_accepted_at: string | null
           terms_version: string | null
+          tiktok_url: string | null
           updated_at: string | null
           user_id: string
           venue_address: string | null
@@ -901,11 +904,13 @@ export type Database = {
           created_at?: string | null
           creators_messaged_reset_at?: string
           creators_messaged_this_month?: number
+          facebook_url?: string | null
           first_name?: string | null
           free_posts_reset_at?: string | null
           free_posts_used_this_month?: number
           id?: string
           industry?: string | null
+          instagram_url?: string | null
           is_verified?: boolean | null
           last_name?: string | null
           location_country?: string | null
@@ -920,6 +925,7 @@ export type Database = {
           preferred_platforms?: string[] | null
           terms_accepted_at?: string | null
           terms_version?: string | null
+          tiktok_url?: string | null
           updated_at?: string | null
           user_id: string
           venue_address?: string | null
@@ -951,11 +957,13 @@ export type Database = {
           created_at?: string | null
           creators_messaged_reset_at?: string
           creators_messaged_this_month?: number
+          facebook_url?: string | null
           first_name?: string | null
           free_posts_reset_at?: string | null
           free_posts_used_this_month?: number
           id?: string
           industry?: string | null
+          instagram_url?: string | null
           is_verified?: boolean | null
           last_name?: string | null
           location_country?: string | null
@@ -970,6 +978,7 @@ export type Database = {
           preferred_platforms?: string[] | null
           terms_accepted_at?: string | null
           terms_version?: string | null
+          tiktok_url?: string | null
           updated_at?: string | null
           user_id?: string
           venue_address?: string | null

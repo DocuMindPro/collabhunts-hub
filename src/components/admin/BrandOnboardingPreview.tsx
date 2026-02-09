@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, Target, DollarSign, Tag, Share2, Phone } from "lucide-react";
+import { CheckCircle, Target, DollarSign, Tag, Share2, Phone, Instagram } from "lucide-react";
 import PhoneInput from "@/components/PhoneInput";
 
 interface BrandOnboardingPreviewProps {
@@ -23,8 +23,9 @@ const BrandOnboardingPreview = ({ onClose }: BrandOnboardingPreviewProps) => {
   const [budget, setBudget] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
+  const [socialMedia, setSocialMedia] = useState({ facebook: "", instagram: "", tiktok: "" });
 
-  const totalSteps = 5;
+  const totalSteps = 6;
   const progress = (step / totalSteps) * 100;
 
   const intents = [
@@ -244,6 +245,48 @@ const BrandOnboardingPreview = ({ onClose }: BrandOnboardingPreviewProps) => {
             ))}
           </div>
 
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => setStep(4)} className="flex-1">Back</Button>
+            <Button onClick={() => setStep(6)} className="flex-1">Continue</Button>
+          </div>
+        </div>
+      )}
+
+      {step === 6 && (
+        <div className="space-y-4">
+          <div className="text-center">
+            <Instagram className="h-10 w-10 mx-auto text-primary mb-3" />
+            <h3 className="text-lg font-semibold">Link your social media</h3>
+            <p className="text-sm text-muted-foreground">Help creators find and connect with you</p>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm">Facebook</Label>
+              <Input
+                placeholder="https://facebook.com/yourbrand"
+                value={socialMedia.facebook}
+                onChange={(e) => setSocialMedia({ ...socialMedia, facebook: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label className="text-sm">Instagram</Label>
+              <Input
+                placeholder="https://instagram.com/yourbrand"
+                value={socialMedia.instagram}
+                onChange={(e) => setSocialMedia({ ...socialMedia, instagram: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label className="text-sm">TikTok</Label>
+              <Input
+                placeholder="https://tiktok.com/@yourbrand"
+                value={socialMedia.tiktok}
+                onChange={(e) => setSocialMedia({ ...socialMedia, tiktok: e.target.value })}
+              />
+            </div>
+          </div>
+
           <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
             <p className="text-sm text-amber-800 dark:text-amber-200">
               <strong>Preview Mode:</strong> Completing the flow will not save any preferences.
@@ -251,7 +294,7 @@ const BrandOnboardingPreview = ({ onClose }: BrandOnboardingPreviewProps) => {
           </div>
 
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setStep(4)} className="flex-1">Back</Button>
+            <Button variant="outline" onClick={() => setStep(5)} className="flex-1">Back</Button>
             <Button onClick={onClose} className="flex-1">
               <CheckCircle className="h-4 w-4 mr-2" />
               Close Preview
