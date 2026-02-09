@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import AdminQuotationsSection from "./AdminQuotationsSection";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -318,7 +319,9 @@ const AdminBrandsTab = () => {
   };
 
   return (
-    <Card>
+    <div className="space-y-6">
+      <AdminQuotationsSection />
+      <Card>
       <CardHeader className="p-4 md:p-6">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -665,6 +668,7 @@ const AdminBrandsTab = () => {
         </DialogContent>
       </Dialog>
     </Card>
+    </div>
   );
 };
 
