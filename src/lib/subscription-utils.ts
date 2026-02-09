@@ -84,11 +84,14 @@ export const getBrandSubscription = async (userId: string): Promise<BrandSubscri
 
     // Get active subscription (prefer non-none if multiple exist)
     // Order: premium > pro > basic > none
+    // Also filter out rows whose period has already ended (defensive against stale data)
+    const now = new Date().toISOString();
     const { data: subs } = await supabase
       .from('brand_subscriptions')
       .select('*')
       .eq('brand_profile_id', brandProfile.id)
       .eq('status', 'active')
+      .gte('current_period_end', now)
       .order('plan_type', { ascending: false }); // premium > pro > basic > none
 
     if (!subs || subs.length === 0) return null;
