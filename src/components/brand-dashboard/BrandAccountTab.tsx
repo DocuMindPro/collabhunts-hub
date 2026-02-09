@@ -166,145 +166,169 @@ const BrandAccountTab = () => {
     );
   }
 
+  const memberSince = brandProfile?.created_at
+    ? new Date(brandProfile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    : null;
+
   return (
-    <div className="space-y-3 max-w-3xl">
-      {/* Brand Identity Header — merged logo + plan */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <label className="cursor-pointer group relative flex-shrink-0">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleLogoUpload(file);
-                }}
-                disabled={uploadingLogo}
-              />
-              <ProfileAvatar
-                src={brandProfile?.logo_url}
-                fallbackName={brandProfile?.company_name || "B"}
-                className="h-14 w-14"
-              />
-              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                {uploadingLogo ? (
-                  <Loader2 className="h-4 w-4 text-white animate-spin" />
-                ) : (
-                  <Camera className="h-4 w-4 text-white" />
+    <div className="space-y-2.5 max-w-3xl">
+      {/* ── Premium Brand Identity Hero ── */}
+      <Card className="overflow-hidden">
+        <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-5">
+              {/* Logo with ring accent */}
+              <label className="cursor-pointer group relative flex-shrink-0">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleLogoUpload(file);
+                  }}
+                  disabled={uploadingLogo}
+                />
+                <div className="ring-2 ring-primary/20 ring-offset-2 ring-offset-background rounded-full shadow-md">
+                  <ProfileAvatar
+                    src={brandProfile?.logo_url}
+                    fallbackName={brandProfile?.company_name || "B"}
+                    className="h-16 w-16"
+                  />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {uploadingLogo ? (
+                    <Loader2 className="h-4 w-4 text-white animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4 text-white" />
+                  )}
+                </div>
+              </label>
+
+              {/* Name + meta */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xl font-bold truncate">{brandProfile?.company_name}</h2>
+                  <Badge variant={planType === "free" ? "secondary" : "default"} className="text-[11px] px-2 py-0 font-medium">
+                    <Crown className="h-3 w-3 mr-1" />
+                    {planType.charAt(0).toUpperCase() + planType.slice(1)}
+                  </Badge>
+                </div>
+                {userEmail && (
+                  <p className="text-sm text-muted-foreground mt-0.5 truncate">{userEmail}</p>
+                )}
+                {memberSince && (
+                  <p className="text-xs text-muted-foreground/70 mt-0.5">
+                    <Calendar className="h-3 w-3 inline mr-1 -mt-0.5" />
+                    Member since {memberSince}
+                  </p>
                 )}
               </div>
-            </label>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg font-semibold truncate">{brandProfile?.company_name}</h2>
-                <Badge variant={planType === "free" ? "secondary" : "default"} className="text-[11px] px-2 py-0">
-                  <Crown className="h-3 w-3 mr-1" />
-                  {planType.charAt(0).toUpperCase() + planType.slice(1)}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">Hover logo to change</p>
+
+              {/* Upgrade CTA */}
+              <Button
+                size="sm"
+                className="flex-shrink-0 gap-1.5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-sm hover:shadow-md transition-shadow"
+                onClick={() => setUpgradeOpen(true)}
+              >
+                {planType === "free" ? "Upgrade" : "Change Plan"}
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Button>
             </div>
-            <Button variant="outline" size="sm" className="gap-1 flex-shrink-0" onClick={() => setUpgradeOpen(true)}>
-              {planType === "free" ? "Upgrade" : "Change Plan"} <ArrowUpRight className="h-3 w-3" />
-            </Button>
-          </div>
-        </CardContent>
+          </CardContent>
+        </div>
       </Card>
       <UpgradePlanDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} currentPlan={planType} />
 
-      {/* Phone Verification */}
-      <Card>
-        <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Phone className="h-3.5 w-3.5" />
-            Phone Verification
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 pt-0 space-y-3">
-          {!isEditingPhone ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {brandProfile?.phone_number ? (
+      {/* ── Two-Column Status Grid ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+        {/* Phone Verification — compact inline */}
+        <Card>
+          <CardContent className="p-4">
+            {!isEditingPhone ? (
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  {brandProfile?.phone_number ? (
+                    <>
+                      <span className="font-mono text-sm truncate">{brandProfile.phone_number}</span>
+                      {brandProfile.phone_verified ? (
+                        <Badge variant="default" className="gap-1 bg-green-600 text-[11px] px-1.5 py-0 flex-shrink-0">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Verified
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive" className="gap-1 text-[11px] px-1.5 py-0 flex-shrink-0">
+                          <AlertCircle className="h-3 w-3" />
+                          Unverified
+                        </Badge>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">No phone added</span>
+                  )}
+                </div>
+                <Button variant="outline" size="sm" className="flex-shrink-0 h-7 text-xs px-2.5" onClick={() => setIsEditingPhone(true)}>
+                  {brandProfile?.phone_number ? "Update" : "Add"}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  Phone Verification
+                </div>
+                {!otpSent ? (
                   <>
-                    <span className="font-mono text-sm">{brandProfile.phone_number}</span>
-                    {brandProfile.phone_verified ? (
-                      <Badge variant="default" className="gap-1 bg-green-600 text-[11px] px-1.5 py-0">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Verified
-                      </Badge>
-                    ) : (
-                      <Badge variant="destructive" className="gap-1 text-[11px] px-1.5 py-0">
-                        <AlertCircle className="h-3 w-3" />
-                        Not Verified
-                      </Badge>
-                    )}
+                    <PhoneInput value={phoneNumber} onChange={setPhoneNumber} placeholder="Enter your phone number" />
+                    <div className="flex gap-2">
+                      <Button onClick={handleSendOtp} disabled={sendingOtp || !phoneNumber} size="sm" className="h-8 text-xs">
+                        {sendingOtp && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                        Send Code
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={handleCancelPhoneEdit}>Cancel</Button>
+                    </div>
                   </>
                 ) : (
-                  <span className="text-muted-foreground text-sm">No phone number added</span>
+                  <>
+                    <div className="space-y-1.5">
+                      <p className="text-xs text-muted-foreground">Code sent to {phoneNumber}</p>
+                      <InputOTP value={otpCode} onChange={setOtpCode} maxLength={6}>
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button onClick={handleVerifyOtp} disabled={verifyingOtp || otpCode.length !== 6} size="sm" className="h-8 text-xs">
+                        {verifyingOtp && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                        Verify
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setOtpSent(false); setOtpCode(""); }}>Change</Button>
+                      <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={handleCancelPhoneEdit}>Cancel</Button>
+                    </div>
+                  </>
                 )}
               </div>
-              <Button variant="outline" size="sm" onClick={() => setIsEditingPhone(true)}>
-                {brandProfile?.phone_number ? "Update" : "Add Phone"}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {!otpSent ? (
-                <>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Phone Number</label>
-                    <PhoneInput value={phoneNumber} onChange={setPhoneNumber} placeholder="Enter your phone number" />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={handleSendOtp} disabled={sendingOtp || !phoneNumber} size="sm">
-                      {sendingOtp && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                      Send Code
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={handleCancelPhoneEdit}>Cancel</Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Enter Verification Code</label>
-                    <p className="text-xs text-muted-foreground">We sent a 6-digit code to {phoneNumber}</p>
-                    <InputOTP value={otpCode} onChange={setOtpCode} maxLength={6}>
-                      <InputOTPGroup>
-                        <InputOTPSlot index={0} />
-                        <InputOTPSlot index={1} />
-                        <InputOTPSlot index={2} />
-                        <InputOTPSlot index={3} />
-                        <InputOTPSlot index={4} />
-                        <InputOTPSlot index={5} />
-                      </InputOTPGroup>
-                    </InputOTP>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button onClick={handleVerifyOtp} disabled={verifyingOtp || otpCode.length !== 6} size="sm">
-                      {verifyingOtp && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                      Verify
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => { setOtpSent(false); setOtpCode(""); }}>Change Number</Button>
-                    <Button variant="ghost" size="sm" onClick={handleCancelPhoneEdit}>Cancel</Button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-          {!brandProfile?.phone_verified && !isEditingPhone && (
-            <p className="text-xs text-muted-foreground">Phone verification is required for business verification badge</p>
-          )}
-        </CardContent>
-      </Card>
+            )}
+            {!brandProfile?.phone_verified && !isEditingPhone && (
+              <p className="text-[11px] text-muted-foreground mt-2">Required for business verification</p>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Verification Badge */}
-      {brandProfile && (
-        <BrandVerificationBadgeCard brandProfileId={brandProfile.id} phoneVerified={brandProfile.phone_verified || false} />
-      )}
+        {/* Verification Badge */}
+        {brandProfile && (
+          <BrandVerificationBadgeCard brandProfileId={brandProfile.id} phoneVerified={brandProfile.phone_verified || false} />
+        )}
+      </div>
 
-      {/* Team Access */}
+      {/* ── Team Access ── */}
       {brandProfile && (
         <TeamAccessCard
           profileId={brandProfile.id}
@@ -315,74 +339,53 @@ const BrandAccountTab = () => {
         />
       )}
 
-      {/* Account Details — merged company + account info */}
-      <Card>
-        <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Building2 className="h-3.5 w-3.5" />
-            Account Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 pt-0">
-          <div className="grid gap-0 text-sm">
-            <div className="flex items-center justify-between py-1.5 border-b">
-              <span className="text-muted-foreground">Company</span>
-              <span className="font-medium">{brandProfile?.company_name || "—"}</span>
+      {/* ── Streamlined Account Details ── */}
+      {(brandProfile?.industry || brandProfile?.company_size || brandProfile?.website_url || brandProfile?.location_country) && (
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Building2 className="h-3.5 w-3.5" />
+              Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="grid gap-0 text-sm">
+              {brandProfile?.industry && (
+                <div className="flex items-center justify-between py-1.5 rounded-sm even:bg-muted/30 px-1">
+                  <span className="text-muted-foreground">Industry</span>
+                  <span className="font-medium">{brandProfile.industry}</span>
+                </div>
+              )}
+              {brandProfile?.company_size && (
+                <div className="flex items-center justify-between py-1.5 rounded-sm even:bg-muted/30 px-1">
+                  <span className="text-muted-foreground">Size</span>
+                  <span className="font-medium">{brandProfile.company_size}</span>
+                </div>
+              )}
+              {brandProfile?.website_url && (
+                <div className="flex items-center justify-between py-1.5 rounded-sm even:bg-muted/30 px-1">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <Globe className="h-3 w-3" />
+                    Website
+                  </span>
+                  <a href={brandProfile.website_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px] font-medium">
+                    {brandProfile.website_url.replace(/^https?:\/\//, '')}
+                  </a>
+                </div>
+              )}
+              {brandProfile?.location_country && (
+                <div className="flex items-center justify-between py-1.5 rounded-sm even:bg-muted/30 px-1">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    Location
+                  </span>
+                  <span className="font-medium">{brandProfile.location_country}</span>
+                </div>
+              )}
             </div>
-            {brandProfile?.industry && (
-              <div className="flex items-center justify-between py-1.5 border-b">
-                <span className="text-muted-foreground">Industry</span>
-                <span>{brandProfile.industry}</span>
-              </div>
-            )}
-            {brandProfile?.company_size && (
-              <div className="flex items-center justify-between py-1.5 border-b">
-                <span className="text-muted-foreground">Size</span>
-                <span>{brandProfile.company_size}</span>
-              </div>
-            )}
-            {brandProfile?.website_url && (
-              <div className="flex items-center justify-between py-1.5 border-b">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  <Globe className="h-3 w-3" />
-                  Website
-                </span>
-                <a href={brandProfile.website_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px]">
-                  {brandProfile.website_url}
-                </a>
-              </div>
-            )}
-            {brandProfile?.location_country && (
-              <div className="flex items-center justify-between py-1.5 border-b">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  Location
-                </span>
-                <span>{brandProfile.location_country}</span>
-              </div>
-            )}
-            <div className="flex items-center justify-between py-1.5 border-b">
-              <span className="text-muted-foreground flex items-center gap-1">
-                <Mail className="h-3 w-3" />
-                Email
-              </span>
-              <span className="font-medium">{userEmail || "—"}</span>
-            </div>
-            <div className="flex items-center justify-between py-1.5">
-              <span className="text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                Member Since
-              </span>
-              <span>
-                {brandProfile?.created_at
-                  ? new Date(brandProfile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-                  : "—"
-                }
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
