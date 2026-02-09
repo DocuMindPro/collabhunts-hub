@@ -9,6 +9,7 @@ import ProfileAvatar from "@/components/ProfileAvatar";
 import PhoneInput from "@/components/PhoneInput";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import BrandVerificationBadgeCard from "./BrandVerificationBadgeCard";
+import TeamAccessCard from "@/components/team/TeamAccessCard";
 
 interface BrandProfile {
   id: string;
@@ -361,6 +362,11 @@ const BrandAccountTab = () => {
           phoneVerified={brandProfile.phone_verified || false}
         />
       )}
+      {/* Team Access Card */}
+      {brandProfile && (
+        <TeamAccessCard profileId={brandProfile.id} accountType="brand" />
+      )}
+
       {/* Company Information Card */}
       <Card>
         <CardHeader className="pb-3">

@@ -9,17 +9,14 @@ interface BrandProtectedRouteProps {
 
 const BrandProtectedRoute = ({ children }: BrandProtectedRouteProps) => {
   const [user, setUser] = useState<User | null>(null);
-  const [hasBrandProfile, setHasBrandProfile] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      
       if (session?.user) {
-        setTimeout(() => {
-          checkBrandProfile(session.user.id);
-        }, 0);
+        setTimeout(() => checkAccess(session.user.id, session.user.email), 0);
       } else {
         setLoading(false);
       }
@@ -27,11 +24,8 @@ const BrandProtectedRoute = ({ children }: BrandProtectedRouteProps) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      
       if (session?.user) {
-        setTimeout(() => {
-          checkBrandProfile(session.user.id);
-        }, 0);
+        setTimeout(() => checkAccess(session.user.id, session.user.email), 0);
       } else {
         setLoading(false);
       }
@@ -40,23 +34,66 @@ const BrandProtectedRoute = ({ children }: BrandProtectedRouteProps) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const checkBrandProfile = async (userId: string) => {
+  const checkAccess = async (userId: string, email?: string) => {
     try {
-      const { data, error } = await supabase
+      // Check direct ownership
+      const { data: ownProfile } = await supabase
         .from("brand_profiles")
         .select("id")
         .eq("user_id", userId)
         .maybeSingle();
 
-      if (error) {
-        console.error("Error checking brand profile:", error);
-        setHasBrandProfile(false);
-      } else {
-        setHasBrandProfile(!!data);
+      if (ownProfile) {
+        setHasAccess(true);
+        setLoading(false);
+        return;
       }
+
+      // Check delegate access
+      const { data: delegateAccess } = await supabase
+        .from("account_delegates")
+        .select("id")
+        .eq("delegate_user_id", userId)
+        .eq("account_type", "brand")
+        .eq("status", "active")
+        .limit(1);
+
+      if (delegateAccess && delegateAccess.length > 0) {
+        setHasAccess(true);
+        setLoading(false);
+        return;
+      }
+
+      // Auto-link pending invites by email
+      if (email) {
+        const { data: pending } = await supabase
+          .from("account_delegates")
+          .select("id")
+          .eq("delegate_email", email.toLowerCase())
+          .eq("account_type", "brand")
+          .eq("status", "pending");
+
+        if (pending && pending.length > 0) {
+          for (const invite of pending) {
+            await supabase
+              .from("account_delegates")
+              .update({
+                delegate_user_id: userId,
+                status: "active",
+                accepted_at: new Date().toISOString(),
+              })
+              .eq("id", invite.id);
+          }
+          setHasAccess(true);
+          setLoading(false);
+          return;
+        }
+      }
+
+      setHasAccess(false);
     } catch (error) {
-      console.error("Error checking brand profile:", error);
-      setHasBrandProfile(false);
+      console.error("Error checking brand access:", error);
+      setHasAccess(false);
     } finally {
       setLoading(false);
     }
@@ -74,7 +111,7 @@ const BrandProtectedRoute = ({ children }: BrandProtectedRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (!hasBrandProfile) {
+  if (!hasAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center max-w-md">

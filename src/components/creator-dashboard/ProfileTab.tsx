@@ -16,6 +16,7 @@ import PortfolioUploadSection from "./PortfolioUploadSection";
 import VerificationBadgeCard from "./VerificationBadgeCard";
 import AiBioSuggestions from "@/components/AiBioSuggestions";
 import PhoneInput from "@/components/PhoneInput";
+import TeamAccessCard from "@/components/team/TeamAccessCard";
 
 const AVAILABLE_CATEGORIES = [
   "Fashion", "Beauty", "Fitness", "Travel", "Food", "Tech",
@@ -974,6 +975,9 @@ const ProfileTab = () => {
 
       {/* Verification Badge Section */}
       <VerificationBadgeCard creatorProfileId={profile.id} />
+
+      {/* Team Access */}
+      <TeamAccessCard profileId={profile.id} accountType="creator" />
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving}>

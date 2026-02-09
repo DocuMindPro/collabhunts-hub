@@ -30,6 +30,7 @@ const BrandDashboard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       
+      // Check direct ownership first
       const { data } = await supabase
         .from("brand_profiles")
         .select("id")
@@ -38,6 +39,21 @@ const BrandDashboard = () => {
       
       if (data) {
         setBrandProfileId(data.id);
+        return;
+      }
+
+      // Check delegate access
+      const { data: delegate } = await supabase
+        .from("account_delegates")
+        .select("profile_id")
+        .eq("delegate_user_id", user.id)
+        .eq("account_type", "brand")
+        .eq("status", "active")
+        .limit(1)
+        .maybeSingle();
+
+      if (delegate) {
+        setBrandProfileId(delegate.profile_id);
       }
     };
     fetchBrandProfile();
