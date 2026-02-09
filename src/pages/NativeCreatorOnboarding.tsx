@@ -66,15 +66,27 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
     { platform: '', username: '', followerCount: '' }
   ]);
 
-  // Step 3: Services
+  // Step 3: TikTok Live (conditional)
+  const [goesLiveTiktok, setGoesLiveTiktok] = useState<boolean | null>(null);
+  const [tiktokMonthlyRevenue, setTiktokMonthlyRevenue] = useState("");
+  const [tiktokLiveInterest, setTiktokLiveInterest] = useState("");
+
+  // Step 3 or 4: Services
   const [services, setServices] = useState<Service[]>([
     { serviceType: '', price: '', deliveryDays: '7' }
   ]);
 
-  // Step 4: Terms
+  // Step 4 or 5: Terms
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  const totalSteps = 4;
+  const hasTiktokAccount = socialAccounts.some(a => a.platform === 'TikTok');
+  const totalSteps = hasTiktokAccount ? 5 : 4;
+  const getEffectiveStep = () => {
+    // If no TikTok and step >= 3, skip TikTok step mapping
+    if (!hasTiktokAccount && step >= 3) return step + 1;
+    return step;
+  };
+  const effectiveStep = getEffectiveStep();
   const progress = (step / totalSteps) * 100;
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,7 +173,23 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
     return true;
   };
 
-  const validateStep3 = () => {
+  const validateStep3TikTok = () => {
+    if (goesLiveTiktok === null) {
+      toast.error('Please answer if you go live on TikTok');
+      return false;
+    }
+    if (goesLiveTiktok && !tiktokMonthlyRevenue) {
+      toast.error('Please select your monthly revenue range');
+      return false;
+    }
+    if (!goesLiveTiktok && !tiktokLiveInterest) {
+      toast.error('Please let us know your interest level');
+      return false;
+    }
+    return true;
+  };
+
+  const validateServices = () => {
     const validServices = services.filter(
       s => s.serviceType && s.price && parseInt(s.price) > 0
     );
@@ -175,7 +203,24 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
   const handleNext = () => {
     if (step === 1 && !validateStep1()) return;
     if (step === 2 && !validateStep2()) return;
-    if (step === 3 && !validateStep3()) return;
+    
+    if (step === 2) {
+      // After social accounts, go to TikTok Live step if TikTok is added
+      if (hasTiktokAccount) {
+        setStep(3);
+      } else {
+        setStep(3); // services step (effectiveStep maps it)
+      }
+      return;
+    }
+    
+    if (hasTiktokAccount) {
+      if (step === 3 && !validateStep3TikTok()) return;
+      if (step === 4 && !validateServices()) return;
+    } else {
+      if (step === 3 && !validateServices()) return;
+    }
+    
     setStep(step + 1);
   };
 
@@ -301,6 +346,28 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
       15000 // 15 second timeout for full signup
     );
 
+    // Insert TikTok Live insights (non-blocking)
+    if (result && hasTiktokAccount && goesLiveTiktok !== null) {
+      try {
+        const { data: creatorProfile } = await supabase
+          .from('creator_profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (creatorProfile) {
+          await supabase.from('creator_tiktok_live_insights').insert({
+            creator_profile_id: creatorProfile.id,
+            goes_live: goesLiveTiktok,
+            monthly_revenue_range: goesLiveTiktok ? tiktokMonthlyRevenue : null,
+            interest_in_going_live: !goesLiveTiktok ? tiktokLiveInterest : null,
+          });
+        }
+      } catch (tiktokError) {
+        console.error("Failed to save TikTok insights:", tiktokError);
+      }
+    }
+
     setIsLoading(false);
 
     if (result) {
@@ -326,7 +393,7 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
           <ArrowLeft className="h-5 w-5" />
         </button>
         <span className="text-sm text-muted-foreground">Step {step} of {totalSteps}</span>
-        <div className="w-9" /> {/* Spacer for centering */}
+        <div className="w-9" />
       </div>
 
       {/* Progress Bar */}
@@ -461,7 +528,90 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
           </div>
         )}
 
-        {step === 3 && (
+        {/* TikTok Live Step (only if TikTok account added) */}
+        {effectiveStep === 3 && hasTiktokAccount && (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-xl font-bold text-foreground">TikTok Live</h1>
+              <p className="text-muted-foreground mt-1">Tell us about your TikTok Live activity</p>
+            </div>
+
+            <div className="space-y-3">
+              <p className="font-medium text-foreground">Do you go live on TikTok?</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => { setGoesLiveTiktok(true); setTiktokLiveInterest(""); }}
+                  className={`p-4 rounded-lg border-2 text-left transition-all ${
+                    goesLiveTiktok === true
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <p className="font-medium">Yes, I go live</p>
+                  <p className="text-xs text-muted-foreground mt-1">I broadcast regularly</p>
+                </button>
+                <button
+                  onClick={() => { setGoesLiveTiktok(false); setTiktokMonthlyRevenue(""); }}
+                  className={`p-4 rounded-lg border-2 text-left transition-all ${
+                    goesLiveTiktok === false
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <p className="font-medium">No, I don't</p>
+                  <p className="text-xs text-muted-foreground mt-1">Haven't gone live yet</p>
+                </button>
+              </div>
+            </div>
+
+            {goesLiveTiktok === true && (
+              <div className="space-y-2">
+                <p className="font-medium text-foreground">Average monthly revenue from TikTok Live?</p>
+                <select
+                  value={tiktokMonthlyRevenue}
+                  onChange={(e) => setTiktokMonthlyRevenue(e.target.value)}
+                  className="w-full h-12 px-3 rounded-md border border-input bg-background text-base"
+                >
+                  <option value="">Select range</option>
+                  <option value="under_100">Under $100</option>
+                  <option value="100_500">$100 - $500</option>
+                  <option value="500_1000">$500 - $1,000</option>
+                  <option value="1000_5000">$1,000 - $5,000</option>
+                  <option value="5000_plus">$5,000+</option>
+                </select>
+              </div>
+            )}
+
+            {goesLiveTiktok === false && (
+              <div className="space-y-2">
+                <p className="font-medium text-foreground">Interested in going live if it generates income?</p>
+                <div className="space-y-2">
+                  {[
+                    { value: "yes_definitely", label: "Yes, definitely!", desc: "I'd love to start" },
+                    { value: "maybe", label: "Maybe — I'd like to learn more", desc: "I'm curious" },
+                    { value: "not_now", label: "Not right now", desc: "Focused on other content" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setTiktokLiveInterest(option.value)}
+                      className={`w-full p-3 rounded-lg border-2 text-left transition-all ${
+                        tiktokLiveInterest === option.value
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <p className="font-medium text-sm">{option.label}</p>
+                      <p className="text-xs text-muted-foreground">{option.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Services Step */}
+        {((hasTiktokAccount && effectiveStep === 4) || (!hasTiktokAccount && effectiveStep === 3)) && (
           <div className="space-y-6">
             <div>
               <h1 className="text-xl font-bold text-foreground">Set your services & pricing</h1>
@@ -531,7 +681,8 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
           </div>
         )}
 
-        {step === 4 && (
+        {/* Terms Step */}
+        {step === totalSteps && (
           <div className="space-y-6">
             <div>
               <h1 className="text-xl font-bold text-foreground">Almost done!</h1>
@@ -585,9 +736,8 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
         )}
       </div>
 
-      {/* Bottom Button */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border safe-area-bottom">
-        {step < 4 ? (
+        {step < totalSteps ? (
           <Button onClick={handleNext} className="w-full h-12 text-base">
             Continue
           </Button>

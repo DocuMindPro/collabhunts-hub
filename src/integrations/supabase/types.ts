@@ -2096,6 +2096,44 @@ export type Database = {
           },
         ]
       }
+      creator_tiktok_live_insights: {
+        Row: {
+          created_at: string | null
+          creator_profile_id: string
+          goes_live: boolean
+          id: string
+          interest_in_going_live: string | null
+          monthly_revenue_range: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_profile_id: string
+          goes_live?: boolean
+          id?: string
+          interest_in_going_live?: string | null
+          monthly_revenue_range?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_profile_id?: string
+          goes_live?: boolean
+          id?: string
+          interest_in_going_live?: string | null
+          monthly_revenue_range?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_tiktok_live_insights_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: true
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_tokens: {
         Row: {
           created_at: string

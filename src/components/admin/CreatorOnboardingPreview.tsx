@@ -10,7 +10,7 @@ import { CheckCircle, Instagram, Youtube, Twitter, Upload, X, User, Camera, Imag
 import AiBioSuggestions from "@/components/AiBioSuggestions";
 import PhoneInput from "@/components/PhoneInput";
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 interface CreatorOnboardingPreviewProps {
   onClose: () => void;
@@ -47,7 +47,12 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
   // Step 4: Social accounts
   const [socialAccounts, setSocialAccounts] = useState<Array<{ platform: string; username: string }>>([]);
 
-  // Step 5: Services
+  // TikTok Live
+  const [goesLiveTiktok, setGoesLiveTiktok] = useState<boolean | null>(null);
+  const [tiktokMonthlyRevenue, setTiktokMonthlyRevenue] = useState("");
+  const [tiktokLiveInterest, setTiktokLiveInterest] = useState("");
+
+  // Step 6: Services
   const [services, setServices] = useState<Array<{ type: string; price: number }>>([]);
 
   const categories = [
@@ -74,7 +79,9 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
     { value: "custom", label: "Custom Experience" }
   ];
 
-  const progress = (step / 7) * 100;
+  const hasTiktok = socialAccounts.some(a => a.platform === "tiktok");
+  const totalSteps = hasTiktok ? 8 : 7;
+  const progress = (step / totalSteps) * 100;
 
   const toggleCoverImage = (index: number) => {
     const newState = [...hasCoverImages];
@@ -86,7 +93,7 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
     <div className="space-y-4">
       <div className="mb-4">
         <Progress value={progress} className="h-2" />
-        <p className="text-sm text-muted-foreground mt-2">Step {step} of 7</p>
+        <p className="text-sm text-muted-foreground mt-2">Step {step} of {totalSteps}</p>
       </div>
 
       <Card>
@@ -465,12 +472,73 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
 
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep(3)} className="flex-1">Back</Button>
-                <Button onClick={() => setStep(5)} className="flex-1">Continue</Button>
+                <Button onClick={() => hasTiktok ? setStep(5) : setStep(6)} className="flex-1">Continue</Button>
               </div>
             </div>
           )}
 
-          {step === 5 && (
+          {step === 5 && hasTiktok && (
+            <div className="space-y-4">
+              <CardHeader className="px-0 pt-0">
+                <CardTitle>TikTok Live Insights</CardTitle>
+                <CardDescription>Your TikTok Live activity</CardDescription>
+              </CardHeader>
+
+              <div className="space-y-3">
+                <Label className="font-semibold">Do you go live on TikTok?</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => { setGoesLiveTiktok(true); setTiktokLiveInterest(""); }}
+                    className={`p-3 rounded-lg border-2 text-left ${goesLiveTiktok === true ? 'border-primary bg-primary/5' : 'border-border'}`}
+                  >
+                    <p className="font-medium text-sm">Yes, I go live</p>
+                  </button>
+                  <button
+                    onClick={() => { setGoesLiveTiktok(false); setTiktokMonthlyRevenue(""); }}
+                    className={`p-3 rounded-lg border-2 text-left ${goesLiveTiktok === false ? 'border-primary bg-primary/5' : 'border-border'}`}
+                  >
+                    <p className="font-medium text-sm">No, I don't</p>
+                  </button>
+                </div>
+              </div>
+
+              {goesLiveTiktok === true && (
+                <div>
+                  <Label>Monthly Revenue</Label>
+                  <select value={tiktokMonthlyRevenue} onChange={(e) => setTiktokMonthlyRevenue(e.target.value)} className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm mt-1">
+                    <option value="">Select range</option>
+                    <option value="under_100">Under $100</option>
+                    <option value="100_500">$100 - $500</option>
+                    <option value="500_1000">$500 - $1,000</option>
+                    <option value="1000_5000">$1,000 - $5,000</option>
+                    <option value="5000_plus">$5,000+</option>
+                  </select>
+                </div>
+              )}
+
+              {goesLiveTiktok === false && (
+                <div className="space-y-2">
+                  <Label>Interest in going live?</Label>
+                  {[
+                    { value: "yes_definitely", label: "Yes, definitely!" },
+                    { value: "maybe", label: "Maybe" },
+                    { value: "not_now", label: "Not right now" },
+                  ].map((opt) => (
+                    <button key={opt.value} onClick={() => setTiktokLiveInterest(opt.value)}
+                      className={`w-full p-2 rounded border-2 text-left text-sm ${tiktokLiveInterest === opt.value ? 'border-primary bg-primary/5' : 'border-border'}`}
+                    >{opt.label}</button>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setStep(4)} className="flex-1">Back</Button>
+                <Button onClick={() => setStep(6)} className="flex-1">Continue</Button>
+              </div>
+            </div>
+          )}
+
+          {step === 6 && (
             <div className="space-y-4">
               <CardHeader className="px-0 pt-0">
                 <CardTitle>Services & Pricing</CardTitle>
@@ -511,13 +579,13 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
               )}
 
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setStep(4)} className="flex-1">Back</Button>
-                <Button onClick={() => setStep(6)} className="flex-1">Continue</Button>
+                <Button variant="outline" onClick={() => hasTiktok ? setStep(5) : setStep(4)} className="flex-1">Back</Button>
+                <Button onClick={() => setStep(7)} className="flex-1">Continue</Button>
               </div>
             </div>
           )}
 
-          {step === 6 && (
+          {step === 7 && (
             <div className="space-y-4">
               <CardHeader className="px-0 pt-0">
                 <CardTitle>Portfolio (Optional)</CardTitle>
@@ -531,13 +599,13 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setStep(5)} className="flex-1">Back</Button>
-                <Button onClick={() => setStep(7)} className="flex-1">Continue</Button>
+                <Button variant="outline" onClick={() => setStep(6)} className="flex-1">Back</Button>
+                <Button onClick={() => setStep(8)} className="flex-1">Continue</Button>
               </div>
             </div>
           )}
 
-          {step === 7 && (
+          {step === 8 && (
             <div className="space-y-4">
               <CardHeader className="px-0 pt-0">
                 <CardTitle>Review & Submit</CardTitle>
@@ -611,7 +679,7 @@ const CreatorOnboardingPreview = ({ onClose }: CreatorOnboardingPreviewProps) =>
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setStep(6)} className="flex-1">Back</Button>
+                <Button variant="outline" onClick={() => setStep(7)} className="flex-1">Back</Button>
                 <Button onClick={onClose} className="flex-1">
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Close Preview
