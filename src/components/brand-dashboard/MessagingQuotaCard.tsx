@@ -97,7 +97,7 @@ const MessagingQuotaCard = () => {
                   variant="link"
                   size="sm"
                   className="h-auto p-0 text-xs gap-1"
-                  onClick={() => navigate("/brand")}
+                  onClick={() => navigate("/brand-dashboard?tab=account")}
                 >
                   Upgrade <ArrowUpRight className="h-3 w-3" />
                 </Button>
