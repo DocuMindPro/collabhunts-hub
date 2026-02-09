@@ -508,24 +508,44 @@ const Influencers = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             
             {/* All Badges - Top Left (Collabstr-style) */}
-            <div className="absolute top-3 left-3 right-14 flex flex-wrap items-center gap-1.5 z-10">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-xs font-medium">
-                <PlatformIcon className="h-3.5 w-3.5" />
-                <span>{formatFollowers(mainPlatform.followers)}</span>
-              </div>
-              <VettedBadge variant="pill" size="sm" showTooltip={false} />
-              {creator.is_featured && <FeaturedBadge variant="pill" size="sm" showTooltip={false} />}
-              {isCreatorVIP(creator) && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} />}
-              {creator.avg_response_minutes !== null && creator.avg_response_minutes <= 1440 && (
-                <RespondsFastBadge variant="pill" size="sm" showTooltip={false} />
-              )}
-              {creator.open_to_invitations && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-500 rounded-full text-white text-xs font-semibold">
-                  <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
+            {(() => {
+              const allBadges: React.ReactNode[] = [];
+              allBadges.push(<VettedBadge key="vetted" variant="pill" size="sm" showTooltip={false} />);
+              if (creator.is_featured) allBadges.push(<FeaturedBadge key="featured" variant="pill" size="sm" showTooltip={false} />);
+              if (isCreatorVIP(creator)) allBadges.push(<VIPCreatorBadge key="vip" variant="pill" size="sm" showTooltip={false} />);
+              if (creator.avg_response_minutes !== null && creator.avg_response_minutes <= 1440) allBadges.push(<RespondsFastBadge key="fast" variant="pill" size="sm" showTooltip={false} />);
+              if (creator.open_to_invitations) allBadges.push(
+                <span key="free" className="inline-flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 bg-green-500 rounded-full text-white text-[10px] sm:text-xs font-semibold">
+                  <span className="inline-block w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse" />
                   Free Invites
                 </span>
-              )}
-            </div>
+              );
+              const mobileMax = 1;
+              const mobileOverflow = allBadges.length - mobileMax;
+              return (
+                <div className="absolute top-2 sm:top-3 left-2 sm:left-3 right-12 sm:right-14 flex flex-wrap items-center gap-1 sm:gap-1.5 z-10">
+                  <div className="flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 sm:px-2.5 sm:py-1 bg-black/60 backdrop-blur-sm rounded-full text-white text-[10px] sm:text-xs font-medium">
+                    <PlatformIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <span>{formatFollowers(mainPlatform.followers)}</span>
+                  </div>
+                  {/* Mobile: show limited badges */}
+                  <div className="flex sm:hidden items-center gap-1">
+                    {allBadges.slice(0, mobileMax).map((badge, i) => (
+                      <span key={i} className="[&>span]:px-1.5 [&>span]:py-0.5 [&>span]:text-[10px]">{badge}</span>
+                    ))}
+                    {mobileOverflow > 0 && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded-full text-white text-[10px] font-medium">
+                        +{mobileOverflow}
+                      </span>
+                    )}
+                  </div>
+                  {/* Desktop: show all badges */}
+                  <div className="hidden sm:flex sm:flex-wrap items-center gap-1.5">
+                    {allBadges}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Rating Badge - Top Right */}
             <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium">
