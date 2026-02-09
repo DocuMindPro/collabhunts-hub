@@ -37,7 +37,7 @@ const plans = [
       { text: "Browse creators", included: true },
       { text: "Message 10 creators/month", included: true },
       { text: "AI-drafted agreements", included: true },
-      { text: "3 free opportunity posts/month", included: true },
+      { text: "4 free opportunity posts/month", included: true },
       { text: "Verified Business Badge", included: true },
       { text: "Priority visibility", included: true },
       { text: "Dedicated CSM", included: false },

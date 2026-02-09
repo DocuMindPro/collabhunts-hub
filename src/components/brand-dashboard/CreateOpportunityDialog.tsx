@@ -105,7 +105,7 @@ const CreateOpportunityDialog = ({
         .eq("id", brandProfileId);
     }
 
-    setFreePostsRemaining(Math.max(0, 3 - usedThisMonth));
+    setFreePostsRemaining(Math.max(0, 4 - usedThisMonth));
   }, [brandProfileId]);
 
   useEffect(() => {
