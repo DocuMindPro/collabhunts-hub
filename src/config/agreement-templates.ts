@@ -149,7 +149,7 @@ One round of minor revisions included. Additional revisions may incur extra fees
     name: 'Custom Agreement',
     description: 'Create your own custom agreement',
     icon: '✍️',
-    questions: ['productDescription', 'platforms', 'usageRights', 'revisionRounds', 'eventDate', 'eventTime', 'durationHours', 'specialInstructions'],
+    questions: ['productDescription', 'platforms', 'usageRights', 'revisionRounds', 'eventDate', 'specialInstructions'],
     defaultDeliverables: [],
     suggestedContent: `This Agreement is entered into between {{creatorName}} ("Creator") and {{brandName}} ("Brand") for the services described below.
 
