@@ -208,12 +208,34 @@ const CreatorSpotlight = () => {
                         </div>
                       )}
                       
-                      <div className="absolute top-2 left-2 flex flex-wrap items-center gap-1.5 z-10">
-                        {isVetted && <VettedBadge variant="pill" size="sm" showTooltip={false} />}
-                        {isFeatured && <FeaturedBadge variant="pill" size="sm" showTooltip={false} />}
-                        {isVip && <VIPCreatorBadge variant="pill" size="sm" showTooltip={false} />}
-                        {respondsFast && <RespondsFastBadge variant="pill" size="sm" showTooltip={false} />}
-                      </div>
+                      {(() => {
+                        const allBadges: React.ReactNode[] = [];
+                        if (isVetted) allBadges.push(<VettedBadge key="vetted" variant="pill" size="sm" showTooltip={false} />);
+                        if (isFeatured) allBadges.push(<FeaturedBadge key="featured" variant="pill" size="sm" showTooltip={false} />);
+                        if (isVip) allBadges.push(<VIPCreatorBadge key="vip" variant="pill" size="sm" showTooltip={false} />);
+                        if (respondsFast) allBadges.push(<RespondsFastBadge key="fast" variant="pill" size="sm" showTooltip={false} />);
+                        const mobileMax = 1;
+                        const mobileOverflow = allBadges.length - mobileMax;
+                        return (
+                          <div className="absolute top-2 left-2 z-10">
+                            {/* Mobile: limited badges */}
+                            <div className="flex sm:hidden items-center gap-1">
+                              {allBadges.slice(0, mobileMax).map((badge, i) => (
+                                <span key={i} className="[&>span]:px-1.5 [&>span]:py-0.5 [&>span]:text-[10px]">{badge}</span>
+                              ))}
+                              {mobileOverflow > 0 && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded-full text-white text-[10px] font-medium">
+                                  +{mobileOverflow}
+                                </span>
+                              )}
+                            </div>
+                            {/* Desktop: all badges */}
+                            <div className="hidden sm:flex sm:flex-wrap items-center gap-1.5">
+                              {allBadges}
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                     </div>
