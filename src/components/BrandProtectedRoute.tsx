@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { BrandRegistrationContext } from "@/contexts/BrandRegistrationContext";
 
 interface BrandProtectedRouteProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ interface BrandProtectedRouteProps {
 const BrandProtectedRoute = ({ children }: BrandProtectedRouteProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
+  const [registrationCompleted, setRegistrationCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,12 +41,13 @@ const BrandProtectedRoute = ({ children }: BrandProtectedRouteProps) => {
       // Check direct ownership
       const { data: ownProfile } = await supabase
         .from("brand_profiles")
-        .select("id")
+        .select("id, registration_completed")
         .eq("user_id", userId)
         .maybeSingle();
 
       if (ownProfile) {
         setHasAccess(true);
+        setRegistrationCompleted(ownProfile.registration_completed);
         setLoading(false);
         return;
       }
@@ -52,14 +55,22 @@ const BrandProtectedRoute = ({ children }: BrandProtectedRouteProps) => {
       // Check delegate access
       const { data: delegateAccess } = await supabase
         .from("account_delegates")
-        .select("id")
+        .select("id, profile_id")
         .eq("delegate_user_id", userId)
         .eq("account_type", "brand")
         .eq("status", "active")
         .limit(1);
 
       if (delegateAccess && delegateAccess.length > 0) {
+        // Fetch registration status for delegated profile
+        const { data: delegatedProfile } = await supabase
+          .from("brand_profiles")
+          .select("registration_completed")
+          .eq("id", delegateAccess[0].profile_id)
+          .maybeSingle();
+
         setHasAccess(true);
+        setRegistrationCompleted(delegatedProfile?.registration_completed ?? false);
         setLoading(false);
         return;
       }
@@ -85,6 +96,7 @@ const BrandProtectedRoute = ({ children }: BrandProtectedRouteProps) => {
               .eq("id", invite.id);
           }
           setHasAccess(true);
+          setRegistrationCompleted(true); // delegates get full access
           setLoading(false);
           return;
         }
@@ -127,7 +139,11 @@ const BrandProtectedRoute = ({ children }: BrandProtectedRouteProps) => {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <BrandRegistrationContext.Provider value={{ registrationCompleted }}>
+      {children}
+    </BrandRegistrationContext.Provider>
+  );
 };
 
 export default BrandProtectedRoute;

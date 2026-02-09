@@ -15,7 +15,11 @@ interface RecentActivity {
   link: string;
 }
 
-const BrandOverviewTab = () => {
+interface BrandOverviewTabProps {
+  registrationCompleted?: boolean;
+}
+
+const BrandOverviewTab = ({ registrationCompleted = true }: BrandOverviewTabProps) => {
   const navigate = useNavigate();
   const [, setSearchParams] = useSearchParams();
   const [stats, setStats] = useState({
@@ -214,8 +218,9 @@ const BrandOverviewTab = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => navigate('/influencers')} 
+              onClick={() => registrationCompleted ? navigate('/influencers') : navigate('/brand-onboarding')} 
               className="h-auto py-3 flex-col gap-1.5 text-xs"
+              disabled={!registrationCompleted}
             >
               <Users className="h-4 w-4" />
               <span>Find Creators</span>
@@ -225,6 +230,7 @@ const BrandOverviewTab = () => {
               size="sm" 
               onClick={() => handleTabNavigation('opportunities')} 
               className="h-auto py-3 flex-col gap-1.5 text-xs"
+              disabled={!registrationCompleted}
             >
               <Briefcase className="h-4 w-4" />
               <span>Opportunities</span>
@@ -234,6 +240,7 @@ const BrandOverviewTab = () => {
               size="sm" 
               onClick={() => handleTabNavigation('messages')} 
               className="h-auto py-3 flex-col gap-1.5 text-xs"
+              disabled={!registrationCompleted}
             >
               <MessageSquare className="h-4 w-4" />
               <span>Messages</span>

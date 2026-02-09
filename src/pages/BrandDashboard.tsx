@@ -8,11 +8,14 @@ import BrandBookingsTab from "@/components/brand-dashboard/BrandBookingsTab";
 import BrandMessagesTab from "@/components/brand-dashboard/BrandMessagesTab";
 import BrandAccountTab from "@/components/brand-dashboard/BrandAccountTab";
 import BrandOpportunitiesTab from "@/components/brand-dashboard/BrandOpportunitiesTab";
+import RegistrationBanner from "@/components/brand-dashboard/RegistrationBanner";
 import { CalendarTab } from "@/components/calendar/CalendarTab";
 import { supabase } from "@/integrations/supabase/client";
+import { useBrandRegistration } from "@/contexts/BrandRegistrationContext";
 import { BarChart3, Calendar, CalendarDays, MessageSquare, User, Briefcase, Users } from "lucide-react";
 
 const BrandDashboard = () => {
+  const { registrationCompleted } = useBrandRegistration();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [brandProfileId, setBrandProfileId] = useState<string | null>(null);
@@ -70,12 +73,16 @@ const BrandDashboard = () => {
       
       <main className="flex-1 py-4 md:py-8">
         <div className="container mx-auto px-4 max-w-7xl">
+          {!registrationCompleted && <RegistrationBanner />}
+          
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <h1 className="text-xl md:text-2xl font-heading font-bold">Dashboard</h1>
-            <Button onClick={() => navigate('/influencers')} size="sm" className="gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Find Creators</span>
-            </Button>
+            {registrationCompleted && (
+              <Button onClick={() => navigate('/influencers')} size="sm" className="gap-2">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Find Creators</span>
+              </Button>
+            )}
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 md:space-y-6">
@@ -107,15 +114,15 @@ const BrandDashboard = () => {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
-              <BrandOverviewTab />
+              <BrandOverviewTab registrationCompleted={registrationCompleted} />
             </TabsContent>
 
             <TabsContent value="opportunities" className="space-y-6">
-              {brandProfileId && <BrandOpportunitiesTab brandProfileId={brandProfileId} />}
+              {brandProfileId && <BrandOpportunitiesTab brandProfileId={brandProfileId} registrationCompleted={registrationCompleted} />}
             </TabsContent>
 
             <TabsContent value="bookings" className="space-y-6">
-              <BrandBookingsTab />
+              <BrandBookingsTab registrationCompleted={registrationCompleted} />
             </TabsContent>
 
             <TabsContent value="calendar" className="space-y-6">
@@ -123,7 +130,7 @@ const BrandDashboard = () => {
             </TabsContent>
 
             <TabsContent value="messages" className="space-y-6">
-              <BrandMessagesTab />
+              <BrandMessagesTab registrationCompleted={registrationCompleted} />
             </TabsContent>
 
             <TabsContent value="account" className="space-y-6">

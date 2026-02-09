@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import FeatureLockedCard from "./FeatureLockedCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -39,7 +40,11 @@ interface Booking {
   } | null;
 }
 
-const BrandBookingsTab = () => {
+interface BrandBookingsTabProps {
+  registrationCompleted?: boolean;
+}
+
+const BrandBookingsTab = ({ registrationCompleted = true }: BrandBookingsTabProps) => {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,6 +148,15 @@ const BrandBookingsTab = () => {
       <div className="flex items-center justify-center py-16">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
+    );
+  }
+
+  if (!registrationCompleted) {
+    return (
+      <FeatureLockedCard 
+        title="Bookings Locked" 
+        description="Complete your brand registration to book creators for events." 
+      />
     );
   }
 
