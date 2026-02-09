@@ -27,10 +27,10 @@ export const checkAndHandleExpiredSubscriptions = async (brandProfileId: string)
   if (expiredSubs && expiredSubs.length > 0) {
     console.log(`Found ${expiredSubs.length} expired subscription(s), downgrading to none...`);
     
-    // Mark expired subscriptions as expired
+    // Mark expired subscriptions as canceled (valid status per DB constraint)
     await supabase
       .from('brand_subscriptions')
-      .update({ status: 'expired' })
+      .update({ status: 'canceled' })
       .in('id', expiredSubs.map(s => s.id));
     
     // Check if there's already a 'none' subscription
