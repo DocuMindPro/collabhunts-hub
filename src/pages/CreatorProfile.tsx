@@ -21,6 +21,8 @@ import DimmedPrice from "@/components/DimmedPrice";
 import DimmedPriceRange from "@/components/DimmedPriceRange";
 import VettedBadge from "@/components/VettedBadge";
 import VIPCreatorBadge from "@/components/VIPCreatorBadge";
+import FeaturedBadge from "@/components/FeaturedBadge";
+import RespondsFastBadge from "@/components/RespondsFastBadge";
 import { isPast } from "date-fns";
 
 interface CreatorData {
@@ -38,6 +40,8 @@ interface CreatorData {
   categories: string[];
   show_pricing_to_public: boolean;
   open_to_invitations: boolean;
+  is_featured: boolean | null;
+  avg_response_minutes: number | null;
   verification_payment_status: string | null;
   verification_expires_at: string | null;
   social_accounts: Array<{
@@ -379,6 +383,8 @@ const CreatorProfile = () => {
         categories: profileData.categories,
         show_pricing_to_public: profileData.show_pricing_to_public !== false,
         open_to_invitations: profileData.open_to_invitations ?? false,
+        is_featured: profileData.is_featured,
+        avg_response_minutes: profileData.avg_response_minutes,
         verification_payment_status: profileData.verification_payment_status,
         verification_expires_at: profileData.verification_expires_at,
         social_accounts: socialData || [],
@@ -588,7 +594,17 @@ const CreatorProfile = () => {
                 {/* Badge row - Collabstr style */}
                 <div className="flex items-center justify-center gap-2 flex-wrap">
                   <VettedBadge variant="pill" size="sm" />
+                  {creator.is_featured && <FeaturedBadge variant="pill" size="sm" />}
                   {isVIP(creator) && <VIPCreatorBadge variant="pill" size="sm" />}
+                  {creator.avg_response_minutes !== null && creator.avg_response_minutes <= 1440 && (
+                    <RespondsFastBadge variant="pill" size="sm" />
+                  )}
+                  {creator.open_to_invitations && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full text-white text-xs font-semibold">
+                      <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
+                      Free Invites
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center justify-center gap-3 flex-wrap">
                   <h1 className="text-2xl font-heading font-bold">
@@ -666,9 +682,19 @@ const CreatorProfile = () => {
                 
                 <div className="flex-1 min-w-0">
                   {/* Badge row - Collabstr style */}
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <VettedBadge variant="pill" size="sm" />
+                    {creator.is_featured && <FeaturedBadge variant="pill" size="sm" />}
                     {isVIP(creator) && <VIPCreatorBadge variant="pill" size="sm" />}
+                    {creator.avg_response_minutes !== null && creator.avg_response_minutes <= 1440 && (
+                      <RespondsFastBadge variant="pill" size="sm" />
+                    )}
+                    {creator.open_to_invitations && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full text-white text-xs font-semibold">
+                        <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
+                        Free Invites
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center justify-start gap-2 flex-wrap mb-1">
                     <h1 className="text-2xl font-heading font-bold">
