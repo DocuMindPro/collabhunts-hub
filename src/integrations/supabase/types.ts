@@ -870,6 +870,7 @@ export type Database = {
           phone_verified: boolean | null
           preferred_categories: string[] | null
           preferred_platforms: string[] | null
+          registration_completed: boolean
           terms_accepted_at: string | null
           terms_version: string | null
           tiktok_url: string | null
@@ -898,7 +899,7 @@ export type Database = {
           ai_drafts_used_this_month?: number
           amenities?: string[] | null
           brand_plan?: string
-          company_name: string
+          company_name?: string
           company_size?: string | null
           contact_position?: string | null
           created_at?: string | null
@@ -923,6 +924,7 @@ export type Database = {
           phone_verified?: boolean | null
           preferred_categories?: string[] | null
           preferred_platforms?: string[] | null
+          registration_completed?: boolean
           terms_accepted_at?: string | null
           terms_version?: string | null
           tiktok_url?: string | null
@@ -976,6 +978,7 @@ export type Database = {
           phone_verified?: boolean | null
           preferred_categories?: string[] | null
           preferred_platforms?: string[] | null
+          registration_completed?: boolean
           terms_accepted_at?: string | null
           terms_version?: string | null
           tiktok_url?: string | null
