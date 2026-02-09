@@ -26,6 +26,7 @@ import GlowCard from "@/components/home/GlowCard";
 import TestimonialCarousel from "@/components/home/TestimonialCarousel";
 import { cn } from "@/lib/utils";
 import BrandPricingSection from "@/components/brand/BrandPricingSection";
+import AnimatedCounter from "@/components/home/AnimatedCounter";
 
 const Brand = () => {
   const navigate = useNavigate();
@@ -297,6 +298,43 @@ const Brand = () => {
         </div>
       </section>
 
+      {/* Zero Platform Fees Emphasis */}
+      <section className="py-16 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5" />
+        <div className="container mx-auto px-4 relative z-10">
+          <AnimatedSection animation="fade-up">
+            <GlowCard glowColor="primary" className="max-w-3xl mx-auto">
+              <div className="p-8 md:p-12 text-center">
+                <div className="mb-4">
+                  <AnimatedCounter
+                    end={0}
+                    prefix="$"
+                    className="text-6xl md:text-7xl font-heading font-bold text-primary"
+                  />
+                </div>
+                <h2 className="text-2xl md:text-3xl font-heading font-bold mb-3">
+                  Zero Platform Fees. Ever.
+                </h2>
+                <p className="text-muted-foreground text-lg max-w-lg mx-auto mb-6">
+                  Negotiate directly with creators. No commissions, no middleman, no hidden charges.
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {["No Commissions", "No Hidden Charges", "Direct Payments"].map((pill) => (
+                    <span
+                      key={pill}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium"
+                    >
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      {pill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </GlowCard>
+          </AnimatedSection>
+        </div>
+      </section>
+
       {/* How It Works - Bento Style */}
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
@@ -482,7 +520,7 @@ const Brand = () => {
                   Ready to Host Creator Events?
                 </h2>
                 <p className="text-xl text-muted-foreground mb-8">
-                  Register your brand for free and start connecting with creators
+                  Register for free — zero platform fees, direct creator payments
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   {renderCTA("lg")}
