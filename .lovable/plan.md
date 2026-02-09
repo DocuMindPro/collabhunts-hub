@@ -1,24 +1,31 @@
 
 
-## Reframe Cities Section to "Not Limited" Messaging
+## Make "Send Agreement" Button More Prominent
 
-### Problem
-The current "Available Across the Middle East" section with a fixed list of cities implies brands can ONLY host in those locations, which is limiting.
+### What Changes
 
-### Solution
-Rebrand the section to frame the cities as popular/trending locations while making it clear the platform works anywhere.
+In `src/components/brand-dashboard/BrandMessagesTab.tsx` (around line 671-679), the current "Send Agreement" button is a small icon-only button. It will be changed to:
 
-### Changes to `src/pages/Brand.tsx`
+- Show the full text **"Send Agreement"** next to the icon
+- Use `size="sm"` instead of `size="icon"` so the text is visible
+- Use a slightly more prominent style (primary variant or outline with primary text) so it stands out as a key action
+- Keep it in the same input bar location but make it clearly labeled
 
-1. **Update section title**: "Available Across the Middle East" → **"Popular Locations"**
-2. **Update subtitle**: → **"Creators and brands are active in these cities — but you can host from anywhere"**
-3. **Add a subtle note** below the city chips: a small text line like "Don't see your city? No problem — CollabHunts works wherever you are." with a Globe icon, styled as muted text centered below the grid.
+### Technical Detail
 
-### Technical Details
+Replace the current button:
+```tsx
+<Button variant="outline" size="icon" ...>
+  <ScrollText className="h-4 w-4" />
+</Button>
+```
 
-Only one file needs editing: `src/pages/Brand.tsx` (lines ~400-432 in the Middle East Cities section).
+With:
+```tsx
+<Button variant="outline" size="sm" className="shrink-0 gap-1.5 font-medium" ...>
+  <ScrollText className="h-4 w-4" />
+  Send Agreement
+</Button>
+```
 
-- Change the `h2` heading text
-- Change the `p` subtitle text  
-- Add a closing `p` element after the city grid with a Globe icon and reassuring copy
-- No changes to the data source or `lebanese-market.ts` — the same cities still display, just reframed as "popular" rather than "available"
+Only one file edited: `src/components/brand-dashboard/BrandMessagesTab.tsx`.
