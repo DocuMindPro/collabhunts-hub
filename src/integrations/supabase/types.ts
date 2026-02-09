@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_delegates: {
+        Row: {
+          accepted_at: string | null
+          account_type: string
+          delegate_email: string
+          delegate_user_id: string | null
+          id: string
+          invited_at: string
+          owner_user_id: string
+          profile_id: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          account_type: string
+          delegate_email: string
+          delegate_user_id?: string | null
+          id?: string
+          invited_at?: string
+          owner_user_id: string
+          profile_id: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          account_type?: string
+          delegate_email?: string
+          delegate_user_id?: string | null
+          id?: string
+          invited_at?: string
+          owner_user_id?: string
+          profile_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       ad_placements: {
         Row: {
           advertiser_name: string | null

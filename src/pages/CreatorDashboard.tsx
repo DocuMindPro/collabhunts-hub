@@ -26,6 +26,7 @@ const CreatorDashboard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       
+      // Check direct ownership first
       const { data } = await supabase
         .from("creator_profiles")
         .select("id")
@@ -34,6 +35,21 @@ const CreatorDashboard = () => {
       
       if (data) {
         setCreatorProfileId(data.id);
+        return;
+      }
+
+      // Check delegate access
+      const { data: delegate } = await supabase
+        .from("account_delegates")
+        .select("profile_id")
+        .eq("delegate_user_id", user.id)
+        .eq("account_type", "creator")
+        .eq("status", "active")
+        .limit(1)
+        .maybeSingle();
+
+      if (delegate) {
+        setCreatorProfileId(delegate.profile_id);
       }
     };
     fetchCreatorProfile();
