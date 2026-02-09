@@ -188,11 +188,11 @@ const SocialAccountsSection = ({ creatorProfileId }: SocialAccountsSectionProps)
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="p-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Social Media Accounts</CardTitle>
-            <CardDescription>Manage your connected social media profiles</CardDescription>
+            <CardTitle className="text-base">Social Media Accounts</CardTitle>
+            <CardDescription className="text-xs">Manage your connected social media profiles</CardDescription>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -272,7 +272,7 @@ const SocialAccountsSection = ({ creatorProfileId }: SocialAccountsSectionProps)
           </Dialog>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 pt-0">
         {accounts.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">
             No social accounts added yet. Click "Add Account" to get started.
@@ -282,7 +282,7 @@ const SocialAccountsSection = ({ creatorProfileId }: SocialAccountsSectionProps)
             {accounts.map((account) => (
               <div
                 key={account.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
+                className="flex items-center justify-between p-3 border rounded-lg"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2">

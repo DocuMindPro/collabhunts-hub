@@ -97,13 +97,13 @@ const TeamAccessCard = ({ profileId, accountType, locked, lockedMessage, onUpgra
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="p-4 pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <Users className="h-4 w-4" />
           Team Access
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="p-4 pt-0 space-y-3">
         {locked ? (
           <div className="text-center py-4 space-y-3">
             <p className="text-sm text-muted-foreground">
