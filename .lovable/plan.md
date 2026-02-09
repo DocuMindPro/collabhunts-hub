@@ -1,32 +1,36 @@
 
 
-## Professional Redesign: Brand Registration Prompt
+## Creative Redesign: Brand Registration Prompt (Orange + Premium)
 
 ### Problem
-The current popup uses rounded pill-shaped benefit rows, a large orange icon, and heavy gradient accent that gives it a playful, consumer-app feel rather than a professional B2B aesthetic.
+The current version went too minimal — lost brand personality and feels generic/dull. Need to bring back the orange identity while keeping it polished and professional.
 
-### Design Direction
-Inspired by Stripe, Linear, and Vercel modal patterns -- minimal, high-contrast, confident typography with subtle depth.
+### Design Concept: "Warm Glow"
+A premium modal with orange accents used strategically — not overwhelming, but unmistakably branded. Inspired by Stripe's warmth + Linear's precision.
 
 ### Changes (single file: `src/components/BrandRegistrationPrompt.tsx`)
 
-**Visual overhaul:**
+**1. Top gradient accent strip** — A thin 1px-height warm orange gradient bar at the very top of the card (from primary to primary/40), adds brand identity without being garish
 
-1. **Remove the gradient accent bar** at the top -- replace with a clean, subtle top border or nothing
-2. **Replace the large orange icon** with a smaller, understated icon inside a soft muted circle (not a bold gradient square)
-3. **Typography**: Use tighter, bolder heading (`text-xl font-bold tracking-tight`) and a shorter, punchier subtitle
-4. **Benefits list**: Replace the pill-shaped rows with a minimal checklist layout -- simple checkmarks with `text-sm` text, no background pills, no borders, just clean vertical list with subtle gray check icons
-5. **CTA button**: Use a solid dark button (not bright orange gradient) with confident copy -- a clean `bg-foreground text-background` or primary with less visual noise, no arrow icon
-6. **Add a subtle "Skip" or "Maybe Later" text link** below the CTA so it doesn't feel like a trap (currently the dialog blocks all interaction with no way out)
-7. **Spacing**: Tighten padding from `p-8` to `p-6`, reduce `space-y-6` to `space-y-4`
-8. **Overall card**: Add `rounded-xl` with subtle shadow, remove the harsh gradient bar
+**2. Icon upgrade** — Replace the muted gray circle with a warm orange gradient icon container: `bg-gradient-to-br from-primary/20 to-primary/5` with the Building2 icon in `text-primary`. Subtle glow, not a loud block.
+
+**3. Benefit checkmarks in orange** — Change check icons from gray to `text-primary` so they pop with brand color. Each benefit gets a subtle left-accent feel.
+
+**4. CTA button goes orange** — Use the primary color: `bg-primary hover:bg-primary/90 text-white` with a subtle `shadow-lg shadow-primary/25` glow effect underneath. This is the hero element.
+
+**5. Add a sparkle/rocket emoji or micro-illustration** — Add a small `Sparkles` icon next to the title "Register your brand" for energy, or use `Zap` icon to convey speed.
+
+**6. Social proof micro-line** — Add a tiny line below benefits: "Trusted by 500+ brands in Lebanon" in `text-xs text-muted-foreground` with a subtle orange dot indicator — builds credibility.
+
+**7. "Maybe later" stays subtle** — Keep the skip link understated in gray, no orange.
+
+**8. Card styling** — Add `shadow-xl` for depth and keep `rounded-xl` for softness.
 
 ### Result
-A clean, confident, business-grade modal that feels like a premium SaaS product rather than a children's app -- clear value prop, minimal decoration, strong CTA.
+A warm, branded, confident modal that says "premium platform" — orange used as strategic accent (icon, checks, CTA glow) rather than overwhelming the design.
 
 ### Technical Details
-- Single file change: `src/components/BrandRegistrationPrompt.tsx`
-- No new dependencies
+- Single file: `src/components/BrandRegistrationPrompt.tsx`
+- No new dependencies (uses existing lucide icons: `Building2`, `Check`, `Sparkles`)
 - No database changes
-- Uses existing UI primitives (Button, Dialog)
 
