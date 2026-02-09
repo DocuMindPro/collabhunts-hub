@@ -699,7 +699,7 @@ const BrandSignup = () => {
 
                 {/* Social Media Accounts */}
                 <div className="border-t pt-4">
-                  <h3 className="font-semibold mb-3">Social Media Accounts (Optional)</h3>
+                  <h3 className="font-semibold mb-3">Social Media Accounts</h3>
                   <div className="space-y-3">
                     <div>
                       <Label htmlFor="facebookUrl" className="flex items-center gap-2">
