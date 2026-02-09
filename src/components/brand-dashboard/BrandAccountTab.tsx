@@ -31,8 +31,6 @@ const BrandAccountTab = () => {
   const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  // Phone verification state
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otpCode, setOtpCode] = useState("");
@@ -60,15 +58,12 @@ const BrandAccountTab = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
       setUserEmail(user.email || null);
-
       const { data, error } = await supabase
         .from('brand_profiles')
         .select('id, user_id, company_name, industry, company_size, website_url, location_country, phone_number, phone_verified, logo_url, created_at')
         .eq('user_id', user.id)
         .single();
-
       if (error) throw error;
       setBrandProfile(data);
       if (data?.phone_number) {
@@ -87,15 +82,10 @@ const BrandAccountTab = () => {
       toast.error("Please enter a valid phone number");
       return;
     }
-
     setSendingOtp(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: phoneNumber,
-      });
-
+      const { error } = await supabase.auth.signInWithOtp({ phone: phoneNumber });
       if (error) throw error;
-
       setOtpSent(true);
       toast.success("Verification code sent to your phone");
     } catch (error: any) {
@@ -111,28 +101,15 @@ const BrandAccountTab = () => {
       toast.error("Please enter the 6-digit code");
       return;
     }
-
     setVerifyingOtp(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        phone: phoneNumber,
-        token: otpCode,
-        type: 'sms',
-      });
-
+      const { error } = await supabase.auth.verifyOtp({ phone: phoneNumber, token: otpCode, type: 'sms' });
       if (error) throw error;
-
-      // Update brand profile with verified phone
       const { error: updateError } = await supabase
         .from('brand_profiles')
-        .update({
-          phone_number: phoneNumber,
-          phone_verified: true,
-        })
+        .update({ phone_number: phoneNumber, phone_verified: true })
         .eq('id', brandProfile?.id);
-
       if (updateError) throw updateError;
-
       toast.success("Phone number verified successfully!");
       setOtpSent(false);
       setOtpCode("");
@@ -153,14 +130,6 @@ const BrandAccountTab = () => {
     setPhoneNumber(brandProfile?.phone_number || "");
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   const handleLogoUpload = async (file: File) => {
     if (!brandProfile) return;
     if (file.size > 5 * 1024 * 1024) {
@@ -171,13 +140,9 @@ const BrandAccountTab = () => {
     try {
       const fileExt = file.name.split('.').pop();
       const filePath = `${brandProfile.user_id}/${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage
-        .from('brand-logos')
-        .upload(filePath, file);
+      const { error: uploadError } = await supabase.storage.from('brand-logos').upload(filePath, file);
       if (uploadError) throw uploadError;
-      const { data: publicUrlData } = supabase.storage
-        .from('brand-logos')
-        .getPublicUrl(filePath);
+      const { data: publicUrlData } = supabase.storage.from('brand-logos').getPublicUrl(filePath);
       const { error: updateError } = await supabase
         .from('brand_profiles')
         .update({ logo_url: publicUrlData.publicUrl })
@@ -193,45 +158,21 @@ const BrandAccountTab = () => {
     }
   };
 
-  return (
-    <div className="space-y-4 max-w-3xl">
-      {/* Subscription Plan Card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Crown className="h-4 w-4" />
-            Subscription Plan
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Badge variant={planType === "free" ? "secondary" : "default"}>
-                {planType.charAt(0).toUpperCase() + planType.slice(1)} Plan
-              </Badge>
-              {planType === "free" && (
-                <span className="text-sm text-muted-foreground">Upgrade for more features</span>
-              )}
-            </div>
-            <Button variant="outline" size="sm" className="gap-1" onClick={() => setUpgradeOpen(true)}>
-              {planType === "free" ? "Upgrade" : "Change Plan"} <ArrowUpRight className="h-3 w-3" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-      <UpgradePlanDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} currentPlan={planType} />
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
-      {/* Brand Logo Card */}
+  return (
+    <div className="space-y-3 max-w-3xl">
+      {/* Brand Identity Header — merged logo + plan */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Camera className="h-4 w-4" />
-            Brand Logo
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
           <div className="flex items-center gap-4">
-            <label className="cursor-pointer group relative">
+            <label className="cursor-pointer group relative flex-shrink-0">
               <input
                 type="file"
                 accept="image/*"
@@ -245,46 +186,56 @@ const BrandAccountTab = () => {
               <ProfileAvatar
                 src={brandProfile?.logo_url}
                 fallbackName={brandProfile?.company_name || "B"}
-                className="h-16 w-16"
+                className="h-14 w-14"
               />
               <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
                 {uploadingLogo ? (
-                  <Loader2 className="h-5 w-5 text-white animate-spin" />
+                  <Loader2 className="h-4 w-4 text-white animate-spin" />
                 ) : (
-                  <Camera className="h-5 w-5 text-white" />
+                  <Camera className="h-4 w-4 text-white" />
                 )}
               </div>
             </label>
-            <div>
-              <p className="text-sm font-medium">{brandProfile?.company_name}</p>
-              <p className="text-xs text-muted-foreground">Click the logo to change it</p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-lg font-semibold truncate">{brandProfile?.company_name}</h2>
+                <Badge variant={planType === "free" ? "secondary" : "default"} className="text-[11px] px-2 py-0">
+                  <Crown className="h-3 w-3 mr-1" />
+                  {planType.charAt(0).toUpperCase() + planType.slice(1)}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">Hover logo to change</p>
             </div>
+            <Button variant="outline" size="sm" className="gap-1 flex-shrink-0" onClick={() => setUpgradeOpen(true)}>
+              {planType === "free" ? "Upgrade" : "Change Plan"} <ArrowUpRight className="h-3 w-3" />
+            </Button>
           </div>
         </CardContent>
       </Card>
+      <UpgradePlanDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} currentPlan={planType} />
 
-      {/* Phone Verification Card - Priority */}
+      {/* Phone Verification */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Phone className="h-4 w-4" />
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Phone className="h-3.5 w-3.5" />
             Phone Verification
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-4 pt-0 space-y-3">
           {!isEditingPhone ? (
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {brandProfile?.phone_number ? (
                   <>
                     <span className="font-mono text-sm">{brandProfile.phone_number}</span>
                     {brandProfile.phone_verified ? (
-                      <Badge variant="default" className="gap-1 bg-green-600">
+                      <Badge variant="default" className="gap-1 bg-green-600 text-[11px] px-1.5 py-0">
                         <CheckCircle2 className="h-3 w-3" />
                         Verified
                       </Badge>
                     ) : (
-                      <Badge variant="destructive" className="gap-1">
+                      <Badge variant="destructive" className="gap-1 text-[11px] px-1.5 py-0">
                         <AlertCircle className="h-3 w-3" />
                         Not Verified
                       </Badge>
@@ -294,56 +245,32 @@ const BrandAccountTab = () => {
                   <span className="text-muted-foreground text-sm">No phone number added</span>
                 )}
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditingPhone(true)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setIsEditingPhone(true)}>
                 {brandProfile?.phone_number ? "Update" : "Add Phone"}
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {!otpSent ? (
                 <>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-sm font-medium">Phone Number</label>
-                    <PhoneInput
-                      value={phoneNumber}
-                      onChange={setPhoneNumber}
-                      placeholder="Enter your phone number"
-                    />
+                    <PhoneInput value={phoneNumber} onChange={setPhoneNumber} placeholder="Enter your phone number" />
                   </div>
                   <div className="flex gap-2">
-                    <Button
-                      onClick={handleSendOtp}
-                      disabled={sendingOtp || !phoneNumber}
-                      size="sm"
-                    >
+                    <Button onClick={handleSendOtp} disabled={sendingOtp || !phoneNumber} size="sm">
                       {sendingOtp && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                       Send Code
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCancelPhoneEdit}
-                    >
-                      Cancel
-                    </Button>
+                    <Button variant="ghost" size="sm" onClick={handleCancelPhoneEdit}>Cancel</Button>
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-sm font-medium">Enter Verification Code</label>
-                    <p className="text-xs text-muted-foreground">
-                      We sent a 6-digit code to {phoneNumber}
-                    </p>
-                    <InputOTP
-                      value={otpCode}
-                      onChange={setOtpCode}
-                      maxLength={6}
-                    >
+                    <p className="text-xs text-muted-foreground">We sent a 6-digit code to {phoneNumber}</p>
+                    <InputOTP value={otpCode} onChange={setOtpCode} maxLength={6}>
                       <InputOTPGroup>
                         <InputOTPSlot index={0} />
                         <InputOTPSlot index={1} />
@@ -355,53 +282,29 @@ const BrandAccountTab = () => {
                     </InputOTP>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button
-                      onClick={handleVerifyOtp}
-                      disabled={verifyingOtp || otpCode.length !== 6}
-                      size="sm"
-                    >
+                    <Button onClick={handleVerifyOtp} disabled={verifyingOtp || otpCode.length !== 6} size="sm">
                       {verifyingOtp && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                       Verify
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setOtpSent(false);
-                        setOtpCode("");
-                      }}
-                    >
-                      Change Number
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCancelPhoneEdit}
-                    >
-                      Cancel
-                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => { setOtpSent(false); setOtpCode(""); }}>Change Number</Button>
+                    <Button variant="ghost" size="sm" onClick={handleCancelPhoneEdit}>Cancel</Button>
                   </div>
                 </>
               )}
             </div>
           )}
-
           {!brandProfile?.phone_verified && !isEditingPhone && (
-            <p className="text-xs text-muted-foreground">
-              Phone verification is required for business verification badge
-            </p>
+            <p className="text-xs text-muted-foreground">Phone verification is required for business verification badge</p>
           )}
         </CardContent>
       </Card>
 
-      {/* Verification Badge Card */}
+      {/* Verification Badge */}
       {brandProfile && (
-        <BrandVerificationBadgeCard 
-          brandProfileId={brandProfile.id} 
-          phoneVerified={brandProfile.phone_verified || false}
-        />
+        <BrandVerificationBadgeCard brandProfileId={brandProfile.id} phoneVerified={brandProfile.phone_verified || false} />
       )}
-      {/* Team Access Card */}
+
+      {/* Team Access */}
       {brandProfile && (
         <TeamAccessCard
           profileId={brandProfile.id}
@@ -412,87 +315,67 @@ const BrandAccountTab = () => {
         />
       )}
 
-      {/* Company Information Card */}
+      {/* Account Details — merged company + account info */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            Company Information
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Building2 className="h-3.5 w-3.5" />
+            Account Details
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 text-sm">
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Company Name</span>
+        <CardContent className="p-4 pt-0">
+          <div className="grid gap-0 text-sm">
+            <div className="flex items-center justify-between py-1.5 border-b">
+              <span className="text-muted-foreground">Company</span>
               <span className="font-medium">{brandProfile?.company_name || "—"}</span>
             </div>
             {brandProfile?.industry && (
-              <div className="flex items-center justify-between py-2 border-b">
+              <div className="flex items-center justify-between py-1.5 border-b">
                 <span className="text-muted-foreground">Industry</span>
                 <span>{brandProfile.industry}</span>
               </div>
             )}
             {brandProfile?.company_size && (
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Company Size</span>
+              <div className="flex items-center justify-between py-1.5 border-b">
+                <span className="text-muted-foreground">Size</span>
                 <span>{brandProfile.company_size}</span>
               </div>
             )}
             {brandProfile?.website_url && (
-              <div className="flex items-center justify-between py-2 border-b">
+              <div className="flex items-center justify-between py-1.5 border-b">
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <Globe className="h-3.5 w-3.5" />
+                  <Globe className="h-3 w-3" />
                   Website
                 </span>
-                <a 
-                  href={brandProfile.website_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
+                <a href={brandProfile.website_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[200px]">
                   {brandProfile.website_url}
                 </a>
               </div>
             )}
             {brandProfile?.location_country && (
-              <div className="flex items-center justify-between py-2">
+              <div className="flex items-center justify-between py-1.5 border-b">
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5" />
+                  <MapPin className="h-3 w-3" />
                   Location
                 </span>
                 <span>{brandProfile.location_country}</span>
               </div>
             )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Account Information Card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Mail className="h-4 w-4" />
-            Account Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 text-sm">
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Email</span>
+            <div className="flex items-center justify-between py-1.5 border-b">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Mail className="h-3 w-3" />
+                Email
+              </span>
               <span className="font-medium">{userEmail || "—"}</span>
             </div>
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center justify-between py-1.5">
               <span className="text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5" />
+                <Calendar className="h-3 w-3" />
                 Member Since
               </span>
               <span>
-                {brandProfile?.created_at 
-                  ? new Date(brandProfile.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })
+                {brandProfile?.created_at
+                  ? new Date(brandProfile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
                   : "—"
                 }
               </span>
