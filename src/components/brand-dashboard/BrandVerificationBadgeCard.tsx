@@ -167,7 +167,7 @@ const BrandVerificationBadgeCard = ({ brandProfileId, phoneVerified }: BrandVeri
                     Verified Business
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Expires {format(new Date(verificationStatus.verification_expires_at!), "MMMM d, yyyy")} · Includes 3 free posts/month
+                    Expires {format(new Date(verificationStatus.verification_expires_at!), "MMMM d, yyyy")} · Includes 4 free posts/month
                   </p>
                 </div>
               </div>
@@ -263,9 +263,9 @@ const BrandVerificationBadgeCard = ({ brandProfileId, phoneVerified }: BrandVeri
                 <div className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   <div>
-                    <p className="font-medium text-sm">3 Free Opportunity Posts/Month</p>
+                    <p className="font-medium text-sm">4 Free Opportunity Posts/Month</p>
                     <p className="text-xs text-muted-foreground">
-                      Post up to 3 opportunities per month at no extra cost
+                      Post up to 4 opportunities per month at no extra cost
                     </p>
                   </div>
                 </div>

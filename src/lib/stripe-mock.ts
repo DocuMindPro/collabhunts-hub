@@ -24,7 +24,7 @@ export const SUBSCRIPTION_PLANS = {
     priceId: 'price_basic_annual',
     features: [
       'Verified Business Badge for 1 year',
-      '3 free opportunity posts per month',
+      '4 free opportunity posts per month',
       'Priority visibility with creators',
       'Browse creators on the marketplace',
       'Message 10 creators/month',
