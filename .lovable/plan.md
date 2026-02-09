@@ -1,111 +1,32 @@
 
-## Add TikTok Live Insights to Creator Onboarding + Admin Filtering
 
-### Overview
-Add a new onboarding step that asks creators about their TikTok Live activity. The data will be stored in a new database table and surfaced in the Admin panel with filtering and detail view capabilities.
+## Professional Redesign: Brand Registration Prompt
 
-### Onboarding Flow Logic
+### Problem
+The current popup uses rounded pill-shaped benefit rows, a large orange icon, and heavy gradient accent that gives it a playful, consumer-app feel rather than a professional B2B aesthetic.
 
-```text
-Question 1: "Do you go live on TikTok?"
-  |
-  +-- YES --> Question 2: "What's your average monthly revenue from TikTok Live?"
-  |              (dropdown: Under $100, $100-$500, $500-$1,000, $1,000-$5,000, $5,000+)
-  |
-  +-- NO  --> Question 2: "Would you be interested in going live on TikTok if it could generate income?"
-                 (options: Yes definitely, Maybe - I'd like to learn more, Not right now)
-```
+### Design Direction
+Inspired by Stripe, Linear, and Vercel modal patterns -- minimal, high-contrast, confident typography with subtle depth.
 
-This captures three valuable data points:
-- Whether the creator currently goes live
-- If yes: their earning tier (helps you assess their value)
-- If no: their openness to it (helps you identify potential converters)
+### Changes (single file: `src/components/BrandRegistrationPrompt.tsx`)
 
-### Database Migration
+**Visual overhaul:**
 
-New table `creator_tiktok_live_insights` linked to `creator_profiles`:
+1. **Remove the gradient accent bar** at the top -- replace with a clean, subtle top border or nothing
+2. **Replace the large orange icon** with a smaller, understated icon inside a soft muted circle (not a bold gradient square)
+3. **Typography**: Use tighter, bolder heading (`text-xl font-bold tracking-tight`) and a shorter, punchier subtitle
+4. **Benefits list**: Replace the pill-shaped rows with a minimal checklist layout -- simple checkmarks with `text-sm` text, no background pills, no borders, just clean vertical list with subtle gray check icons
+5. **CTA button**: Use a solid dark button (not bright orange gradient) with confident copy -- a clean `bg-foreground text-background` or primary with less visual noise, no arrow icon
+6. **Add a subtle "Skip" or "Maybe Later" text link** below the CTA so it doesn't feel like a trap (currently the dialog blocks all interaction with no way out)
+7. **Spacing**: Tighten padding from `p-8` to `p-6`, reduce `space-y-6` to `space-y-4`
+8. **Overall card**: Add `rounded-xl` with subtle shadow, remove the harsh gradient bar
 
-```sql
-CREATE TABLE public.creator_tiktok_live_insights (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  creator_profile_id uuid NOT NULL REFERENCES public.creator_profiles(id) ON DELETE CASCADE,
-  goes_live boolean NOT NULL DEFAULT false,
-  monthly_revenue_range text,        -- 'under_100', '100_500', '500_1000', '1000_5000', '5000_plus'
-  interest_in_going_live text,       -- 'yes_definitely', 'maybe', 'not_now' (only when goes_live = false)
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now(),
-  UNIQUE(creator_profile_id)
-);
+### Result
+A clean, confident, business-grade modal that feels like a premium SaaS product rather than a children's app -- clear value prop, minimal decoration, strong CTA.
 
-ALTER TABLE public.creator_tiktok_live_insights ENABLE ROW LEVEL SECURITY;
+### Technical Details
+- Single file change: `src/components/BrandRegistrationPrompt.tsx`
+- No new dependencies
+- No database changes
+- Uses existing UI primitives (Button, Dialog)
 
-CREATE POLICY "Creators can manage own tiktok insights"
-  ON public.creator_tiktok_live_insights
-  FOR ALL USING (
-    creator_profile_id IN (
-      SELECT id FROM public.creator_profiles WHERE user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Admins can view all tiktok insights"
-  ON public.creator_tiktok_live_insights
-  FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.admin_users WHERE user_id = auth.uid())
-  );
-```
-
-### Files to Edit
-
-**1. `src/pages/CreatorSignup.tsx`** (web onboarding)
-- Add state for `goesLiveTiktok`, `tiktokMonthlyRevenue`, `tiktokLiveInterest`
-- Insert a new step between current Step 4 (Social Accounts) and Step 5 (Services) -- this step only shows if the creator added TikTok as a social account
-- If TikTok is not in their social accounts, skip this step automatically
-- On final submit, insert a row into `creator_tiktok_live_insights`
-- Update total steps count from 7 to 8
-
-**2. `src/pages/NativeCreatorOnboarding.tsx`** (native/mobile onboarding)
-- Same TikTok Live step between Social Accounts (step 2) and Services (step 3)
-- Conditionally show only if TikTok was added in step 2
-- On submit, insert into `creator_tiktok_live_insights`
-- Update total steps from 4 to 5
-
-**3. `src/components/admin/AdminCreatorsTab.tsx`** (admin panel)
-- Fetch `creator_tiktok_live_insights` data alongside existing queries
-- Add to `CreatorData` interface: `goes_live_tiktok`, `tiktok_monthly_revenue`, `tiktok_live_interest`
-- Add a new filter dropdown: "TikTok Live" with options: All, Goes Live, Doesn't Go Live, Interested, Not Interested
-- Show TikTok Live info in the Creator Detail modal (new section below Categories)
-- Include TikTok Live columns in CSV export
-
-**4. `src/components/admin/CreatorOnboardingPreview.tsx`** (admin preview)
-- Add the TikTok Live step to the onboarding preview so admins can see how it looks
-
-### UI for the New Onboarding Step
-
-The step will use a clean card-based selection (radio-style cards, not plain radio buttons):
-
-- **"Do you go live on TikTok?"** -- Two large tappable cards: "Yes, I go live" / "No, I don't"
-- **Follow-up (if Yes):** Select dropdown for monthly revenue range
-- **Follow-up (if No):** Three tappable cards for interest level, each with a short description
-
-### Admin Detail Modal Addition
-
-New section in the creator detail dialog:
-
-```text
-TikTok Live
-Goes Live: Yes / No
-Monthly Revenue: $500-$1,000  (or "Interest Level: Maybe - I'd like to learn more")
-```
-
-### Admin Filter Addition
-
-New dropdown in filter row 2:
-
-```text
-[TikTok Live ▾]
-  All
-  Goes Live
-  Doesn't Go Live
-  Interested in Going Live
-  Not Interested
-```
