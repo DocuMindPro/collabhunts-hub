@@ -55,39 +55,38 @@ const TermsOfService = () => {
 
             {/* Section 3 - Business Model */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">3. Platform Fee & Payment Model</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">3. Platform Model</h2>
               <p className="text-muted-foreground mb-4">
-                CollabHunts operates on a <strong>transactional fee model</strong>. We charge a <strong>15% platform fee</strong> on each completed booking.
+                CollabHunts operates as a <strong>zero-commission marketplace</strong>. We do not take any fees from bookings between Brands and Creators. 
+                All financial arrangements are made directly between the parties.
               </p>
               <p className="text-muted-foreground mb-4">
                 <strong>How it works:</strong>
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li>Brands browse and select Creators on our platform</li>
-                <li>Brands book Creators for events at the Creator's listed price</li>
-                <li>Upon booking confirmation, Brands pay a <strong>50% deposit</strong> which is held in escrow</li>
-                <li>The remaining 50% is due before the event date</li>
-                <li>After successful event completion and Brand approval, funds are released to the Creator (minus the 15% platform fee)</li>
+                <li>Brands and Creators communicate and negotiate directly via our messaging tools</li>
+                <li>AI-assisted agreements help document collaboration terms for record-keeping</li>
+                <li>Payment is handled directly between the parties, outside the platform</li>
               </ul>
               <p className="text-muted-foreground mb-4">
-                <strong>Free Features:</strong> Account creation, browsing creators, viewing pricing, messaging, and advanced search filters are all free for Brands. You only pay when you book a Creator.
+                <strong>Free Features:</strong> Account creation, browsing creators, viewing pricing, messaging, and advanced search filters are all free for Brands on the Free plan.
               </p>
             </section>
 
-            {/* Section 4 - Escrow System */}
+            {/* Section 4 - Direct Payments */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">4. Escrow & Payment Protection</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">4. Direct Payments Between Parties</h2>
               <p className="text-muted-foreground mb-4">
-                All booking payments are processed through our secure escrow system:
+                CollabHunts does <strong>not</strong> process, hold, or manage any payments between Brands and Creators. All financial transactions are handled directly between the parties involved:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>50% Deposit:</strong> Paid at booking confirmation, held securely in escrow</li>
-                <li><strong>50% Balance:</strong> Due before the event date</li>
-                <li><strong>Release:</strong> Funds released to Creator after event completion and Brand approval (or automatically after 72 hours if no disputes)</li>
-                <li><strong>Platform Fee:</strong> 15% is deducted from the Creator's payout</li>
+                <li><strong>Payment Terms:</strong> Brands and Creators negotiate and agree on payment terms directly</li>
+                <li><strong>Payment Method:</strong> Parties choose their preferred payment method outside the platform</li>
+                <li><strong>Platform Role:</strong> CollabHunts facilitates discovery, communication, and AI-assisted agreements for record-keeping only</li>
               </ul>
               <p className="text-muted-foreground mb-4">
-                This escrow system protects both Brands and Creators by ensuring funds are secure until services are delivered.
+                CollabHunts is not responsible for any payment disputes between Brands and Creators.
               </p>
             </section>
 
@@ -131,20 +130,14 @@ const TermsOfService = () => {
               </ol>
             </section>
 
-            {/* Section 7 - Refunds & Cancellations */}
+            {/* Section 7 - Cancellations */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">7. Refunds & Cancellations</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">7. Cancellations & Disputes</h2>
               <p className="text-muted-foreground mb-4">
-                Our complete Refund & Cancellation Policy is available at <Link to="/refund" className="text-primary hover:underline">collabhunts.com/refund</Link>. Key points include:
+                Since all payments are handled directly between Brands and Creators, cancellation and refund terms should be agreed upon by both parties prior to the event. CollabHunts is not responsible for financial disputes.
               </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Before Creator Confirmation:</strong> Full refund if booking is cancelled before Creator accepts</li>
-                <li><strong>After Confirmation, Before Event:</strong> Refund eligibility depends on cancellation timing and reason</li>
-                <li><strong>Creator No-Show:</strong> Full refund plus potential compensation</li>
-                <li><strong>Event Issues:</strong> Disputes handled through our resolution process</li>
-              </ul>
               <p className="text-muted-foreground mb-4">
-                All refunds are processed within 5-10 business days to the original payment method.
+                We encourage both parties to use our AI-assisted agreement tool to document cancellation terms before confirming any booking.
               </p>
             </section>
 
@@ -176,7 +169,7 @@ const TermsOfService = () => {
                 <li>Maintain professional conduct during all events</li>
                 <li>Respond to booking requests within 48 hours</li>
                 <li>Not cancel confirmed bookings except for genuine emergencies</li>
-                <li>Accept the 15% platform fee on all completed bookings</li>
+                <li>Accept the platform's terms regarding pricing visibility and subscription plans</li>
               </ul>
               <p className="text-muted-foreground mb-4">
                 <strong>Misrepresentation of metrics (fake followers, purchased engagement, inflated statistics) will result in immediate account termination and forfeiture of pending payments.</strong>
@@ -193,10 +186,9 @@ const TermsOfService = () => {
                 <li>Provide accurate information about your venue and event requirements</li>
                 <li>Pay deposits and balances on time as specified</li>
                 <li>Provide safe and appropriate event conditions for Creators</li>
-                <li>Approve or raise disputes within 72 hours of event completion</li>
+                <li>Approve or raise disputes in a timely manner after event completion</li>
                 <li>Not request services that violate platform policies or applicable laws</li>
                 <li>Maintain professional communication with Creators at all times</li>
-                <li>Understand that inaction for 72 hours constitutes approval and triggers auto-release of payment</li>
               </ul>
             </section>
 
