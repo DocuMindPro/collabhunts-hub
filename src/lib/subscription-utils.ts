@@ -139,6 +139,77 @@ export const getMessageLimit = (planType: PlanType | string): number => {
   }
 };
 
+// Get the AI draft agreement limit for a given plan
+export const getAiDraftLimit = (planType: PlanType | string): number => {
+  switch (planType) {
+    case 'pro': return 100;
+    case 'basic': return 30;
+    default: return 5; // free / none
+  }
+};
+
+// Check if a brand can use AI to draft an agreement
+export const canBrandUseAiDraft = async (
+  brandProfileId: string
+): Promise<{ canUse: boolean; used: number; limit: number; reason?: string }> => {
+  try {
+    const { data: brand } = await supabase
+      .from('brand_profiles')
+      .select('id, user_id, ai_drafts_used_this_month, ai_drafts_reset_at')
+      .eq('id', brandProfileId)
+      .single();
+
+    if (!brand) return { canUse: false, used: 0, limit: 0, reason: 'Brand profile not found' };
+
+    const planType = await getCurrentPlanType(brand.user_id);
+    const limit = getAiDraftLimit(planType);
+
+    // Auto-reset if we're in a new month
+    const resetAt = new Date(brand.ai_drafts_reset_at);
+    const now = new Date();
+    let currentCount = brand.ai_drafts_used_this_month;
+
+    if (now.getMonth() !== resetAt.getMonth() || now.getFullYear() !== resetAt.getFullYear()) {
+      await supabase
+        .from('brand_profiles')
+        .update({ ai_drafts_used_this_month: 0, ai_drafts_reset_at: now.toISOString() })
+        .eq('id', brandProfileId);
+      currentCount = 0;
+    }
+
+    if (currentCount >= limit) {
+      const planName = planType === 'basic' ? 'Basic' : planType === 'pro' ? 'Pro' : 'Free';
+      return {
+        canUse: false,
+        used: currentCount,
+        limit,
+        reason: `You've reached your ${planName} plan limit of ${limit} AI-drafted agreements per month. Upgrade your plan for more.`
+      };
+    }
+
+    return { canUse: true, used: currentCount, limit };
+  } catch (error) {
+    console.error('Error checking AI draft limit:', error);
+    return { canUse: true, used: 0, limit: 999 }; // fail open
+  }
+};
+
+// Increment the AI draft counter after a successful AI improvement
+export const incrementAiDraftCounter = async (brandProfileId: string): Promise<void> => {
+  const { data: brand } = await supabase
+    .from('brand_profiles')
+    .select('ai_drafts_used_this_month')
+    .eq('id', brandProfileId)
+    .single();
+
+  if (brand) {
+    await supabase
+      .from('brand_profiles')
+      .update({ ai_drafts_used_this_month: brand.ai_drafts_used_this_month + 1 })
+      .eq('id', brandProfileId);
+  }
+};
+
 // Check if a brand can message a new creator (enforces monthly limit)
 export const canBrandMessageCreator = async (
   brandProfileId: string,

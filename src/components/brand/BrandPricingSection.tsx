@@ -29,7 +29,7 @@ const plans = [
     features: [
       { text: "Browse creators", included: true },
       { text: "Message 1 creator/month", included: true },
-      { text: "AI-drafted agreements", included: true },
+      { text: "5 AI-drafted agreements/month", included: true },
       { text: "$15 per opportunity post", included: true },
       { text: "Verified Business Badge", included: false },
       { text: "Team access (invite members)", included: false },
@@ -51,7 +51,7 @@ const plans = [
     features: [
       { text: "Browse creators", included: true },
       { text: "Message 10 creators/month", included: true },
-      { text: "AI-drafted agreements", included: true },
+      { text: "30 AI-drafted agreements/month", included: true },
       { text: "4 free opportunity posts/month", included: true },
       { text: "Verified Business Badge", included: true },
       { text: "Priority visibility", included: true },
@@ -72,7 +72,7 @@ const plans = [
     features: [
       { text: "Browse creators", included: true },
       { text: "Unlimited creator messaging", included: true },
-      { text: "AI-drafted agreements", included: true },
+      { text: "100 AI-drafted agreements/month", included: true },
       { text: "Unlimited opportunity posts", included: true },
       { text: "Verified Business Badge", included: true },
       { text: "Team access (invite members)", included: true },

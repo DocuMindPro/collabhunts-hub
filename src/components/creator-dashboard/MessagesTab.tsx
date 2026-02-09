@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Send, MessageSquare, ArrowLeft, Circle, FileText, ScrollText } from "lucide-react";
+import { Send, MessageSquare, ArrowLeft, Circle, FileText } from "lucide-react";
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
@@ -16,7 +16,6 @@ import PackageInquiryMessage, { isPackageInquiry } from "@/components/chat/Packa
 import OfferMessage, { isOfferMessage } from "@/components/chat/OfferMessage";
 import AgreementMessage from "@/components/chat/AgreementMessage";
 import SendOfferDialog from "@/components/chat/SendOfferDialog";
-import SendAgreementDialog from "@/components/agreements/SendAgreementDialog";
 import CounterOfferDialog from "@/components/chat/CounterOfferDialog";
 import { type NegotiationData } from "@/components/chat/NegotiationMessage";
 import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
@@ -52,7 +51,6 @@ interface OnlineStatus {
 const MessagesTab = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showOfferDialog, setShowOfferDialog] = useState(false);
-  const [showAgreementDialog, setShowAgreementDialog] = useState(false);
   const [showCounterDialog, setShowCounterDialog] = useState(false);
   const [activeNegotiation, setActiveNegotiation] = useState<NegotiationData | null>(null);
   const [prefillPackageData, setPrefillPackageData] = useState<{
@@ -73,22 +71,22 @@ const MessagesTab = () => {
   const isNative = Capacitor.isNativePlatform();
   const { keyboardHeight } = useKeyboardHeight();
 
-  // Handle accept - opens agreement dialog with pre-filled data
+  // Handle accept - send acceptance message
   const handleAcceptInquiry = async (data: NegotiationData) => {
     try {
-      // Update the message status to accepted
       await supabase
         .from("messages")
         .update({ negotiation_status: "accepted" })
         .eq("id", data.message_id);
       
-      // Pre-fill and open agreement dialog
-      setActiveNegotiation(data);
-      setPrefillPackageData({
-        serviceType: data.package_type,
-        priceCents: data.proposed_budget_cents,
+      await supabase.from("messages").insert({
+        conversation_id: selectedConversation,
+        sender_id: userId,
+        content: `✅ I accept the inquiry for the ${data.package_type.replace(/_/g, ' ')} package at $${(data.proposed_budget_cents / 100).toFixed(0)}. The brand can now send a formal agreement.`,
+        message_type: "text",
       });
-      setShowAgreementDialog(true);
+      
+      toast.success("Inquiry accepted! The brand can now send an agreement.");
       fetchMessages(selectedConversation || "");
     } catch (error) {
       console.error("Error accepting inquiry:", error);
@@ -578,15 +576,6 @@ const MessagesTab = () => {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => setShowAgreementDialog(true)}
-              title="Send Agreement"
-              className="shrink-0"
-            >
-              <ScrollText className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
               onClick={() => setShowOfferDialog(true)}
               title="Send Offer"
               className="shrink-0"
@@ -605,18 +594,6 @@ const MessagesTab = () => {
             </Button>
           </div>
         </div>
-
-        {/* Send Agreement Dialog */}
-        {creatorProfileId && (
-          <SendAgreementDialog
-            open={showAgreementDialog}
-            onOpenChange={setShowAgreementDialog}
-            conversationId={selectedConversation || ""}
-            creatorProfileId={creatorProfileId}
-            brandProfileId={selectedConvo.brand_profile_id}
-            onAgreementSent={() => fetchMessages(selectedConversation || "")}
-          />
-        )}
 
         {/* Send Offer Dialog */}
         {creatorProfileId && (

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Send, MessageSquare, ArrowLeft, Circle } from "lucide-react";
+import { Send, MessageSquare, ArrowLeft, Circle, ScrollText } from "lucide-react";
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
@@ -16,6 +16,8 @@ import InquiryFormCard, { type InquiryFormData } from "@/components/chat/Inquiry
 import PackageInquiryMessage, { isPackageInquiry } from "@/components/chat/PackageInquiryMessage";
 import OfferMessage, { isOfferMessage } from "@/components/chat/OfferMessage";
 import CounterOfferDialog from "@/components/chat/CounterOfferDialog";
+import AgreementMessage from "@/components/chat/AgreementMessage";
+import SendAgreementDialog from "@/components/agreements/SendAgreementDialog";
 import { type NegotiationData } from "@/components/chat/NegotiationMessage";
 import { getMessagePreview } from "@/lib/message-preview";
 import MessagingLimitBanner from "./MessagingLimitBanner";
@@ -63,7 +65,9 @@ const BrandMessagesTab = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({});
   const [pendingPackage, setPendingPackage] = useState<PendingPackage | null>(null);
+  const [brandProfileId, setBrandProfileId] = useState<string | null>(null);
   const [showCounterDialog, setShowCounterDialog] = useState(false);
+  const [showAgreementDialog, setShowAgreementDialog] = useState(false);
   const [activeNegotiation, setActiveNegotiation] = useState<NegotiationData | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -256,7 +260,8 @@ const BrandMessagesTab = () => {
         .eq("user_id", user.id)
         .single();
 
-      if (!profile) return;
+       if (!profile) return;
+       setBrandProfileId(profile.id);
 
       const { data, error } = await supabase
         .from("conversations")
@@ -568,6 +573,16 @@ const BrandMessagesTab = () => {
                   const showAvatar = !isOwn && (msgIndex === 0 || group.messages[msgIndex - 1]?.sender_id !== msg.sender_id);
                   const isPackageInquiryMsg = isPackageInquiry(msg.content);
                   const isOffer = isOfferMessage(msg.content);
+                  const isAgreement = msg.message_type === "agreement";
+                  
+                  let agreementContent = null;
+                  if (isAgreement) {
+                    try {
+                      agreementContent = JSON.parse(msg.content);
+                    } catch (e) {
+                      console.error("Failed to parse agreement content:", e);
+                    }
+                  }
                   
                   return (
                     <div
@@ -586,7 +601,13 @@ const BrandMessagesTab = () => {
                           )}
                         </div>
                       )}
-                      {isOffer ? (
+                      {isAgreement && agreementContent ? (
+                        <AgreementMessage 
+                          messageContent={agreementContent}
+                          isOwnMessage={isOwn}
+                          onAgreementUpdated={() => fetchMessages(selectedConversation || "")}
+                        />
+                      ) : isOffer ? (
                         <OfferMessage 
                           content={msg.content} 
                           isOwn={isOwn} 
@@ -647,6 +668,15 @@ const BrandMessagesTab = () => {
   const renderMessageInput = () => (
     <div className="p-4 border-t bg-card">
       <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setShowAgreementDialog(true)}
+          title="Send Agreement"
+          className="shrink-0"
+        >
+          <ScrollText className="h-4 w-4" />
+        </Button>
         <Input
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
@@ -658,6 +688,18 @@ const BrandMessagesTab = () => {
           <Send className="h-4 w-4" />
         </Button>
       </div>
+
+      {/* Send Agreement Dialog */}
+      {brandProfileId && selectedConvo && (
+        <SendAgreementDialog
+          open={showAgreementDialog}
+          onOpenChange={setShowAgreementDialog}
+          conversationId={selectedConversation || ""}
+          creatorProfileId={selectedConvo.creator_profile_id}
+          brandProfileId={brandProfileId}
+          onAgreementSent={() => fetchMessages(selectedConversation || "")}
+        />
+      )}
     </div>
   );
 

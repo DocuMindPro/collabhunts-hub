@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AGREEMENT_TEMPLATES, type AgreementTemplateType, type DeliverableItem } from "@/config/agreement-templates";
+import { canBrandUseAiDraft, incrementAiDraftCounter } from "@/lib/subscription-utils";
 
 interface SendAgreementDialogProps {
   open: boolean;
@@ -64,6 +65,13 @@ const SendAgreementDialog = ({
       return;
     }
 
+    // Check AI draft usage limit
+    const { canUse, used, limit, reason } = await canBrandUseAiDraft(brandProfileId);
+    if (!canUse) {
+      toast.error(reason || "AI draft limit reached");
+      return;
+    }
+
     setAiLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('draft-agreement', {
@@ -80,7 +88,8 @@ const SendAgreementDialog = ({
       
       if (data?.improvedContent) {
         setContent(data.improvedContent);
-        toast.success("Agreement improved with AI suggestions!");
+        await incrementAiDraftCounter(brandProfileId);
+        toast.success(`Agreement improved with AI! (${used + 1}/${limit} used this month)`);
       }
     } catch (error: any) {
       console.error("AI improvement error:", error);
