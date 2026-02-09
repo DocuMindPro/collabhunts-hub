@@ -14,6 +14,7 @@ import { EVENT_PACKAGES, PackageType } from "@/config/packages";
 import { formatFollowerRanges } from "@/config/follower-ranges";
 import CreateOpportunityDialog from "./CreateOpportunityDialog";
 import OpportunityApplicationsDialog from "./OpportunityApplicationsDialog";
+import FeatureLockedCard from "./FeatureLockedCard";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +48,7 @@ interface BrandOpportunity {
 
 interface BrandOpportunitiesTabProps {
   brandProfileId: string;
+  registrationCompleted?: boolean;
 }
 
 const PACKAGE_ACCENT: Record<string, string> = {
@@ -57,7 +59,7 @@ const PACKAGE_ACCENT: Record<string, string> = {
   custom: "border-l-muted-foreground",
 };
 
-const BrandOpportunitiesTab = ({ brandProfileId }: BrandOpportunitiesTabProps) => {
+const BrandOpportunitiesTab = ({ brandProfileId, registrationCompleted = true }: BrandOpportunitiesTabProps) => {
   const [opportunities, setOpportunities] = useState<BrandOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -174,6 +176,15 @@ const BrandOpportunitiesTab = ({ brandProfileId }: BrandOpportunitiesTabProps) =
           </Card>
         ))}
       </div>
+    );
+  }
+
+  if (!registrationCompleted) {
+    return (
+      <FeatureLockedCard 
+        title="Opportunities Locked" 
+        description="Complete your brand registration to post opportunities and attract creators." 
+      />
     );
   }
 

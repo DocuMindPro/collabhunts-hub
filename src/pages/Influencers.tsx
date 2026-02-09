@@ -141,13 +141,6 @@ const Influencers = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Check for brand profile
-        const { data: brandProfile } = await supabase
-          .from("brand_profiles")
-          .select("id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        
         // Check for creator profile
         const { data: creatorProfile } = await supabase
           .from("creator_profiles")
@@ -155,23 +148,35 @@ const Influencers = () => {
           .eq("user_id", user.id)
           .maybeSingle();
         
-        // Redirect creators to their dashboard - they shouldn't browse other creators
+        // Redirect creators to their dashboard
         if (creatorProfile) {
           navigate('/creator-dashboard', { replace: true });
           return;
         }
+        
+        // Check for brand profile with registration status
+        const { data: brandProfile } = await supabase
+          .from("brand_profiles")
+          .select("id, registration_completed")
+          .eq("user_id", user.id)
+          .maybeSingle();
         
         // Redirect non-brand users to homepage
         if (!brandProfile) {
           navigate('/', { replace: true });
           return;
         }
+
+        // Block unregistered brands
+        if (!brandProfile.registration_completed) {
+          navigate('/brand-dashboard', { replace: true });
+          return;
+        }
         
-        setHasBrandProfile(!!brandProfile);
-        setHasCreatorProfile(!!creatorProfile);
+        setHasBrandProfile(true);
+        setHasCreatorProfile(false);
         setIsLoggedIn(true);
       } else {
-        // Not logged in - redirect to homepage
         navigate('/', { replace: true });
         return;
       }

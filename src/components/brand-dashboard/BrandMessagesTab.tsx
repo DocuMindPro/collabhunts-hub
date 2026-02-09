@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Send, MessageSquare, ArrowLeft, Circle, ScrollText } from "lucide-react";
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
+import FeatureLockedCard from "./FeatureLockedCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import TypingIndicator from "@/components/chat/TypingIndicator";
@@ -55,7 +56,11 @@ interface PendingPackage {
   delivery_days: number;
 }
 
-const BrandMessagesTab = () => {
+interface BrandMessagesTabProps {
+  registrationCompleted?: boolean;
+}
+
+const BrandMessagesTab = ({ registrationCompleted = true }: BrandMessagesTabProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -440,6 +445,15 @@ const BrandMessagesTab = () => {
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
+    );
+  }
+
+  if (!registrationCompleted) {
+    return (
+      <FeatureLockedCard 
+        title="Messages Locked" 
+        description="Complete your brand registration to message creators and start conversations." 
+      />
     );
   }
 
