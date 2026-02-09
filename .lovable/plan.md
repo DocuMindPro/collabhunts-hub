@@ -1,54 +1,66 @@
 
 
-## Fix Missing Badges on Creator Profile Page
+## Redesign Brand Opportunity Cards (Dashboard View)
 
 ### Problem
-The discovery cards on `/influencers` show up to 5 badges (Vetted, Featured, VIP, Responds Fast, Free Invites), but the creator profile page (`/creator/:id`) only renders 2 badges: Vetted and VIP. The profile page is missing Featured, Responds Fast, and Free Invites badges entirely.
+The current opportunity cards in the Brand Dashboard "Opps" tab are plain and text-heavy with minimal visual hierarchy. They show only basic metadata (title, status, package type, date, applications, spots, budget) in a flat list format with no description preview, no location, no deliverables preview, no deadline info, and no visual distinction between card types.
 
-### Root Cause
-The `CreatorProfile.tsx` page:
-1. Does not fetch `is_featured` or `avg_response_minutes` from the `creator_profiles` table
-2. Does not import `FeaturedBadge` or `RespondsFastBadge` components
-3. Only renders `VettedBadge` and `VIPCreatorBadge` in both mobile and desktop badge rows
+### Solution
+Redesign the `BrandOpportunitiesTab` cards to be richer, more visually polished, and information-dense -- following dashboard card best practices.
 
-### Changes (single file: `src/pages/CreatorProfile.tsx`)
+### Changes (single file: `src/components/brand-dashboard/BrandOpportunitiesTab.tsx`)
 
-**1. Add missing data fields to the `CreatorData` interface**
-- Add `is_featured: boolean | null`
-- Add `avg_response_minutes: number | null`
+**1. Add a `views_count` column to the database**
+- Add an integer `views_count` column (default 0) to `brand_opportunities` so brands can see how many creators viewed their posting
+- This will be incremented on the public Opportunities page when a creator views the card details
 
-**2. Add missing imports**
-- Import `FeaturedBadge` from `@/components/FeaturedBadge`
-- Import `RespondsFastBadge` from `@/components/RespondsFastBadge`
+**2. Fetch additional data**
+- Include `is_featured`, `requirements`, `location_city`, `location_country`, `follower_ranges`, `start_time`, `end_time`, `description` in the interface (already fetched via `select("*")`)
+- Add `views_count` to the interface after the migration
 
-**3. Fetch the missing fields from the database**
-- The query already uses `select("*")`, so `is_featured` and `avg_response_minutes` are already returned -- just need to map them into state
+**3. Redesigned card layout**
 
-**4. Update state mapping in `fetchCreatorProfile`**
-- Add `is_featured: profileData.is_featured` and `avg_response_minutes: profileData.avg_response_minutes` to the state object
+Each opportunity card will have:
 
-**5. Update badge rendering (mobile, line ~589 and desktop, line ~669)**
-Both badge rows currently show only:
-```
-<VettedBadge variant="pill" size="sm" />
-{isVIP(creator) && <VIPCreatorBadge variant="pill" size="sm" />}
-```
-
-Will be updated to show all 5 badges, matching the Influencers page logic:
-```
-<VettedBadge variant="pill" size="sm" />
-{creator.is_featured && <FeaturedBadge variant="pill" size="sm" />}
-{isVIP(creator) && <VIPCreatorBadge variant="pill" size="sm" />}
-{creator.avg_response_minutes !== null && creator.avg_response_minutes <= 1440 && (
-  <RespondsFastBadge variant="pill" size="sm" />
-)}
-{creator.open_to_invitations && (
-  <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full text-white text-xs font-semibold">
-    <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
-    Free Invites
-  </span>
-)}
+```text
++------------------------------------------------------+
+| [Package Icon]  Title                    [Status] [...] |
+| Brand Package Name  *  Location  *  Date + Time        |
+|------------------------------------------------------|
+| Description preview (2 lines, truncated)              |
+|                                                       |
+| [Deliverables pill] [Follower target pill]            |
+|                                                       |
+| +----------+ +----------+ +----------+ +----------+  |
+| | 0 Views  | | 0 Apps   | | 3 Spots  | | $50/ea   |  |
+| +----------+ +----------+ +----------+ +----------+  |
+|                                                       |
+| [Deadline badge if set]    [View Applications button] |
++------------------------------------------------------+
 ```
 
-### Result
-All badges that appear on discovery cards will now also appear on the creator profile page, ensuring consistency across views.
+Key visual improvements:
+- **Package-colored left accent border** (blue for Social Boost, purple for Meet and Greet, orange for Unbox and Review, gray for Custom)
+- **Stats grid** with 4 mini stat cards (Views, Applications, Spots Left, Budget) using icons and subtle backgrounds
+- **Description preview** truncated to 2 lines with `line-clamp-2`
+- **Deliverables preview** showing first 2 items from the package includes as small pills
+- **Follower targeting** shown as a compact badge when set
+- **Location** shown with MapPin icon
+- **Time range** shown when start/end times exist
+- **Application deadline** shown as a countdown/warning badge when approaching
+- **Featured glow** ring effect on featured opportunities matching the public board style
+- **Progress bar** for spots filled (visual fill indicator)
+
+**4. Increment views on the public Opportunities page**
+- In `src/pages/Opportunities.tsx`, add a lightweight view counter that increments `views_count` when a creator scrolls an opportunity card into view (using IntersectionObserver or on card render)
+
+### Database Migration
+```sql
+ALTER TABLE brand_opportunities 
+ADD COLUMN views_count integer NOT NULL DEFAULT 0;
+```
+
+### Files to Edit
+- `src/components/brand-dashboard/BrandOpportunitiesTab.tsx` -- full card redesign
+- `src/pages/Opportunities.tsx` -- add view count increment on card visibility
+
