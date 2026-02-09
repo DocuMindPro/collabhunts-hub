@@ -3,16 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, X, ArrowUpRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { getCurrentPlanType, getMessageLimit } from "@/lib/subscription-utils";
+import UpgradePlanDialog from "./UpgradePlanDialog";
 
 const MessagingLimitBanner = () => {
-  const navigate = useNavigate();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [used, setUsed] = useState(0);
   const [limit, setLimit] = useState(1);
   const [dismissed, setDismissed] = useState(false);
   const [show, setShow] = useState(false);
   const [atLimit, setAtLimit] = useState(false);
+  const [planType, setPlanType] = useState("free");
 
   useEffect(() => {
     const fetch = async () => {
@@ -20,8 +21,9 @@ const MessagingLimitBanner = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const planType = await getCurrentPlanType(user.id);
-        const msgLimit = getMessageLimit(planType);
+        const currentPlan = await getCurrentPlanType(user.id);
+        const msgLimit = getMessageLimit(currentPlan);
+        setPlanType(currentPlan);
 
         if (msgLimit === Infinity) return;
 
@@ -59,6 +61,7 @@ const MessagingLimitBanner = () => {
   if (!show || dismissed) return null;
 
   return (
+    <>
     <Alert variant={atLimit ? "destructive" : "default"} className={`relative ${!atLimit ? "border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 text-yellow-900 dark:text-yellow-200 [&>svg]:text-yellow-600" : ""}`}>
       <AlertTriangle className="h-4 w-4" />
       <AlertTitle className="text-sm font-medium">
@@ -74,7 +77,7 @@ const MessagingLimitBanner = () => {
           variant="link"
           size="sm"
           className="h-auto p-0 text-xs gap-1 shrink-0"
-          onClick={() => navigate("/brand-dashboard?tab=account")}
+          onClick={() => setUpgradeOpen(true)}
         >
           Upgrade <ArrowUpRight className="h-3 w-3" />
         </Button>
@@ -87,6 +90,8 @@ const MessagingLimitBanner = () => {
         <X className="h-3.5 w-3.5" />
       </button>
     </Alert>
+    <UpgradePlanDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} currentPlan={planType} />
+    </>
   );
 };
 

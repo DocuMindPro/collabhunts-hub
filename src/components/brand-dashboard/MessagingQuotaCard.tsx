@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { MessageSquare, ArrowUpRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { getCurrentPlanType, getMessageLimit } from "@/lib/subscription-utils";
+import UpgradePlanDialog from "./UpgradePlanDialog";
 
 const MessagingQuotaCard = () => {
-  const navigate = useNavigate();
   const [used, setUsed] = useState(0);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [limit, setLimit] = useState(1);
   const [planLabel, setPlanLabel] = useState("Free");
   const [loading, setLoading] = useState(true);
@@ -97,7 +97,7 @@ const MessagingQuotaCard = () => {
                   variant="link"
                   size="sm"
                   className="h-auto p-0 text-xs gap-1"
-                  onClick={() => navigate("/brand-dashboard?tab=account")}
+                  onClick={() => setUpgradeOpen(true)}
                 >
                   Upgrade <ArrowUpRight className="h-3 w-3" />
                 </Button>
@@ -106,6 +106,7 @@ const MessagingQuotaCard = () => {
           </>
         )}
       </CardContent>
+      <UpgradePlanDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} currentPlan={planLabel.toLowerCase()} />
     </Card>
   );
 };
