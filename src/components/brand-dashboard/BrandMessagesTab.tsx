@@ -670,12 +670,13 @@ const BrandMessagesTab = () => {
       <div className="flex gap-2">
         <Button
           variant="outline"
-          size="icon"
+          size="sm"
           onClick={() => setShowAgreementDialog(true)}
           title="Send Agreement"
-          className="shrink-0"
+          className="shrink-0 gap-1.5 font-medium"
         >
           <ScrollText className="h-4 w-4" />
+          Send Agreement
         </Button>
         <Input
           value={newMessage}
