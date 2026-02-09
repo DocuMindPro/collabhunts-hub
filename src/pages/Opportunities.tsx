@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -62,9 +62,33 @@ const Opportunities = () => {
   const [isCreator, setIsCreator] = useState<boolean | null>(null);
   const [isBrand, setIsBrand] = useState<boolean | null>(null);
   const [creatorMaxFollowers, setCreatorMaxFollowers] = useState<number>(0);
+  const viewedOppIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     checkUserAccess();
+  }, []);
+
+  // Increment views_count when an opportunity card becomes visible
+  const trackView = useCallback((oppId: string) => {
+    if (viewedOppIds.current.has(oppId)) return;
+    viewedOppIds.current.add(oppId);
+    // Fire-and-forget: fetch current value and increment
+    supabase
+      .from("brand_opportunities")
+      .select("views_count")
+      .eq("id", oppId)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          supabase
+            .from("brand_opportunities")
+            .update({ views_count: (data.views_count ?? 0) + 1 })
+            .eq("id", oppId)
+            .then(({ error }) => {
+              if (error) console.error("View tracking error:", error);
+            });
+        }
+      });
   }, []);
 
   const checkUserAccess = async () => {
@@ -373,7 +397,23 @@ const Opportunities = () => {
                 const combinedRange = getCombinedRange(opportunity.follower_ranges);
 
                 return (
-                  <Card key={opportunity.id} className={`flex flex-col hover:shadow-md transition-shadow ${(opportunity as any).is_featured ? 'ring-1 ring-amber-400/50 border-amber-400/30' : ''}`}>
+                  <Card
+                    key={opportunity.id}
+                    ref={(el) => {
+                      if (!el) return;
+                      const observer = new IntersectionObserver(
+                        ([entry]) => {
+                          if (entry.isIntersecting) {
+                            trackView(opportunity.id);
+                            observer.disconnect();
+                          }
+                        },
+                        { threshold: 0.5 }
+                      );
+                      observer.observe(el);
+                    }}
+                    className={`flex flex-col hover:shadow-md transition-shadow ${(opportunity as any).is_featured ? 'ring-1 ring-amber-400/50 border-amber-400/30' : ''}`}
+                  >
                     <CardHeader className="p-4 pb-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1 min-w-0">

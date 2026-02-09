@@ -768,6 +768,7 @@ export type Database = {
           status: string
           title: string
           updated_at: string
+          views_count: number
         }
         Insert: {
           application_deadline?: string | null
@@ -794,6 +795,7 @@ export type Database = {
           status?: string
           title: string
           updated_at?: string
+          views_count?: number
         }
         Update: {
           application_deadline?: string | null
@@ -820,6 +822,7 @@ export type Database = {
           status?: string
           title?: string
           updated_at?: string
+          views_count?: number
         }
         Relationships: [
           {
