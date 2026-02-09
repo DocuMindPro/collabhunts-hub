@@ -18,12 +18,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, Database, FlaskConical, Phone, X, Gavel, BookOpen, BadgeCheck, ImageIcon, MapPin, CalendarDays, Crown, Briefcase } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, Database, FlaskConical, Phone, X, BookOpen, BadgeCheck, ImageIcon, MapPin, CalendarDays, Crown, Briefcase } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AdminTestingTab from "@/components/admin/AdminTestingTab";
 import AdminCreatorsTab from "@/components/admin/AdminCreatorsTab";
 import AdminBrandsTab from "@/components/admin/AdminBrandsTab";
-import AdminDisputesTab from "@/components/admin/AdminDisputesTab";
+
 import AdminPlatformManualTab from "@/components/admin/AdminPlatformManualTab";
 import AdminVerificationsTab from "@/components/admin/AdminVerificationsTab";
 import AdminBrandingSeoTab from "@/components/admin/AdminBrandingSeoTab";
@@ -912,15 +912,6 @@ const Admin = () => {
                 <FlaskConical className="h-4 w-4" />
                 <span className="hidden sm:inline">Testing</span>
               </TabsTrigger>
-              <TabsTrigger value="disputes" className="gap-2 shrink-0">
-                <Gavel className="h-4 w-4" />
-                <span className="hidden sm:inline">Disputes</span>
-                {getBadgeCount("disputes") > 0 && (
-                  <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
-                    {getBadgeCount("disputes")}
-                  </Badge>
-                )}
-              </TabsTrigger>
               <TabsTrigger value="manual" className="gap-2 shrink-0">
                 <BookOpen className="h-4 w-4" />
                 <span className="hidden sm:inline">Manual</span>
@@ -1475,10 +1466,6 @@ const Admin = () => {
               <AdminTestingTab />
             </TabsContent>
 
-            {/* Disputes Tab */}
-            <TabsContent value="disputes">
-              <AdminDisputesTab />
-            </TabsContent>
 
             {/* Platform Manual Tab */}
             <TabsContent value="manual">

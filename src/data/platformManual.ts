@@ -181,7 +181,7 @@ Full recovery guide: \`public/DISASTER_RECOVERY.md\``,
 | \`verify-backup\` | Validate backup file integrity |
 | \`get-cron-status\` | Return scheduled job status |
 | \`get-storage-stats\` | Return storage bucket statistics |
-| \`check-dispute-deadlines\` | Monitor and escalate disputes |
+| \`check-subscription-renewal\` | Monitor subscription expiration |
 | \`check-content-expiration\` | Send content rights expiration reminders |
 | \`check-ad-expiration\` | Auto-expire ad placements |
 | \`admin-reset-password\` | Allow admins to reset user passwords |
@@ -241,8 +241,7 @@ Edge functions are automatically deployed when code changes are pushed.`,
 ### Transactions
 - \`bookings\` - Collaboration bookings (for tracking only)
 - \`booking_deliverables\` - Uploaded deliverable files
-- \`booking_disputes\` - Dispute cases
-- \`booking_offers\` - Offer/counter-offer messages
+- \`reviews\` - Brand reviews of creators
 - \`reviews\` - Brand reviews of creators
 
 ### Campaigns/Opportunities
@@ -397,15 +396,19 @@ CollabHunts operates as a classifieds-style marketplace similar to OLX/Dubizzle,
 
 | Revenue Source | Price | Target |
 |----------------|-------|--------|
-| Brand Basic Subscription | $10/mo | Brands wanting to contact creators |
-| Brand Pro Subscription | $49/mo | Brands needing CRM & campaigns |
-| Brand Premium Subscription | $99/mo | Large brands with multiple campaigns |
+| Brand Basic Subscription | $99/year (quotation-based) | Brands wanting badge & messaging |
+| Brand Pro Subscription | $299/year (quotation-based) | Brands needing unlimited access |
 | Creator Featured Badge | $29/week | Creators wanting visibility |
 | Creator Spotlight | $49/week | Featured homepage placement |
 | Creator Category Boost | $79/week | Top category positioning |
 | Verified Business Badge | $99/year | Brand credibility |
-| Standard Opportunity | $15 | Posting opportunity listings |
-| Featured Opportunity | +$25 | Premium opportunity placement |
+| Standard Opportunity | $15/post | Posting opportunity listings |
+
+### Quotation Inquiry System
+- Basic and Pro pricing is hidden from guest/unauthenticated users
+- Interested brands submit a "Get a Quotation" inquiry
+- Admin receives notification and manages inquiries from the Venues tab
+- This drives lead capture and personalized onboarding
 
 ### What We Don't Do
 - Process payments between parties
@@ -488,18 +491,23 @@ CollabHunts operates as a classifieds-style marketplace similar to OLX/Dubizzle,
         title: "Tier Comparison",
         content: `## Brand Subscription Tiers
 
-| Feature | No Package | Basic ($10/mo) | Pro ($49/mo) | Premium ($99/mo) |
-|---------|------------|----------------|--------------|-------------------|
-| Browse Creators | ✅ | ✅ | ✅ | ✅ |
-| Message Creators | ❌ | ✅ | ✅ | ✅ |
-| View Creator Pricing | ❌ | ✅ | ✅ | ✅ |
-| Post Opportunities | ❌ | ❌ | 1/month | Unlimited |
-| Advanced Filters | ❌ | ❌ | ✅ | ✅ |
-| Creator CRM | ❌ | ❌ | ✅ | ✅ |
-| Mass Messaging | ❌ | ❌ | 50/day | 100/day |
-| Content Library | ❌ | 10 GB | 10 GB | 50 GB |
-| Extra Storage | ❌ | $10/100GB | $10/100GB | $10/100GB |
-| Verified Badge Eligible | ❌ | ❌ | ✅ | ✅ |
+| Feature | Free | Basic ($99/year) | Pro ($299/year) |
+|---------|------|-------------------|-----------------|
+| Browse Creators | ✅ | ✅ | ✅ |
+| Message Creators | 1/month | 10/month | Unlimited |
+| View Creator Pricing | ❌ | ✅ | ✅ |
+| Post Opportunities | $15/post (4 free/month) | 4 free/month | Unlimited |
+| Advanced Filters | ❌ | ❌ | ✅ |
+| Creator CRM | ❌ | ❌ | ✅ |
+| Content Library | ❌ | 10 GB | 50 GB |
+| Extra Storage | ❌ | $10/100GB | $10/100GB |
+| Verified Badge Eligible | ❌ | ❌ | ✅ |
+| Dedicated CSM | ❌ | ❌ | ✅ |
+
+### Pricing Visibility
+- **Free tier:** Publicly visible features
+- **Basic & Pro:** Pricing hidden from guests; brands must submit a quotation inquiry
+- Monthly limits (messages, posts) reset on the 1st of each month
 
 ### Important Notes
 - CollabHunts is a discovery platform with **zero transaction fees**
@@ -607,6 +615,41 @@ none → pending_payment → pending_review → verified
 - Valid for 1 year from approval`,
         lastUpdated: "2025-02-01",
         tags: ["approval", "verification", "badge"]
+      },
+      {
+        id: "quotation-inquiry",
+        title: "Quotation Inquiry Workflow",
+        content: `## Quotation Inquiry Flow
+
+### Purpose
+Capture leads from brands interested in Basic or Pro subscription plans. Pricing for these tiers is hidden from unauthenticated users to drive personalized engagement.
+
+### How It Works:
+1. Guest visits /brand page and sees plan features (prices hidden for Basic/Pro)
+2. Clicks "Get a Quotation" button
+3. If not logged in → redirected to register/login
+4. If logged in → inquiry submitted automatically with brand profile details
+5. Admin receives notification badge on "Venues" tab
+6. Admin reviews and contacts brand directly
+
+### Database Table:
+\\\`quotation_inquiries\\\`
+
+### Key Fields:
+| Field | Purpose |
+|-------|---------|
+| \\\`brand_profile_id\\\` | The brand submitting the inquiry |
+| \\\`plan_interest\\\` | Which plan they're interested in (basic/pro) |
+| \\\`status\\\` | pending / contacted / converted / dismissed |
+| \\\`admin_notes\\\` | Internal notes from admin follow-up |
+
+### Admin Management:
+- View pending inquiries in Admin > Venues tab
+- Badge shows count of pending inquiries
+- Admin can update status and add notes
+- Goal: convert inquiry into active subscription`,
+        lastUpdated: "2025-02-01",
+        tags: ["quotation", "inquiry", "lead", "workflow"]
       }
     ]
   },
