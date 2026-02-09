@@ -32,6 +32,7 @@ interface BrandData {
   company_size: string | null;
   monthly_budget_range: string | null;
   onboarding_completed: boolean | null;
+  registration_completed: boolean;
   created_at: string;
   email?: string;
   subscription_tier?: string;
@@ -57,6 +58,7 @@ const AdminBrandsTab = () => {
   const [industryFilter, setIndustryFilter] = useState<string>("all");
   const [sizeFilter, setSizeFilter] = useState<string>("all");
   const [onboardingFilter, setOnboardingFilter] = useState<string>("all");
+  const [registrationFilter, setRegistrationFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   
@@ -177,6 +179,12 @@ const AdminBrandsTab = () => {
       );
     }
 
+    if (registrationFilter !== "all") {
+      filtered = filtered.filter(b => 
+        registrationFilter === "registered" ? b.registration_completed : !b.registration_completed
+      );
+    }
+
     // Date range filter
     if (dateFrom) {
       filtered = filtered.filter(b => new Date(b.created_at) >= new Date(dateFrom));
@@ -188,7 +196,7 @@ const AdminBrandsTab = () => {
     setFilteredBrands(filtered);
     setCurrentPage(1);
     setSelectedIds(new Set());
-  }, [search, phoneFilter, tierFilter, industryFilter, sizeFilter, onboardingFilter, dateFrom, dateTo, brands]);
+  }, [search, phoneFilter, tierFilter, industryFilter, sizeFilter, onboardingFilter, registrationFilter, dateFrom, dateTo, brands]);
 
   const fetchBrands = async () => {
     try {
@@ -266,7 +274,7 @@ const AdminBrandsTab = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ["Company Name", "Email", "Phone", "Phone Verified", "Industry", "Company Size", "Subscription Tier", "Monthly Budget", "Total Spent ($)", "Bookings", "Campaigns", "Onboarding", "Joined"];
+    const headers = ["Company Name", "Email", "Phone", "Phone Verified", "Industry", "Company Size", "Subscription Tier", "Monthly Budget", "Total Spent ($)", "Bookings", "Campaigns", "Onboarding", "Registration", "Joined"];
     const rows = filteredBrands.map(b => [
       b.company_name,
       b.email || "",
@@ -280,6 +288,7 @@ const AdminBrandsTab = () => {
       b.bookings_count?.toString() || "0",
       b.campaigns_count?.toString() || "0",
       b.onboarding_completed ? "Completed" : "Incomplete",
+      b.registration_completed ? "Registered" : "Signed Up",
       new Date(b.created_at).toLocaleDateString()
     ]);
 
@@ -396,6 +405,20 @@ const AdminBrandsTab = () => {
             </Select>
           </div>
 
+          {/* Filters Row 1.5 */}
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+            <Select value={registrationFilter} onValueChange={setRegistrationFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Registration" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Registration</SelectItem>
+                <SelectItem value="signed_up">Signed Up Only</SelectItem>
+                <SelectItem value="registered">Fully Registered</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Filters Row 2 */}
           <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
             <div>
@@ -441,6 +464,7 @@ const AdminBrandsTab = () => {
                 setIndustryFilter("all");
                 setSizeFilter("all");
                 setOnboardingFilter("all");
+                setRegistrationFilter("all");
                 setDateFrom("");
                 setDateTo("");
               }}
@@ -489,6 +513,7 @@ const AdminBrandsTab = () => {
                     <SortableHeader field="subscription_tier">Tier</SortableHeader>
                     <SortableHeader field="total_spent_cents">Spent</SortableHeader>
                     <SortableHeader field="campaigns_count">Campaigns</SortableHeader>
+                    <TableHead>Registration</TableHead>
                     <SortableHeader field="created_at">Joined</SortableHeader>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -538,6 +563,11 @@ const AdminBrandsTab = () => {
                       </TableCell>
                       <TableCell>
                         {brand.campaigns_count || 0}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={brand.registration_completed ? "default" : "secondary"} className={brand.registration_completed ? "bg-green-600" : ""}>
+                          {brand.registration_completed ? "Registered" : "Signed Up"}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         {new Date(brand.created_at).toLocaleDateString()}
@@ -643,6 +673,12 @@ const AdminBrandsTab = () => {
                   <h4 className="font-semibold text-sm mb-1">Onboarding</h4>
                   <Badge variant={selectedBrand.onboarding_completed ? "default" : "secondary"}>
                     {selectedBrand.onboarding_completed ? "Completed" : "Incomplete"}
+                  </Badge>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm mb-1">Registration</h4>
+                  <Badge variant={selectedBrand.registration_completed ? "default" : "secondary"} className={selectedBrand.registration_completed ? "bg-green-600" : ""}>
+                    {selectedBrand.registration_completed ? "Fully Registered" : "Signed Up Only"}
                   </Badge>
                 </div>
               </div>

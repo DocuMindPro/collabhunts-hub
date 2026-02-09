@@ -20,9 +20,10 @@ interface TeamAccessCardProps {
   accountType: "brand" | "creator";
   locked?: boolean;
   lockedMessage?: string;
+  onUpgrade?: () => void;
 }
 
-const TeamAccessCard = ({ profileId, accountType, locked, lockedMessage }: TeamAccessCardProps) => {
+const TeamAccessCard = ({ profileId, accountType, locked, lockedMessage, onUpgrade }: TeamAccessCardProps) => {
   const [delegates, setDelegates] = useState<Delegate[]>([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -108,9 +109,13 @@ const TeamAccessCard = ({ profileId, accountType, locked, lockedMessage }: TeamA
             <p className="text-sm text-muted-foreground">
               {lockedMessage || "Upgrade to Basic or Pro to invite team members."}
             </p>
-            <a href="/brand#pricing">
-              <Button variant="outline" size="sm">View Plans</Button>
-            </a>
+            {onUpgrade ? (
+              <Button variant="outline" size="sm" onClick={onUpgrade}>View Plans</Button>
+            ) : (
+              <a href="/brand#pricing">
+                <Button variant="outline" size="sm">View Plans</Button>
+              </a>
+            )}
           </div>
         ) : (
         <>

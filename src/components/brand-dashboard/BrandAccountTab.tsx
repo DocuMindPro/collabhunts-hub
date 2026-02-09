@@ -408,6 +408,7 @@ const BrandAccountTab = () => {
           accountType="brand"
           locked={planType !== "pro"}
           lockedMessage="Team access is available on the Pro plan. Upgrade to invite team members."
+          onUpgrade={() => setUpgradeOpen(true)}
         />
       )}
 
