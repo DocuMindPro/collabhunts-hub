@@ -1,66 +1,62 @@
 
 
-## Redesign Brand Opportunity Cards (Dashboard View)
+## Compact & Professional Creator Profile Tab Redesign
 
 ### Problem
-The current opportunity cards in the Brand Dashboard "Opps" tab are plain and text-heavy with minimal visual hierarchy. They show only basic metadata (title, status, package type, date, applications, spots, budget) in a flat list format with no description preview, no location, no deliverables preview, no deadline info, and no visual distinction between card types.
+The Profile tab has 9 separate full-width cards stacked vertically, each with generous p-6 padding and large headers. This creates excessive scrolling and a fragmented, bloated feel. Sections like Location (3 small inputs), Categories (a row of pills), and Demographics (4 dropdowns) each occupy their own oversized card unnecessarily.
 
 ### Solution
-Redesign the `BrandOpportunitiesTab` cards to be richer, more visually polished, and information-dense -- following dashboard card best practices.
+Consolidate related sections, reduce padding, and use multi-column layouts to create a dense, professional settings page -- similar to Stripe or Linear account settings.
 
-### Changes (single file: `src/components/brand-dashboard/BrandOpportunitiesTab.tsx`)
+### Changes (single file: `src/components/creator-dashboard/ProfileTab.tsx`)
 
-**1. Add a `views_count` column to the database**
-- Add an integer `views_count` column (default 0) to `brand_opportunities` so brands can see how many creators viewed their posting
-- This will be incremented on the public Opportunities page when a creator views the card details
+**1. Merge "Basic Information" + "Location" + "Categories" + "Demographics" into one card**
+- Single card titled "Profile Details" with internal section dividers (thin borders, not separate cards)
+- Display Name + Bio in the first section
+- Location fields in a 3-column grid row (already exists but inside its own card)
+- Categories as a compact pill row (no card wrapper)
+- Demographics in a 2x2 grid with languages below
+- Each sub-section separated by a slim `<Separator />` instead of a full card boundary
 
-**2. Fetch additional data**
-- Include `is_featured`, `requirements`, `location_city`, `location_country`, `follower_ranges`, `start_time`, `end_time`, `description` in the interface (already fetched via `select("*")`)
-- Add `views_count` to the interface after the migration
+**2. Reduce all card padding**
+- CardHeader: `p-4` instead of default `p-6`
+- CardContent: `p-4 pt-0` instead of default `p-6 pt-0`
+- Inner spacing: `space-y-4` reduced to `space-y-3` where appropriate
 
-**3. Redesigned card layout**
+**3. Compact the "Your Media" card**
+- Profile image section: reduce avatar from `h-28 w-28` to `h-20 w-20`
+- Cover images: reduce gap, keep grid but tighter
+- Remove verbose helper text, keep only essential hints inline
 
-Each opportunity card will have:
+**4. Compact the "Privacy & Visibility Settings" card**
+- Remove the outer colored border/bg styling -- use a standard card
+- Remove inner `p-4` boxes around each toggle -- use simple flex rows with less padding (`py-3`)
+- Remove separators between toggles (the flex rows provide enough visual separation)
 
-```text
-+------------------------------------------------------+
-| [Package Icon]  Title                    [Status] [...] |
-| Brand Package Name  *  Location  *  Date + Time        |
-|------------------------------------------------------|
-| Description preview (2 lines, truncated)              |
-|                                                       |
-| [Deliverables pill] [Follower target pill]            |
-|                                                       |
-| +----------+ +----------+ +----------+ +----------+  |
-| | 0 Views  | | 0 Apps   | | 3 Spots  | | $50/ea   |  |
-| +----------+ +----------+ +----------+ +----------+  |
-|                                                       |
-| [Deadline badge if set]    [View Applications button] |
-+------------------------------------------------------+
-```
+**5. Compact the "Phone Number" card**
+- Merge into the consolidated "Profile Details" card as another section
+- Reduce the verified display from a full bordered box to an inline row
 
-Key visual improvements:
-- **Package-colored left accent border** (blue for Social Boost, purple for Meet and Greet, orange for Unbox and Review, gray for Custom)
-- **Stats grid** with 4 mini stat cards (Views, Applications, Spots Left, Budget) using icons and subtle backgrounds
-- **Description preview** truncated to 2 lines with `line-clamp-2`
-- **Deliverables preview** showing first 2 items from the package includes as small pills
-- **Follower targeting** shown as a compact badge when set
-- **Location** shown with MapPin icon
-- **Time range** shown when start/end times exist
-- **Application deadline** shown as a countdown/warning badge when approaching
-- **Featured glow** ring effect on featured opportunities matching the public board style
-- **Progress bar** for spots filled (visual fill indicator)
+**6. Reduce CardTitle sizes**
+- Use `text-base` instead of default `text-2xl` for card titles
+- Use `text-sm` for card descriptions
 
-**4. Increment views on the public Opportunities page**
-- In `src/pages/Opportunities.tsx`, add a lightweight view counter that increments `views_count` when a creator scrolls an opportunity card into view (using IntersectionObserver or on card render)
+**7. Sticky save button**
+- Make the "Save Changes" button sticky at the bottom of the viewport so users don't have to scroll all the way down
 
-### Database Migration
-```sql
-ALTER TABLE brand_opportunities 
-ADD COLUMN views_count integer NOT NULL DEFAULT 0;
-```
+### Result
+The Profile tab will go from ~9 separate cards to ~4 compact cards:
+1. **Your Media** (profile image + covers + portfolio -- compacted)
+2. **Profile Details** (name, bio, phone, location, categories, demographics, languages -- all consolidated)
+3. **Privacy & Visibility** (3 toggles in compact rows)
+4. **Social Accounts** / **Verification** / **Team Access** (these remain separate as they are self-contained components)
 
-### Files to Edit
-- `src/components/brand-dashboard/BrandOpportunitiesTab.tsx` -- full card redesign
-- `src/pages/Opportunities.tsx` -- add view count increment on card visibility
+This reduces vertical scrolling by roughly 40-50% while keeping all functionality intact.
 
+### Technical Details
+
+- All changes are in `src/components/creator-dashboard/ProfileTab.tsx`
+- No database changes required
+- No new dependencies needed
+- The sub-components (`SocialAccountsSection`, `VerificationBadgeCard`, `TeamAccessCard`, `PortfolioUploadSection`) remain as-is since they are separate component files
+- The save handler and all state management remain unchanged
