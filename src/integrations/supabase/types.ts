@@ -2918,6 +2918,48 @@ export type Database = {
         }
         Relationships: []
       }
+      quotation_inquiries: {
+        Row: {
+          admin_notes: string | null
+          brand_profile_id: string
+          created_at: string
+          id: string
+          plan_type: string
+          status: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          brand_profile_id: string
+          created_at?: string
+          id?: string
+          plan_type: string
+          status?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          brand_profile_id?: string
+          created_at?: string
+          id?: string
+          plan_type?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_inquiries_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotation_inquiries_brand_profile_id_fkey"
+            columns: ["brand_profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referrals: {
         Row: {
           affiliate_id: string

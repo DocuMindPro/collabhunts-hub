@@ -329,9 +329,50 @@ const BrandSignup = () => {
         }
       }
 
+      // Check for quotation inquiry param
+      const quotationPlan = searchParams.get('quotation');
+      if (quotationPlan && (quotationPlan === 'basic' || quotationPlan === 'pro')) {
+        try {
+          // Get the newly created brand profile
+          const { data: newBrandProfile } = await supabase
+            .from("brand_profiles")
+            .select("id, company_name")
+            .eq("user_id", authData.user.id)
+            .maybeSingle();
+
+          if (newBrandProfile) {
+            await supabase.from("quotation_inquiries").insert({
+              brand_profile_id: newBrandProfile.id,
+              plan_type: quotationPlan,
+            });
+
+            // Notify admins
+            const { data: admins } = await supabase
+              .from("user_roles")
+              .select("user_id")
+              .eq("role", "admin");
+
+            if (admins && admins.length > 0) {
+              const notifications = admins.map((admin) => ({
+                user_id: admin.user_id,
+                title: "New Quotation Inquiry",
+                message: `${newBrandProfile.company_name} is inquiring about the ${quotationPlan.charAt(0).toUpperCase() + quotationPlan.slice(1)} plan`,
+                type: "quotation_inquiry",
+                link: "/admin",
+              }));
+              await supabase.from("notifications").insert(notifications);
+            }
+          }
+        } catch (quotationError) {
+          console.error("Error submitting quotation inquiry:", quotationError);
+        }
+      }
+
       toast({
         title: "Welcome to CollabHunts!",
-        description: "Let's personalize your experience."
+        description: quotationPlan
+          ? `Thank you for inquiring about the ${quotationPlan.charAt(0).toUpperCase() + quotationPlan.slice(1)} plan. Our team will reach out soon!`
+          : "Let's personalize your experience."
       });
 
       // Navigate to onboarding after signup

@@ -59,13 +59,51 @@ const Login = () => {
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
+    // Check for quotation param in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const quotationPlan = urlParams.get('quotation');
+
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Login: Auth state changed:', event, session?.user?.email);
       if (event === 'SIGNED_IN' && session && !isPhoneMode) {
-        // Use a slight delay to ensure state is propagated
+        // If there's a quotation param, auto-submit the inquiry
+        if (quotationPlan && (quotationPlan === 'basic' || quotationPlan === 'pro')) {
+          try {
+            const { data: brandProfile } = await supabase
+              .from("brand_profiles")
+              .select("id, company_name")
+              .eq("user_id", session.user.id)
+              .maybeSingle();
+
+            if (brandProfile) {
+              await supabase.from("quotation_inquiries").insert({
+                brand_profile_id: brandProfile.id,
+                plan_type: quotationPlan,
+              });
+
+              const { data: admins } = await supabase
+                .from("user_roles")
+                .select("user_id")
+                .eq("role", "admin");
+
+              if (admins && admins.length > 0) {
+                const notifications = admins.map((admin) => ({
+                  user_id: admin.user_id,
+                  title: "New Quotation Inquiry",
+                  message: `${brandProfile.company_name} is inquiring about the ${quotationPlan.charAt(0).toUpperCase() + quotationPlan.slice(1)} plan`,
+                  type: "quotation_inquiry",
+                  link: "/admin",
+                }));
+                await supabase.from("notifications").insert(notifications);
+              }
+            }
+          } catch (err) {
+            console.error("Error submitting quotation inquiry on login:", err);
+          }
+        }
+
         setTimeout(() => {
-          // Redirect creators to dashboard on native, home on web
           if (isNative) {
             navigate("/creator-dashboard");
           } else {
