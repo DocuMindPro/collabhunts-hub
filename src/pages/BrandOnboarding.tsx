@@ -8,6 +8,7 @@ import IntentStep from "@/components/brand-onboarding/IntentStep";
 import BudgetStep from "@/components/brand-onboarding/BudgetStep";
 import CategoriesStep from "@/components/brand-onboarding/CategoriesStep";
 import PlatformsStep from "@/components/brand-onboarding/PlatformsStep";
+import SocialMediaStep from "@/components/brand-onboarding/SocialMediaStep";
 
 const BrandOnboarding = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const BrandOnboarding = () => {
     budget: "",
     categories: [] as string[],
     platforms: [] as string[],
+    socialMedia: { facebook: "", instagram: "", tiktok: "" },
   });
 
   useEffect(() => {
@@ -65,6 +67,9 @@ const BrandOnboarding = () => {
           monthly_budget_range: preferences.budget || null,
           preferred_categories: preferences.categories,
           preferred_platforms: preferences.platforms,
+          facebook_url: preferences.socialMedia.facebook || null,
+          instagram_url: preferences.socialMedia.instagram || null,
+          tiktok_url: preferences.socialMedia.tiktok || null,
           onboarding_completed: true,
         })
         .eq("id", brandProfileId);
@@ -117,7 +122,7 @@ const BrandOnboarding = () => {
     }
   };
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center p-4">
@@ -160,8 +165,18 @@ const BrandOnboarding = () => {
             <PlatformsStep
               value={preferences.platforms}
               onChange={(platforms) => setPreferences({ ...preferences, platforms })}
-              onNext={savePreferences}
+              onNext={() => setStep(5)}
               onBack={() => setStep(3)}
+              onSkip={handleSkip}
+            />
+          )}
+
+          {step === 5 && (
+            <SocialMediaStep
+              value={preferences.socialMedia}
+              onChange={(socialMedia) => setPreferences({ ...preferences, socialMedia })}
+              onNext={savePreferences}
+              onBack={() => setStep(4)}
               onSkip={handleSkip}
             />
           )}
