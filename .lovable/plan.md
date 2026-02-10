@@ -1,39 +1,52 @@
 
 
-## Differentiate Quality Messaging Sections + Remove Creator Card from Brand Page
+## Block AI Crawlers and Add Anti-Scraping Terms
 
-### Problems
-1. Homepage and Brand page have nearly identical copy -- same headlines, same body text, same pills
-2. Brand page has a "For Creators" card which doesn't belong on a page targeting brands
+### 1. Update `robots.txt` to Block AI Crawlers
 
-### Changes
+Replace the current file with rules that explicitly block known AI crawlers while keeping search engines and social media bots allowed.
 
-**1. Brand Page (`src/pages/Brand.tsx`) -- Lines 300-365**
+**AI bots to block:**
+- GPTBot, ChatGPT-User (OpenAI)
+- CCBot (Common Crawl, used for AI training)
+- ClaudeBot, anthropic-ai (Anthropic)
+- Google-Extended (Google AI training, separate from Googlebot search)
+- Bytespider (ByteDance AI)
+- Perplexity bots
+- Cohere-ai, FacebookBot (Meta AI training)
 
-Replace the current dual-card section with a single, brand-focused section. No "For Creators" card.
+**File:** `public/robots.txt`
 
-- **New headline**: "Your Message Gets Seen. Every Time."
-- **New subtitle**: "Unlike social media where your DM competes with thousands of fan messages, CollabHunts is a business-only platform -- creators here expect brand inquiries and respond fast."
-- **Single GlowCard layout** (full-width, not two columns) with three feature rows:
-  - ShieldCheck icon + "Vetted Creators" -- "Every creator is reviewed and approved before joining the platform."
-  - Zap icon + "Fast Response Times" -- "Creators only receive business inquiries here, so they respond quickly -- no inbox clutter."
-  - MessageSquare icon + "Business-Only Inbox" -- "No fans, no spam, no noise. Your collaboration request stands out from day one."
-- Remove the second GlowCard (the "For Creators" / "Why Creators Respond Fast" card entirely)
+### 2. Add `noai` Meta Tags to HTML Head
 
-**2. Homepage (`src/pages/Index.tsx`) -- Lines 320-385**
+Add two meta tags to `index.html` that signal to compliant crawlers not to use content for AI training:
 
-Keep the dual-card layout (both perspectives make sense on the homepage) but rewrite the copy so it's distinct from the Brand page:
+```html
+<meta name="robots" content="noai, noimageai" />
+```
 
-- **New headline**: "No Spam. No Fans. Just Business."
-- **New subtitle**: "CollabHunts is a professional collaboration platform -- every conversation starts with real intent."
-- **Brand card**: Headline: "Your DMs Actually Get Read". Body: "Stop competing with thousands of fan messages. On CollabHunts, creators only receive business inquiries -- your pitch lands in a focused inbox, not a crowded feed." Pills: "Vetted Creators", "Priority Inbox", "Quick Replies"
-- **Creator card**: Headline: "Only Serious Offers in Your Inbox". Body: "Forget sifting through thousands of irrelevant DMs. Every message you receive here is from a registered brand with real collaboration intent -- meaning less time filtering, more time earning." Pills: "Registered Brands", "Zero Spam", "Higher Deal Rate"
+**File:** `index.html`
+
+### 3. Add Section 12.5 to Terms of Service -- "Automated Scraping & AI Prohibition"
+
+Insert a new clause into the existing "Prohibited Activities" section (Section 12) of `src/pages/TermsOfService.tsx`. This adds legal teeth to the technical protections. Content will cover:
+
+- Prohibition of automated scraping, crawling, or data extraction
+- Prohibition of using platform content to train AI/ML models
+- Prohibition of reproducing platform features, layouts, or functionality via AI tools
+- Statement that violations may result in legal action and account termination
+
+This will be added as additional bullet points to the existing Section 12 list, plus a highlighted legal warning box below it.
+
+**File:** `src/pages/TermsOfService.tsx` -- modify Section 12 (lines 216-234)
 
 ### Files to Modify
+
 | File | Change |
 |------|--------|
-| `src/pages/Brand.tsx` | Replace dual-card section with single brand-focused section, remove "For Creators" card |
-| `src/pages/Index.tsx` | Rewrite headlines and body copy to be distinct from Brand page |
+| `public/robots.txt` | Replace with AI-crawler-blocking rules |
+| `index.html` | Add `noai, noimageai` meta tag in head |
+| `src/pages/TermsOfService.tsx` | Add AI scraping prohibition to Section 12 |
 
 ### No new files, no new dependencies, no database changes.
 
