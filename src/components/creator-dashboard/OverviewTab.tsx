@@ -64,7 +64,6 @@ const OverviewTab = () => {
         if (!profile) return defaultStats;
         setCreatorProfileId(profile.id);
 
-        // Get conversations first
         const { data: conversationsData } = await supabase
           .from("conversations")
           .select("id")
@@ -92,7 +91,6 @@ const OverviewTab = () => {
                 .eq("is_read", false)
                 .in("conversation_id", conversationIds)
             : { data: [] },
-          // Latest 3 open opportunities
           supabase
             .from("brand_opportunities")
             .select("id, title, package_type, event_date, is_paid, budget_cents, brand_profiles(company_name, venue_name, logo_url)")
@@ -100,13 +98,11 @@ const OverviewTab = () => {
             .gte("event_date", new Date().toISOString().split('T')[0])
             .order("created_at", { ascending: false })
             .limit(3),
-          // Count of new opps this week
           supabase
             .from("brand_opportunities")
             .select("id, required_categories", { count: "exact" })
             .eq("status", "open")
             .gte("created_at", sevenDaysAgoISO),
-          // Weekly profile views
           supabase
             .from("profile_views")
             .select("*", { count: "exact", head: true })
@@ -116,7 +112,6 @@ const OverviewTab = () => {
 
         setLatestOpportunities((latestOppsData.data as unknown as OpportunityPreview[]) || []);
 
-        // Weekly stats
         const weeklyOpps = weeklyOppsData.data || [];
         const matchingCount = profile.categories?.length
           ? weeklyOpps.filter((opp: any) =>
@@ -130,7 +125,6 @@ const OverviewTab = () => {
           weeklyViews: weeklyViewsData.count || 0,
         });
 
-        // Recommended opportunities (match by category or city)
         if (profile.categories?.length || profile.location_city) {
           const { data: allOpenOpps } = await supabase
             .from("brand_opportunities")
@@ -193,98 +187,111 @@ const OverviewTab = () => {
 
   const isNative = isNativePlatform();
 
+  const OpportunityRow = ({ opp, highlight = false }: { opp: OpportunityPreview; highlight?: boolean }) => {
+    const packageInfo = opp.package_type ? EVENT_PACKAGES[opp.package_type as PackageType] : null;
+    return (
+      <Link
+        key={opp.id}
+        to="/opportunities"
+        className={`flex items-center justify-between p-2 md:p-3 rounded-lg border transition-colors ${
+          highlight
+            ? "border-primary/20 bg-primary/5 hover:bg-primary/10"
+            : "border-border hover:bg-muted/50"
+        }`}
+      >
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-xs md:text-sm truncate">{opp.title}</p>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1">
+              <Building2 className="h-2.5 w-2.5 md:h-3 md:w-3" />
+              {opp.brand_profiles?.venue_name || opp.brand_profiles?.company_name}
+            </span>
+            {packageInfo && (
+              <Badge variant="outline" className="text-[9px] md:text-[10px] px-1 py-0 leading-tight">
+                {packageInfo.name}
+              </Badge>
+            )}
+          </div>
+        </div>
+        <div className="text-right ml-2 shrink-0">
+          {opp.is_paid && opp.budget_cents ? (
+            <span className="text-xs md:text-sm font-semibold text-green-600">${(opp.budget_cents / 100).toFixed(0)}</span>
+          ) : opp.is_paid ? (
+            <span className="text-[10px] md:text-xs text-green-600">Paid</span>
+          ) : (
+            <span className="text-[10px] md:text-xs text-amber-600">Free Invite</span>
+          )}
+          <p className="text-[9px] md:text-[10px] text-muted-foreground">
+            {format(new Date(opp.event_date), "MMM d")}
+          </p>
+        </div>
+      </Link>
+    );
+  };
+
   return (
-    <div className={`space-y-4 ${isNative ? 'pb-24' : 'space-y-6'}`}>
-      <Card>
-        <CardHeader className={isNative ? 'pb-2' : ''}>
-          <CardTitle className={isNative ? 'text-base' : ''}>Profile Status</CardTitle>
-          {!isNative && <CardDescription>Your current profile approval status</CardDescription>}
-        </CardHeader>
-        <CardContent>
-          <Badge className={`${getStatusColor(stats.profileStatus)} text-white capitalize`}>
-            {stats.profileStatus}
-          </Badge>
-        </CardContent>
-      </Card>
-
-      <div className={`grid gap-3 ${isNative ? 'grid-cols-2' : 'gap-6 md:grid-cols-2 lg:grid-cols-4'}`}>
-        <Card>
-          <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isNative ? 'pb-1 pt-3 px-3' : 'pb-2'}`}>
-            <CardTitle className={`font-medium ${isNative ? 'text-xs' : 'text-sm'}`}>Profile Views</CardTitle>
-            <Eye className={`text-muted-foreground ${isNative ? 'h-3 w-3' : 'h-4 w-4'}`} />
-          </CardHeader>
-          <CardContent className={isNative ? 'px-3 pb-3' : ''}>
-            <div className={`font-bold ${isNative ? 'text-xl' : 'text-2xl'}`}>{stats.profileViews}</div>
-            {!isNative && <p className="text-xs text-muted-foreground">Total views on your profile</p>}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isNative ? 'pb-1 pt-3 px-3' : 'pb-2'}`}>
-            <CardTitle className={`font-medium ${isNative ? 'text-xs' : 'text-sm'}`}>Earnings</CardTitle>
-            <DollarSign className={`text-muted-foreground ${isNative ? 'h-3 w-3' : 'h-4 w-4'}`} />
-          </CardHeader>
-          <CardContent className={isNative ? 'px-3 pb-3' : ''}>
-            <div className={`font-bold ${isNative ? 'text-xl' : 'text-2xl'}`}>${stats.totalEarnings.toFixed(2)}</div>
-            {!isNative && <p className="text-xs text-muted-foreground">From completed bookings</p>}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isNative ? 'pb-1 pt-3 px-3' : 'pb-2'}`}>
-            <CardTitle className={`font-medium ${isNative ? 'text-xs' : 'text-sm'}`}>Pending</CardTitle>
-            <Calendar className={`text-muted-foreground ${isNative ? 'h-3 w-3' : 'h-4 w-4'}`} />
-          </CardHeader>
-          <CardContent className={isNative ? 'px-3 pb-3' : ''}>
-            <div className={`font-bold ${isNative ? 'text-xl' : 'text-2xl'}`}>{stats.pendingBookings}</div>
-            {!isNative && <p className="text-xs text-muted-foreground">Awaiting your response</p>}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isNative ? 'pb-1 pt-3 px-3' : 'pb-2'}`}>
-            <CardTitle className={`font-medium ${isNative ? 'text-xs' : 'text-sm'}`}>Messages</CardTitle>
-            <MessageSquare className={`text-muted-foreground ${isNative ? 'h-3 w-3' : 'h-4 w-4'}`} />
-          </CardHeader>
-          <CardContent className={isNative ? 'px-3 pb-3' : ''}>
-            <div className={`font-bold ${isNative ? 'text-xl' : 'text-2xl'}`}>{stats.unreadMessages}</div>
-            {!isNative && <p className="text-xs text-muted-foreground">New messages from brands</p>}
-          </CardContent>
-        </Card>
+    <div className={`space-y-3 md:space-y-6 ${isNative ? 'pb-24' : ''}`}>
+      {/* Inline Profile Status */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs md:text-sm text-muted-foreground">Status:</span>
+        <Badge className={`${getStatusColor(stats.profileStatus)} text-white capitalize text-[10px] md:text-xs px-2 py-0.5`}>
+          {stats.profileStatus}
+        </Badge>
       </div>
 
-      {/* This Week Summary */}
-      {!isNative && (weeklyStats.newOppsCount > 0 || weeklyStats.weeklyViews > 0) && (
+      {/* Stats Grid - 2 cols mobile, 4 cols desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+        {[
+          { title: "Profile Views", value: stats.profileViews, icon: Eye, desc: "Total views on your profile" },
+          { title: "Earnings", value: `$${stats.totalEarnings.toFixed(2)}`, icon: DollarSign, desc: "From completed bookings" },
+          { title: "Pending", value: stats.pendingBookings, icon: Calendar, desc: "Awaiting your response" },
+          { title: "Messages", value: stats.unreadMessages, icon: MessageSquare, desc: "New messages from brands" },
+        ].map((stat) => (
+          <Card key={stat.title}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3 md:pb-2 md:pt-6 md:px-6">
+              <CardTitle className="text-[11px] md:text-sm font-medium">{stat.title}</CardTitle>
+              <stat.icon className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
+              <div className="text-lg md:text-2xl font-bold">{stat.value}</div>
+              <p className="hidden md:block text-xs text-muted-foreground">{stat.desc}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* This Week Summary - always visible, compact on mobile */}
+      {(weeklyStats.newOppsCount > 0 || weeklyStats.weeklyViews > 0) && (
         <Card className="border-primary/20 bg-primary/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" />
+          <CardHeader className="pb-2 pt-3 px-3 md:pb-3 md:pt-6 md:px-6">
+            <CardTitle className="text-sm md:text-base flex items-center gap-2">
+              <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
               This Week
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-6 text-sm">
+          <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
+            <div className="flex flex-wrap gap-4 md:gap-6 text-sm">
               {weeklyStats.newOppsCount > 0 && (
                 <div>
-                  <span className="text-2xl font-bold text-primary">{weeklyStats.newOppsCount}</span>
-                  <p className="text-muted-foreground">new opportunities posted</p>
+                  <span className="text-lg md:text-2xl font-bold text-primary">{weeklyStats.newOppsCount}</span>
+                  <p className="text-[10px] md:text-sm text-muted-foreground">new opportunities</p>
                 </div>
               )}
               {weeklyStats.matchingOppsCount > 0 && (
                 <div>
-                  <span className="text-2xl font-bold text-primary">{weeklyStats.matchingOppsCount}</span>
-                  <p className="text-muted-foreground">matching your categories</p>
+                  <span className="text-lg md:text-2xl font-bold text-primary">{weeklyStats.matchingOppsCount}</span>
+                  <p className="text-[10px] md:text-sm text-muted-foreground">matching yours</p>
                 </div>
               )}
               {weeklyStats.weeklyViews > 0 && (
                 <div>
-                  <span className="text-2xl font-bold text-primary">{weeklyStats.weeklyViews}</span>
-                  <p className="text-muted-foreground">profile views this week</p>
+                  <span className="text-lg md:text-2xl font-bold text-primary">{weeklyStats.weeklyViews}</span>
+                  <p className="text-[10px] md:text-sm text-muted-foreground">profile views</p>
                 </div>
               )}
             </div>
             {weeklyStats.matchingOppsCount > 0 && (
-              <p className="text-sm text-primary font-medium mt-3">
+              <p className="text-xs md:text-sm text-primary font-medium mt-2">
                 🔥 {weeklyStats.matchingOppsCount} brand{weeklyStats.matchingOppsCount > 1 ? 's are' : ' is'} looking for creators like you!
               </p>
             )}
@@ -295,113 +302,45 @@ const OverviewTab = () => {
       {/* Latest Opportunities */}
       {latestOpportunities.length > 0 && (
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2 pt-3 px-3 md:pb-3 md:pt-6 md:px-6">
             <div className="flex items-center justify-between">
-              <CardTitle className={`flex items-center gap-2 ${isNative ? 'text-base' : ''}`}>
-                <Sparkles className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm md:text-base flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
                 New Opportunities
                 {weeklyStats.newOppsCount > 0 && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-[9px] md:text-xs">
                     {weeklyStats.newOppsCount} this week
                   </Badge>
                 )}
               </CardTitle>
-              <Button variant="ghost" size="sm" asChild>
+              <Button variant="ghost" size="sm" asChild className="h-7 text-xs md:h-9 md:text-sm">
                 <Link to="/opportunities" className="gap-1 text-primary">
                   View All <ArrowRight className="h-3 w-3" />
                 </Link>
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {latestOpportunities.map((opp) => {
-              const packageInfo = opp.package_type ? EVENT_PACKAGES[opp.package_type as PackageType] : null;
-              return (
-                <Link
-                  key={opp.id}
-                  to="/opportunities"
-                  className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{opp.title}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Building2 className="h-3 w-3" />
-                        {opp.brand_profiles?.venue_name || opp.brand_profiles?.company_name}
-                      </span>
-                      {packageInfo && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                          {packageInfo.name}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right ml-3 shrink-0">
-                    {opp.is_paid && opp.budget_cents ? (
-                      <span className="text-sm font-semibold text-green-600">${(opp.budget_cents / 100).toFixed(0)}</span>
-                    ) : opp.is_paid ? (
-                      <span className="text-xs text-green-600">Paid</span>
-                    ) : (
-                      <span className="text-xs text-amber-600">Free Invite</span>
-                    )}
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {format(new Date(opp.event_date), "MMM d")}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
+          <CardContent className="space-y-2 px-3 pb-3 md:space-y-3 md:px-6 md:pb-6">
+            {latestOpportunities.map((opp) => (
+              <OpportunityRow key={opp.id} opp={opp} />
+            ))}
           </CardContent>
         </Card>
       )}
 
-      {/* Recommended For You */}
-      {!isNative && recommendedOpportunities.length > 0 && (
+      {/* Recommended For You - now visible on all screens */}
+      {recommendedOpportunities.length > 0 && (
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
+          <CardHeader className="pb-2 pt-3 px-3 md:pb-3 md:pt-6 md:px-6">
+            <CardTitle className="text-sm md:text-base flex items-center gap-2">
               🎯 Recommended For You
             </CardTitle>
-            <CardDescription>Opportunities matching your categories & location</CardDescription>
+            <CardDescription className="text-[10px] md:text-sm">Matching your categories & location</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {recommendedOpportunities.map((opp) => {
-              const packageInfo = opp.package_type ? EVENT_PACKAGES[opp.package_type as PackageType] : null;
-              return (
-                <Link
-                  key={opp.id}
-                  to="/opportunities"
-                  className="flex items-center justify-between p-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{opp.title}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Building2 className="h-3 w-3" />
-                        {opp.brand_profiles?.venue_name || opp.brand_profiles?.company_name}
-                      </span>
-                      {packageInfo && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                          {packageInfo.name}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right ml-3 shrink-0">
-                    {opp.is_paid && opp.budget_cents ? (
-                      <span className="text-sm font-semibold text-green-600">${(opp.budget_cents / 100).toFixed(0)}</span>
-                    ) : opp.is_paid ? (
-                      <span className="text-xs text-green-600">Paid</span>
-                    ) : (
-                      <span className="text-xs text-amber-600">Free Invite</span>
-                    )}
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {format(new Date(opp.event_date), "MMM d")}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
+          <CardContent className="space-y-2 px-3 pb-3 md:space-y-3 md:px-6 md:pb-6">
+            {recommendedOpportunities.map((opp) => (
+              <OpportunityRow key={opp.id} opp={opp} highlight />
+            ))}
           </CardContent>
         </Card>
       )}
