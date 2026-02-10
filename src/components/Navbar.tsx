@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import Notifications from "@/components/Notifications";
 import { useState, useEffect } from "react";
+import { useNewOpportunitiesCount } from "@/hooks/useNewOpportunitiesCount";
 import {
   Sheet,
   SheetContent,
@@ -39,6 +40,7 @@ const Navbar = () => {
   const [hasNewUpdates, setHasNewUpdates] = useState(false);
   const [showRegistrationPrompt, setShowRegistrationPrompt] = useState(false);
   const { unreadCount: unreadMessages, getMessagesLink } = useUnreadMessages();
+  const { count: newOppsCount, markAsViewed: markOppsViewed } = useNewOpportunitiesCount(hasCreatorProfile);
   const creatorTabs = [
     { value: "overview", label: "Overview", icon: BarChart3 },
     { value: "availability", label: "Availability", icon: Calendar },
@@ -225,7 +227,7 @@ const Navbar = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors flex items-center gap-1"
+                className="relative text-sm font-medium text-foreground/80 hover:text-primary transition-colors flex items-center gap-1"
                 onClick={(e) => {
                   if (link.to === "/influencers") {
                     handleFindCreatorsClick(e);
@@ -233,10 +235,18 @@ const Navbar = () => {
                   if (link.to === "/whats-new") {
                     setHasNewUpdates(false);
                   }
+                  if (link.to === "/opportunities") {
+                    markOppsViewed();
+                  }
                 }}
               >
                 {'icon' in link && link.icon && <link.icon className="h-3.5 w-3.5" />}
                 {link.label}
+                {link.to === "/opportunities" && newOppsCount > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-primary text-primary-foreground rounded-full">
+                    {newOppsCount > 99 ? "99+" : newOppsCount}
+                  </span>
+                )}
                 {link.to === "/whats-new" && hasNewUpdates && (
                   <span className="ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-primary text-primary-foreground rounded-full animate-pulse">
                     New
