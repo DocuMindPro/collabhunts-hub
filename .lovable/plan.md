@@ -1,58 +1,47 @@
 
 
-## Redesign the Opportunities Tab -- Remove Duplication, Improve UX
+## Compact Mobile-Friendly Creator Dashboard Overview
 
-### Current Problems
+### Problem
+On mobile web browsers, every card uses desktop-sized padding and full-width layout. The "Profile Status" card wastes space with a full card just for one badge. Stats cards show one per row with large text and descriptions, requiring excessive scrolling.
 
-1. **Two "Browse Opportunities" buttons** -- "Browse All" in the Fresh Opportunities card AND a separate "Browse Opportunities" button next to "My Applications"
-2. **"Fresh Opportunities" section duplicates the Overview tab** -- the same 3 latest opportunities already appear on the Overview tab
-3. **Layout feels disconnected** -- two separate sections with redundant CTAs instead of one cohesive page
+### Solution
+Make the Overview tab responsive for all mobile screens (not just native), by using Tailwind responsive breakpoints instead of `isNative` checks.
 
-### Redesigned Layout
+### Changes (Single File: `src/components/creator-dashboard/OverviewTab.tsx`)
 
-Merge everything into a single, unified page with a clear hierarchy:
+**1. Merge "Profile Status" into the header area**
+- Remove the dedicated Profile Status card entirely
+- Show the status badge inline next to the dashboard title or as a small pill at the top of the stats grid -- saves an entire card worth of vertical space
 
-```text
-+----------------------------------------------------------+
-|  Opportunities                        [Browse All ->]     |
-|  Find gigs and track your applications                    |
-+----------------------------------------------------------+
-|                                                          |
-|  3 New This Week  |  1 Application  |  0 Accepted        |
-|  (stat cards row)                                        |
-+----------------------------------------------------------+
-|                                                          |
-|  MY APPLICATIONS                                         |
-|  [All (1)] [Pending (0)] [Active (0)] [Completed (0)]    |
-|                                                          |
-|  +----------------------------------------------------+  |
-|  | fdgfdgfgfdgfdgfd           Withdrawn                |  |
-|  | TOP CREATOR NETWORK                                 |  |
-|  | Meet & Greet | Feb 11, 2026 | $232323 proposed      |  |
-|  +----------------------------------------------------+  |
-|                                                          |
-|  --- empty state shows "Browse Opportunities" CTA ---    |
-+----------------------------------------------------------+
-```
+**2. Stats grid: 2 columns on mobile, 4 on desktop**
+- Change from single-column mobile to `grid-cols-2 md:grid-cols-4`
+- Reduce card padding on mobile: `p-3 md:p-6`
+- Hide description text on mobile, show only on `md:` and up
+- Smaller font sizes on mobile: `text-lg md:text-2xl` for stat numbers
 
-### Changes (Single File: `src/components/creator-dashboard/OpportunitiesTab.tsx`)
+**3. "This Week" section: show on mobile too, but compact**
+- Currently hidden on mobile (`!isNative &&` guard hides it for native but mobile web shows desktop version)
+- Make it always visible but use smaller text and a horizontal row layout on mobile
+- Numbers use `text-lg` on mobile instead of `text-2xl`
 
-1. **Remove the "Fresh Opportunities" card entirely** -- it already exists on the Overview tab, so showing it here is redundant
-2. **Combine the header** -- single header row with title "Opportunities" on the left and one "Browse All" button on the right
-3. **Add quick-stat cards** -- three small stat cards showing "New This Week", "My Applications", and "Accepted" counts for at-a-glance context
-4. **Keep the application list and filters** as-is (they work well)
-5. **Keep the "Browse Opportunities" CTA only in the empty state** -- when a creator has zero applications, the empty state still shows the link to discover opportunities
+**4. Opportunities cards: tighter padding on mobile**
+- Reduce padding from `p-3` to `p-2` on mobile for opportunity list items
+- CardHeader/CardContent use `p-3 md:p-6` responsive padding
+- Keep the layout otherwise the same since it already works well
 
-### Technical Details
+**5. "Recommended For You": show on mobile too**
+- Currently hidden on mobile web (behind `!isNative` check that was meant only for native)
+- Show it with compact styling
 
-| What | Detail |
-|------|--------|
-| Remove `newestOpportunities` state + fetch | No longer needed in this tab |
-| Remove `NewestOpportunity` interface | Cleanup |
-| Remove `fetchNewestOpportunities` call | Cleanup |
-| Add stat card row | Use existing `applications` data + a simple count query for "new this week" |
-| Single CTA button | Replace two buttons with one in the header |
-| Keep empty-state CTA | The "Browse Opportunities" button stays only when there are zero applications |
+### Summary of Visual Impact
 
-No new files, no database changes. One file modified.
+| Section | Before (mobile) | After (mobile) |
+|---------|-----------------|----------------|
+| Profile Status | Full card with header + description | Inline badge at top, no card |
+| Stats | 1 column, large text, descriptions | 2-column grid, compact, no descriptions |
+| This Week | Full desktop size | Compact horizontal row |
+| Opportunities | Desktop padding | Tighter padding |
+| Recommended | Hidden | Visible, compact |
 
+Single file change, no database changes needed.
