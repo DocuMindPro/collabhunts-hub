@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Rocket, Clock, TrendingUp, Star, Badge as BadgeIcon, Sparkles } from "lucide-react";
+import { Rocket, Clock, TrendingUp, Star, Badge as BadgeIcon, Sparkles, Bell } from "lucide-react";
 import BoostProfileDialog from "./BoostProfileDialog";
 import { getFeaturingTier } from "@/config/featuring-tiers";
 
@@ -40,7 +40,6 @@ const FeaturingTab = ({ creatorProfileId }: FeaturingTabProps) => {
     try {
       const now = new Date().toISOString();
       
-      // Fetch active features
       const { data: active } = await supabase
         .from("creator_featuring")
         .select("*")
@@ -49,7 +48,6 @@ const FeaturingTab = ({ creatorProfileId }: FeaturingTabProps) => {
         .gt("end_date", now)
         .order("end_date", { ascending: true });
 
-      // Fetch past features
       const { data: past } = await supabase
         .from("creator_featuring")
         .select("*")
@@ -87,35 +85,42 @@ const FeaturingTab = ({ creatorProfileId }: FeaturingTabProps) => {
           <h2 className="text-2xl font-bold">Boost Your Profile</h2>
           <p className="text-muted-foreground">Get more visibility and attract more brands</p>
         </div>
-        <Button onClick={() => setShowBoostDialog(true)}>
-          <Rocket className="mr-2 h-4 w-4" />
-          Get Featured
+        <Button variant="outline" onClick={() => setShowBoostDialog(true)}>
+          <Bell className="mr-2 h-4 w-4" />
+          I'm Interested
         </Button>
       </div>
 
-      {/* Active Features */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-yellow-500" />
-            Active Boosts
-          </CardTitle>
-          <CardDescription>
-            Your currently active profile boosts
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p className="text-muted-foreground">Loading...</p>
-          ) : activeFeatures.length === 0 ? (
-            <div className="text-center py-8">
-              <Rocket className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground mb-4">No active boosts</p>
-              <Button variant="outline" onClick={() => setShowBoostDialog(true)}>
-                Boost Your Profile
-              </Button>
+      {/* Coming Soon Banner */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="py-5">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <Rocket className="h-5 w-5 text-primary" />
             </div>
-          ) : (
+            <div>
+              <p className="font-medium text-primary">Self-Service Boosts — Coming Soon!</p>
+              <p className="text-sm text-muted-foreground">
+                We're working on letting you boost your profile directly. For now, express your interest and our team will set it up for you.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Active Features (admin-activated) */}
+      {activeFeatures.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-yellow-500" />
+              Active Boosts
+            </CardTitle>
+            <CardDescription>
+              Your currently active profile boosts
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-3">
               {activeFeatures.map((feature) => {
                 const tier = getFeaturingTier(feature.feature_type as any);
@@ -151,9 +156,25 @@ const FeaturingTab = ({ creatorProfileId }: FeaturingTabProps) => {
                 );
               })}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty state when no active features */}
+      {!isLoading && activeFeatures.length === 0 && (
+        <Card>
+          <CardContent className="py-8">
+            <div className="text-center">
+              <Rocket className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground mb-4">No active boosts yet</p>
+              <Button variant="outline" onClick={() => setShowBoostDialog(true)}>
+                <Bell className="mr-2 h-4 w-4" />
+                Express Interest
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Past Features */}
       {pastFeatures.length > 0 && (
