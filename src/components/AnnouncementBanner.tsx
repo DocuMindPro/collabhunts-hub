@@ -5,6 +5,12 @@ import { Capacitor } from "@capacitor/core";
 
 type BannerStyle = "info" | "warning" | "success" | "promo";
 
+const safeUrl = (url: string) => {
+  if (!url) return "";
+  if (url.match(/^https?:\/\//)) return url;
+  return `https://${url}`;
+};
+
 const styleClasses: Record<BannerStyle, string> = {
   info: "bg-primary/90 text-primary-foreground",
   warning: "bg-amber-500 text-white",
@@ -16,6 +22,7 @@ const AnnouncementBanner = () => {
   const [enabled, setEnabled] = useState(false);
   const [text, setText] = useState("");
   const [link, setLink] = useState("");
+  const [linkText, setLinkText] = useState("");
   const [style, setStyle] = useState<BannerStyle>("info");
   const [updatedAt, setUpdatedAt] = useState("");
   const [dismissed, setDismissed] = useState(false);
@@ -31,7 +38,7 @@ const AnnouncementBanner = () => {
       const { data } = await supabase
         .from("site_settings")
         .select("key, value, updated_at")
-        .in("key", ["announcement_enabled", "announcement_text", "announcement_link", "announcement_style"]);
+        .in("key", ["announcement_enabled", "announcement_text", "announcement_link", "announcement_link_text", "announcement_style"]);
 
       if (data) {
         const settings: Record<string, string> = {};
@@ -49,6 +56,7 @@ const AnnouncementBanner = () => {
         setEnabled(isEnabled);
         setText(announcementText);
         setLink(settings.announcement_link || "");
+        setLinkText(settings.announcement_link_text || "");
         setStyle((settings.announcement_style || "info") as BannerStyle);
         setUpdatedAt(latestUpdatedAt);
 
@@ -82,12 +90,12 @@ const AnnouncementBanner = () => {
         <span>{text}</span>
         {link && (
           <a
-            href={link}
+            href={safeUrl(link)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 underline underline-offset-2 hover:opacity-80 font-semibold"
           >
-            Learn More
+            {linkText || "Learn More"}
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
         )}
