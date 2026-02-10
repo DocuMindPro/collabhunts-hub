@@ -28,7 +28,7 @@ export const FEATURING_TIERS: FeaturingTier[] = [
     id: 'featured_badge',
     name: 'Featured Badge',
     description: '"Featured" badge + top of search results',
-    pricePerWeek: 2900, // $29/week
+    pricePerWeek: 1450, // $15/week
     benefits: [
       'Featured badge on your profile',
       'Priority in search results',
@@ -41,7 +41,7 @@ export const FEATURING_TIERS: FeaturingTier[] = [
     id: 'homepage_spotlight',
     name: 'Homepage Spotlight',
     description: 'Rotating spotlight on homepage',
-    pricePerWeek: 4900, // $49/week
+    pricePerWeek: 2450, // $25/week
     benefits: [
       'Featured on homepage carousel',
       'Maximum visibility to brands',
@@ -54,7 +54,7 @@ export const FEATURING_TIERS: FeaturingTier[] = [
     id: 'category_boost',
     name: 'Category Boost',
     description: 'Top of your category results',
-    pricePerWeek: 3900, // $39/week
+    pricePerWeek: 1950, // $20/week
     benefits: [
       'Top position in your category',
       'Targeted visibility',
@@ -67,7 +67,7 @@ export const FEATURING_TIERS: FeaturingTier[] = [
     id: 'auto_popup',
     name: 'Auto Popup',
     description: 'Profile pops up for brands on first visit',
-    pricePerWeek: 7900, // $79/week
+    pricePerWeek: 3950, // $40/week
     benefits: [
       'Automatic profile popup for new brands',
       'Highest visibility option',
