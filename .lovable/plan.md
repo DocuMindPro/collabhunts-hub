@@ -1,33 +1,48 @@
 
 
-## Change "Become VIP" to Interest-Based (Like Boost)
+## Fix Announcement Banner: Custom Link Text + Broken URL
 
-### What Changes
+### Two Issues
 
-Replace the mock payment flow on the VIP Creator Badge card with a simple "I'm Interested" button that inserts a record into the existing `boost_interest_requests` table -- the same table the Boost Profile feature uses. Admins already see these requests in the Feature Overrides tab.
+**1. "Learn More" is hardcoded** -- you can't change it to something like "Give Feedback" or "Read More"
 
-### Single File Change: `src/components/creator-dashboard/VerificationBadgeCard.tsx`
+**2. Link opens inside the app** -- entering `www.feedback.com` results in navigating to `yoursite.lovable.app/www.feedback.com` because there's no `https://` prefix. The link needs auto-prefixing.
 
-**Remove:**
-- `MockPaymentDialog` import and usage
-- `handlePaymentSuccess` function
-- `showPaymentDialog` state
-- `date-fns` imports (`addYears`)
+### Solution
 
-**Add:**
-- A `submitting` state (boolean)
-- A `handleInterest` function that inserts into `boost_interest_requests` with `feature_type: "vip_badge"`
-- A "Coming Soon" badge in the header
-- Replace the "Become VIP" / "Renew VIP" buttons with "I'm Interested" buttons (with a Bell icon, matching the Boost dialog style)
-- Show a success state if the creator has already expressed interest (query `boost_interest_requests` for existing `vip_badge` entry)
-- Keep the active/expired states as-is (admin can still grant VIP manually via Feature Overrides)
+**Add a new field: "Link Text"** stored in `site_settings` as `announcement_link_text`, and **auto-prefix URLs** that don't start with `http://` or `https://`.
 
-**New flow for unpaid creators:**
-1. Creator sees benefits list + "$99/year" pricing info (unchanged)
-2. Button says "I'm Interested" with a Bell icon instead of "Become VIP"
-3. Click inserts into `boost_interest_requests` with `feature_type: "vip_badge"`
-4. Toast: "We've noted your interest! Our team will review and reach out to you soon."
-5. Admin sees the request in Feature Overrides tab (already wired up)
+### Database Change
 
-No database changes needed -- the `boost_interest_requests` table already accepts any string as `feature_type`.
+Add a new row to `site_settings` for `announcement_link_text` (single INSERT migration).
+
+### File Changes
+
+| File | Change |
+|------|--------|
+| `src/components/admin/AdminAnnouncementsTab.tsx` | Add "Link Text" input field next to "Link URL". Fetch/save `announcement_link_text`. Use it in the preview instead of hardcoded "Learn More". Auto-prefix URL with `https://` if missing when saving. |
+| `src/components/AnnouncementBanner.tsx` | Fetch `announcement_link_text` from `site_settings`. Use it instead of hardcoded "Learn More". Auto-prefix URL with `https://` if it doesn't start with `http`. |
+
+### Admin UI Layout (updated)
+
+```text
+Link URL (optional)          Link Text (optional)       Banner Style
+[https://feedback.com   ]    [Give Feedback        ]    [Warning (Amber) v]
+```
+
+- "Link Text" defaults to "Learn More" if left empty
+- URL auto-prefixed: `www.feedback.com` becomes `https://www.feedback.com`
+
+### Technical Detail
+
+URL fix in both files:
+```typescript
+const safeUrl = (url: string) => {
+  if (!url) return "";
+  if (url.match(/^https?:\/\//)) return url;
+  return `https://${url}`;
+};
+```
+
+No other files affected. Two files modified, one small migration.
 
