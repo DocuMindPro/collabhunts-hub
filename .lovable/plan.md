@@ -1,78 +1,43 @@
 
 
-## Fix Two-Tier Brand Registration Gate
+## Add "Quality Messaging" Selling Point to Homepage and Brand Page
 
-### Current Problems
+### The Key Insight to Communicate
 
-1. **No two-tier split**: BrandSignup is one giant form requiring everything upfront (name, email, password, phone, logo, company name, industry, social media, address). The intended flow was Tier 1 (quick signup) then Tier 2 (full registration).
-2. **`registration_completed` is never set to `true`**: The field exists in the database (defaults to `false`) but no code ever updates it.
-3. **No feature gating**: Once a brand profile exists, users get full access to everything -- browsing creators, messaging, inquiring -- regardless of whether `registration_completed` is `true` or `false`.
+This is a unique value proposition that no section currently addresses:
 
-### Intended Flow (Per Original Request)
+**For Brands:** Creators on CollabHunts are vetted and respond fast. Unlike social media where your DM gets buried under thousands of fan messages, here every message is a business inquiry -- so creators actually see and reply to you.
 
-```text
-Guest --> Tier 1 Signup (Name, Email, Password, Phone) --> Account Created (registration_completed = false)
-                                                                    |
-                                                         Can log in, sees dashboard
-                                                         but RESTRICTED from:
-                                                         - Browsing creators (/influencers)
-                                                         - Messaging creators
-                                                         - Sending inquiries
-                                                         - Booking
-                                                                    |
-                                                         Prompted to "Complete Registration"
-                                                                    |
-Tier 2 Registration (Logo, Company Name, Industry, Size, Location, Social Media, Address)
-                                                                    |
-                                                         registration_completed = true
-                                                         Full access unlocked
-```
+**For Creators:** No more drowning in thousands of useless DMs from fans and spam. On CollabHunts, every message is from a verified brand with a real business intent. Fewer messages, but each one has a much higher chance of turning into a paid collaboration.
 
-### Implementation Plan
+### Design: Dual-Perspective Section
 
-**1. Split `BrandSignup.tsx` into Tier 1 (Quick Signup)**
-- Keep only: First Name, Last Name, Email, Password, Phone Verification, Terms checkbox
-- Remove from this page: Logo, Company Name, Website, Industry, Company Size, Country, Address, Social Media
-- On submit: Create auth user + insert `brand_profiles` row with just basic info (`first_name`, `last_name`, `phone_number`, `phone_verified`, `terms_accepted_at`) and `registration_completed = false` (the default)
-- Navigate to `/brand-dashboard` after signup
+A split-view section with two GlowCards side by side -- one for brands, one for creators -- each explaining the messaging quality benefit from their perspective. Visually distinct with brand/creator color coding.
 
-**2. Create a new "Complete Registration" page/flow**
-- New component or repurpose the existing `BrandOnboarding` flow
-- Contains Tier 2 fields: Brand Logo, Company Name, Website, Industry, Company Size, Country, Address, Social Media
-- On submit: Updates the `brand_profiles` row with all business details AND sets `registration_completed = true`
-- Accessible from the dashboard via a prominent banner
+### Changes
 
-**3. Add Registration Gate to `BrandProtectedRoute.tsx`**
-- After confirming a brand profile exists, also fetch `registration_completed`
-- Pass `registrationCompleted` status down (or store in context)
-- Allow access to dashboard but with restricted state
+**1. Homepage (`src/pages/Index.tsx`)**
 
-**4. Add Registration Completion Banner to `BrandDashboard.tsx`**
-- When `registration_completed = false`, show a prominent banner at the top:
-  "Complete your brand registration to unlock all features -- browse creators, send messages, and post opportunities."
-  with a CTA button linking to the registration completion page
+Add a new section between the "Zero Fees + Privacy" section and the "Benefits" section. Layout:
 
-**5. Gate Feature Access**
-- **`/influencers` page**: Check `registration_completed` before allowing access; redirect incomplete brands to dashboard with a toast
-- **BrandOverviewTab**: Disable/hide "Find Creators" button when not registered
-- **BrandMessagesTab**: Show a locked state prompting registration completion
-- **BrandBookingsTab**: Show a locked state prompting registration completion  
-- **BrandOpportunitiesTab**: Disable "Post Opportunity" when not registered
-- **Homepage (`Index.tsx`)**: When user has brand profile but `registration_completed = false`, still redirect to dashboard (where they see the banner)
+- Section title: "Business Messages Only. No Noise."
+- Two-column grid with GlowCards:
+  - **Left card (For Brands):** Icon: ShieldCheck. Headline: "Creators That Actually Reply". Body explains vetted creators, fast response times, business-only inbox means your message gets seen. Trust pills: "Vetted Profiles", "Fast Responses", "Business-Only Inbox".
+  - **Right card (For Creators):** Icon: Zap. Headline: "Fewer Messages, Higher Conversions". Body explains no fan spam, only verified brand inquiries, every message is a potential paid collab. Trust pills: "Verified Brands", "No Fan Spam", "Higher Conversion Rate".
 
-### Files to Modify
+**2. Brand Page (`src/pages/Brand.tsx`)**
 
-| File | Change |
-|------|--------|
-| `src/pages/BrandSignup.tsx` | Strip down to Tier 1 fields only; remove logo/company/industry/social media sections |
-| `src/components/BrandProtectedRoute.tsx` | Fetch `registration_completed` and pass it as context/prop |
-| `src/pages/BrandDashboard.tsx` | Add registration completion banner when `registration_completed = false` |
-| `src/pages/BrandOnboarding.tsx` | Repurpose or add a step for Tier 2 business details that sets `registration_completed = true` |
-| `src/pages/Influencers.tsx` | Check `registration_completed` and block access for incomplete brands |
-| `src/components/brand-dashboard/BrandOverviewTab.tsx` | Conditionally disable features |
-| `src/components/brand-dashboard/BrandMessagesTab.tsx` | Show locked state for unregistered |
-| `src/components/brand-dashboard/BrandOpportunitiesTab.tsx` | Disable posting for unregistered |
+Add a similar section after the Benefits section and before the Zero Fees section. Same dual-perspective layout but with slightly different copy tailored to the brand audience -- emphasizing why this matters for brands specifically, while also showing the creator benefit (which explains WHY creators respond fast).
 
-### No Database Changes Needed
-The `registration_completed` column already exists with a default of `false`. No schema changes required.
+### Technical Details
+
+**Files to modify:**
+- `src/pages/Index.tsx` -- Add new section (~40 lines) between lines 317-320
+- `src/pages/Brand.tsx` -- Add new section (~40 lines) between lines 298-301
+
+**Components used (all existing):**
+- `AnimatedSection` for scroll animations
+- `GlowCard` for the glassmorphism card effect
+- Lucide icons: `ShieldCheck`, `Zap`, `MessageSquare`, `CheckCircle`
+- No new dependencies, no new files, no database changes
 
