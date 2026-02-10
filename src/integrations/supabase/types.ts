@@ -742,6 +742,41 @@ export type Database = {
           },
         ]
       }
+      boost_interest_requests: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          creator_profile_id: string
+          feature_type: string
+          id: string
+          seen_by_admin: boolean | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          creator_profile_id: string
+          feature_type: string
+          id?: string
+          seen_by_admin?: boolean | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          creator_profile_id?: string
+          feature_type?: string
+          id?: string
+          seen_by_admin?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boost_interest_requests_creator_profile_id_fkey"
+            columns: ["creator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_opportunities: {
         Row: {
           application_deadline: string | null

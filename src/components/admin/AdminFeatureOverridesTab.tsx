@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Crown, BadgeCheck, Sparkles, Star, TrendingUp, Zap, Building2, Palette, Loader2, Copy } from "lucide-react";
+import { Search, Crown, BadgeCheck, Sparkles, Star, TrendingUp, Zap, Building2, Palette, Loader2, Copy, Rocket, Eye, Bell } from "lucide-react";
+import { format } from "date-fns";
+import { getFeaturingTier } from "@/config/featuring-tiers";
 
 interface CreatorResult {
   id: string;
@@ -286,10 +288,99 @@ const AdminFeatureOverridesTab = () => {
     }
   };
 
+  // Boost interest requests
+  const [boostRequests, setBoostRequests] = useState<any[]>([]);
+  const [loadingBoosts, setLoadingBoosts] = useState(true);
+  const [markingSeenId, setMarkingSeenId] = useState<string | null>(null);
 
+  const fetchBoostRequests = async () => {
+    setLoadingBoosts(true);
+    try {
+      const { data } = await supabase
+        .from("boost_interest_requests")
+        .select("*, creator_profiles(display_name)")
+        .eq("seen_by_admin", false)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      setBoostRequests(data || []);
+    } catch (error) {
+      console.error("Error fetching boost requests:", error);
+    } finally {
+      setLoadingBoosts(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBoostRequests();
+  }, []);
+
+  const markBoostSeen = async (id: string) => {
+    setMarkingSeenId(id);
+    try {
+      await supabase
+        .from("boost_interest_requests")
+        .update({ seen_by_admin: true })
+        .eq("id", id);
+      setBoostRequests(prev => prev.filter(r => r.id !== id));
+      toast({ title: "Marked as seen" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setMarkingSeenId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
+      {/* Boost Interest Requests */}
+      {boostRequests.length > 0 && (
+        <Card className="border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/20">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Rocket className="h-5 w-5 text-purple-500" />
+              Boost Interest Requests
+              <Badge variant="destructive" className="ml-1">{boostRequests.length}</Badge>
+            </CardTitle>
+            <CardDescription>Creators who expressed interest in boosting their profile</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {boostRequests.map((req) => {
+                const tier = getFeaturingTier(req.feature_type);
+                return (
+                  <div key={req.id} className="flex items-center justify-between p-3 border rounded-lg bg-background">
+                    <div className="flex items-center gap-3">
+                      <Bell className="h-4 w-4 text-purple-500" />
+                      <div>
+                        <p className="font-medium text-sm">{req.creator_profiles?.display_name || "Unknown Creator"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Interested in: <span className="font-medium">{tier?.name || req.feature_type}</span>
+                          {req.created_at && ` • ${format(new Date(req.created_at), "MMM d, yyyy h:mm a")}`}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={markingSeenId === req.id}
+                      onClick={() => markBoostSeen(req.id)}
+                    >
+                      {markingSeenId === req.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <>
+                          <Eye className="h-3 w-3 mr-1" />
+                          Mark Seen
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
       {/* Search */}
       <Card>
         <CardHeader>

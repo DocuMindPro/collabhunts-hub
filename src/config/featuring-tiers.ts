@@ -34,7 +34,8 @@ export const FEATURING_TIERS: FeaturingTier[] = [
       'Priority in search results',
       'Stand out from other creators'
     ],
-    icon: 'Badge'
+    icon: 'Badge',
+    comingSoon: true
   },
   {
     id: 'homepage_spotlight',
@@ -46,7 +47,8 @@ export const FEATURING_TIERS: FeaturingTier[] = [
       'Maximum visibility to brands',
       'Includes Featured badge'
     ],
-    icon: 'Star'
+    icon: 'Star',
+    comingSoon: true
   },
   {
     id: 'category_boost',
@@ -58,7 +60,8 @@ export const FEATURING_TIERS: FeaturingTier[] = [
       'Targeted visibility',
       'Great for niche creators'
     ],
-    icon: 'TrendingUp'
+    icon: 'TrendingUp',
+    comingSoon: true
   },
   {
     id: 'auto_popup',

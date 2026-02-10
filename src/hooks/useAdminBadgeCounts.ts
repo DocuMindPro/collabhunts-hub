@@ -7,6 +7,7 @@ interface BadgeCounts {
   careers: number;
   verifications: number;
   revenue: number;
+  boostRequests: number;
 }
 
 const EMPTY_COUNTS: BadgeCounts = {
@@ -15,6 +16,7 @@ const EMPTY_COUNTS: BadgeCounts = {
   careers: 0,
   verifications: 0,
   revenue: 0,
+  boostRequests: 0,
 };
 
 type TabKey = keyof BadgeCounts;
@@ -34,6 +36,7 @@ export function useAdminBadgeCounts() {
         { count: verifications },
         { count: franchisePayouts },
         { count: affiliatePayouts },
+        { count: boostRequests },
       ] = await Promise.all([
         supabase.from("quotation_inquiries").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("creator_profiles").select("*", { count: "exact", head: true }).eq("status", "pending"),
@@ -41,6 +44,7 @@ export function useAdminBadgeCounts() {
         supabase.from("brand_profiles").select("*", { count: "exact", head: true }).eq("verification_status", "pending"),
         supabase.from("franchise_payout_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("affiliate_payout_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("boost_interest_requests").select("*", { count: "exact", head: true }).eq("seen_by_admin", false),
       ]);
 
       setCounts({
@@ -49,6 +53,7 @@ export function useAdminBadgeCounts() {
         careers: careers || 0,
         verifications: verifications || 0,
         revenue: (franchisePayouts || 0) + (affiliatePayouts || 0),
+        boostRequests: boostRequests || 0,
       });
     } catch (error) {
       console.error("Error fetching admin badge counts:", error);
@@ -63,11 +68,18 @@ export function useAdminBadgeCounts() {
     return () => clearInterval(intervalRef.current);
   }, [fetchCounts]);
 
+  // Map tabs to their badge count keys (some tabs use different keys)
+  const TAB_TO_KEYS: Record<string, TabKey[]> = {
+    features: ["boostRequests"],
+  };
+
   const markSeen = useCallback((tab: string) => {
-    const key = tab as TabKey;
-    if (key in EMPTY_COUNTS) {
-      setSeenCounts(prev => ({ ...prev, [key]: counts[key] }));
-    }
+    const keys = TAB_TO_KEYS[tab] || [tab as TabKey];
+    keys.forEach(key => {
+      if (key in EMPTY_COUNTS) {
+        setSeenCounts(prev => ({ ...prev, [key]: counts[key] }));
+      }
+    });
   }, [counts]);
 
   // A badge is visible if count > 0 AND (tab hasn't been seen OR count changed since seen)

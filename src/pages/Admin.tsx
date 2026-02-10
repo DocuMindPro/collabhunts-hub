@@ -932,6 +932,11 @@ const Admin = () => {
               <TabsTrigger value="features" className="gap-2 shrink-0">
                 <Crown className="h-4 w-4" />
                 <span className="hidden sm:inline">Features</span>
+                {getBadgeCount("boostRequests") > 0 && (
+                  <Badge variant="destructive" className="h-5 min-w-[20px] px-1 text-[10px]">
+                    {getBadgeCount("boostRequests")}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="announcements" className="gap-2 shrink-0">
                 <Phone className="h-4 w-4" />

@@ -10,7 +10,8 @@ import {
   DollarSign,
   ArrowRight,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Rocket
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +22,7 @@ interface QuickActionStats {
   verificationRequests: number;
   pendingPayouts: number;
   staleItems: number;
+  boostRequests: number;
 }
 
 interface Props {
@@ -34,6 +36,7 @@ export default function AdminQuickActions({ onNavigate }: Props) {
     verificationRequests: 0,
     pendingPayouts: 0,
     staleItems: 0,
+    boostRequests: 0,
   });
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
@@ -51,6 +54,7 @@ export default function AdminQuickActions({ onNavigate }: Props) {
         { count: franchisePayouts },
         { count: affiliatePayouts },
         { count: staleCreators },
+        { count: boostRequests },
       ] = await Promise.all([
         supabase.from("creator_profiles").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("booking_disputes").select("*", { count: "exact", head: true }).in("status", ["open", "awaiting_response"]),
@@ -58,6 +62,7 @@ export default function AdminQuickActions({ onNavigate }: Props) {
         supabase.from("franchise_payout_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("affiliate_payout_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("creator_profiles").select("*", { count: "exact", head: true }).eq("status", "pending").lt("created_at", twentyFourHoursAgo),
+        supabase.from("boost_interest_requests").select("*", { count: "exact", head: true }).eq("seen_by_admin", false),
       ]);
 
       setStats({
@@ -66,6 +71,7 @@ export default function AdminQuickActions({ onNavigate }: Props) {
         verificationRequests: verificationRequests || 0,
         pendingPayouts: (franchisePayouts || 0) + (affiliatePayouts || 0),
         staleItems: staleCreators || 0,
+        boostRequests: boostRequests || 0,
       });
       setLastRefresh(new Date());
     } catch (error) {
@@ -86,7 +92,8 @@ export default function AdminQuickActions({ onNavigate }: Props) {
     stats.pendingCreators + 
     stats.openDisputes + 
     stats.verificationRequests + 
-    stats.pendingPayouts;
+    stats.pendingPayouts +
+    stats.boostRequests;
 
   const actions = [
     {
@@ -121,6 +128,14 @@ export default function AdminQuickActions({ onNavigate }: Props) {
       color: "text-amber-500",
       bgColor: "bg-amber-500/10",
     },
+    {
+      label: "Boost Requests",
+      count: stats.boostRequests,
+      icon: Rocket,
+      tab: "features",
+      color: "text-purple-500",
+      bgColor: "bg-purple-500/10",
+    },
   ];
 
   if (loading) {
@@ -131,7 +146,7 @@ export default function AdminQuickActions({ onNavigate }: Props) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[...Array(4)].map((_, i) => (
+            {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-20" />
             ))}
           </div>
@@ -192,7 +207,7 @@ export default function AdminQuickActions({ onNavigate }: Props) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {actions.map((action) => (
             <button
               key={action.tab}
