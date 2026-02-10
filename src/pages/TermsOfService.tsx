@@ -231,6 +231,25 @@ const TermsOfService = () => {
                 <li>Scrape, data mine, or extract data from the Platform</li>
                 <li>Manipulate reviews, ratings, or search rankings</li>
               </ul>
+
+              <h3 className="text-xl font-heading font-semibold mt-6 mb-3">12.1 Automated Scraping & AI Prohibition</h3>
+              <p className="text-muted-foreground mb-4">
+                Without limiting the generality of the above, you expressly agree that you will not:
+              </p>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
+                <li>Use any automated system, bot, spider, scraper, or other programmatic method to access, crawl, index, or extract data from the Platform, including but not limited to user profiles, portfolio content, pricing information, or platform layouts</li>
+                <li>Use any content, data, or materials obtained from the Platform — whether directly or indirectly — to train, fine-tune, or otherwise develop any artificial intelligence model, machine learning system, large language model (LLM), or similar technology</li>
+                <li>Reproduce, replicate, or reverse-engineer the Platform's features, functionality, user interface, user experience, or business logic using AI-assisted tools or any other means</li>
+                <li>Feed any Platform URL, screenshot, or content into any AI tool, chatbot, or generative system for the purpose of recreating, cloning, or deriving a competing product or service</li>
+                <li>Circumvent or attempt to bypass any technical measures implemented by the Platform to prevent automated access, including but not limited to robots.txt directives, rate limiting, or anti-scraping protections</li>
+              </ul>
+
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 mb-4">
+                <p className="text-sm font-semibold text-destructive mb-1">⚠️ Legal Notice</p>
+                <p className="text-sm text-muted-foreground">
+                  Violations of this section may result in immediate and permanent account termination, pursuit of injunctive relief, and claims for damages including statutory damages under applicable computer fraud, copyright, and data protection laws. CollabHunts reserves the right to pursue all available legal remedies.
+                </p>
+              </div>
             </section>
 
             {/* Section 13 - Limitation of Liability */}
