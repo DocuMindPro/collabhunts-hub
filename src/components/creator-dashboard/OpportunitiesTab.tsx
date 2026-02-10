@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Calendar, DollarSign, Gift, Building2, ExternalLink, Search, Link as LinkIcon } from "lucide-react";
+import { Calendar, DollarSign, Gift, Building2, ExternalLink, Search, Link as LinkIcon, Sparkles, ArrowRight } from "lucide-react";
 import { EVENT_PACKAGES, PackageType } from "@/config/packages";
 import SubmitDeliveryDialog from "./SubmitDeliveryDialog";
 
@@ -39,15 +39,41 @@ interface OpportunitiesTabProps {
   creatorProfileId: string;
 }
 
+interface NewestOpportunity {
+  id: string;
+  title: string;
+  package_type: string | null;
+  event_date: string;
+  is_paid: boolean;
+  budget_cents: number | null;
+  brand_profiles: {
+    company_name: string;
+    venue_name: string | null;
+  } | null;
+}
+
 const OpportunitiesTab = ({ creatorProfileId }: OpportunitiesTabProps) => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [newestOpportunities, setNewestOpportunities] = useState<NewestOpportunity[]>([]);
 
   useEffect(() => {
     fetchApplications();
+    fetchNewestOpportunities();
   }, [creatorProfileId]);
+
+  const fetchNewestOpportunities = async () => {
+    const { data } = await supabase
+      .from("brand_opportunities")
+      .select("id, title, package_type, event_date, is_paid, budget_cents, brand_profiles(company_name, venue_name)")
+      .eq("status", "open")
+      .gte("event_date", new Date().toISOString().split('T')[0])
+      .order("created_at", { ascending: false })
+      .limit(3);
+    setNewestOpportunities((data as unknown as NewestOpportunity[]) || []);
+  };
 
   const fetchApplications = async () => {
     setLoading(true);
@@ -158,6 +184,52 @@ const OpportunitiesTab = ({ creatorProfileId }: OpportunitiesTabProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Newest Opportunities Inline Preview */}
+      {newestOpportunities.length > 0 && (
+        <Card className="border-primary/20">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                Fresh Opportunities
+              </CardTitle>
+              <Button asChild size="sm" className="gap-1">
+                <Link to="/opportunities">
+                  Browse All <ArrowRight className="h-3 w-3" />
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {newestOpportunities.map((opp) => {
+                const packageInfo = opp.package_type ? EVENT_PACKAGES[opp.package_type as PackageType] : null;
+                return (
+                  <Link
+                    key={opp.id}
+                    to="/opportunities"
+                    className="p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  >
+                    <p className="font-medium text-sm truncate">{opp.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1 truncate">
+                      {opp.brand_profiles?.venue_name || opp.brand_profiles?.company_name}
+                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                      {packageInfo && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{packageInfo.name}</Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(opp.event_date), "MMM d")}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
