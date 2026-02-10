@@ -97,7 +97,7 @@ const CreatorDashboard = () => {
                 </TabsTrigger>
                 <TabsTrigger value="services" className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 shrink-0 min-w-[52px] px-1.5 py-1.5 sm:min-w-0 sm:px-3">
                   <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="text-[9px] leading-tight sm:text-sm truncate">Packages</span>
+                  <span className="text-[9px] leading-tight sm:text-sm truncate">My Packages</span>
                 </TabsTrigger>
               <TabsTrigger value="bookings" className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 shrink-0 min-w-[52px] px-1.5 py-1.5 sm:min-w-0 sm:px-3">
                 <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
