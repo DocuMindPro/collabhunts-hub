@@ -59,7 +59,7 @@ const AdminAnnouncementsTab = () => {
       const updates = [
         { key: "announcement_enabled", value: bannerEnabled.toString() },
         { key: "announcement_text", value: bannerText },
-        { key: "announcement_link", value: bannerLink },
+        { key: "announcement_link", value: bannerLink.trim() },
         { key: "announcement_link_text", value: bannerLinkText },
         { key: "announcement_style", value: bannerStyle },
       ];
