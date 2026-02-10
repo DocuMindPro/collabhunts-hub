@@ -53,6 +53,7 @@ const EventDetail = lazy(() => import("./pages/EventDetail"));
 const Opportunities = lazy(() => import("./pages/Opportunities"));
 const Careers = lazy(() => import("./pages/Careers"));
 const CollaborationGuide = lazy(() => import("./pages/CollaborationGuide"));
+const Feedback = lazy(() => import("./pages/Feedback"));
 
 const queryClient = new QueryClient();
 
@@ -99,6 +100,7 @@ const WebAppRoutes = () => (
       <Route path="/opportunities" element={<Opportunities />} />
       <Route path="/careers" element={<Careers />} />
       <Route path="/collaborations/:slug" element={<CollaborationGuide />} />
+      <Route path="/feedback" element={<Feedback />} />
       <Route path="/brand-signup" element={<BrandSignup />} />
       <Route path="/brand-onboarding" element={<BrandOnboarding />} />
       <Route path="/brand-welcome" element={<BrandWelcome />} />

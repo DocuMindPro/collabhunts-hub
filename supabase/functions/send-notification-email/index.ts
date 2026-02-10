@@ -90,7 +90,9 @@ type EmailType =
   | 'affiliate_payout_rejected'
   // Platform updates
   | 'platform_update'
-  | 'test_email';
+  | 'test_email'
+  // Feedback
+  | 'feedback_submitted';
 
 interface EmailRequest {
   type: EmailType;
@@ -1050,6 +1052,27 @@ function getEmailContent(type: EmailType, data: Record<string, any>, toName?: st
           </p>
           <div style="text-align: center;">
             ${getCtaButton('Go to CollabHunts', baseUrl)}
+          </div>
+        `)
+      };
+
+    case 'feedback_submitted':
+      return {
+        subject: `📝 New Feedback from ${data.first_name} ${data.last_name}`,
+        html: wrapEmail(`
+          <h2 style="color: #2F2F2F; margin: 0 0 20px 0; font-family: 'Poppins', Arial, sans-serif;">New Feedback Received</h2>
+          <p style="color: #666; line-height: 1.6; font-size: 16px;">
+            A new feedback has been submitted on CollabHunts.
+          </p>
+          <div style="background: #FFF8F0; border-left: 4px solid #FF7A00; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0 0 10px 0; color: #2F2F2F;"><strong>👤 Name:</strong> ${data.first_name} ${data.last_name}</p>
+            <p style="margin: 0 0 10px 0; color: #2F2F2F;"><strong>📧 Email:</strong> ${data.email}</p>
+            <p style="margin: 0 0 10px 0; color: #2F2F2F;"><strong>⭐ Rating:</strong> ${data.rating}/3 (${data.rating_label})</p>
+            <p style="margin: 0; color: #2F2F2F;"><strong>💬 Feedback:</strong></p>
+            <p style="margin: 10px 0 0 0; color: #666; white-space: pre-wrap;">${data.details}</p>
+          </div>
+          <div style="text-align: center;">
+            ${getCtaButton('View in Admin', `${baseUrl}/admin?tab=feedbacks`)}
           </div>
         `)
       };

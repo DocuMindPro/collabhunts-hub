@@ -2452,6 +2452,39 @@ export type Database = {
           },
         ]
       }
+      feedbacks: {
+        Row: {
+          created_at: string
+          details: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          rating: number
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          details: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          rating: number
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          rating?: number
+          status?: string
+        }
+        Relationships: []
+      }
       franchise_countries: {
         Row: {
           assigned_at: string
