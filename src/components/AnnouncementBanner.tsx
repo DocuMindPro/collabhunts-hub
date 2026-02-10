@@ -7,8 +7,9 @@ type BannerStyle = "info" | "warning" | "success" | "promo";
 
 const safeUrl = (url: string) => {
   if (!url) return "";
-  if (url.match(/^https?:\/\//)) return url;
-  return `https://${url}`;
+  const trimmed = url.trim();
+  if (trimmed.match(/^https?:\/\//)) return trimmed;
+  return `https://${trimmed}`;
 };
 
 const styleClasses: Record<BannerStyle, string> = {
