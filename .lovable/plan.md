@@ -1,72 +1,58 @@
 
 
-## Make Opportunities More Discoverable + Add Creator Engagement Features
+## Redesign the Opportunities Tab -- Remove Duplication, Improve UX
 
-### Problem 1: Opportunities Are Too Buried
-Currently a creator must: Dashboard > Opps Tab > Click "Browse Opportunities" -- that's 3 steps to find new work.
+### Current Problems
 
-### Problem 2: No Reason to Return
-Creators only open the app when a brand messages them. There's nothing pulling them back proactively.
+1. **Two "Browse Opportunities" buttons** -- "Browse All" in the Fresh Opportunities card AND a separate "Browse Opportunities" button next to "My Applications"
+2. **"Fresh Opportunities" section duplicates the Overview tab** -- the same 3 latest opportunities already appear on the Overview tab
+3. **Layout feels disconnected** -- two separate sections with redundant CTAs instead of one cohesive page
 
----
+### Redesigned Layout
 
-### Solution A: Surface Opportunities Everywhere
+Merge everything into a single, unified page with a clear hierarchy:
 
-**1. Add "New Opportunities" Card to Overview Tab**
-File: `src/components/creator-dashboard/OverviewTab.tsx`
+```text
++----------------------------------------------------------+
+|  Opportunities                        [Browse All ->]     |
+|  Find gigs and track your applications                    |
++----------------------------------------------------------+
+|                                                          |
+|  3 New This Week  |  1 Application  |  0 Accepted        |
+|  (stat cards row)                                        |
++----------------------------------------------------------+
+|                                                          |
+|  MY APPLICATIONS                                         |
+|  [All (1)] [Pending (0)] [Active (0)] [Completed (0)]    |
+|                                                          |
+|  +----------------------------------------------------+  |
+|  | fdgfdgfgfdgfdgfd           Withdrawn                |  |
+|  | TOP CREATOR NETWORK                                 |  |
+|  | Meet & Greet | Feb 11, 2026 | $232323 proposed      |  |
+|  +----------------------------------------------------+  |
+|                                                          |
+|  --- empty state shows "Browse Opportunities" CTA ---    |
++----------------------------------------------------------+
+```
 
-- Add a new card below the stats grid showing the latest 3 open opportunities
-- Each shows title, brand name, package type badge, budget, and event date
-- "View All Opportunities" button links directly to `/opportunities`
-- Fetch count of new opportunities posted in the last 7 days and show it as a highlighted number (e.g., "5 New This Week")
+### Changes (Single File: `src/components/creator-dashboard/OpportunitiesTab.tsx`)
 
-**2. Add Opportunities Count Badge to Navbar**
-File: `src/components/Navbar.tsx`
+1. **Remove the "Fresh Opportunities" card entirely** -- it already exists on the Overview tab, so showing it here is redundant
+2. **Combine the header** -- single header row with title "Opportunities" on the left and one "Browse All" button on the right
+3. **Add quick-stat cards** -- three small stat cards showing "New This Week", "My Applications", and "Accepted" counts for at-a-glance context
+4. **Keep the application list and filters** as-is (they work well)
+5. **Keep the "Browse Opportunities" CTA only in the empty state** -- when a creator has zero applications, the empty state still shows the link to discover opportunities
 
-- Show a count badge on the "Opportunities" nav link (similar to the unread messages badge)
-- Count = open opportunities the creator hasn't viewed yet (based on opportunities created after the creator's last visit to `/opportunities`, tracked via localStorage)
+### Technical Details
 
-**3. Add Quick-Access "Browse Opps" Button on the Opps Tab Header**
-File: `src/components/creator-dashboard/OpportunitiesTab.tsx`
-
-- Make the existing "Browse Opportunities" button more prominent (larger, with a pulsing dot if there are new ones)
-- Add an inline preview section at the top showing 2-3 newest opportunities directly in the tab before the "My Applications" section, so creators see fresh opportunities without an extra click
-
----
-
-### Solution B: Give Creators Reasons to Come Back (Engagement Features)
-
-**4. "Weekly Opportunity Digest" Summary on Overview Tab**
-File: `src/components/creator-dashboard/OverviewTab.tsx`
-
-- Add a "This Week" section showing:
-  - Number of new opportunities matching their category
-  - Number of profile views they got
-  - A motivational prompt like "3 brands are looking for creators like you!"
-- This gives creators a reason to check the dashboard regularly
-
-**5. "Recommended For You" Section on Overview Tab**
-File: `src/components/creator-dashboard/OverviewTab.tsx`
-
-- Show 2-3 opportunities that match the creator's categories/location
-- Uses existing `required_categories` and `location_city` fields from opportunities
-- Fetch creator's categories from their profile and match against open opportunities
-- Each card is clickable and goes directly to `/opportunities` with the opportunity pre-selected
-
----
-
-### Files to Modify
-
-| File | Change |
+| What | Detail |
 |------|--------|
-| `src/components/creator-dashboard/OverviewTab.tsx` | Add "New Opportunities" card, "This Week" summary, and "Recommended For You" section |
-| `src/components/creator-dashboard/OpportunitiesTab.tsx` | Add inline preview of newest opportunities above "My Applications" |
-| `src/components/Navbar.tsx` | Add badge count on "Opportunities" nav link for creators |
+| Remove `newestOpportunities` state + fetch | No longer needed in this tab |
+| Remove `NewestOpportunity` interface | Cleanup |
+| Remove `fetchNewestOpportunities` call | Cleanup |
+| Add stat card row | Use existing `applications` data + a simple count query for "new this week" |
+| Single CTA button | Replace two buttons with one in the header |
+| Keep empty-state CTA | The "Browse Opportunities" button stays only when there are zero applications |
 
-No database changes needed -- all data is already available via existing tables.
+No new files, no database changes. One file modified.
 
-### Summary of Impact
-- Opportunities become visible on every dashboard visit (Overview tab)
-- Navbar badge creates curiosity to check new opportunities
-- "Recommended For You" makes the dashboard feel personalized
-- Weekly summary gives creators a reason to open the app daily/weekly even without messages
