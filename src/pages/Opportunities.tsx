@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Calendar, MapPin, Users, DollarSign, Clock, Search, Gift, Briefcase, AlertCircle, BarChart3, Sparkles } from "lucide-react";
+import { Calendar, MapPin, Users, DollarSign, Clock, Search, Gift, Briefcase, AlertCircle, BarChart3, Sparkles, ArrowUpDown } from "lucide-react";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import { EVENT_PACKAGES, PackageType } from "@/config/packages";
 import { FOLLOWER_RANGES, checkFollowerEligibility, formatFollowerRanges, formatFollowerCount, getCombinedRange } from "@/config/follower-ranges";
@@ -54,6 +54,8 @@ const Opportunities = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPackageType, setSelectedPackageType] = useState<string>("all");
+  const [selectedCity, setSelectedCity] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("default");
   const [showPaidOnly, setShowPaidOnly] = useState(false);
   const [showFreeOnly, setShowFreeOnly] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<BrandOpportunity | null>(null);
@@ -202,26 +204,46 @@ const Opportunities = () => {
     fetchOpportunities();
   };
 
-  // Sort featured opportunities to the top, then by date
-  const sortedOpportunities = [...opportunities].sort((a, b) => {
-    const aFeatured = (a as any).is_featured === true;
-    const bFeatured = (b as any).is_featured === true;
-    if (aFeatured && !bFeatured) return -1;
-    if (!aFeatured && bFeatured) return 1;
-    return 0;
-  });
+  // Extract unique cities for the location filter
+  const uniqueCities = Array.from(
+    new Set(opportunities.map(o => o.location_city).filter(Boolean) as string[])
+  ).sort();
 
-  const filteredOpportunities = sortedOpportunities.filter(opp => {
+  // Filter opportunities
+  const filtered = opportunities.filter(opp => {
     const matchesSearch = 
       opp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       opp.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       opp.brand_profiles?.company_name.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesPackage = selectedPackageType === "all" || opp.package_type === selectedPackageType;
+    const matchesCity = selectedCity === "all" || opp.location_city === selectedCity;
     const matchesPaid = !showPaidOnly || opp.is_paid;
     const matchesFree = !showFreeOnly || !opp.is_paid;
     
-    return matchesSearch && matchesPackage && matchesPaid && matchesFree;
+    return matchesSearch && matchesPackage && matchesCity && matchesPaid && matchesFree;
+  });
+
+  // Sort filtered opportunities
+  const filteredOpportunities = [...filtered].sort((a, b) => {
+    if (sortBy === "price_high") {
+      // Paid first (desc by budget), then non-paid
+      if (a.is_paid && !b.is_paid) return -1;
+      if (!a.is_paid && b.is_paid) return 1;
+      return (b.budget_cents ?? 0) - (a.budget_cents ?? 0);
+    }
+    if (sortBy === "price_low") {
+      // Paid first (asc by budget), then non-paid
+      if (a.is_paid && !b.is_paid) return -1;
+      if (!a.is_paid && b.is_paid) return 1;
+      return (a.budget_cents ?? 0) - (b.budget_cents ?? 0);
+    }
+    // Default: featured first, then by date
+    const aFeatured = (a as any).is_featured === true;
+    const bFeatured = (b as any).is_featured === true;
+    if (aFeatured && !bFeatured) return -1;
+    if (!aFeatured && bFeatured) return 1;
+    return 0;
   });
 
   const getPackageBadgeColor = (packageType: string | null) => {
@@ -306,7 +328,7 @@ const Opportunities = () => {
                 {/* Package Select + Toggles */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Select value={selectedPackageType} onValueChange={setSelectedPackageType}>
-                    <SelectTrigger className="w-full sm:w-[200px] h-11">
+                    <SelectTrigger className="w-full sm:w-[180px] h-11">
                       <SelectValue placeholder="Package Type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -314,6 +336,35 @@ const Opportunities = () => {
                       {Object.entries(EVENT_PACKAGES).map(([key, pkg]) => (
                         <SelectItem key={key} value={key}>{pkg.name}</SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={selectedCity} onValueChange={setSelectedCity}>
+                    <SelectTrigger className="w-full sm:w-[180px] h-11">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <SelectValue placeholder="All Locations" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Locations</SelectItem>
+                      {uniqueCities.map((city) => (
+                        <SelectItem key={city} value={city}>{city}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-full sm:w-[180px] h-11">
+                      <div className="flex items-center gap-2">
+                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <SelectValue placeholder="Sort By" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Default</SelectItem>
+                      <SelectItem value="price_high">Price: High to Low</SelectItem>
+                      <SelectItem value="price_low">Price: Low to High</SelectItem>
                     </SelectContent>
                   </Select>
 
