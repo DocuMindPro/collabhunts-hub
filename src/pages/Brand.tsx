@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
-  MapPin, Shield, Users, DollarSign, CheckCircle, 
+  MapPin, Shield, ShieldCheck, Users, DollarSign, CheckCircle, 
   MessageSquare, Calendar, Star, Building, 
   Sparkles, Clock, Zap, FileText
 } from "lucide-react";
@@ -303,64 +303,46 @@ const Brand = () => {
         <div className="container mx-auto px-4">
           <AnimatedSection animation="fade-up" className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-              Business Messages Only. No Noise.
+              Your Message Gets Seen. Every Time.
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Every message on CollabHunts is a real business inquiry — not fan mail, not spam.
+              Unlike social media where your DM competes with thousands of fan messages, CollabHunts is a business-only platform — creators here expect brand inquiries and respond fast.
             </p>
           </AnimatedSection>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <AnimatedSection animation="slide-left">
-              <GlowCard glowColor="primary" className="h-full">
-                <div className="p-8 space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-medium text-primary">For Brands</span>
+          <AnimatedSection animation="fade-up" delay={200}>
+            <GlowCard glowColor="primary" className="max-w-4xl mx-auto">
+              <div className="p-8 md:p-10 space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-2.5 rounded-lg bg-primary/10 shrink-0">
+                    <ShieldCheck className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-heading font-bold">Creators That Actually Reply</h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    On social media, your DM gets buried under thousands of fan messages. 
-                    On CollabHunts, creators only receive business inquiries — so your message gets seen, 
-                    read, and replied to fast. All creators are vetted and known for quick response times.
-                  </p>
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {["Vetted Profiles", "Fast Responses", "Business-Only Inbox"].map((pill) => (
-                      <span key={pill} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                        <CheckCircle className="h-3 w-3" />
-                        {pill}
-                      </span>
-                    ))}
+                  <div>
+                    <h3 className="font-heading font-semibold text-lg mb-1">Vetted Creators</h3>
+                    <p className="text-muted-foreground">Every creator is reviewed and approved before joining the platform.</p>
                   </div>
                 </div>
-              </GlowCard>
-            </AnimatedSection>
-
-            <AnimatedSection animation="slide-right" delay={200}>
-              <GlowCard glowColor="accent" className="h-full">
-                <div className="p-8 space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Zap className="h-5 w-5 text-accent" />
-                    <span className="text-sm font-medium text-accent">Why Creators Respond Fast</span>
+                <div className="flex items-start gap-4">
+                  <div className="p-2.5 rounded-lg bg-primary/10 shrink-0">
+                    <Zap className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-heading font-bold">Fewer Messages, Higher Conversions</h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    Creators on CollabHunts don't get thousands of useless DMs from fans and spam. 
-                    Every message is from a verified brand with real business intent — 
-                    so they treat each inquiry seriously. That means faster replies and higher conversion rates for you.
-                  </p>
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {["Verified Brands Only", "No Fan Spam", "Higher Conversion Rate"].map((pill) => (
-                      <span key={pill} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                        <CheckCircle className="h-3 w-3" />
-                        {pill}
-                      </span>
-                    ))}
+                  <div>
+                    <h3 className="font-heading font-semibold text-lg mb-1">Fast Response Times</h3>
+                    <p className="text-muted-foreground">Creators only receive business inquiries here, so they respond quickly — no inbox clutter.</p>
                   </div>
                 </div>
-              </GlowCard>
-            </AnimatedSection>
-          </div>
+                <div className="flex items-start gap-4">
+                  <div className="p-2.5 rounded-lg bg-primary/10 shrink-0">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-semibold text-lg mb-1">Business-Only Inbox</h3>
+                    <p className="text-muted-foreground">No fans, no spam, no noise. Your collaboration request stands out from day one.</p>
+                  </div>
+                </div>
+              </div>
+            </GlowCard>
+          </AnimatedSection>
         </div>
       </section>
 

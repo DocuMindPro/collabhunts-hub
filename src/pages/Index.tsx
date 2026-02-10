@@ -323,10 +323,10 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <AnimatedSection animation="fade-up" className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-              Business Messages Only. No Noise.
+              No Spam. No Fans. Just Business.
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Unlike social media, every message on CollabHunts is a real business inquiry — not fan mail, not spam.
+              CollabHunts is a professional collaboration platform — every conversation starts with real intent.
             </p>
           </AnimatedSection>
 
@@ -338,14 +338,13 @@ const Index = () => {
                     <Sparkles className="h-5 w-5 text-primary" />
                     <span className="text-sm font-medium text-primary">For Brands</span>
                   </div>
-                  <h3 className="text-2xl font-heading font-bold">Creators That Actually Reply</h3>
+                  <h3 className="text-2xl font-heading font-bold">Your DMs Actually Get Read</h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    On social media, your DM gets buried under thousands of fan messages. 
-                    On CollabHunts, creators only receive business inquiries — so your message gets seen, 
-                    read, and replied to. All creators are vetted and known for fast response times.
+                    Stop competing with thousands of fan messages. On CollabHunts, creators only receive 
+                    business inquiries — your pitch lands in a focused inbox, not a crowded feed.
                   </p>
                   <div className="flex flex-wrap gap-2 pt-2">
-                    {["Vetted Profiles", "Fast Responses", "Business-Only Inbox"].map((pill) => (
+                    {["Vetted Creators", "Priority Inbox", "Quick Replies"].map((pill) => (
                       <span key={pill} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
                         <ShieldCheck className="h-3 w-3" />
                         {pill}
@@ -363,14 +362,13 @@ const Index = () => {
                     <Star className="h-5 w-5 text-accent" />
                     <span className="text-sm font-medium text-accent">For Creators</span>
                   </div>
-                  <h3 className="text-2xl font-heading font-bold">Fewer Messages, Higher Conversions</h3>
+                  <h3 className="text-2xl font-heading font-bold">Only Serious Offers in Your Inbox</h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    No more drowning in thousands of useless DMs from fans and spam. 
-                    Every message on CollabHunts comes from a verified brand with real business intent. 
-                    Fewer messages, but each one has a much higher chance of turning into a paid collaboration.
+                    Forget sifting through thousands of irrelevant DMs. Every message you receive here is from 
+                    a registered brand with real collaboration intent — meaning less time filtering, more time earning.
                   </p>
                   <div className="flex flex-wrap gap-2 pt-2">
-                    {["Verified Brands", "No Fan Spam", "Higher Conversion Rate"].map((pill) => (
+                    {["Registered Brands", "Zero Spam", "Higher Deal Rate"].map((pill) => (
                       <span key={pill} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-medium">
                         <ShieldCheck className="h-3 w-3" />
                         {pill}
