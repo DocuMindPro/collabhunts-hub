@@ -17,6 +17,7 @@ const AdminAnnouncementsTab = () => {
   const [bannerEnabled, setBannerEnabled] = useState(false);
   const [bannerText, setBannerText] = useState("");
   const [bannerLink, setBannerLink] = useState("");
+  const [bannerLinkText, setBannerLinkText] = useState("");
   const [bannerStyle, setBannerStyle] = useState("info");
   const [isSavingBanner, setIsSavingBanner] = useState(false);
   const [isLoadingBanner, setIsLoadingBanner] = useState(true);
@@ -31,7 +32,7 @@ const AdminAnnouncementsTab = () => {
     const { data } = await supabase
       .from("site_settings")
       .select("key, value")
-      .in("key", ["announcement_enabled", "announcement_text", "announcement_link", "announcement_style"]);
+      .in("key", ["announcement_enabled", "announcement_text", "announcement_link", "announcement_link_text", "announcement_style"]);
 
     if (data) {
       const settings: Record<string, string> = {};
@@ -39,6 +40,7 @@ const AdminAnnouncementsTab = () => {
       setBannerEnabled(settings.announcement_enabled === "true");
       setBannerText(settings.announcement_text || "");
       setBannerLink(settings.announcement_link || "");
+      setBannerLinkText(settings.announcement_link_text || "");
       setBannerStyle(settings.announcement_style || "info");
     }
     setIsLoadingBanner(false);
@@ -58,6 +60,7 @@ const AdminAnnouncementsTab = () => {
         { key: "announcement_enabled", value: bannerEnabled.toString() },
         { key: "announcement_text", value: bannerText },
         { key: "announcement_link", value: bannerLink },
+        { key: "announcement_link_text", value: bannerLinkText },
         { key: "announcement_style", value: bannerStyle },
       ];
 
@@ -138,7 +141,7 @@ const AdminAnnouncementsTab = () => {
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="banner-link">Link URL (optional)</Label>
                   <Input
@@ -146,6 +149,15 @@ const AdminAnnouncementsTab = () => {
                     placeholder="https://..."
                     value={bannerLink}
                     onChange={(e) => setBannerLink(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="banner-link-text">Link Text (optional)</Label>
+                  <Input
+                    id="banner-link-text"
+                    placeholder="Learn More"
+                    value={bannerLinkText}
+                    onChange={(e) => setBannerLinkText(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -173,7 +185,7 @@ const AdminAnnouncementsTab = () => {
                       <span>{bannerText}</span>
                       {bannerLink && (
                         <span className="inline-flex items-center gap-1 underline underline-offset-2 font-semibold">
-                          Learn More
+                          {bannerLinkText || "Learn More"}
                           <ExternalLink className="h-3.5 w-3.5" />
                         </span>
                       )}
