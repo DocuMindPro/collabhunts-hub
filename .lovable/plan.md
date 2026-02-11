@@ -1,48 +1,40 @@
 
 
-## Fix: Make Native App Feature-Complete for Creators
+## Rebrand: Change App Name to "Collab Hunts" and Update Native App Icons
 
-### Problem
-The native app's bottom navigation doesn't match the actual dashboard features available on web. Specifically:
-- The "Campaigns" tab in bottom nav links to a tab that **doesn't exist** in the dashboard (no `TabsContent value="campaigns"`)
-- Several web tabs are missing from native: **Services/Packages, Calendar, Opportunities, and Boost**
-- Creators can't access key features that work fine on the web version
+### What Will Change
 
-### Solution
-Redesign the `MobileBottomNav` to match the web dashboard's actual tabs, ensuring all creator features are accessible on native.
+**1. App Name** -- Update "CollabHunts" to "Collab Hunts" (with a space) everywhere it appears as a display name across the app.
 
-### Bottom Nav Redesign
-
-The web dashboard has 8 tabs. We can't fit all 8 in a bottom nav, so we'll use the most important 5 and make the rest accessible from the dashboard via tab navigation:
-
-**New bottom nav tabs (5 icons):**
-1. **Overview** (BarChart3) -- `/creator-dashboard?tab=overview`
-2. **Bookings** (Calendar) -- `/creator-dashboard?tab=bookings`  
-3. **Opportunities** (Briefcase) -- `/opportunities` page
-4. **Messages** (MessageSquare) -- `/creator-dashboard?tab=messages`
-5. **Profile** (User) -- `/creator-dashboard?tab=profile`
-
-This removes the non-functional "Campaigns" tab and adds the critical "Opportunities" tab. The remaining tabs (Services, Calendar, Boost) stay accessible via the dashboard's tab strip which is currently hidden on native -- we'll show a simplified horizontal scroll tab bar on native too.
+**2. Native App Icon/Splash** -- Copy your uploaded logo to the project so it can be used as the PWA icon and in loading screens. The actual native Android icons (inside the `android/` folder) need to be regenerated on your machine using `npx capacitor-assets generate` after you place the logo source files.
 
 ### Technical Details
 
-**File: `src/components/mobile/MobileBottomNav.tsx`**
-- Replace "campaigns" tab with "opportunities" tab using the Briefcase icon
-- Update the tab config array to match the 5 tabs above
+**Files to update for the name change (CollabHunts -> Collab Hunts):**
 
-**File: `src/App.tsx` (NativeBottomNavWrapper)**
-- Update the `activeTab` logic to correctly detect which tab is active based on current route/params
-- The "opportunities" tab maps to the `/opportunities` route (already registered)
+| File | What Changes |
+|------|-------------|
+| `capacitor.config.ts` | `appName: 'Collab Hunts'` |
+| `public/manifest.json` | `name` and `short_name` fields |
+| `index.html` | Title, meta tags, and pre-React loader text |
+| `src/components/Logo.tsx` | Fallback text (3 occurrences) |
+| `src/components/PageLoader.tsx` | Brand name text |
+| `src/components/NativeLoadingScreen.tsx` | Brand name text |
+| `src/pages/Download.tsx` | Page heading text |
 
-**File: `src/pages/CreatorDashboard.tsx`**
-- Show a compact horizontal tab strip on native (currently hidden with `{!isNative && ...}`) so creators can access Services, Calendar, Boost, and other sub-tabs
-- Use a simplified scrollable row with just the tabs not in the bottom nav: Services, Calendar, Boost
-- These render inline in the dashboard content area
+Note: Legal pages (Terms, Privacy, etc.) and detailed descriptions will keep the current wording since those are formal documents -- we'll only update user-facing UI branding.
 
-### Changes Summary
-| File | Change |
-|------|--------|
-| `src/components/mobile/MobileBottomNav.tsx` | Replace "campaigns" with "opportunities", reorder tabs |
-| `src/App.tsx` | Update NativeBottomNavWrapper active tab detection for opportunities |
-| `src/pages/CreatorDashboard.tsx` | Show compact tab strip on native for secondary tabs (Services, Calendar, Boost) |
+**For the logo/icon:**
 
+| File | What Changes |
+|------|-------------|
+| `public/app-icon.png` | Copy the uploaded logo image here |
+| `public/pwa-192x192.png` | Will still be used for PWA (can be updated later with properly sized versions) |
+| `src/components/NativeLoadingScreen.tsx` | Show the logo image instead of the camera emoji |
+| `src/components/PageLoader.tsx` | Show the logo image instead of the camera emoji |
+| `index.html` | Update pre-React loader to show the logo image instead of the camera emoji |
+
+**After these changes, on your local machine you should:**
+1. Place a 1024x1024 version of the logo in `assets/icon-only.png`
+2. Run `npx capacitor-assets generate` to create all Android/iOS icon sizes
+3. Run `npx cap sync android` to apply changes to the native project
