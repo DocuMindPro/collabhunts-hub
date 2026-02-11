@@ -78,19 +78,80 @@ const RefundPolicy = () => {
               </ul>
             </section>
 
-            {/* Section 4 - Platform Subscription Refunds */}
+            {/* Section 4 - Platform Service Refunds */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">4. Platform Subscription Refunds</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">4. Platform Service Refunds (Subscriptions & Creator Featuring)</h2>
+              
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-5 mb-6">
+                <p className="font-semibold text-destructive mb-3">⚠️ IMPORTANT: NO REFUND FOR USED SERVICES</p>
+                <p className="text-sm text-muted-foreground">
+                  Once any paid service has been used, activated, or its benefits accessed in any capacity, <strong>no refund will be issued</strong>. 
+                  This applies to all platform services without exception.
+                </p>
+              </div>
+
+              <h3 className="text-xl font-heading font-semibold mb-3">4.1 General No-Refund Rule</h3>
               <p className="text-muted-foreground mb-4">
-                CollabHunts offers paid Brand subscription plans (Basic and Pro) that provide enhanced platform features. 
-                The following refund policy applies <strong>only</strong> to platform subscription fees paid to CollabHunts:
+                All fees paid to CollabHunts for platform services — including Brand subscription plans (Basic, Pro) and Creator 
+                visibility boosts (Featured Badge, Homepage Spotlight, Category Boost, Auto Popup) — are for <strong>digital services 
+                rendered upon activation</strong>. Once a paid service has been used, activated, or its benefits have been accessed 
+                in any capacity, <strong>no refund will be issued</strong>.
               </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Annual Subscriptions:</strong> Subscription fees are billed annually. You may cancel at any time, but refunds are not provided for the remaining portion of the billing period</li>
-                <li><strong>Cancellation:</strong> Upon cancellation, you will retain access to paid features until the end of your current billing period</li>
-                <li><strong>Refund Requests:</strong> Refund requests for subscription fees may be submitted to <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a> within 14 days of purchase. Refunds are granted at CollabHunts' sole discretion</li>
-                <li><strong>Processing:</strong> Approved refunds are processed within 5-10 business days to the original payment method</li>
+              <p className="text-muted-foreground mb-4">
+                <strong>"Usage"</strong> includes but is not limited to:
+              </p>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-6">
+                <li>Logging into a paid account after subscription activation</li>
+                <li>Sending messages using paid messaging quota</li>
+                <li>Posting opportunities using paid tier allowances</li>
+                <li>Activating a Creator visibility boost</li>
+                <li>Appearing in boosted or priority search results</li>
+                <li>Accessing any feature, tool, or capability exclusive to the paid tier</li>
+                <li>Using AI-assisted agreement drafting quota</li>
+                <li>Adding team members under a paid plan</li>
               </ul>
+
+              <h3 className="text-xl font-heading font-semibold mb-3">4.2 14-Day Review Period</h3>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-6">
+                <li>Refund requests may be submitted within <strong>14 calendar days</strong> of purchase to <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a></li>
+                <li>During this 14-day period, CollabHunts will conduct an investigation to determine whether the paid service has been used or activated</li>
+                <li>If the investigation confirms <strong>no usage</strong> of the paid service occurred, a refund may be granted at CollabHunts' sole discretion</li>
+                <li>If <strong>any usage is detected</strong> during the investigation, the refund request will be <strong>denied</strong></li>
+                <li>After 14 days from purchase, <strong>no refund requests will be considered under any circumstances</strong></li>
+              </ul>
+
+              <h3 className="text-xl font-heading font-semibold mb-3">4.3 Brand Subscription Refunds</h3>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-6">
+                <li>Brand subscription fees (Basic and Pro plans) are billed annually</li>
+                <li>You may cancel at any time, but <strong>no refund is provided</strong> for the remaining billing period</li>
+                <li>Upon cancellation, you retain access to paid features until the end of your current billing period</li>
+                <li>If you have used <strong>any</strong> paid features (messaging quota, opportunity posts, team access, AI agreement drafts, etc.), no refund will be issued regardless of when the request is made within the 14-day window</li>
+              </ul>
+
+              <h3 className="text-xl font-heading font-semibold mb-3">4.4 Creator Featuring & Visibility Boost Refunds</h3>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-6">
+                <li>Creator visibility boost purchases (Featured Badge, Homepage Spotlight, Category Boost, Auto Popup) are <strong>non-refundable once activated</strong></li>
+                <li>Activation occurs <strong>immediately upon purchase confirmation</strong>. Once your boost is live and your profile has received any boosted visibility, the service is considered <strong>fully rendered</strong></li>
+                <li>No partial refunds are available for unused portions of a visibility boost period</li>
+              </ul>
+
+              <h3 className="text-xl font-heading font-semibold mb-3">4.5 Refund Processing</h3>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-6">
+                <li>All refund decisions are made at CollabHunts' <strong>sole and absolute discretion</strong></li>
+                <li>Approved refunds are processed within 5-10 business days to the original payment method</li>
+                <li>CollabHunts reserves the right to deny any refund request without providing a reason</li>
+                <li>Disputing a legitimate charge with your payment provider after using our services may result in <strong>immediate account termination</strong></li>
+              </ul>
+
+              <h3 className="text-xl font-heading font-semibold mb-3">4.6 No Double Recovery</h3>
+              <div className="bg-muted/50 rounded-lg p-4 border border-border mb-4">
+                <p className="text-muted-foreground text-sm">
+                  If you initiate a chargeback or payment dispute with your bank or payment provider for a service you have used, 
+                  CollabHunts reserves the right to <strong>immediately suspend or terminate your account</strong>, pursue recovery 
+                  of the disputed amount, and <strong>ban you from future use of the Platform</strong>. This clause is enforceable 
+                  to the maximum extent permitted by applicable law.
+                </p>
+              </div>
             </section>
 
             {/* Section 5 - Cancellation Between Parties */}
