@@ -81,7 +81,7 @@ export function NativeLogin() {
           CollabHunts
         </h1>
         <p className="text-muted-foreground mb-8">
-          Creators
+          Creators & Brands
         </p>
 
         {/* Login Form */}

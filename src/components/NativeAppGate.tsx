@@ -5,6 +5,7 @@ import { safeNativeAsync } from '@/lib/supabase-native';
 import NativeLoadingScreen from './NativeLoadingScreen';
 import NativeLogin from '@/pages/NativeLogin';
 import NativeCreatorOnboarding from '@/pages/NativeCreatorOnboarding';
+import NativeRolePicker from './NativeRolePicker';
 
 interface CreatorProfile {
   id: string;
@@ -12,51 +13,70 @@ interface CreatorProfile {
   status: string | null;
 }
 
+interface BrandProfile {
+  id: string;
+  company_name: string;
+  registration_completed: boolean;
+}
+
+export type NativeRole = 'creator' | 'brand';
+
+interface NativeAppGateProps {
+  children: (role: NativeRole, brandProfile?: BrandProfile | null) => React.ReactNode;
+}
+
 /**
  * Authentication gate for native mobile apps.
- * 
- * This component:
- * 1. Shows a loading screen while checking auth status
- * 2. If not logged in: Shows the native login screen
- * 3. If logged in but no creator profile: Shows onboarding prompt
- * 4. If logged in with creator profile: Renders children (dashboard routes)
- * 
- * All Supabase calls use safeNativeAsync with 5-second timeouts to prevent
- * hanging on Android WebView where network requests can fail silently.
+ * Supports both Creator and Brand roles.
  */
-export function NativeAppGate({ children }: { children: React.ReactNode }) {
+export function NativeAppGate({ children }: NativeAppGateProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null);
-  const [profileCheckKey, setProfileCheckKey] = useState(0);
+  const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
+  const [selectedRole, setSelectedRole] = useState<NativeRole | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
-  // Refetch profile after onboarding completes
-  const refetchProfile = useCallback(async () => {
-    if (!user) return;
-    
-    const profile = await safeNativeAsync(
-      async () => {
+  const refetchProfiles = useCallback(async (userId: string) => {
+    const [creator, brand] = await Promise.all([
+      safeNativeAsync(async () => {
         const { data } = await supabase
           .from('creator_profiles')
           .select('id, display_name, status')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .maybeSingle();
         return data;
-      },
-      null,
-      5000
-    );
+      }, null, 5000),
+      safeNativeAsync(async () => {
+        const { data } = await supabase
+          .from('brand_profiles')
+          .select('id, company_name, registration_completed')
+          .eq('user_id', userId)
+          .maybeSingle();
+        return data;
+      }, null, 5000),
+    ]);
 
-    if (profile) {
-      setCreatorProfile(profile);
+    setCreatorProfile(creator);
+    setBrandProfile(brand);
+    return { creator, brand };
+  }, []);
+
+  // After onboarding completes, refetch and auto-select creator
+  const handleOnboardingComplete = useCallback(async () => {
+    if (!user) return;
+    const { creator } = await refetchProfiles(user.id);
+    if (creator) {
+      setSelectedRole('creator');
+      setShowOnboarding(false);
     }
-  }, [user]);
+  }, [user, refetchProfiles]);
 
-  // Failsafe: If still loading after 10 seconds, force show login screen
+  // Failsafe timeout
   useEffect(() => {
     const failsafe = setTimeout(() => {
       if (isLoading) {
-        console.warn('NativeAppGate: Failsafe timeout reached, showing login screen');
+        console.warn('NativeAppGate: Failsafe timeout reached');
         setIsLoading(false);
       }
     }, 10000);
@@ -68,90 +88,54 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
 
     const checkAuthAndProfile = async () => {
       try {
-        // Get current session with timeout protection
         const session = await safeNativeAsync(
           async () => {
             const { data } = await supabase.auth.getSession();
             return data.session;
           },
-          null, // fallback: no session
-          5000  // 5 second timeout
+          null,
+          5000
         );
-        
+
         if (!mounted) return;
 
         if (!session?.user) {
-          console.log('NativeAppGate: No session found, showing login');
           setUser(null);
           setCreatorProfile(null);
+          setBrandProfile(null);
           setIsLoading(false);
           return;
         }
 
         setUser(session.user);
-        console.log('NativeAppGate: User found, checking creator profile');
+        await refetchProfiles(session.user.id);
 
-        // Check for creator profile with timeout protection
-        const profile = await safeNativeAsync(
-          async () => {
-            const { data } = await supabase
-              .from('creator_profiles')
-              .select('id, display_name, status')
-              .eq('user_id', session.user.id)
-              .maybeSingle();
-            return data;
-          },
-          null, // fallback: no profile
-          5000  // 5 second timeout
-        );
-
-        if (!mounted) return;
-
-        if (profile) {
-          console.log('NativeAppGate: Creator profile found');
-          setCreatorProfile(profile);
-        } else {
-          console.log('NativeAppGate: No creator profile found');
-        }
-
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       } catch (error) {
-        console.error('NativeAppGate: Error checking auth:', error);
-        if (mounted) {
-          setIsLoading(false);
-        }
+        console.error('NativeAppGate: Error:', error);
+        if (mounted) setIsLoading(false);
       }
     };
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
 
-        console.log('NativeAppGate: Auth state changed:', event);
-
         if (event === 'SIGNED_OUT') {
           setUser(null);
           setCreatorProfile(null);
+          setBrandProfile(null);
+          setSelectedRole(null);
+          setShowOnboarding(false);
         } else if (event === 'SIGNED_IN' && session?.user) {
           setUser(session.user);
-          
-          // Check for creator profile after sign in with timeout
-          const profile = await safeNativeAsync(
-            async () => {
-              const { data } = await supabase
-                .from('creator_profiles')
-                .select('id, display_name, status')
-                .eq('user_id', session.user.id)
-                .maybeSingle();
-              return data;
-            },
-            null,
-            5000
-          );
+          const { creator, brand } = await refetchProfiles(session.user.id);
 
-          if (mounted && profile) {
-            setCreatorProfile(profile);
+          // Auto-select role if only one profile exists
+          if (mounted) {
+            if (creator && !brand) setSelectedRole('creator');
+            else if (brand && !creator) setSelectedRole('brand');
+            // If both or neither, user will pick via NativeRolePicker
           }
         }
       }
@@ -163,25 +147,42 @@ export function NativeAppGate({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [refetchProfiles]);
 
-  // Show loading screen while checking auth
-  if (isLoading) {
-    return <NativeLoadingScreen />;
+  // Auto-select role when profiles load (after initial check)
+  useEffect(() => {
+    if (isLoading || !user) return;
+    if (selectedRole) return; // Already picked
+
+    if (creatorProfile && !brandProfile) {
+      setSelectedRole('creator');
+    } else if (brandProfile && !creatorProfile) {
+      setSelectedRole('brand');
+    }
+  }, [isLoading, user, creatorProfile, brandProfile, selectedRole]);
+
+  if (isLoading) return <NativeLoadingScreen />;
+  if (!user) return <NativeLogin />;
+
+  // Show onboarding if user chose to create a creator profile
+  if (showOnboarding) {
+    return <NativeCreatorOnboarding user={user} onComplete={handleOnboardingComplete} />;
   }
 
-  // Not logged in - show native login
-  if (!user) {
-    return <NativeLogin />;
+  // Need role selection (both profiles, or neither)
+  if (!selectedRole) {
+    return (
+      <NativeRolePicker
+        user={user}
+        creatorProfile={creatorProfile}
+        brandProfile={brandProfile}
+        onSelectRole={setSelectedRole}
+        onStartCreatorOnboarding={() => setShowOnboarding(true)}
+      />
+    );
   }
 
-  // Logged in but no creator profile - show in-app onboarding
-  if (!creatorProfile) {
-    return <NativeCreatorOnboarding user={user} onComplete={refetchProfile} />;
-  }
-
-  // User has creator profile - render routes (Routes in App.tsx handle /creator-dashboard)
-  return <>{children}</>;
+  return <>{children(selectedRole, brandProfile)}</>;
 }
 
 export default NativeAppGate;
