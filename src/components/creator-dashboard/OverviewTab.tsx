@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, DollarSign, Calendar, MessageSquare, Sparkles, ArrowRight, TrendingUp, Building2 } from "lucide-react";
+import { Eye, DollarSign, Calendar, MessageSquare, ArrowRight, Building2, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 import { EVENT_PACKAGES, PackageType } from "@/config/packages";
+import { checkFollowerEligibility } from "@/config/follower-ranges";
 import { format } from "date-fns";
 
 interface OpportunityPreview {
@@ -32,10 +33,8 @@ const OverviewTab = () => {
     profileStatus: "pending" as string,
   });
   const [loading, setLoading] = useState(true);
-  const [creatorProfileId, setCreatorProfileId] = useState<string | null>(null);
-  const [latestOpportunities, setLatestOpportunities] = useState<OpportunityPreview[]>([]);
-  const [recommendedOpportunities, setRecommendedOpportunities] = useState<OpportunityPreview[]>([]);
-  const [weeklyStats, setWeeklyStats] = useState({ newOppsCount: 0, matchingOppsCount: 0, weeklyViews: 0 });
+  const [matchedOpportunities, setMatchedOpportunities] = useState<OpportunityPreview[]>([]);
+  const [isFallback, setIsFallback] = useState(false);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -59,10 +58,9 @@ const OverviewTab = () => {
           .from("creator_profiles")
           .select("id, status, categories, location_city")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
 
         if (!profile) return defaultStats;
-        setCreatorProfileId(profile.id);
 
         const { data: conversationsData } = await supabase
           .from("conversations")
@@ -71,11 +69,7 @@ const OverviewTab = () => {
 
         const conversationIds = conversationsData?.map(c => c.id) || [];
 
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const sevenDaysAgoISO = sevenDaysAgo.toISOString();
-
-        const [viewsData, bookingsData, messagesData, latestOppsData, weeklyOppsData, weeklyViewsData] = await Promise.all([
+        const [viewsData, bookingsData, messagesData, socialData, oppsData] = await Promise.all([
           supabase
             .from("profile_views")
             .select("*", { count: "exact", head: true })
@@ -92,60 +86,42 @@ const OverviewTab = () => {
                 .in("conversation_id", conversationIds)
             : { data: [] },
           supabase
+            .from("creator_social_accounts")
+            .select("follower_count")
+            .eq("creator_profile_id", profile.id),
+          supabase
             .from("brand_opportunities")
-            .select("id, title, package_type, event_date, is_paid, budget_cents, brand_profiles(company_name, venue_name, logo_url)")
+            .select("id, title, package_type, event_date, is_paid, budget_cents, required_categories, location_city, follower_ranges, min_followers, brand_profiles(company_name, venue_name, logo_url)")
             .eq("status", "open")
             .gte("event_date", new Date().toISOString().split('T')[0])
             .order("created_at", { ascending: false })
-            .limit(3),
-          supabase
-            .from("brand_opportunities")
-            .select("id, required_categories", { count: "exact" })
-            .eq("status", "open")
-            .gte("created_at", sevenDaysAgoISO),
-          supabase
-            .from("profile_views")
-            .select("*", { count: "exact", head: true })
-            .eq("creator_profile_id", profile.id)
-            .gte("viewed_at", sevenDaysAgoISO),
+            .limit(30),
         ]);
 
-        setLatestOpportunities((latestOppsData.data as unknown as OpportunityPreview[]) || []);
+        // Calculate max follower count
+        const maxFollowers = socialData.data?.reduce((max, acc) => {
+          const count = Number(acc.follower_count) || 0;
+          return count > max ? count : max;
+        }, 0) || 0;
 
-        const weeklyOpps = weeklyOppsData.data || [];
-        const matchingCount = profile.categories?.length
-          ? weeklyOpps.filter((opp: any) =>
-              opp.required_categories?.some((cat: string) => profile.categories?.includes(cat))
-            ).length
-          : 0;
-
-        setWeeklyStats({
-          newOppsCount: weeklyOppsData.count || 0,
-          matchingOppsCount: matchingCount,
-          weeklyViews: weeklyViewsData.count || 0,
+        // Score opportunities
+        const allOpps = oppsData.data || [];
+        const scored = allOpps.map((opp: any) => {
+          let score = 0;
+          if (maxFollowers > 0 && checkFollowerEligibility(maxFollowers, opp.follower_ranges)) score += 3;
+          if (opp.required_categories?.some((cat: string) => profile.categories?.includes(cat))) score += 2;
+          if (opp.location_city && opp.location_city === profile.location_city) score += 1;
+          return { ...opp, score };
         });
 
-        if (profile.categories?.length || profile.location_city) {
-          const { data: allOpenOpps } = await supabase
-            .from("brand_opportunities")
-            .select("id, title, package_type, event_date, is_paid, budget_cents, required_categories, location_city, brand_profiles(company_name, venue_name, logo_url)")
-            .eq("status", "open")
-            .gte("event_date", new Date().toISOString().split('T')[0])
-            .order("created_at", { ascending: false })
-            .limit(20);
+        const matched = scored.filter((o: any) => o.score > 0).sort((a: any, b: any) => b.score - a.score).slice(0, 5);
 
-          if (allOpenOpps) {
-            const scored = allOpenOpps.map((opp: any) => {
-              let score = 0;
-              if (opp.required_categories?.some((cat: string) => profile.categories?.includes(cat))) score += 2;
-              if (opp.location_city && opp.location_city === profile.location_city) score += 1;
-              return { ...opp, score };
-            }).filter((opp: any) => opp.score > 0)
-              .sort((a: any, b: any) => b.score - a.score)
-              .slice(0, 3);
-
-            setRecommendedOpportunities(scored as unknown as OpportunityPreview[]);
-          }
+        if (matched.length > 0) {
+          setMatchedOpportunities(matched as unknown as OpportunityPreview[]);
+          setIsFallback(false);
+        } else {
+          setMatchedOpportunities((allOpps.slice(0, 3)) as unknown as OpportunityPreview[]);
+          setIsFallback(true);
         }
 
         const completedBookings = bookingsData.data?.filter(b => b.status === "completed") || [];
@@ -239,7 +215,7 @@ const OverviewTab = () => {
         </Badge>
       </div>
 
-      {/* Stats Grid - 2 cols mobile, 4 cols desktop */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
         {[
           { title: "Profile Views", value: stats.profileViews, icon: Eye, desc: "Total views on your profile" },
@@ -260,59 +236,20 @@ const OverviewTab = () => {
         ))}
       </div>
 
-      {/* This Week Summary - always visible, compact on mobile */}
-      {(weeklyStats.newOppsCount > 0 || weeklyStats.weeklyViews > 0) && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader className="pb-2 pt-3 px-3 md:pb-3 md:pt-6 md:px-6">
-            <CardTitle className="text-sm md:text-base flex items-center gap-2">
-              <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
-              This Week
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
-            <div className="flex flex-wrap gap-4 md:gap-6 text-sm">
-              {weeklyStats.newOppsCount > 0 && (
-                <div>
-                  <span className="text-lg md:text-2xl font-bold text-primary">{weeklyStats.newOppsCount}</span>
-                  <p className="text-[10px] md:text-sm text-muted-foreground">new opportunities</p>
-                </div>
-              )}
-              {weeklyStats.matchingOppsCount > 0 && (
-                <div>
-                  <span className="text-lg md:text-2xl font-bold text-primary">{weeklyStats.matchingOppsCount}</span>
-                  <p className="text-[10px] md:text-sm text-muted-foreground">matching yours</p>
-                </div>
-              )}
-              {weeklyStats.weeklyViews > 0 && (
-                <div>
-                  <span className="text-lg md:text-2xl font-bold text-primary">{weeklyStats.weeklyViews}</span>
-                  <p className="text-[10px] md:text-sm text-muted-foreground">profile views</p>
-                </div>
-              )}
-            </div>
-            {weeklyStats.matchingOppsCount > 0 && (
-              <p className="text-xs md:text-sm text-primary font-medium mt-2">
-                🔥 {weeklyStats.matchingOppsCount} brand{weeklyStats.matchingOppsCount > 1 ? 's are' : ' is'} looking for creators like you!
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Latest Opportunities */}
-      {latestOpportunities.length > 0 && (
+      {/* Opportunities For You */}
+      {matchedOpportunities.length > 0 && (
         <Card>
           <CardHeader className="pb-2 pt-3 px-3 md:pb-3 md:pt-6 md:px-6">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm md:text-base flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
-                New Opportunities
-                {weeklyStats.newOppsCount > 0 && (
-                  <Badge variant="secondary" className="text-[9px] md:text-xs">
-                    {weeklyStats.newOppsCount} this week
-                  </Badge>
-                )}
-              </CardTitle>
+              <div>
+                <CardTitle className="text-sm md:text-base flex items-center gap-2">
+                  <Target className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
+                  Opportunities For You
+                </CardTitle>
+                <CardDescription className="text-[10px] md:text-sm mt-0.5">
+                  {isFallback ? "Browse all to find your match" : "Based on your profile and stats"}
+                </CardDescription>
+              </div>
               <Button variant="ghost" size="sm" asChild className="h-7 text-xs md:h-9 md:text-sm">
                 <Link to="/opportunities" className="gap-1 text-primary">
                   View All <ArrowRight className="h-3 w-3" />
@@ -321,25 +258,8 @@ const OverviewTab = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-2 px-3 pb-3 md:space-y-3 md:px-6 md:pb-6">
-            {latestOpportunities.map((opp) => (
-              <OpportunityRow key={opp.id} opp={opp} />
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Recommended For You - now visible on all screens */}
-      {recommendedOpportunities.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2 pt-3 px-3 md:pb-3 md:pt-6 md:px-6">
-            <CardTitle className="text-sm md:text-base flex items-center gap-2">
-              🎯 Recommended For You
-            </CardTitle>
-            <CardDescription className="text-[10px] md:text-sm">Matching your categories & location</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 px-3 pb-3 md:space-y-3 md:px-6 md:pb-6">
-            {recommendedOpportunities.map((opp) => (
-              <OpportunityRow key={opp.id} opp={opp} highlight />
+            {matchedOpportunities.map((opp) => (
+              <OpportunityRow key={opp.id} opp={opp} highlight={!isFallback} />
             ))}
           </CardContent>
         </Card>
