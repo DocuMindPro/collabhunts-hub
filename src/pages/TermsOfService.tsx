@@ -4,7 +4,6 @@ import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
 
 const TermsOfService = () => {
-  // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
@@ -19,7 +18,7 @@ const TermsOfService = () => {
             Terms of Service
           </h1>
           <p className="text-muted-foreground mb-8">
-            Last updated: February 3, 2026 | Version 3.0
+            Last updated: February 11, 2026 | Version 4.0
           </p>
 
           <div className="prose prose-lg dark:prose-invert max-w-none space-y-10">
@@ -42,15 +41,19 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">2. Service Description</h2>
               <p className="text-muted-foreground mb-4">
-                CollabHunts is a transactional marketplace platform that connects venues and brands ("Brands" or "Buyers") with social media influencers and content creators 
+                CollabHunts is a discovery and communication platform that connects venues and brands ("Brands" or "Buyers") with social media influencers and content creators 
                 ("Creators" or "Sellers") for live events and fan experiences. Our services include:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Event Booking:</strong> Facilitating bookings between Brands/Venues and Creators for meet & greets, workshops, and live appearances</li>
+                <li><strong>Event Booking Facilitation:</strong> Helping Brands discover and connect with Creators for meet & greets, workshops, and live appearances</li>
                 <li><strong>Discovery Services:</strong> Helping Brands find and connect with Creators through our marketplace</li>
-                <li><strong>Payment Processing:</strong> Secure escrow-based payment handling for all bookings</li>
+                <li><strong>Agreement Tools:</strong> AI-assisted agreement drafting for record-keeping between parties</li>
                 <li><strong>Communication Tools:</strong> Messaging system for collaboration between parties</li>
               </ul>
+              <p className="text-muted-foreground mb-4">
+                <strong>CollabHunts is a facilitator only.</strong> We do not process, hold, or manage any payments between Brands and Creators. 
+                All financial transactions are conducted directly between the parties outside of the Platform.
+              </p>
             </section>
 
             {/* Section 3 - Business Model */}
@@ -116,18 +119,20 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">6. Booking Process</h2>
               <p className="text-muted-foreground mb-4">
-                All event bookings on CollabHunts follow this process:
+                Collaborations facilitated through CollabHunts follow this general process:
               </p>
               <ol className="list-decimal pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Discovery:</strong> Brands browse and find Creators using our search and filter tools (free)</li>
-                <li><strong>Inquiry:</strong> Brands message Creators to discuss event details (free)</li>
-                <li><strong>Booking Request:</strong> Brands submit a booking request with event details</li>
-                <li><strong>Creator Confirmation:</strong> Creator reviews and accepts/declines the booking</li>
-                <li><strong>Deposit Payment:</strong> Brand pays 50% deposit to confirm the booking</li>
-                <li><strong>Balance Payment:</strong> Brand pays remaining 50% before the event</li>
-                <li><strong>Event Delivery:</strong> Creator performs at the event as agreed</li>
-                <li><strong>Approval & Release:</strong> Brand approves completion, funds are released to Creator</li>
+                <li><strong>Discovery:</strong> Brands browse and find Creators using our search and filter tools</li>
+                <li><strong>Inquiry:</strong> Brands send inquiries to Creators with event details, preferred dates, and proposed budget</li>
+                <li><strong>Negotiation:</strong> Creators and Brands negotiate terms through our structured messaging system (accept, counter-offer, or decline)</li>
+                <li><strong>Agreement:</strong> Once terms are agreed, an AI-assisted agreement is generated for both parties' records</li>
+                <li><strong>Direct Payment:</strong> Brands and Creators arrange payment directly between themselves, outside of CollabHunts</li>
+                <li><strong>Event:</strong> Creator performs at the event as agreed</li>
               </ol>
+              <p className="text-muted-foreground mb-4">
+                <strong>CollabHunts does not guarantee that any step of this process will be completed.</strong> Creators may not respond to inquiries, 
+                may decline bookings, or may become unavailable. See Section 9 and Section 14 for important disclaimers.
+              </p>
             </section>
 
             {/* Section 7 - Cancellations */}
@@ -145,7 +150,9 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">8. Dispute Resolution</h2>
               <p className="text-muted-foreground mb-4">
-                <strong>Platform Mediation:</strong> For disputes arising from bookings, both parties must first attempt resolution through our platform's dispute system. Either party can open a dispute within 72 hours of event completion.
+                <strong>Voluntary Mediation:</strong> CollabHunts may, at its sole discretion, offer voluntary mediation assistance for disputes 
+                between Brands and Creators. Any such mediation is provided as a courtesy and is non-binding. CollabHunts is not obligated to 
+                mediate, resolve, or intervene in any dispute between parties.
               </p>
               <p className="text-muted-foreground mb-4">
                 <strong>BINDING ARBITRATION:</strong> Any disputes between you and CollabHunts shall be resolved through binding arbitration 
@@ -165,15 +172,23 @@ const TermsOfService = () => {
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li>Provide accurate information about your social media presence, follower counts, and audience demographics</li>
-                <li>Arrive on time and fulfill all event obligations as agreed</li>
                 <li>Maintain professional conduct during all events</li>
-                <li>Respond to booking requests within 48 hours</li>
-                <li>Not cancel confirmed bookings except for genuine emergencies</li>
                 <li>Accept the platform's terms regarding pricing visibility and subscription plans</li>
               </ul>
               <p className="text-muted-foreground mb-4">
-                <strong>Misrepresentation of metrics (fake followers, purchased engagement, inflated statistics) will result in immediate account termination and forfeiture of pending payments.</strong>
+                <strong>Misrepresentation of metrics (fake followers, purchased engagement, inflated statistics) will result in immediate account termination.</strong>
               </p>
+
+              <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800 mt-4">
+                <p className="text-sm font-semibold mb-2">⚠️ IMPORTANT: NO GUARANTEE OF CREATOR RESPONSE OR AVAILABILITY</p>
+                <p className="text-sm text-muted-foreground">
+                  Creators are independent users of the Platform. CollabHunts does <strong>not</strong> employ, manage, or control Creators. 
+                  Creators may or may not respond to inquiries, accept bookings, or be available at their sole discretion. 
+                  Response times vary and are entirely outside CollabHunts' control. While CollabHunts may attempt to facilitate communication, 
+                  we cannot compel any Creator to respond, and we bear <strong>no responsibility</strong> if a Creator fails to reply to a Brand's 
+                  message, booking inquiry, or any other communication. By using the Platform, you acknowledge and accept this limitation.
+                </p>
+              </div>
             </section>
 
             {/* Section 10 - Brand Terms */}
@@ -184,11 +199,11 @@ const TermsOfService = () => {
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li>Provide accurate information about your venue and event requirements</li>
-                <li>Pay deposits and balances on time as specified</li>
+                <li>Arrange payment directly with Creators as agreed between the parties</li>
                 <li>Provide safe and appropriate event conditions for Creators</li>
-                <li>Approve or raise disputes in a timely manner after event completion</li>
                 <li>Not request services that violate platform policies or applicable laws</li>
                 <li>Maintain professional communication with Creators at all times</li>
+                <li>Acknowledge that Creator response and availability are not guaranteed by CollabHunts</li>
               </ul>
             </section>
 
@@ -221,7 +236,6 @@ const TermsOfService = () => {
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li>Violate any applicable laws or regulations</li>
-                <li>Circumvent platform payments or arrange off-platform transactions</li>
                 <li>Infringe upon intellectual property rights of others</li>
                 <li>Transmit harmful code, viruses, or malware</li>
                 <li>Engage in fraudulent activities or misrepresentation</li>
@@ -263,7 +277,9 @@ const TermsOfService = () => {
                 <li>Loss of profits, revenue, or business opportunities</li>
                 <li>Event cancellations or no-shows</li>
                 <li>Quality of Creator performance at events</li>
+                <li>Creator non-response or unavailability</li>
                 <li>Disputes between Brands and Creators</li>
+                <li>Payment disputes arising from direct transactions between parties</li>
                 <li>Any unauthorized access to or use of our servers</li>
               </ul>
               <p className="text-muted-foreground mb-4">
@@ -271,9 +287,49 @@ const TermsOfService = () => {
               </p>
             </section>
 
-            {/* Section 14 - Indemnification */}
+            {/* Section 14 - No Warranty / As-Is Disclaimer */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">14. Indemnification</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">14. No Warranty / As-Is Disclaimer</h2>
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 mb-4">
+                <p className="text-sm text-muted-foreground">
+                  THE PLATFORM IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE. 
+                  COLLABHUNTS SPECIFICALLY DISCLAIMS ALL IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+                </p>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Without limiting the foregoing, CollabHunts does not warrant or guarantee:
+              </p>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
+                <li>That any Creator will respond to messages, inquiries, or booking requests</li>
+                <li>That any Creator will be available for events</li>
+                <li>The quality, safety, or legality of any Creator's services</li>
+                <li>The accuracy of any Creator's profile information, metrics, or portfolio</li>
+                <li>That the Platform will be uninterrupted, error-free, or secure</li>
+                <li>That any collaboration arranged through the Platform will be satisfactory</li>
+              </ul>
+              <p className="text-muted-foreground mb-4">
+                <strong>YOU USE THE PLATFORM AT YOUR OWN RISK. ALL ARRANGEMENTS MADE THROUGH THE PLATFORM ARE BETWEEN THE RESPECTIVE PARTIES AND NOT WITH COLLABHUNTS.</strong>
+              </p>
+            </section>
+
+            {/* Section 15 - No Agency Relationship */}
+            <section>
+              <h2 className="text-2xl font-heading font-bold mb-4">15. No Agency Relationship</h2>
+              <p className="text-muted-foreground mb-4">
+                CollabHunts is <strong>not</strong> an agent, employer, joint venturer, partner, or representative of any Creator, Brand, or Venue. 
+                We are a technology platform that facilitates discovery and communication only.
+              </p>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
+                <li>Creators are independent users, not employees or contractors of CollabHunts</li>
+                <li>CollabHunts does not direct, control, or supervise any Creator's work or conduct</li>
+                <li>CollabHunts does not set pricing, schedules, or terms between parties</li>
+                <li>No agency, employment, franchise, or partnership relationship is created by use of the Platform</li>
+              </ul>
+            </section>
+
+            {/* Section 16 - Indemnification */}
+            <section>
+              <h2 className="text-2xl font-heading font-bold mb-4">16. Indemnification</h2>
               <p className="text-muted-foreground mb-4">
                 You agree to indemnify, defend, and hold harmless CollabHunts and its officers, directors, employees, agents, and affiliates from any claims, 
                 liabilities, damages, losses, and expenses arising from:
@@ -284,12 +340,13 @@ const TermsOfService = () => {
                 <li>Your violation of any third-party rights</li>
                 <li>Any content you submit to the Platform</li>
                 <li>Your conduct during events booked through the Platform</li>
+                <li>Any disputes arising from direct transactions between you and another user</li>
               </ul>
             </section>
 
-            {/* Section 15 - Changes to Terms */}
+            {/* Section 17 - Changes to Terms */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">15. Changes to Terms</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">17. Changes to Terms</h2>
               <p className="text-muted-foreground mb-4">
                 We reserve the right to modify these Terms at any time. Changes will be effective immediately upon posting to the Platform. 
                 Material changes will be communicated via email to registered users. Your continued use of the Platform after changes 
@@ -297,9 +354,9 @@ const TermsOfService = () => {
               </p>
             </section>
 
-            {/* Section 16 - Contact */}
+            {/* Section 18 - Contact */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">16. Contact Us</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">18. Contact Us</h2>
               <p className="text-muted-foreground mb-4">
                 If you have questions about these Terms of Service, please contact us:
               </p>

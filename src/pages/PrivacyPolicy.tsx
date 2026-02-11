@@ -19,7 +19,7 @@ const PrivacyPolicy = () => {
             Privacy Policy
           </h1>
           <p className="text-muted-foreground mb-8">
-            Last updated: February 3, 2026 | Version 3.0
+            Last updated: February 11, 2026 | Version 4.0
           </p>
 
           <div className="prose prose-lg dark:prose-invert max-w-none space-y-10">
@@ -93,7 +93,7 @@ const PrivacyPolicy = () => {
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li>Create and manage your account</li>
                 <li>Facilitate connections between Brands/Venues and Creators</li>
-                <li>Process bookings and payments through our escrow system</li>
+                <li>Facilitate connections and communication between Brands/Venues and Creators</li>
                 <li>Enable messaging and communication features</li>
                 <li>Handle disputes and provide customer support</li>
               </ul>
@@ -195,8 +195,7 @@ const PrivacyPolicy = () => {
                 <li><strong>Encryption:</strong> Data encrypted in transit (TLS/SSL) and at rest</li>
                 <li><strong>Access Controls:</strong> Role-based access with authentication requirements</li>
                 <li><strong>Infrastructure Security:</strong> Secure cloud hosting with regular security updates</li>
-                <li><strong>Payment Security:</strong> PCI-DSS compliant payment processing</li>
-                <li><strong>Escrow Protection:</strong> Secure fund holding until service delivery</li>
+                <li><strong>Authentication:</strong> Secure user authentication and session management</li>
                 <li><strong>Regular Backups:</strong> Automated daily backups with secure storage</li>
                 <li><strong>Monitoring:</strong> Continuous monitoring for unauthorized access</li>
               </ul>
