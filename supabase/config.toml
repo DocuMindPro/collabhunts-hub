@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.backup-media]
 verify_jwt = false
+
+[functions.check-stats-update]
+verify_jwt = false

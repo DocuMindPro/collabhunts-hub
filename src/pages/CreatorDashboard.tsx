@@ -10,6 +10,7 @@ import BookingsTab from "@/components/creator-dashboard/BookingsTab";
 import MessagesTab from "@/components/creator-dashboard/MessagesTab";
 import OpportunitiesTab from "@/components/creator-dashboard/OpportunitiesTab";
 import FeaturingTab from "@/components/creator-dashboard/FeaturingTab";
+import StatsUpdateBanner from "@/components/creator-dashboard/StatsUpdateBanner";
 import { CalendarTab } from "@/components/calendar/CalendarTab";
 import MobileBottomNav from "@/components/mobile/MobileBottomNav";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +20,7 @@ const CreatorDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [creatorProfileId, setCreatorProfileId] = useState<string | null>(null);
+  const [statsUpdateRequired, setStatsUpdateRequired] = useState(false);
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
@@ -29,12 +31,13 @@ const CreatorDashboard = () => {
       // Check direct ownership first
       const { data } = await supabase
         .from("creator_profiles")
-        .select("id")
+        .select("id, stats_update_required")
         .eq("user_id", user.id)
         .maybeSingle();
       
       if (data) {
         setCreatorProfileId(data.id);
+        setStatsUpdateRequired(data.stats_update_required ?? false);
         return;
       }
 
@@ -83,6 +86,14 @@ const CreatorDashboard = () => {
               </p>
             )}
           </div>
+
+          {statsUpdateRequired && creatorProfileId && (
+            <StatsUpdateBanner
+              creatorProfileId={creatorProfileId}
+              onNavigateToProfile={() => handleTabChange("profile")}
+              onDismissed={() => setStatsUpdateRequired(false)}
+            />
+          )}
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 md:space-y-6">
             {!isNative && (

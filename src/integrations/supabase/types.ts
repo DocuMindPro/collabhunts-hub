@@ -1917,6 +1917,8 @@ export type Database = {
           rejection_reason: string | null
           secondary_languages: string[] | null
           show_pricing_to_public: boolean | null
+          stats_last_confirmed_at: string
+          stats_update_required: boolean
           status: string | null
           terms_accepted_at: string | null
           terms_version: string | null
@@ -1962,6 +1964,8 @@ export type Database = {
           rejection_reason?: string | null
           secondary_languages?: string[] | null
           show_pricing_to_public?: boolean | null
+          stats_last_confirmed_at?: string
+          stats_update_required?: boolean
           status?: string | null
           terms_accepted_at?: string | null
           terms_version?: string | null
@@ -2007,6 +2011,8 @@ export type Database = {
           rejection_reason?: string | null
           secondary_languages?: string[] | null
           show_pricing_to_public?: boolean | null
+          stats_last_confirmed_at?: string
+          stats_update_required?: boolean
           status?: string | null
           terms_accepted_at?: string | null
           terms_version?: string | null
