@@ -76,10 +76,11 @@ const NativeBottomNavWrapper = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  const activeTab = location.pathname === "/creator-dashboard"
-    ? (searchParams.get("tab") || "overview")
-    : location.pathname === "/opportunities"
-      ? "opportunities"
+  const currentTab = searchParams.get("tab") || "overview";
+  const activeTab = location.pathname === "/opportunities"
+    ? "opportunities"
+    : location.pathname === "/creator-dashboard"
+      ? (["overview", "bookings", "messages", "profile"].includes(currentTab) ? currentTab : "overview")
       : "overview";
 
   const handleTabChange = (tab: string) => {
