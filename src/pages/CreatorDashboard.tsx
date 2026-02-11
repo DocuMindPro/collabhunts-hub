@@ -15,6 +15,7 @@ import { CalendarTab } from "@/components/calendar/CalendarTab";
 
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart3, User, Package, Calendar, CalendarDays, MessageSquare, Briefcase, Rocket } from "lucide-react";
+import Notifications from "@/components/Notifications";
 
 const CreatorDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -77,9 +78,12 @@ const CreatorDashboard = () => {
       <main className="flex-1 py-4 md:py-8">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className={`${isNative ? 'mb-2' : 'mb-4 md:mb-8'}`}>
-            <h1 className={`font-heading font-bold ${isNative ? 'text-xl' : 'text-2xl md:text-4xl'} mb-1 md:mb-2`}>
-              {isNative ? 'Dashboard' : 'My Dashboard'}
-            </h1>
+            <div className="flex items-center justify-between">
+              <h1 className={`font-heading font-bold ${isNative ? 'text-xl' : 'text-2xl md:text-4xl'} mb-1 md:mb-2`}>
+                {isNative ? 'Dashboard' : 'My Dashboard'}
+              </h1>
+              <Notifications />
+            </div>
             {!isNative && (
               <p className="text-sm md:text-base text-muted-foreground">
                 Manage your events, availability, and earnings
