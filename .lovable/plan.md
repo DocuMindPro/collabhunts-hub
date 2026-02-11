@@ -1,22 +1,20 @@
 
 
-## Fix: Update All Logo Assets to Match New Branding
+## Fix: Eliminate Brief Flash of Old Text Logo on Reload
 
 ### Problem
-The `public/app-icon.png` was replaced, but:
-1. The loading screen may show the cached old icon (browser/PWA cache)
-2. `public/pwa-192x192.png` and `public/pwa-512x512.png` were never updated -- they still use the old logo
-3. These PWA icons are referenced in `manifest.json` and `index.html` (apple-touch-icon)
+The `Logo` component in `src/components/Logo.tsx` initializes with `logoUrl = null`. While it fetches the logo URL from the database (takes ~0.5s), it renders an orange gradient "Collab Hunts" text as a fallback. Once the database responds, it swaps to the real logo image -- causing a visible flash.
+
+### Solution
+Instead of showing the text fallback during loading, show the local `/app-icon.png` as the immediate fallback. This way the new logo appears instantly, and when the database URL loads, it seamlessly replaces it (same logo, no flash).
 
 ### What Will Change
 
-| File | Action |
+| File | Change |
 |------|--------|
-| `public/pwa-192x192.png` | Replace with the new Collab Hunts logo (resized to 192x192) |
-| `public/pwa-512x512.png` | Replace with the new Collab Hunts logo (resized to 512x512) |
+| `src/components/Logo.tsx` | Use `/app-icon.png` as the default fallback image instead of the text-based "Collab Hunts" while the database logo URL loads. Only show the text fallback if the image itself fails to load. |
 
-Both files will be copied from the new `app-icon.png` that was already uploaded. The loading screen (`index.html` line 84) already points to `/app-icon.png` which is correct -- the old icon showing is a cache issue that will resolve once the PWA icons are also updated and the app is refreshed.
+### Technical Detail
 
-### After This Change
-- All three icon files (`app-icon.png`, `pwa-192x192.png`, `pwa-512x512.png`) will use the new orange Collab Hunts logo
-- Hard-refresh or clear cache to see the updated loading screen
+The component will render the local `app-icon.png` immediately on mount, then swap to the database URL once fetched. Since both are the same logo, there will be no visible flash. The text fallback will only appear if both the database fetch and the local image fail.
+
