@@ -226,6 +226,25 @@ export const canBrandMessageCreator = async (
 
     if (existing) return { canMessage: true };
 
+    // Check if connected through an accepted opportunity application — exempt from limit
+    const { data: brandOpps } = await supabase
+      .from('brand_opportunities')
+      .select('id')
+      .eq('brand_profile_id', brandProfileId);
+
+    if (brandOpps && brandOpps.length > 0) {
+      const { data: acceptedApp } = await supabase
+        .from('opportunity_applications')
+        .select('id')
+        .eq('creator_profile_id', creatorProfileId)
+        .eq('status', 'accepted')
+        .in('opportunity_id', brandOpps.map(o => o.id))
+        .limit(1)
+        .maybeSingle();
+
+      if (acceptedApp) return { canMessage: true };
+    }
+
     // Get brand profile with messaging counters
     const { data: brand } = await supabase
       .from('brand_profiles')

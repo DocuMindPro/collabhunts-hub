@@ -409,6 +409,7 @@ const BrandOpportunitiesTab = ({ brandProfileId, registrationCompleted = true }:
       {selectedOpportunityId && (
         <OpportunityApplicationsDialog
           opportunityId={selectedOpportunityId}
+          brandProfileId={brandProfileId}
           open={!!selectedOpportunityId}
           onOpenChange={(open) => !open && setSelectedOpportunityId(null)}
           onUpdate={fetchOpportunities}
