@@ -402,7 +402,7 @@ CollabHunts operates as a classifieds-style marketplace similar to OLX/Dubizzle,
 | Creator Spotlight | $49/week | Featured homepage placement |
 | Creator Category Boost | $79/week | Top category positioning |
 | Verified Business Badge | $99/year | Brand credibility |
-| Standard Opportunity | $15/post | Posting opportunity listings |
+| Standard Opportunity | $40/post | Posting opportunity listings |
 
 ### Quotation Inquiry System
 - Basic and Pro pricing is hidden from guest/unauthenticated users
@@ -496,7 +496,7 @@ CollabHunts operates as a classifieds-style marketplace similar to OLX/Dubizzle,
 | Browse Creators | ✅ | ✅ | ✅ |
 | Message Creators | 1/month | 10/month | Unlimited |
 | View Creator Pricing | ❌ | ✅ | ✅ |
-| Post Opportunities | $15/post (4 free/month) | 4 free/month | Unlimited |
+| Post Opportunities | $40/post (4 free/month) | 4 free/month | Unlimited |
 | Advanced Filters | ❌ | ❌ | ✅ |
 | Creator CRM | ❌ | ❌ | ✅ |
 | Content Library | ❌ | 10 GB | 50 GB |

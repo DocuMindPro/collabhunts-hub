@@ -10,7 +10,7 @@ export const SUBSCRIPTION_PLANS = {
       'Browse creators on the marketplace',
       'Message 1 creator/month',
       'AI-drafted agreements',
-      'Pay $15 per opportunity post',
+      'Pay $40 per opportunity post',
     ],
     lockedFeatures: [
       'Verified Business Badge',

@@ -21,7 +21,7 @@ import MockPaymentDialog from "@/components/payments/MockPaymentDialog";
 import { isSameMonth } from "date-fns";
 
 // Opportunity posting pricing (in cents)
-const OPPORTUNITY_POSTING_FEE = 1500; // $15 to post
+const OPPORTUNITY_POSTING_FEE = 4000; // $40 to post
 const FEATURED_UPGRADE_FEE = 2500; // +$25 to feature
 
 interface CreateOpportunityDialogProps {
@@ -625,7 +625,7 @@ const CreateOpportunityDialog = ({
                   ? "Post Free (Unlimited)"
                   : hasActiveVerification && freePostsRemaining > 0
                     ? `Post Free (${freePostsRemaining}/3 remaining)`
-                    : "Continue to Payment ($15)"}
+                    : "Continue to Payment ($40)"}
             </Button>
           </div>
         </DialogFooter>

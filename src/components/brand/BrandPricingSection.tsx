@@ -30,7 +30,7 @@ const plans = [
       { text: "Browse creators", included: true },
       { text: "Message 1 creator/month", included: true },
       { text: "5 AI-drafted agreements/month", included: true },
-      { text: "$15 per opportunity post", included: true },
+      { text: "$40 per opportunity post", included: true },
       { text: "Verified Business Badge", included: false },
       { text: "Team access (invite members)", included: false },
       { text: "Free opportunity posts", included: false },
