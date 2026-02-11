@@ -152,6 +152,8 @@ const BrandBookingsTab = ({ registrationCompleted = true }: BrandBookingsTabProp
   const canReviewBooking = (booking: Booking) => {
     return booking.status === "completed" || booking.status === "confirmed";
   };
+
+  const getStatusBadge = (status: string | null) => {
     switch (status) {
       case "confirmed":
         return <Badge className="bg-green-500">Confirmed</Badge>;
@@ -322,8 +324,6 @@ const BrandBookingsTab = ({ registrationCompleted = true }: BrandBookingsTabProp
                               variant={reviews[booking.id] ? "ghost" : "outline"}
                               size="sm"
                               onClick={() => {
-                                const { data: brandProfile } = { data: { id: "" } };
-                                // We already fetched brandProfileId during fetchBookings
                                 supabase.auth.getUser().then(({ data: { user } }) => {
                                   if (!user) return;
                                   supabase.from("brand_profiles").select("id").eq("user_id", user.id).single().then(({ data: bp }) => {
