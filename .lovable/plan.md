@@ -1,43 +1,48 @@
 
 
-## Fix: Make Bottom Navigation Sticky and Global for Native App
+## Fix: Make Native App Feature-Complete for Creators
 
 ### Problem
-The bottom navigation bar (`MobileBottomNav`) is currently rendered **only inside** `CreatorDashboard.tsx`. This causes two issues:
-1. When navigating to other pages like `/opportunities`, the bottom nav disappears entirely.
-2. On long pages, you have to scroll down to find the menu.
+The native app's bottom navigation doesn't match the actual dashboard features available on web. Specifically:
+- The "Campaigns" tab in bottom nav links to a tab that **doesn't exist** in the dashboard (no `TabsContent value="campaigns"`)
+- Several web tabs are missing from native: **Services/Packages, Calendar, Opportunities, and Boost**
+- Creators can't access key features that work fine on the web version
 
 ### Solution
-Move the `MobileBottomNav` out of `CreatorDashboard` and into the **global native app layout** in `App.tsx`, so it appears on every native screen and stays fixed at the bottom of the viewport at all times.
+Redesign the `MobileBottomNav` to match the web dashboard's actual tabs, ensuring all creator features are accessible on native.
+
+### Bottom Nav Redesign
+
+The web dashboard has 8 tabs. We can't fit all 8 in a bottom nav, so we'll use the most important 5 and make the rest accessible from the dashboard via tab navigation:
+
+**New bottom nav tabs (5 icons):**
+1. **Overview** (BarChart3) -- `/creator-dashboard?tab=overview`
+2. **Bookings** (Calendar) -- `/creator-dashboard?tab=bookings`  
+3. **Opportunities** (Briefcase) -- `/opportunities` page
+4. **Messages** (MessageSquare) -- `/creator-dashboard?tab=messages`
+5. **Profile** (User) -- `/creator-dashboard?tab=profile`
+
+This removes the non-functional "Campaigns" tab and adds the critical "Opportunities" tab. The remaining tabs (Services, Calendar, Boost) stay accessible via the dashboard's tab strip which is currently hidden on native -- we'll show a simplified horizontal scroll tab bar on native too.
 
 ### Technical Details
 
-**File: `src/App.tsx`**
-- Import `MobileBottomNav` and add it inside `NativeAppRoutes`, rendered **outside** the `<Routes>` block so it persists across all pages.
-- Use a wrapper component with navigation logic so tapping tabs navigates to the correct route/tab.
+**File: `src/components/mobile/MobileBottomNav.tsx`**
+- Replace "campaigns" tab with "opportunities" tab using the Briefcase icon
+- Update the tab config array to match the 5 tabs above
+
+**File: `src/App.tsx` (NativeBottomNavWrapper)**
+- Update the `activeTab` logic to correctly detect which tab is active based on current route/params
+- The "opportunities" tab maps to the `/opportunities` route (already registered)
 
 **File: `src/pages/CreatorDashboard.tsx`**
-- Remove the `MobileBottomNav` rendering from this page (it will now come from the global layout).
-- Keep the `pb-20` padding so content doesn't hide behind the nav.
+- Show a compact horizontal tab strip on native (currently hidden with `{!isNative && ...}`) so creators can access Services, Calendar, Boost, and other sub-tabs
+- Use a simplified scrollable row with just the tabs not in the bottom nav: Services, Calendar, Boost
+- These render inline in the dashboard content area
 
-**File: `src/pages/Opportunities.tsx`**
-- Add `pb-20` bottom padding when on native so content isn't hidden behind the fixed nav.
-
-**File: `src/components/mobile/MobileBottomNav.tsx`**
-- The component already has `fixed bottom-0` positioning, so no changes needed to its core styling. It will work correctly once placed at the app level.
-
-**New wrapper in `NativeAppRoutes`:**
-```text
-NativeAppRoutes
-  NativeAppGate
-    <div>
-      <Routes>...</Routes>
-      <MobileBottomNav />   <-- always visible, fixed at bottom
-    </div>
-  NativeAppGate
-```
-
-The nav tabs will map to routes:
-- Overview, Campaigns, Bookings, Messages, Profile --> `/creator-dashboard?tab=X`
-- This keeps the current tab-based navigation working seamlessly.
+### Changes Summary
+| File | Change |
+|------|--------|
+| `src/components/mobile/MobileBottomNav.tsx` | Replace "campaigns" with "opportunities", reorder tabs |
+| `src/App.tsx` | Update NativeBottomNavWrapper active tab detection for opportunities |
+| `src/pages/CreatorDashboard.tsx` | Show compact tab strip on native for secondary tabs (Services, Calendar, Boost) |
 
