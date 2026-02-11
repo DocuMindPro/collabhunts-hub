@@ -51,6 +51,8 @@ interface CreatorData {
   tiktok_goes_live?: boolean | null;
   tiktok_monthly_revenue?: string | null;
   tiktok_live_interest?: string | null;
+  stats_update_required?: boolean;
+  stats_last_confirmed_at?: string | null;
 }
 
 const ITEMS_PER_PAGE = 20;
@@ -75,6 +77,7 @@ const AdminCreatorsTab = () => {
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [minFollowers, setMinFollowers] = useState<string>("");
   const [tiktokLiveFilter, setTiktokLiveFilter] = useState<string>("all");
+  const [statsFilter, setStatsFilter] = useState<string>("all");
   
   // Sorting
   const [sortField, setSortField] = useState<string>("created_at");
@@ -207,6 +210,15 @@ const AdminCreatorsTab = () => {
       }
     }
 
+    // Stats status filter
+    if (statsFilter !== "all") {
+      if (statsFilter === "outdated") {
+        filtered = filtered.filter(c => c.stats_update_required === true);
+      } else if (statsFilter === "current") {
+        filtered = filtered.filter(c => !c.stats_update_required);
+      }
+    }
+
     // TikTok Live filter
     if (tiktokLiveFilter !== "all") {
       if (tiktokLiveFilter === "goes_live") {
@@ -223,7 +235,7 @@ const AdminCreatorsTab = () => {
     setFilteredCreators(filtered);
     setCurrentPage(1);
     setSelectedIds(new Set());
-  }, [search, statusFilter, phoneFilter, countryFilter, categoryFilter, genderFilter, dateFrom, dateTo, platformFilter, minFollowers, tiktokLiveFilter, creators]);
+  }, [search, statusFilter, phoneFilter, countryFilter, categoryFilter, genderFilter, dateFrom, dateTo, platformFilter, minFollowers, tiktokLiveFilter, statsFilter, creators]);
 
   const fetchCreators = async () => {
     try {
@@ -396,7 +408,7 @@ const AdminCreatorsTab = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ["Display Name", "Email", "Phone", "Phone Verified", "Status", "Location", "Gender", "Categories", "Total Followers", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch", "TikTok Goes Live", "TikTok Live Revenue", "TikTok Live Interest", "Earnings ($)", "Joined"];
+    const headers = ["Display Name", "Email", "Phone", "Phone Verified", "Status", "Stats Status", "Location", "Gender", "Categories", "Total Followers", "Instagram", "TikTok", "YouTube", "Twitter", "Twitch", "TikTok Goes Live", "TikTok Live Revenue", "TikTok Live Interest", "Earnings ($)", "Joined"];
     const rows = filteredCreators.map(c => {
       const getFollowers = (platform: string) => {
         const account = c.social_accounts?.find(s => s.platform.toLowerCase() === platform.toLowerCase());
@@ -408,6 +420,7 @@ const AdminCreatorsTab = () => {
         c.phone_number || "",
         c.phone_verified ? "Yes" : "No",
         c.status,
+        c.stats_update_required ? "Stats Outdated" : "Current",
         [c.location_city, c.location_state, c.location_country].filter(Boolean).join(", "),
         c.gender || "",
         (c.categories || []).join("; "),
@@ -601,6 +614,7 @@ const AdminCreatorsTab = () => {
                 setPlatformFilter("all");
                 setMinFollowers("");
                 setTiktokLiveFilter("all");
+                setStatsFilter("all");
               }}
               className="w-full"
             >
@@ -617,6 +631,17 @@ const AdminCreatorsTab = () => {
                 <SelectItem value="no_live">Doesn't Go Live</SelectItem>
                 <SelectItem value="interested">Interested</SelectItem>
                 <SelectItem value="not_interested">Not Interested</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={statsFilter} onValueChange={setStatsFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Stats Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Stats</SelectItem>
+                <SelectItem value="outdated">Stats Outdated</SelectItem>
+                <SelectItem value="current">Stats Current</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -709,18 +734,25 @@ const AdminCreatorsTab = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            creator.status === "approved"
-                              ? "default"
-                              : creator.status === "pending"
-                              ? "secondary"
-                              : "destructive"
-                          }
-                          className="capitalize"
-                        >
-                          {creator.status}
-                        </Badge>
+                        <div className="flex flex-wrap gap-1">
+                          <Badge
+                            variant={
+                              creator.status === "approved"
+                                ? "default"
+                                : creator.status === "pending"
+                                ? "secondary"
+                                : "destructive"
+                            }
+                            className="capitalize"
+                          >
+                            {creator.status}
+                          </Badge>
+                          {creator.stats_update_required && (
+                            <Badge className="bg-orange-500/15 text-orange-600 border-orange-300 hover:bg-orange-500/20">
+                              Stats Inactive
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {creator.total_followers?.toLocaleString() || "0"}
@@ -816,9 +848,21 @@ const AdminCreatorsTab = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-semibold text-sm mb-1">Status</h4>
-                  <Badge variant={selectedCreator.status === "approved" ? "default" : selectedCreator.status === "pending" ? "secondary" : "destructive"} className="capitalize">
-                    {selectedCreator.status}
-                  </Badge>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant={selectedCreator.status === "approved" ? "default" : selectedCreator.status === "pending" ? "secondary" : "destructive"} className="capitalize">
+                      {selectedCreator.status}
+                    </Badge>
+                    {selectedCreator.stats_update_required && (
+                      <Badge className="bg-orange-500/15 text-orange-600 border-orange-300">
+                        Stats Inactive
+                      </Badge>
+                    )}
+                  </div>
+                  {selectedCreator.stats_update_required && selectedCreator.stats_last_confirmed_at && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Last confirmed: {new Date(selectedCreator.stats_last_confirmed_at).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <h4 className="font-semibold text-sm mb-1">Location</h4>
