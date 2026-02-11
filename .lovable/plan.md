@@ -1,40 +1,43 @@
 
 
-## Rebrand: Change App Name to "Collab Hunts" and Update Native App Icons
+## Fix: Add Icon Generation to GitHub Actions Build
 
-### What Will Change
+### Problem
+The GitHub Actions workflow runs `npx cap add android` fresh every build, which creates default Capacitor icons. Your new logo (`public/app-icon.png`) is used in the splash/loading screens but NOT as the Android launcher icon because `capacitor-assets generate` is never run in CI.
 
-**1. App Name** -- Update "CollabHunts" to "Collab Hunts" (with a space) everywhere it appears as a display name across the app.
-
-**2. Native App Icon/Splash** -- Copy your uploaded logo to the project so it can be used as the PWA icon and in loading screens. The actual native Android icons (inside the `android/` folder) need to be regenerated on your machine using `npx capacitor-assets generate` after you place the logo source files.
+### Solution
+Update the GitHub Actions workflow to:
+1. Install `@capacitor/assets` 
+2. Create the required source icon files from your existing `public/app-icon.png`
+3. Run `npx capacitor-assets generate` to produce all Android icon sizes
 
 ### Technical Details
 
-**Files to update for the name change (CollabHunts -> Collab Hunts):**
+**File: `.github/workflows/build-android.yml`**
 
-| File | What Changes |
-|------|-------------|
-| `capacitor.config.ts` | `appName: 'Collab Hunts'` |
-| `public/manifest.json` | `name` and `short_name` fields |
-| `index.html` | Title, meta tags, and pre-React loader text |
-| `src/components/Logo.tsx` | Fallback text (3 occurrences) |
-| `src/components/PageLoader.tsx` | Brand name text |
-| `src/components/NativeLoadingScreen.tsx` | Brand name text |
-| `src/pages/Download.tsx` | Page heading text |
+Add these steps after "Add Android platform" and before "Sync Capacitor":
 
-Note: Legal pages (Terms, Privacy, etc.) and detailed descriptions will keep the current wording since those are formal documents -- we'll only update user-facing UI branding.
+```yaml
+- name: Setup icon assets
+  run: |
+    mkdir -p assets
+    cp public/app-icon.png assets/icon-only.png
+    cp public/app-icon.png assets/icon-foreground.png
+    cp public/app-icon.png assets/icon-background.png
+    cp public/app-icon.png assets/splash.png
+    cp public/app-icon.png assets/splash-dark.png
 
-**For the logo/icon:**
+- name: Install capacitor-assets
+  run: npm install @capacitor/assets --save-dev --legacy-peer-deps
 
-| File | What Changes |
-|------|-------------|
-| `public/app-icon.png` | Copy the uploaded logo image here |
-| `public/pwa-192x192.png` | Will still be used for PWA (can be updated later with properly sized versions) |
-| `src/components/NativeLoadingScreen.tsx` | Show the logo image instead of the camera emoji |
-| `src/components/PageLoader.tsx` | Show the logo image instead of the camera emoji |
-| `index.html` | Update pre-React loader to show the logo image instead of the camera emoji |
+- name: Generate native assets
+  run: npx capacitor-assets generate --android
+```
 
-**After these changes, on your local machine you should:**
-1. Place a 1024x1024 version of the logo in `assets/icon-only.png`
-2. Run `npx capacitor-assets generate` to create all Android/iOS icon sizes
-3. Run `npx cap sync android` to apply changes to the native project
+This will generate all the properly sized Android icons (mdpi through xxxhdpi) and splash screens from your logo automatically during every build. No manual steps needed on your end -- just let GitHub Actions rebuild and download the new APK.
+
+### Changes Summary
+| File | Change |
+|------|--------|
+| `.github/workflows/build-android.yml` | Add 3 new steps for icon/splash generation |
+
