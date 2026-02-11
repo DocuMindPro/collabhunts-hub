@@ -2027,6 +2027,53 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_service_deliverables: {
+        Row: {
+          content_type: string
+          created_at: string
+          creator_service_id: string
+          description: string | null
+          duration_seconds: number | null
+          id: string
+          platform: string
+          price_cents: number
+          quantity: number
+          sort_order: number
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          creator_service_id: string
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          platform: string
+          price_cents?: number
+          quantity?: number
+          sort_order?: number
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          creator_service_id?: string
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          platform?: string
+          price_cents?: number
+          quantity?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_service_deliverables_creator_service_id_fkey"
+            columns: ["creator_service_id"]
+            isOneToOne: false
+            referencedRelation: "creator_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_services: {
         Row: {
           created_at: string | null

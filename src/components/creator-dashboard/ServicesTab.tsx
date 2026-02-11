@@ -6,6 +6,7 @@ import { Plus, Edit, Trash2, Gift, Sparkles, Users, Swords, Wand2 } from "lucide
 import { toast } from "sonner";
 import ServiceEditDialog from "./ServiceEditDialog";
 import { Badge } from "@/components/ui/badge";
+import { DELIVERABLE_PLATFORMS, CONTENT_TYPES, DURATION_OPTIONS, type DeliverablePlatform, type ContentType } from "@/config/packages";
 
 interface Service {
   id: string;
@@ -18,6 +19,15 @@ interface Service {
   delivery_days: number;
   is_active: boolean;
   creator_profile_id: string;
+}
+
+interface Deliverable {
+  id: string;
+  platform: string;
+  content_type: string;
+  quantity: number;
+  duration_seconds: number | null;
+  price_cents: number;
 }
 
 const PACKAGE_ICONS: Record<string, React.ReactNode> = {
@@ -45,10 +55,7 @@ const PACKAGE_DESCRIPTIONS: Record<string, string> = {
 };
 
 const formatPrice = (service: Service) => {
-  // PK Battle has no creator pricing
-  if (service.service_type === "competition") {
-    return "Contact for pricing";
-  }
+  if (service.service_type === "competition") return "Contact for pricing";
   return `$${(service.price_cents / 100).toLocaleString()}`;
 };
 
@@ -58,6 +65,7 @@ const ServicesTab = () => {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [creatorProfileId, setCreatorProfileId] = useState<string | null>(null);
+  const [deliverablesByService, setDeliverablesByService] = useState<Record<string, Deliverable[]>>({});
 
   useEffect(() => {
     fetchServices();
@@ -84,7 +92,27 @@ const ServicesTab = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setServices(data || []);
+      const servicesList = data || [];
+      setServices(servicesList);
+
+      // Fetch deliverables for all services
+      if (servicesList.length > 0) {
+        const serviceIds = servicesList.map(s => s.id);
+        const { data: delData } = await supabase
+          .from("creator_service_deliverables")
+          .select("id, creator_service_id, platform, content_type, quantity, duration_seconds, price_cents")
+          .in("creator_service_id", serviceIds)
+          .order("sort_order");
+
+        if (delData) {
+          const grouped: Record<string, Deliverable[]> = {};
+          delData.forEach(d => {
+            if (!grouped[d.creator_service_id]) grouped[d.creator_service_id] = [];
+            grouped[d.creator_service_id].push(d);
+          });
+          setDeliverablesByService(grouped);
+        }
+      }
     } catch (error) {
       console.error("Error fetching services:", error);
       toast.error("Failed to load packages");
@@ -95,13 +123,8 @@ const ServicesTab = () => {
 
   const handleDelete = async (serviceId: string) => {
     if (!confirm("Are you sure you want to delete this package?")) return;
-
     try {
-      const { error } = await supabase
-        .from("creator_services")
-        .delete()
-        .eq("id", serviceId);
-
+      const { error } = await supabase.from("creator_services").delete().eq("id", serviceId);
       if (error) throw error;
       toast.success("Package deleted successfully");
       fetchServices();
@@ -111,15 +134,8 @@ const ServicesTab = () => {
     }
   };
 
-  const handleEdit = (service: Service) => {
-    setEditingService(service);
-    setIsDialogOpen(true);
-  };
-
-  const handleAddNew = () => {
-    setEditingService(null);
-    setIsDialogOpen(true);
-  };
+  const handleEdit = (service: Service) => { setEditingService(service); setIsDialogOpen(true); };
+  const handleAddNew = () => { setEditingService(null); setIsDialogOpen(true); };
 
   if (loading) {
     return (
@@ -156,7 +172,11 @@ const ServicesTab = () => {
         <div className="grid gap-4">
           {services.map((service) => {
             const isPKBattle = service.service_type === "competition";
-            
+            const isCustom = service.service_type === "custom";
+            const dels = deliverablesByService[service.id] || [];
+            const storyAddons = dels.filter(d => d.content_type === "story");
+            const customDels = isCustom ? dels : [];
+
             return (
               <Card key={service.id}>
                 <CardHeader>
@@ -175,18 +195,10 @@ const ServicesTab = () => {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleEdit(service)}
-                      >
+                      <Button variant="outline" size="icon" onClick={() => handleEdit(service)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleDelete(service.id)}
-                      >
+                      <Button variant="outline" size="icon" onClick={() => handleDelete(service.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -196,13 +208,19 @@ const ServicesTab = () => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <p className="text-sm text-muted-foreground">
-                        {isPKBattle ? "Pricing" : "Your Price"}
+                        {isPKBattle ? "Pricing" : isCustom ? "Content Menu" : "Your Price"}
                       </p>
-                      <p className={`text-2xl font-bold ${isPKBattle ? 'text-muted-foreground text-lg' : ''}`}>
-                        {formatPrice(service)}
-                      </p>
+                      {isCustom ? (
+                        <p className="text-lg font-semibold">
+                          {customDels.length} deliverable{customDels.length !== 1 ? "s" : ""}
+                        </p>
+                      ) : (
+                        <p className={`text-2xl font-bold ${isPKBattle ? 'text-muted-foreground text-lg' : ''}`}>
+                          {formatPrice(service)}
+                        </p>
+                      )}
                     </div>
-                    {!isPKBattle && (
+                    {!isPKBattle && !isCustom && (
                       <div className="space-y-1 text-right">
                         <p className="text-sm text-muted-foreground">Delivery Time</p>
                         <p className="text-lg font-semibold">
@@ -217,6 +235,37 @@ const ServicesTab = () => {
                       </Badge>
                     </div>
                   </div>
+
+                  {/* Story add-ons indicator */}
+                  {storyAddons.length > 0 && !isCustom && (
+                    <div className="mt-3 pt-3 border-t flex flex-wrap gap-1.5">
+                      <span className="text-xs text-muted-foreground mr-1">Story Add-ons:</span>
+                      {storyAddons.map(s => (
+                        <Badge key={s.id} variant="outline" className="text-xs">
+                          {DELIVERABLE_PLATFORMS[s.platform as DeliverablePlatform] || s.platform} ${(s.price_cents / 100)}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Custom deliverables summary */}
+                  {isCustom && customDels.length > 0 && (
+                    <div className="mt-3 pt-3 border-t space-y-1">
+                      {customDels.map(d => {
+                        const durLabel = d.duration_seconds ? DURATION_OPTIONS.find(o => o.value === d.duration_seconds)?.label : null;
+                        return (
+                          <div key={d.id} className="flex items-center justify-between text-sm">
+                            <span>
+                              {d.quantity}x {DELIVERABLE_PLATFORMS[d.platform as DeliverablePlatform] || d.platform}{" "}
+                              {CONTENT_TYPES[d.content_type as ContentType] || d.content_type}
+                              {durLabel && <span className="text-muted-foreground"> ({durLabel})</span>}
+                            </span>
+                            <span className="font-medium">${(d.price_cents / 100).toLocaleString()}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -228,15 +277,8 @@ const ServicesTab = () => {
         service={editingService}
         creatorProfileId={creatorProfileId}
         isOpen={isDialogOpen}
-        onClose={() => {
-          setIsDialogOpen(false);
-          setEditingService(null);
-        }}
-        onSuccess={() => {
-          fetchServices();
-          setIsDialogOpen(false);
-          setEditingService(null);
-        }}
+        onClose={() => { setIsDialogOpen(false); setEditingService(null); }}
+        onSuccess={() => { fetchServices(); setIsDialogOpen(false); setEditingService(null); }}
       />
     </div>
   );
