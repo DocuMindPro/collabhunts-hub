@@ -1,38 +1,37 @@
 
 
-## Add "Stats Inactive" Filter and Indicator to Admin Creators Tab
+## Fix: Add Missing Routes to Native App
 
-### Overview
-The admin panel's Creators tab will show which creators have inactive accounts due to not updating their social media stats, with a new filter and visual indicator.
+### Problem
+On native platforms (BlueStacks/Android), the app uses `NativeAppRoutes` which only registers 3 routes:
+- `/` (redirects to dashboard)
+- `/creator-dashboard`
+- `/creator/:id`
 
-### Changes to `src/components/admin/AdminCreatorsTab.tsx`
+When you tap "View All", an opportunity row, or "Browse All", they all link to `/opportunities` which is **not registered** as a native route. The catch-all `*` route redirects back to `/creator-dashboard`, making it look like the page just reloads.
 
-1. **Add `stats_update_required` to CreatorData interface** -- include the boolean field from the database.
-
-2. **New filter: "Stats Status"** -- A dropdown filter added to the filters section with options:
-   - All
-   - Stats Outdated (shows only creators with `stats_update_required = true`)
-   - Stats Current (shows only creators with `stats_update_required = false`)
-
-3. **Status column enhancement** -- When a creator has `stats_update_required = true`, show an additional orange "Stats Inactive" badge next to their existing status badge so admins can spot them at a glance.
-
-4. **Detail modal** -- In the creator detail dialog, show "Stats Inactive" status with the `stats_last_confirmed_at` date so admins know how long it's been.
-
-5. **Clear Filters** -- Reset the new stats filter when clearing all filters.
-
-6. **CSV Export** -- Add a "Stats Status" column to the export.
-
-### Quick Actions Integration
-Add a count of stats-inactive creators to `AdminQuickActions.tsx` so it appears in the "Requires Attention" section (optional, low priority).
+### Solution
+Add the `/opportunities` route (and its lazy-loaded `Opportunities` page) to the `NativeAppRoutes` in `src/App.tsx`.
 
 ### Technical Details
 
-**File: `src/components/admin/AdminCreatorsTab.tsx`**
-- Add `stats_update_required` and `stats_last_confirmed_at` to the `CreatorData` interface
-- Add `statsFilter` state (`"all" | "outdated" | "current"`)
-- Add filter logic in the `useEffect` that filters creators
-- Add orange "Stats Inactive" badge in the Status column when `stats_update_required === true`
-- Add stats filter dropdown in filters row
-- Reset `statsFilter` in Clear Filters handler
-- Add stats column to CSV export
+**File: `src/App.tsx`**
+
+1. The `Opportunities` page is already lazy-loaded at line 53. It just needs to be added to the native routes block.
+
+2. Update `NativeAppRoutes` (lines 73-82) to include:
+```
+<Route path="/opportunities" element={
+  <Suspense fallback={<PageLoader />}>
+    <Opportunities />
+  </Suspense>
+} />
+```
+
+3. Since the `Opportunities` page uses `Navbar` and `Footer` (web components), we should also verify it renders cleanly on native. The page at `src/pages/Opportunities.tsx` will need a quick check -- if it includes Navbar/Footer, those should be conditionally hidden on native to avoid broken navigation elements.
+
+**File: `src/pages/Opportunities.tsx`** (if needed)
+- Wrap `Navbar` and `Footer` with `!isNativePlatform()` checks so the page renders cleanly within the native app's bottom-nav layout.
+
+This is a minimal, targeted fix -- just registering the missing route so navigation works.
 
