@@ -113,6 +113,27 @@ const TermsOfService = () => {
                 <strong>Account Termination:</strong> We reserve the right to terminate or suspend accounts immediately, without prior notice, for any violation of these Terms, 
                 including but not limited to: providing false information, creating fake accounts, artificially inflating metrics, or engaging in fraudulent activity.
               </p>
+
+              <h3 className="text-xl font-heading font-semibold mt-6 mb-3">5.1 Vetting & Verification Limitations</h3>
+              <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                <p className="text-muted-foreground mb-3">
+                  CollabHunts may conduct voluntary vetting of Creator profiles as a courtesy. This vetting is performed on a <strong>best-effort basis</strong> and does 
+                  <strong> NOT</strong> constitute a guarantee, endorsement, or certification of any Creator's identity, credentials, social media metrics, follower authenticity, 
+                  engagement rates, or professional conduct.
+                </p>
+                <p className="text-muted-foreground mb-3">
+                  CollabHunts <strong>does not and cannot</strong> verify the authenticity of followers, engagement, or audience demographics. Creators may have purchased followers, 
+                  inflated metrics, or misrepresented their reach. <strong>CollabHunts bears no responsibility for inaccurate or misleading Creator profiles.</strong>
+                </p>
+                <p className="text-muted-foreground mb-3">
+                  A "Vetted" badge or any other status indicator on the Platform is <strong>NOT</strong> a warranty of reliability, honesty, or quality. It indicates only that the 
+                  Creator has passed our basic review process at the time of vetting. Vetting status may become outdated and does not reflect the Creator's current conduct or metrics.
+                </p>
+                <p className="text-muted-foreground">
+                  <strong>Brands are solely responsible for conducting their own due diligence</strong> before entering into any arrangement with a Creator, including but not limited to 
+                  independently verifying follower counts, engagement rates, audience demographics, and professional references.
+                </p>
+              </div>
             </section>
 
             {/* Section 6 - Booking Process */}
@@ -266,9 +287,45 @@ const TermsOfService = () => {
               </div>
             </section>
 
-            {/* Section 13 - Limitation of Liability */}
+            {/* Section 13 - Fraud, Scams & User Conduct Disclaimer */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">13. Limitation of Liability</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">13. Fraud, Scams & User Conduct Disclaimer</h2>
+              <p className="text-muted-foreground mb-4">
+                CollabHunts is a <strong>technology platform only</strong>. We do <strong>NOT</strong> police, monitor, or guarantee the conduct, honesty, or intentions of any user.
+              </p>
+              <p className="text-muted-foreground mb-4">
+                <strong>CollabHunts is NOT responsible for any scam, fraud, misrepresentation, theft, or deception committed by any user against another user</strong>, including but not limited to:
+              </p>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
+                <li>Creators who accept payment and fail to perform services</li>
+                <li>Creators who misrepresent their identity, metrics, reach, capabilities, or portfolio</li>
+                <li>Creators who purchase followers, engagement, or artificially inflate their statistics</li>
+                <li>Brands who fail to pay Creators as agreed</li>
+                <li>Brands who misrepresent event details, conditions, compensation, or expectations</li>
+                <li>Any party who provides false, misleading, or incomplete information</li>
+                <li>Any party who engages in identity fraud, impersonation, or deceptive practices</li>
+              </ul>
+              <p className="text-muted-foreground mb-4">
+                All interactions, negotiations, and transactions between users are conducted <strong>at the users' own risk</strong>. CollabHunts has no obligation to investigate, 
+                mediate, or resolve any allegations of fraud or misconduct between users, though we may choose to do so as a voluntary courtesy.
+              </p>
+              <p className="text-muted-foreground mb-4">
+                Users are encouraged to verify identities, check references, conduct independent research, and use our AI-assisted agreement tools before committing to any collaboration.
+              </p>
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 mb-4">
+                <p className="text-sm font-semibold text-destructive mb-2">⚠️ IMPORTANT LEGAL NOTICE</p>
+                <p className="text-sm text-muted-foreground">
+                  BY USING THE PLATFORM, YOU ACKNOWLEDGE THAT COLLABHUNTS CANNOT PREVENT ALL FRAUDULENT ACTIVITY AND YOU EXPRESSLY AGREE NOT TO HOLD COLLABHUNTS, 
+                  ITS OFFICERS, DIRECTORS, EMPLOYEES, AGENTS, OR AFFILIATES LIABLE FOR ANY LOSSES, DAMAGES, OR HARM RESULTING FROM THE ACTIONS, OMISSIONS, 
+                  MISREPRESENTATIONS, OR MISCONDUCT OF OTHER USERS. THIS WAIVER APPLIES REGARDLESS OF WHETHER THE OTHER USER HAS BEEN "VETTED" OR HOLDS ANY 
+                  STATUS INDICATOR ON THE PLATFORM.
+                </p>
+              </div>
+            </section>
+
+            {/* Section 14 - Limitation of Liability */}
+            <section>
+              <h2 className="text-2xl font-heading font-bold mb-4">14. Limitation of Liability</h2>
               <p className="text-muted-foreground mb-4">
                 TO THE MAXIMUM EXTENT PERMITTED BY LAW, COLLABHUNTS AND ITS OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR ANY INDIRECT, 
                 INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO:
@@ -281,15 +338,29 @@ const TermsOfService = () => {
                 <li>Disputes between Brands and Creators</li>
                 <li>Payment disputes arising from direct transactions between parties</li>
                 <li>Any unauthorized access to or use of our servers</li>
+                <li>Fraud, scams, or deception committed by any user</li>
+                <li>Inaccuracy of Creator profile information, follower counts, engagement rates, or audience metrics</li>
+                <li>Purchased or fake followers on any Creator's social media accounts</li>
+                <li>Any losses arising from reliance on information provided by other users on the Platform</li>
+                <li>Physical harm, property damage, or personal injury at events arranged through the Platform</li>
+                <li>Any Creator's failure to deliver services after receiving payment from a Brand</li>
+                <li>Any Brand's failure to pay a Creator after services are rendered</li>
               </ul>
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 mb-4">
+                <p className="text-sm text-muted-foreground">
+                  COLLABHUNTS' VETTING PROCESS IS NOT A GUARANTEE OF AUTHENTICITY, RELIABILITY, OR GOOD FAITH. EVEN VETTED CREATORS MAY ENGAGE IN FRAUDULENT, 
+                  DECEPTIVE, OR UNPROFESSIONAL BEHAVIOR. COLLABHUNTS SHALL NOT BE LIABLE FOR ANY DAMAGES ARISING FROM A VETTED CREATOR'S MISCONDUCT, 
+                  MISREPRESENTATION, OR FAILURE TO PERFORM.
+                </p>
+              </div>
               <p className="text-muted-foreground mb-4">
                 <strong>OUR TOTAL LIABILITY SHALL NOT EXCEED THE PLATFORM FEES YOU HAVE PAID TO US IN THE 12 MONTHS PRECEDING THE CLAIM.</strong>
               </p>
             </section>
 
-            {/* Section 14 - No Warranty / As-Is Disclaimer */}
+            {/* Section 15 - No Warranty / As-Is Disclaimer */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">14. No Warranty / As-Is Disclaimer</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">15. No Warranty / As-Is Disclaimer</h2>
               <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 mb-4">
                 <p className="text-sm text-muted-foreground">
                   THE PLATFORM IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE. 
@@ -312,9 +383,9 @@ const TermsOfService = () => {
               </p>
             </section>
 
-            {/* Section 15 - No Agency Relationship */}
+            {/* Section 16 - No Agency Relationship */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">15. No Agency Relationship</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">16. No Agency Relationship</h2>
               <p className="text-muted-foreground mb-4">
                 CollabHunts is <strong>not</strong> an agent, employer, joint venturer, partner, or representative of any Creator, Brand, or Venue. 
                 We are a technology platform that facilitates discovery and communication only.
@@ -327,12 +398,12 @@ const TermsOfService = () => {
               </ul>
             </section>
 
-            {/* Section 16 - Indemnification */}
+            {/* Section 17 - Indemnification */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">16. Indemnification</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">17. Indemnification</h2>
               <p className="text-muted-foreground mb-4">
                 You agree to indemnify, defend, and hold harmless CollabHunts and its officers, directors, employees, agents, and affiliates from any claims, 
-                liabilities, damages, losses, and expenses arising from:
+                liabilities, damages, losses, and expenses (including reasonable attorneys' fees) arising from:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
                 <li>Your use of the Platform</li>
@@ -341,12 +412,15 @@ const TermsOfService = () => {
                 <li>Any content you submit to the Platform</li>
                 <li>Your conduct during events booked through the Platform</li>
                 <li>Any disputes arising from direct transactions between you and another user</li>
+                <li>Any fraud, scam, or misrepresentation you commit against another user</li>
+                <li>Any claims by third parties arising from your conduct on or off the Platform in connection with collaborations arranged through CollabHunts</li>
+                <li>Any inaccuracy in information you provide on the Platform, including but not limited to social media metrics, follower counts, and audience demographics</li>
               </ul>
             </section>
 
-            {/* Section 17 - Changes to Terms */}
+            {/* Section 18 - Changes to Terms */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">17. Changes to Terms</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">18. Changes to Terms</h2>
               <p className="text-muted-foreground mb-4">
                 We reserve the right to modify these Terms at any time. Changes will be effective immediately upon posting to the Platform. 
                 Material changes will be communicated via email to registered users. Your continued use of the Platform after changes 
@@ -354,9 +428,9 @@ const TermsOfService = () => {
               </p>
             </section>
 
-            {/* Section 18 - Contact */}
+            {/* Section 19 - Contact */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">18. Contact Us</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">19. Contact Us</h2>
               <p className="text-muted-foreground mb-4">
                 If you have questions about these Terms of Service, please contact us:
               </p>
