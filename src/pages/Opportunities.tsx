@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
+import { isNativePlatform } from "@/lib/supabase-native";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,7 @@ interface BrandOpportunity {
 }
 
 const Opportunities = () => {
+  const isNative = isNativePlatform();
   const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState<BrandOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -261,7 +263,7 @@ const Opportunities = () => {
   if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
+        {!isNative && <Navbar />}
         <main className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </main>
@@ -273,7 +275,7 @@ const Opportunities = () => {
   if (!isCreator && !isBrand) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
+        {!isNative && <Navbar />}
         <main className="flex-1 py-8">
           <div className="container mx-auto px-4 max-w-md text-center">
             <Card>
@@ -296,7 +298,7 @@ const Opportunities = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
+      {!isNative && <Navbar />}
       
       <main className="flex-1 py-8">
         <div className="container mx-auto px-4 max-w-6xl">

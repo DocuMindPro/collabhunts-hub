@@ -76,6 +76,11 @@ const NativeAppRoutes = () => (
       <Route path="/" element={<Navigate to="/creator-dashboard" replace />} />
       <Route path="/creator-dashboard" element={<CreatorDashboard />} />
       <Route path="/creator/:id" element={<CreatorProfile />} />
+      <Route path="/opportunities" element={
+        <Suspense fallback={<PageLoader />}>
+          <Opportunities />
+        </Suspense>
+      } />
       <Route path="*" element={<Navigate to="/creator-dashboard" replace />} />
     </Routes>
   </NativeAppGate>
