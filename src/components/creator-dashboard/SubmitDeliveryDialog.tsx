@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Trash2, Link as LinkIcon } from "lucide-react";
+import { sendBrandEmail } from "@/lib/email-utils";
 
 interface SubmitDeliveryDialogProps {
   applicationId: string;
   opportunityTitle: string;
+  brandProfileId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
@@ -18,6 +20,7 @@ interface SubmitDeliveryDialogProps {
 const SubmitDeliveryDialog = ({
   applicationId,
   opportunityTitle,
+  brandProfileId,
   open,
   onOpenChange,
   onSuccess,
@@ -87,6 +90,16 @@ const SubmitDeliveryDialog = ({
         title: "Delivery Submitted!",
         description: "The brand will review your content and confirm delivery.",
       });
+      
+      // Email brand about deliverable submission
+      if (brandProfileId) {
+        sendBrandEmail("brand_deliverables_submitted", brandProfileId, {
+          creator_name: "Creator",
+          opportunity_title: opportunityTitle,
+          links_count: validLinks.length,
+        });
+      }
+      
       setLinks([""]);
       onSuccess();
     }

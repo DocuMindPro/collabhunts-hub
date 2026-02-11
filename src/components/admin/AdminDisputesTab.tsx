@@ -15,6 +15,7 @@ import {
   Gavel, Clock, AlertTriangle, CheckCircle, DollarSign, RefreshCcw,
   MessageSquare, User, Building2, Calendar, FileText
 } from "lucide-react";
+import { sendCreatorEmail, sendBrandEmail } from "@/lib/email-utils";
 
 interface Dispute {
   id: string;
@@ -231,6 +232,37 @@ const AdminDisputesTab = () => {
         .eq("id", selectedDispute.booking_id);
 
       toast.success(`Dispute resolved: ${getStatusLabel(status)}`);
+      
+      // Send resolution emails to both parties
+      const dispute = selectedDispute;
+      const creatorUserId = dispute.bookings.creator_profiles.user_id;
+      const brandUserId = dispute.bookings.brand_profiles.user_id;
+      
+      // Get creator profile ID from booking
+      const { data: bookingData } = await supabase
+        .from("bookings")
+        .select("creator_profile_id, brand_profile_id")
+        .eq("id", dispute.booking_id)
+        .single();
+      
+      if (bookingData) {
+        const resolutionLabel = getStatusLabel(status);
+        const inCreatorFavor = resolutionType === "release";
+        
+        sendCreatorEmail("creator_dispute_resolved", bookingData.creator_profile_id, {
+          brand_name: dispute.bookings.brand_profiles.company_name,
+          resolution: resolutionLabel,
+          in_your_favor: inCreatorFavor,
+          amount_to_creator: inCreatorFavor ? dispute.bookings.total_price_cents : (refund ? Math.round(dispute.bookings.total_price_cents * (100 - refund) / 100) : 0),
+        });
+        
+        sendBrandEmail("brand_dispute_resolved", bookingData.brand_profile_id, {
+          creator_name: dispute.bookings.creator_profiles.display_name,
+          resolution: resolutionLabel,
+          refund_percentage: refund,
+        });
+      }
+      
       setResolveDialogOpen(false);
       setSelectedDispute(null);
       fetchDisputes();

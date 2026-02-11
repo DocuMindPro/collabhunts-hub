@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Eye, Phone, CheckCircle, XCircle, MapPin, ExternalLink, Download, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { sendCreatorEmail } from "@/lib/email-utils";
 import { Link } from "react-router-dom";
 
 interface SocialAccount {
@@ -309,6 +310,10 @@ const AdminCreatorsTab = () => {
       if (error) throw error;
 
       toast({ title: "Creator Approved" });
+      
+      // Send email to creator
+      sendCreatorEmail("creator_profile_approved", creatorId, {});
+      
       fetchCreators();
       setSelectedCreator(null);
     } catch (error: any) {
@@ -326,6 +331,10 @@ const AdminCreatorsTab = () => {
       if (error) throw error;
 
       toast({ title: "Creator Rejected" });
+      
+      // Send email to creator
+      sendCreatorEmail("creator_profile_rejected", creatorId, {});
+      
       fetchCreators();
       setSelectedCreator(null);
     } catch (error: any) {

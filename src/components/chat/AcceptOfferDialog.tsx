@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { type OfferData } from "./OfferMessage";
+import { sendCreatorEmail } from "@/lib/email-utils";
 
 interface AcceptOfferDialogProps {
   open: boolean;
@@ -101,6 +102,13 @@ const AcceptOfferDialog = ({
 
       setStep("success");
       toast.success("Agreement confirmed! You can now arrange payment directly with the creator.");
+      
+      // Email creator about accepted booking
+      sendCreatorEmail("creator_booking_accepted", offer.creator_profile_id, {
+        brand_name: "Brand",
+        amount_cents: offerData.price_cents,
+        delivery_deadline: offerData.event_date || "As agreed",
+      });
       
       // Close after a short delay to show success state
       setTimeout(() => {

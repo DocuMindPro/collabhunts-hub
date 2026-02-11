@@ -16,6 +16,7 @@ import {
   Archive,
   AlertTriangle
 } from "lucide-react";
+import { sendCreatorEmail } from "@/lib/email-utils";
 
 interface Deliverable {
   id: string;
@@ -109,6 +110,13 @@ const DeliveryReviewDialog = ({
       if (error) throw error;
 
       toast.success("Delivery approved! Payment released to creator.");
+      
+      // Email creator about confirmed delivery
+      sendCreatorEmail("creator_delivery_confirmed", creatorProfileId, {
+        brand_name: creatorName ? `Brand` : "Brand",
+        amount_cents: totalPrice,
+      });
+      
       onReviewComplete();
       onOpenChange(false);
     } catch (error) {
@@ -139,6 +147,13 @@ const DeliveryReviewDialog = ({
       if (error) throw error;
 
       toast.success("Revision request sent to creator");
+      
+      // Email creator about revision request
+      sendCreatorEmail("creator_revision_requested", creatorProfileId, {
+        brand_name: "Brand",
+        revision_notes: revisionNotes,
+      });
+      
       setRevisionNotes("");
       setShowRevisionForm(false);
       onReviewComplete();
