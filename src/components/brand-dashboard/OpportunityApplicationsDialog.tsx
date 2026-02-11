@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Check, X, MessageSquare, DollarSign, Link as LinkIcon, ExternalLink, Clock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 interface Application {
   id: string;
@@ -32,6 +32,7 @@ interface Application {
 
 interface OpportunityApplicationsDialogProps {
   opportunityId: string;
+  brandProfileId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
@@ -39,12 +40,14 @@ interface OpportunityApplicationsDialogProps {
 
 const OpportunityApplicationsDialog = ({
   opportunityId,
+  brandProfileId,
   open,
   onOpenChange,
   onUpdate,
 }: OpportunityApplicationsDialogProps) => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (open) {
@@ -81,7 +84,37 @@ const OpportunityApplicationsDialog = ({
     setLoading(false);
   };
 
+  const findOrCreateConversation = async (creatorProfileId: string): Promise<string | null> => {
+    // Check for existing conversation
+    const { data: existing } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("brand_profile_id", brandProfileId)
+      .eq("creator_profile_id", creatorProfileId)
+      .maybeSingle();
+
+    if (existing) return existing.id;
+
+    // Create new conversation — exempt from messaging counter
+    const { data: newConv, error } = await supabase
+      .from("conversations")
+      .insert({
+        brand_profile_id: brandProfileId,
+        creator_profile_id: creatorProfileId,
+      })
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error("Error creating conversation:", error);
+      return null;
+    }
+    return newConv.id;
+  };
+
   const updateApplicationStatus = async (applicationId: string, newStatus: string) => {
+    const application = applications.find(a => a.id === applicationId);
+
     const { error } = await supabase
       .from("opportunity_applications")
       .update({ status: newStatus })
@@ -93,13 +126,45 @@ const OpportunityApplicationsDialog = ({
         description: "Failed to update application status",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Auto-create conversation when accepting (exempt from messaging limit)
+    if (newStatus === "accepted" && application?.creator_profile_id) {
+      const convId = await findOrCreateConversation(application.creator_profile_id);
+      if (convId) {
+        toast({
+          title: "Accepted!",
+          description: "Application accepted and conversation created. You can now message this creator.",
+        });
+      } else {
+        toast({
+          title: "Accepted",
+          description: "Application accepted, but conversation could not be created.",
+        });
+      }
     } else {
       toast({
         title: "Updated",
         description: `Application ${newStatus}`,
       });
-      fetchApplications();
-      onUpdate();
+    }
+
+    fetchApplications();
+    onUpdate();
+  };
+
+  const handleMessageCreator = async (creatorProfileId: string) => {
+    const convId = await findOrCreateConversation(creatorProfileId);
+    if (convId) {
+      onOpenChange(false);
+      navigate("/brand?tab=messages");
+    } else {
+      toast({
+        title: "Error",
+        description: "Could not open conversation",
+        variant: "destructive",
+      });
     }
   };
 
@@ -285,6 +350,18 @@ const OpportunityApplicationsDialog = ({
                       >
                         <Check className="h-3 w-3" />
                         Confirm Delivery
+                      </Button>
+                    )}
+
+                    {application.status === 'accepted' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleMessageCreator(application.creator_profile_id)}
+                        className="gap-1 w-full sm:w-auto"
+                      >
+                        <MessageSquare className="h-3 w-3" />
+                        Message
                       </Button>
                     )}
 
