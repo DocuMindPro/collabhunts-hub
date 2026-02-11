@@ -130,6 +130,15 @@ const SocialAccountsSection = ({ creatorProfileId }: SocialAccountsSectionProps)
         if (error) throw error;
       }
 
+      // Reset stats confirmation timer on any social account update
+      await supabase
+        .from("creator_profiles")
+        .update({
+          stats_last_confirmed_at: new Date().toISOString(),
+          stats_update_required: false,
+        })
+        .eq("id", creatorProfileId);
+
       toast({
         title: "Success",
         description: `Social account ${editingAccount ? "updated" : "added"} successfully`,
