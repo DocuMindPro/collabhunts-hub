@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'app.lovable.f0d3858ae7f2489288d232504acaef78',
-  appName: 'CollabHunts Creators',
+  appName: 'Collab Hunts',
   webDir: 'dist',
   plugins: {
     PushNotifications: {

@@ -55,7 +55,7 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
       <div className={`flex items-center gap-2 ${className}`}>
         <img
           src={displayLogoUrl}
-          alt="CollabHunts"
+          alt="Collab Hunts"
           style={{ height: logoHeight, width: "auto", maxWidth: showText ? 180 : logoHeight }}
           className="flex-shrink-0 object-contain"
         />
@@ -63,23 +63,11 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
     );
   }
 
-  // On native or after loading check: show text fallback immediately
-  // This ensures the UI never appears blank
-  if (isLoaded || isNative) {
-    return (
-      <div className={`flex items-center gap-2 ${className}`}>
-        <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text} whitespace-nowrap`}>
-          CollabHunts
-        </span>
-      </div>
-    );
-  }
-
-  // Show text fallback while loading on web (prevents flash)
+  // Text fallback
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text} whitespace-nowrap`}>
-        CollabHunts
+        Collab Hunts
       </span>
     </div>
   );
