@@ -4,7 +4,6 @@ import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
 
 const RefundPolicy = () => {
-  // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
@@ -19,183 +18,149 @@ const RefundPolicy = () => {
             Refund & Cancellation Policy
           </h1>
           <p className="text-muted-foreground mb-8">
-            Last updated: February 3, 2026 | Version 2.0
+            Last updated: February 11, 2026 | Version 4.0
           </p>
 
           <div className="prose prose-lg dark:prose-invert max-w-none space-y-10">
             
-            {/* Overview */}
+            {/* Section 1 - Overview */}
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">1. Overview</h2>
               <p className="text-muted-foreground mb-4">
-                This Refund & Cancellation Policy outlines the terms and conditions for refunds, cancellations, and chargebacks 
-                on CollabHunts ("the Platform"). By using our services, you agree to this policy. This policy applies to all 
-                event bookings made through the Platform.
+                CollabHunts ("the Platform") is a discovery and communication platform that connects Brands and Venues with social media 
+                Creators for live events and collaborations. <strong>CollabHunts does not process, hold, or manage any payments between 
+                Brands and Creators.</strong> All financial transactions — including deposits, payments, and refunds — are conducted 
+                directly between the parties outside of our Platform.
               </p>
               <p className="text-muted-foreground mb-4">
-                <strong>Payment Model:</strong> CollabHunts uses a secure escrow system. Brands pay a 50% deposit at booking confirmation, 
-                with the remaining 50% due before the event. Funds are held securely until event completion and approval.
+                This Refund & Cancellation Policy outlines the terms regarding platform subscription refunds, cancellation expectations, 
+                and the limitations of CollabHunts' involvement in disputes between parties.
               </p>
             </section>
 
-            {/* Booking Cancellations */}
+            {/* Section 2 - Creator Response Disclaimer */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">2. Booking Cancellations</h2>
-              
-              <h3 className="text-xl font-heading font-semibold mb-3">2.1 Cancellation by Brand</h3>
-              <p className="text-muted-foreground mb-4">
-                Brands may cancel bookings under the following conditions:
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Before Creator Confirmation:</strong> Full refund of any payments made</li>
-                <li><strong>7+ Days Before Event:</strong> Full refund of deposit (minus processing fees)</li>
-                <li><strong>3-7 Days Before Event:</strong> 50% refund of deposit</li>
-                <li><strong>Less than 3 Days Before Event:</strong> No refund (deposit retained by Creator)</li>
-              </ul>
-
-              <h3 className="text-xl font-heading font-semibold mb-3">2.2 Cancellation by Creator</h3>
-              <p className="text-muted-foreground mb-4">
-                If a Creator cancels a confirmed booking:
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Brand receives a <strong>full refund</strong> of all payments made</li>
-                <li>Creator may receive a warning or account suspension depending on circumstances</li>
-                <li>Repeated cancellations may result in account termination</li>
-              </ul>
-
-              <h3 className="text-xl font-heading font-semibold mb-3">2.3 Creator No-Show</h3>
-              <p className="text-muted-foreground mb-4">
-                If a Creator fails to appear at a confirmed event:
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Brand receives a <strong>full refund</strong> of all payments</li>
-                <li>Creator's account may be suspended or terminated</li>
-                <li>Brand may be eligible for additional compensation at CollabHunts' discretion</li>
-              </ul>
+              <h2 className="text-2xl font-heading font-bold mb-4">2. Creator Response & Availability Disclaimer</h2>
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-5 mb-4">
+                <p className="font-semibold text-destructive mb-3">⚠️ IMPORTANT: NO GUARANTEE OF CREATOR RESPONSE OR AVAILABILITY</p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  CollabHunts is a discovery platform that connects Brands with Creators. We do <strong>not</strong> employ, manage, or control Creators. 
+                  Creators are independent users who may or may not respond to inquiries at their sole discretion.
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  While CollabHunts may attempt to facilitate communication between parties, <strong>we cannot compel any Creator to respond</strong>, 
+                  and we bear <strong>no responsibility</strong> if a Creator fails to reply to a Brand's message, booking inquiry, or any other communication.
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  If CollabHunts reaches out to a Creator on a Brand's behalf and the Creator does not respond to us, this is <strong>not the fault or 
+                  responsibility of CollabHunts</strong>. We have no authority over Creators and cannot guarantee their participation, availability, or responsiveness.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <strong>By using the Platform, you acknowledge and accept that Creator response and availability are entirely outside of CollabHunts' control, 
+                  and you agree not to hold CollabHunts liable for any Creator's failure to respond or perform.</strong>
+                </p>
+              </div>
             </section>
 
-            {/* Event Issues & Disputes */}
+            {/* Section 3 - Direct Payment Terms */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">3. Event Issues & Disputes</h2>
-              
-              <h3 className="text-xl font-heading font-semibold mb-3">3.1 Opening a Dispute</h3>
+              <h2 className="text-2xl font-heading font-bold mb-4">3. Direct Payment Terms</h2>
               <p className="text-muted-foreground mb-4">
-                If there are issues with an event, either party can open a dispute within <strong>72 hours</strong> of the scheduled event time:
+                All financial arrangements — including deposits, full payments, refunds, and cancellation fees — are negotiated and 
+                handled <strong>directly between Brands and Creators</strong>. CollabHunts has no involvement in, control over, or 
+                responsibility for these transactions.
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Go to your Dashboard → Bookings → Select the booking → Open Dispute</li>
-                <li>Provide a detailed description of the issue</li>
-                <li>The other party has 72 hours to respond</li>
-                <li>If unresolved, the dispute escalates to CollabHunts mediation</li>
+                <li>CollabHunts does not collect, process, or hold any funds on behalf of either party</li>
+                <li>CollabHunts does not take any commission or percentage from transactions between parties</li>
+                <li>Payment disputes between Brands and Creators are the sole responsibility of the involved parties</li>
+                <li>We strongly recommend that both parties agree on payment terms, cancellation policies, and refund conditions <strong>before</strong> confirming any collaboration</li>
               </ul>
-
-              <h3 className="text-xl font-heading font-semibold mb-3">3.2 Dispute Outcomes</h3>
-              <p className="text-muted-foreground mb-4">
-                Based on our review, disputes may result in:
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Full refund to Brand:</strong> If Creator failed to deliver as agreed</li>
-                <li><strong>Partial refund:</strong> If service was partially delivered or issues were shared</li>
-                <li><strong>Full payment to Creator:</strong> If Brand's complaint is unfounded</li>
-                <li><strong>Split resolution:</strong> Negotiated settlement between parties</li>
-              </ul>
-
-              <h3 className="text-xl font-heading font-semibold mb-3">3.3 Auto-Approval</h3>
-              <p className="text-muted-foreground mb-4">
-                If a Brand does not approve or dispute an event within <strong>72 hours</strong> of completion, 
-                the booking is automatically approved and funds are released to the Creator.
-              </p>
             </section>
 
-            {/* How to Request a Refund */}
+            {/* Section 4 - Platform Subscription Refunds */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">4. How to Request a Refund</h2>
-              
-              <h3 className="text-xl font-heading font-semibold mb-3">4.1 Through the Platform</h3>
+              <h2 className="text-2xl font-heading font-bold mb-4">4. Platform Subscription Refunds</h2>
               <p className="text-muted-foreground mb-4">
-                To cancel a booking and request a refund:
-              </p>
-              <ol className="list-decimal pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Go to your Dashboard → Bookings</li>
-                <li>Select the booking you want to cancel</li>
-                <li>Click "Cancel Booking" and select your reason</li>
-                <li>Refund eligibility is calculated automatically based on timing</li>
-              </ol>
-
-              <h3 className="text-xl font-heading font-semibold mb-3">4.2 Contact Support</h3>
-              <p className="text-muted-foreground mb-4">
-                For complex situations or issues not covered by the standard cancellation flow:
-              </p>
-              <ol className="list-decimal pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Email <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a> with subject line "Refund Request"</li>
-                <li>Include booking details and description of the issue</li>
-                <li>We will respond within 2 business days</li>
-              </ol>
-            </section>
-
-            {/* Refund Processing */}
-            <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">5. Refund Processing</h2>
-              <p className="text-muted-foreground mb-4">
-                Once a refund is approved:
+                CollabHunts offers paid Brand subscription plans (Basic and Pro) that provide enhanced platform features. 
+                The following refund policy applies <strong>only</strong> to platform subscription fees paid to CollabHunts:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Refunds are issued to the original payment method</li>
-                <li>Processing time: 5-10 business days depending on your payment provider</li>
-                <li>You will receive an email confirmation when the refund is initiated</li>
-              </ul>
-              <p className="text-muted-foreground mb-4">
-                <strong>Currency:</strong> Refunds are issued in the same currency as the original payment. 
-                Exchange rate fluctuations may result in slight differences in the refunded amount.
-              </p>
-            </section>
-
-            {/* Chargebacks */}
-            <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">6. Chargebacks</h2>
-              <p className="text-muted-foreground mb-4">
-                We strongly encourage you to contact us before initiating a chargeback with your bank or credit card company. 
-                Chargebacks can be costly and time-consuming for all parties.
-              </p>
-              <p className="text-muted-foreground mb-4">
-                <strong>If you initiate a chargeback:</strong>
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Your account may be suspended pending investigation</li>
-                <li>We will provide transaction records to the payment processor</li>
-                <li>Fraudulent chargebacks may result in permanent account termination</li>
-                <li>You may be held responsible for chargeback fees if the dispute is resolved in our favor</li>
+                <li><strong>Annual Subscriptions:</strong> Subscription fees are billed annually. You may cancel at any time, but refunds are not provided for the remaining portion of the billing period</li>
+                <li><strong>Cancellation:</strong> Upon cancellation, you will retain access to paid features until the end of your current billing period</li>
+                <li><strong>Refund Requests:</strong> Refund requests for subscription fees may be submitted to <a href="mailto:care@collabhunts.com" className="text-primary hover:underline">care@collabhunts.com</a> within 14 days of purchase. Refunds are granted at CollabHunts' sole discretion</li>
+                <li><strong>Processing:</strong> Approved refunds are processed within 5-10 business days to the original payment method</li>
               </ul>
             </section>
 
-            {/* Creator Payouts */}
+            {/* Section 5 - Cancellation Between Parties */}
             <section>
-              <h2 className="text-2xl font-heading font-bold mb-4">7. Creator Payouts</h2>
+              <h2 className="text-2xl font-heading font-bold mb-4">5. Cancellation Between Parties</h2>
               <p className="text-muted-foreground mb-4">
-                Creator payments are processed as follows:
+                Brands and Creators should agree on cancellation terms <strong>before</strong> confirming any collaboration. 
+                We strongly recommend using our AI-assisted agreement tool to document:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Funds are released after event completion and Brand approval (or 72-hour auto-approval)</li>
-                <li>A <strong>15% platform fee</strong> is deducted from the total booking amount</li>
-                <li>Remaining funds are transferred to the Creator's registered payout method</li>
-                <li>Payout processing time: 3-5 business days</li>
+                <li>Cancellation deadlines and notice periods</li>
+                <li>Refund or penalty terms if either party cancels</li>
+                <li>Force majeure provisions</li>
+                <li>No-show policies</li>
+              </ul>
+              <p className="text-muted-foreground mb-4">
+                <strong>CollabHunts is not responsible for cancellation disputes between Brands and Creators.</strong> Any cancellation 
+                terms are strictly between the involved parties.
+              </p>
+            </section>
+
+            {/* Section 6 - Dispute Assistance */}
+            <section>
+              <h2 className="text-2xl font-heading font-bold mb-4">6. Dispute Assistance</h2>
+              <p className="text-muted-foreground mb-4">
+                While CollabHunts may, at its sole discretion, offer voluntary mediation assistance for disputes between 
+                Brands and Creators:
+              </p>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
+                <li>CollabHunts is <strong>not obligated</strong> to mediate, resolve, or intervene in any dispute between parties</li>
+                <li>Any mediation offered is provided as a <strong>courtesy only</strong> and is non-binding</li>
+                <li>CollabHunts' mediation efforts do not constitute legal advice or representation</li>
+                <li>Both parties retain the right to pursue their own legal remedies independently</li>
               </ul>
             </section>
 
-            {/* Force Majeure */}
+            {/* Section 7 - Limitation of Liability */}
+            <section>
+              <h2 className="text-2xl font-heading font-bold mb-4">7. Limitation of Liability</h2>
+              <p className="text-muted-foreground mb-4">
+                TO THE MAXIMUM EXTENT PERMITTED BY LAW, COLLABHUNTS SHALL NOT BE LIABLE FOR:
+              </p>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
+                <li>Creator non-response, unavailability, or failure to perform</li>
+                <li>Payment disputes between Brands and Creators</li>
+                <li>Event cancellations, no-shows, or scheduling conflicts</li>
+                <li>Quality, safety, or legality of any Creator's services</li>
+                <li>Any losses, damages, or expenses arising from direct transactions between parties</li>
+                <li>Any failure of a Creator to honor terms agreed upon with a Brand</li>
+                <li>Accuracy of Creator profile information, metrics, or portfolio content</li>
+              </ul>
+              <p className="text-muted-foreground mb-4">
+                <strong>OUR TOTAL LIABILITY SHALL NOT EXCEED THE PLATFORM SUBSCRIPTION FEES YOU HAVE PAID TO COLLABHUNTS IN THE 12 MONTHS PRECEDING THE CLAIM.</strong>
+              </p>
+            </section>
+
+            {/* Section 8 - Force Majeure */}
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">8. Force Majeure</h2>
               <p className="text-muted-foreground mb-4">
-                In cases of events beyond reasonable control (natural disasters, government restrictions, etc.):
+                In cases of events beyond reasonable control (natural disasters, government restrictions, pandemics, etc.):
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li>Both parties may reschedule without penalty</li>
-                <li>If rescheduling is not possible, full refunds are provided</li>
-                <li>Contact support immediately with documentation of the circumstances</li>
+                <li>Both parties should attempt to reschedule in good faith</li>
+                <li>Cancellation and refund terms should follow whatever agreement was made between the parties</li>
+                <li>CollabHunts is not responsible for any losses resulting from force majeure events affecting collaborations between parties</li>
               </ul>
             </section>
 
-            {/* Modifications */}
+            {/* Section 9 - Policy Changes */}
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">9. Policy Changes</h2>
               <p className="text-muted-foreground mb-4">
@@ -203,15 +168,15 @@ const RefundPolicy = () => {
                 with an updated "Last updated" date. Significant changes will be communicated via email to registered users.
               </p>
               <p className="text-muted-foreground mb-4">
-                The policy in effect at the time of your booking will apply to that transaction.
+                The policy in effect at the time of your subscription purchase or platform use will apply to that transaction.
               </p>
             </section>
 
-            {/* Contact */}
+            {/* Section 10 - Contact */}
             <section>
               <h2 className="text-2xl font-heading font-bold mb-4">10. Contact Us</h2>
               <p className="text-muted-foreground mb-4">
-                If you have questions about this Refund & Cancellation Policy or need assistance with a refund, please contact us:
+                If you have questions about this Refund & Cancellation Policy or need assistance, please contact us:
               </p>
               <div className="bg-muted/50 rounded-lg p-4 border border-border">
                 <p className="text-muted-foreground mb-2">
