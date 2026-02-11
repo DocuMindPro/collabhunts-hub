@@ -54,6 +54,13 @@ const PACKAGE_NAMES: Record<string, string> = {
   custom: "Custom Experience"
 };
 
+const PACKAGE_HINTS: Record<string, string> = {
+  unbox_review: "Product shipped to you — review from home",
+  social_boost: "Visit the brand's venue & create content",
+  meet_greet: "Appear at the brand's location, meet fans",
+  custom: "Flexible collab — you negotiate the details",
+};
+
 const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSuccess }: ServiceEditDialogProps) => {
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
@@ -206,9 +213,14 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
                   <SelectValue placeholder="Select a package" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableTypes.map(type => (
-                    <SelectItem key={type} value={type}>
-                      {PACKAGE_NAMES[type] || type.replace(/_/g, ' ')}
+                {availableTypes.map(type => (
+                    <SelectItem key={type} value={type} className="h-auto py-2">
+                      <div className="flex flex-col">
+                        <span>{PACKAGE_NAMES[type] || type.replace(/_/g, ' ')}</span>
+                        {PACKAGE_HINTS[type] && (
+                          <span className="text-xs text-muted-foreground">{PACKAGE_HINTS[type]}</span>
+                        )}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
