@@ -210,6 +210,20 @@ const TermsOfService = () => {
                   message, booking inquiry, or any other communication. By using the Platform, you acknowledge and accept this limitation.
                 </p>
               </div>
+
+              <h3 className="text-xl font-heading font-semibold mt-6 mb-3">9.1 Open to Free Invites</h3>
+              <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                <p className="text-sm text-muted-foreground mb-3">
+                  Creators may opt in to display an <strong>"Open to Free Invites"</strong> status on their profile. This signals a willingness to 
+                  <strong> consider</strong> complimentary or barter-based invitations from Brands — it does <strong>not</strong> constitute a binding 
+                  obligation to accept any invitation or to produce any specific content.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Opting in means you are open to being contacted for free invite opportunities. You retain <strong>full discretion</strong> to accept 
+                  or decline any invitation, and to decide the format, style, timing, and scope of any content you choose to share. No Brand may compel 
+                  you to deliver specific content as part of a free invite arrangement.
+                </p>
+              </div>
             </section>
 
             {/* Section 10 - Brand Terms */}
@@ -226,6 +240,39 @@ const TermsOfService = () => {
                 <li>Maintain professional communication with Creators at all times</li>
                 <li>Acknowledge that Creator response and availability are not guaranteed by CollabHunts</li>
               </ul>
+
+              <h3 className="text-xl font-heading font-semibold mt-6 mb-3">10.1 Free Invite Collaborations Policy</h3>
+              <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                <p className="text-sm font-semibold mb-3">⚠️ OUR POSITION ON "OPEN TO FREE INVITES"</p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  A <strong>"Free Invite"</strong> refers to a complimentary invitation extended by a Brand to a Creator where no monetary payment is exchanged. 
+                  This may include, but is not limited to, complimentary dining, event access, experiences, or product gifting. The "Open to Free Invites" signal 
+                  on a Creator's profile indicates their willingness to consider such invitations — it is <strong>not</strong> a guarantee of acceptance or a 
+                  commitment to deliver any specific content.
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  <strong>No Forced Deliverables:</strong> Since no payment is involved, Brands <strong>cannot demand, require, or force</strong> any specific 
+                  content type, quantity, format, or posting timeline from a Creator. A Brand may <strong>request or suggest</strong> specific deliverables, but 
+                  the Creator has the absolute right to decline any such request. Pressuring, coercing, or threatening a Creator to produce specific content in 
+                  exchange for a free invite is a violation of these Terms.
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  <strong>Creator Autonomy:</strong> The content format, style, timing, and platform of posting are <strong>entirely at the Creator's discretion</strong>. 
+                  Whether the Creator chooses to share a post, a story, a reel, a photo, a tag, a mention, or any other form of content — and how they present 
+                  it — is their decision alone. At minimum, a Creator accepting a free invite is expected to visit, experience, and share in their own way and at 
+                  their own discretion.
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  <strong>Mutual Agreement:</strong> If a Brand has specific content expectations for a free invite collaboration, these must be 
+                  <strong> discussed and mutually agreed upon beforehand</strong>. We strongly recommend using paid collaborations for any arrangement 
+                  where guaranteed deliverables are required.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <strong>Platform Disclaimer:</strong> CollabHunts facilitates the connection between Brands and Creators only. We are <strong>not a party</strong> to 
+                  any free invite arrangement, do not endorse or guarantee any outcome, and bear <strong>no responsibility or liability</strong> for disputes, 
+                  disagreements, or dissatisfaction arising from free invite collaborations. Any disputes are solely between the Brand and Creator involved.
+                </p>
+              </div>
             </section>
 
             {/* Section 11 - Content & IP */}
