@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import PageTransition from "./components/PageTransition";
 import CookieConsent from "./components/CookieConsent";
@@ -17,6 +17,7 @@ import PageLoader from "./components/PageLoader";
 // Eager load pages used by native app
 import CreatorDashboard from "./pages/CreatorDashboard";
 import CreatorProfile from "./pages/CreatorProfile";
+import MobileBottomNav from "./components/mobile/MobileBottomNav";
 
 // Protected route components (small, used immediately)
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -69,20 +70,46 @@ const SiteSettingsProvider = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Native navigation wrapper that handles tab→route mapping
+const NativeBottomNavWrapper = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  const activeTab = location.pathname === "/creator-dashboard"
+    ? (searchParams.get("tab") || "overview")
+    : location.pathname === "/opportunities"
+      ? "opportunities"
+      : "overview";
+
+  const handleTabChange = (tab: string) => {
+    if (tab === "opportunities") {
+      navigate("/opportunities");
+    } else {
+      navigate(`/creator-dashboard?tab=${tab}`);
+    }
+  };
+
+  return <MobileBottomNav activeTab={activeTab} onTabChange={handleTabChange} />;
+};
+
 // Native App Routes - Focused creator experience with auth gate (no lazy loading needed)
 const NativeAppRoutes = () => (
   <NativeAppGate>
-    <Routes>
-      <Route path="/" element={<Navigate to="/creator-dashboard" replace />} />
-      <Route path="/creator-dashboard" element={<CreatorDashboard />} />
-      <Route path="/creator/:id" element={<CreatorProfile />} />
-      <Route path="/opportunities" element={
-        <Suspense fallback={<PageLoader />}>
-          <Opportunities />
-        </Suspense>
-      } />
-      <Route path="*" element={<Navigate to="/creator-dashboard" replace />} />
-    </Routes>
+    <div className="min-h-screen bg-background pb-20">
+      <Routes>
+        <Route path="/" element={<Navigate to="/creator-dashboard" replace />} />
+        <Route path="/creator-dashboard" element={<CreatorDashboard />} />
+        <Route path="/creator/:id" element={<CreatorProfile />} />
+        <Route path="/opportunities" element={
+          <Suspense fallback={<PageLoader />}>
+            <Opportunities />
+          </Suspense>
+        } />
+        <Route path="*" element={<Navigate to="/creator-dashboard" replace />} />
+      </Routes>
+      <NativeBottomNavWrapper />
+    </div>
   </NativeAppGate>
 );
 
