@@ -75,7 +75,7 @@ const CreatorDashboard = () => {
         <div className="container mx-auto px-4 max-w-7xl">
           <div className={`${isNative ? 'mb-2' : 'mb-4 md:mb-8'}`}>
             <h1 className={`font-heading font-bold ${isNative ? 'text-xl' : 'text-2xl md:text-4xl'} mb-1 md:mb-2`}>
-              {isNative ? 'Dashboard' : 'Creator Dashboard'}
+              {isNative ? 'Dashboard' : 'My Dashboard'}
             </h1>
             {!isNative && (
               <p className="text-sm md:text-base text-muted-foreground">
