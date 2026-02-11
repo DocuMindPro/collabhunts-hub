@@ -11,13 +11,16 @@ import useSiteSettings from "./hooks/useSiteSettings";
 import PushNotificationProvider from "./components/PushNotificationProvider";
 import NativeErrorBoundary from "./components/NativeErrorBoundary";
 import NativeAppGate from "./components/NativeAppGate";
+import type { NativeRole } from "./components/NativeAppGate";
 
 import PageLoader from "./components/PageLoader";
 
 // Eager load pages used by native app
 import CreatorDashboard from "./pages/CreatorDashboard";
 import CreatorProfile from "./pages/CreatorProfile";
+import NativeBrandDashboard from "./pages/NativeBrandDashboard";
 import MobileBottomNav from "./components/mobile/MobileBottomNav";
+import BrandBottomNav from "./components/mobile/BrandBottomNav";
 
 // Protected route components (small, used immediately)
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -70,8 +73,8 @@ const SiteSettingsProvider = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Native navigation wrapper that handles tab→route mapping
-const NativeBottomNavWrapper = () => {
+// Native navigation wrapper for CREATOR mode
+const CreatorBottomNavWrapper = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -95,23 +98,54 @@ const NativeBottomNavWrapper = () => {
   return <MobileBottomNav activeTab={activeTab} onTabChange={handleTabChange} />;
 };
 
-// Native App Routes - Focused creator experience with auth gate (no lazy loading needed)
+// Native navigation wrapper for BRAND mode
+const BrandBottomNavWrapper = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "messages";
+
+  const handleTabChange = (tab: string) => {
+    navigate(`/brand-dashboard?tab=${tab}`);
+  };
+
+  return <BrandBottomNav activeTab={activeTab} onTabChange={handleTabChange} />;
+};
+
+// Native App Routes - Dual-role experience with auth gate
 const NativeAppRoutes = () => (
   <NativeAppGate>
-    <div className="min-h-screen bg-background pb-20">
-      <Routes>
-        <Route path="/" element={<Navigate to="/creator-dashboard" replace />} />
-        <Route path="/creator-dashboard" element={<CreatorDashboard />} />
-        <Route path="/creator/:id" element={<CreatorProfile />} />
-        <Route path="/opportunities" element={
-          <Suspense fallback={<PageLoader />}>
-            <Opportunities />
-          </Suspense>
-        } />
-        <Route path="*" element={<Navigate to="/creator-dashboard" replace />} />
-      </Routes>
-      <NativeBottomNavWrapper />
-    </div>
+    {(role, brandProfile) => (
+      <div className="min-h-screen bg-background pb-20">
+        {role === 'creator' ? (
+          <>
+            <Routes>
+              <Route path="/" element={<Navigate to="/creator-dashboard" replace />} />
+              <Route path="/creator-dashboard" element={<CreatorDashboard />} />
+              <Route path="/creator/:id" element={<CreatorProfile />} />
+              <Route path="/opportunities" element={
+                <Suspense fallback={<PageLoader />}>
+                  <Opportunities />
+                </Suspense>
+              } />
+              <Route path="*" element={<Navigate to="/creator-dashboard" replace />} />
+            </Routes>
+            <CreatorBottomNavWrapper />
+          </>
+        ) : (
+          <>
+            <Routes>
+              <Route path="/" element={<Navigate to="/brand-dashboard" replace />} />
+              <Route path="/brand-dashboard" element={
+                <NativeBrandDashboard brandName={brandProfile?.company_name} />
+              } />
+              <Route path="/creator/:id" element={<CreatorProfile />} />
+              <Route path="*" element={<Navigate to="/brand-dashboard" replace />} />
+            </Routes>
+            <BrandBottomNavWrapper />
+          </>
+        )}
+      </div>
+    )}
   </NativeAppGate>
 );
 
