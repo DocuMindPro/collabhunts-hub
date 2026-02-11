@@ -23,6 +23,7 @@ interface QuickActionStats {
   pendingPayouts: number;
   staleItems: number;
   boostRequests: number;
+  statsInactive: number;
 }
 
 interface Props {
@@ -37,6 +38,7 @@ export default function AdminQuickActions({ onNavigate }: Props) {
     pendingPayouts: 0,
     staleItems: 0,
     boostRequests: 0,
+    statsInactive: 0,
   });
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
@@ -55,6 +57,7 @@ export default function AdminQuickActions({ onNavigate }: Props) {
         { count: affiliatePayouts },
         { count: staleCreators },
         { count: boostRequests },
+        { count: statsInactive },
       ] = await Promise.all([
         supabase.from("creator_profiles").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("booking_disputes").select("*", { count: "exact", head: true }).in("status", ["open", "awaiting_response"]),
@@ -63,6 +66,7 @@ export default function AdminQuickActions({ onNavigate }: Props) {
         supabase.from("affiliate_payout_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("creator_profiles").select("*", { count: "exact", head: true }).eq("status", "pending").lt("created_at", twentyFourHoursAgo),
         supabase.from("boost_interest_requests").select("*", { count: "exact", head: true }).eq("seen_by_admin", false),
+        supabase.from("creator_profiles").select("*", { count: "exact", head: true }).eq("stats_update_required", true),
       ]);
 
       setStats({
@@ -72,6 +76,7 @@ export default function AdminQuickActions({ onNavigate }: Props) {
         pendingPayouts: (franchisePayouts || 0) + (affiliatePayouts || 0),
         staleItems: staleCreators || 0,
         boostRequests: boostRequests || 0,
+        statsInactive: statsInactive || 0,
       });
       setLastRefresh(new Date());
     } catch (error) {
@@ -93,7 +98,8 @@ export default function AdminQuickActions({ onNavigate }: Props) {
     stats.openDisputes + 
     stats.verificationRequests + 
     stats.pendingPayouts +
-    stats.boostRequests;
+    stats.boostRequests +
+    stats.statsInactive;
 
   const actions = [
     {
@@ -135,6 +141,14 @@ export default function AdminQuickActions({ onNavigate }: Props) {
       tab: "features",
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
+    },
+    {
+      label: "Stats Inactive",
+      count: stats.statsInactive,
+      icon: AlertCircle,
+      tab: "approvals",
+      color: "text-orange-500",
+      bgColor: "bg-orange-500/10",
     },
   ];
 
@@ -207,7 +221,7 @@ export default function AdminQuickActions({ onNavigate }: Props) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
           {actions.map((action) => (
             <button
               key={action.tab}
