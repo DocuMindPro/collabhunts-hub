@@ -1,105 +1,99 @@
 
 
-## Expand Content Deliverables and Multi-Platform Story Upsells
+## "My Profile" Tab: Live Preview with Edit Drawer
 
-### The Approach
+### Concept
 
-After analyzing how your platform is structured, here is what makes the most sense:
+The "Profile" tab becomes "My Profile" and works like Instagram or LinkedIn: **creators see their profile exactly as brands see it**. When they want to make changes, they tap an "Edit" button that slides open a drawer with the current editor.
 
-**Standard Packages (Unbox & Review, Social Boost, Meet & Greet):**
-These have locked deliverables -- that's by design and should stay that way. But the "Stories Upsell" section should expand beyond just Instagram to let creators set per-platform story prices for Instagram, TikTok, and Facebook Stories. This gives brands clear add-on options without disrupting the fixed package structure.
+This way, the default experience is always "this is what people see" -- no extra buttons, no mode toggles. Creators naturally notice what needs improving because they're looking at the real thing.
 
-**Custom Experience:**
-This is where the Collabstr-style deliverables builder belongs. When a creator selects Custom Experience, they get a content builder to add individual line items like:
-- 1 Instagram Reel (30s) -- $500
-- 2 TikTok Videos (60s) -- $900  
-- 3 Instagram Stories -- $150
+### How It Works
 
-This lets creators showcase exactly what they offer, and brands can see a clear menu of options.
+1. **Creator opens "My Profile" tab** -- they see their full public profile: cover images, avatar, bio, badges, social links, packages, reviews. Exactly what a brand sees on `/creator-profile/:id`.
 
-### What Changes
+2. **They spot something to fix** -- they tap the floating "Edit Profile" pencil button (bottom-right on mobile, top-right on desktop).
 
-#### 1. New Database Table: `creator_service_deliverables`
+3. **A side drawer slides open** -- the current accordion editor (media, details, privacy, socials, etc.) appears in a Sheet panel. They make changes, save, close the drawer, and the preview refreshes automatically.
 
-Stores individual content line items linked to a creator's service/package:
+### Architecture
 
-| Column | Type | Purpose |
-|--------|------|---------|
-| id | UUID | Primary key |
-| creator_service_id | UUID | Links to the parent package |
-| platform | TEXT | instagram, tiktok, facebook, youtube |
-| content_type | TEXT | reel, story, video, short, post, ugc_ad |
-| quantity | INTEGER | Number of pieces (e.g., 2 videos) |
-| duration_seconds | INTEGER | Video duration (optional) |
-| price_cents | INTEGER | Price for this deliverable |
-| description | TEXT | Optional custom note |
-| sort_order | INTEGER | Display ordering |
-| created_at | TIMESTAMPTZ | Timestamp |
+Rather than duplicating the entire CreatorProfile page, we extract the profile display logic into a reusable component.
 
-RLS policies will allow creators to manage their own deliverables and anyone to read active ones.
+**New file: `src/components/creator-dashboard/ProfilePreview.tsx`**
+- Accepts a `creatorProfileId` prop
+- Fetches the same data as CreatorProfile (profile, socials, services, reviews, portfolio)
+- Renders the same layout (cover images, info section, packages, reviews) but without the Navbar/Footer wrapper and without the "Message Creator" / "Book" action buttons
+- Shows an "Edit Profile" floating button instead
 
-#### 2. Standard Packages -- Multi-Platform Story Add-ons
+**Modified file: `src/components/creator-dashboard/ProfileTab.tsx`**
+- Wraps the current editor content inside a Sheet component
+- The default view renders `<ProfilePreview />` 
+- The "Edit" button opens the Sheet with the existing accordion editor inside
+- When the Sheet closes after saving, the preview re-fetches to show updated data
 
-Replace the single "Instagram Stories Upsell" input with a clean section showing three toggleable story options:
+**Modified file: `src/pages/CreatorDashboard.tsx`**
+- Rename "Profile" tab label to "My Profile"
+
+### Visual Layout
 
 ```text
-+------------------------------------------+
-|  Story Add-ons (optional)                |
-|                                           |
-|  [x] Instagram Stories    $ [20]          |
-|  [ ] TikTok Stories       $ [--]          |
-|  [ ] Facebook Stories     $ [--]          |
-|                                           |
-|  Brands can add stories to their booking  |
-+------------------------------------------+
++--------------------------------------------------+
+|  My Dashboard                                     |
+|  Overview | My Profile | My Packages | ...        |
++--------------------------------------------------+
+|                                                    |
+|  [Cover Image 1] [Cover Image 2] [Cover Image 3]  |
+|                                                    |
+|  (Avatar)  Creator Name          [Vetted] [VIP]    |
+|            Beirut, Lebanon                         |
+|            Fashion | Beauty | Lifestyle            |
+|            "Your bio text here..."                 |
+|            @instagram 50K  @tiktok 120K            |
+|                                                    |
+|  --- Packages ---                                  |
+|  [Unbox & Review - $300]  [Social Boost - $500]    |
+|                                                    |
+|  --- Reviews ---                                   |
+|  Brand X: "Great creator!" *****                   |
+|                                                    |
+|                              [pencil icon]  <-- floating edit button
++--------------------------------------------------+
 ```
 
-Each platform can be toggled on/off with its own price. This replaces the single `story_upsell_price_cents` column -- the new deliverables table stores each one as a separate row with `content_type = 'story'`.
-
-#### 3. Custom Experience -- Content Deliverables Builder
-
-When "Custom Experience" is selected, show a deliverables builder below the description:
+Pressing the pencil opens:
 
 ```text
-+------------------------------------------+
-|  Your Content Menu                        |
-|                                           |
-|  Platform: [Instagram v]                  |
-|  Type:     [Reel v]                       |
-|  Qty:      [1]    Duration: [30s v]       |
-|  Price:    $ [500]                        |
-|  [+ Add Deliverable]                      |
-|                                           |
-|  --- Added ---                            |
-|  1x Instagram Reel (30s)       $500   [x] |
-|  2x TikTok Video (60s)        $900   [x] |
-|  3x Instagram Story            $150   [x] |
-+------------------------------------------+
+                        +----------------------------+
+                        |  Edit Profile         [X]  |
+                        +----------------------------+
+                        |  > Your Media              |
+                        |  > Profile Details         |
+                        |  > Privacy & Visibility    |
+                        |  > Social Accounts         |
+                        |  > VIP Badge               |
+                        |  > Team Access             |
+                        |                            |
+                        |  [Save Changes]            |
+                        +----------------------------+
 ```
-
-Available platforms: Instagram, TikTok, Facebook, YouTube
-Available content types per platform:
-- Instagram: Reel, Story, Post, Carousel
-- TikTok: Video, Story
-- Facebook: Story, Post, Reel
-- YouTube: Video, Short
-
-#### 4. Display on Creator Profile
-
-On the public creator profile page, the Custom Experience card will show the deliverables menu so brands can see exactly what the creator offers and at what price, similar to the Collabstr screenshots.
-
-#### 5. Update ServicesTab Display
-
-The services list in the creator dashboard will show story add-on indicators for standard packages and a deliverables summary for Custom Experience packages.
 
 ### Technical Details
 
-**Files to create:**
-- Database migration for `creator_service_deliverables` table with RLS
+**`src/components/creator-dashboard/ProfilePreview.tsx`** (new)
+- Reuses the same data-fetching pattern from CreatorProfile.tsx (profile, socials, services with deliverables, reviews, portfolio)
+- Renders cover images grid, avatar + info section, badge row, social icons, package cards, and reviews
+- Strips out brand-specific actions (Message, Book, Save) since the creator is viewing their own profile
+- Accepts an `onEdit` callback prop to trigger the edit drawer
+- Accepts a `refreshKey` prop to re-fetch when edits are saved
 
-**Files to modify:**
-- `src/components/creator-dashboard/ServiceEditDialog.tsx` -- Add multi-platform story toggles for standard packages + deliverables builder for Custom Experience
-- `src/components/creator-dashboard/ServicesTab.tsx` -- Show deliverables/add-ons in the service cards
-- `src/pages/CreatorProfile.tsx` -- Display deliverables on the public profile for Custom Experience packages
-- `src/config/packages.ts` -- Add platform/content type constants for the deliverables builder
+**`src/components/creator-dashboard/ProfileTab.tsx`** (modified)
+- Import Sheet from ui/sheet
+- Wrap the existing accordion editor inside `<SheetContent>` 
+- Default render: `<ProfilePreview />` with a floating edit button
+- On save: close Sheet, increment refreshKey to trigger preview re-fetch
+- The sticky "Save Changes" footer moves inside the Sheet
+
+**`src/pages/CreatorDashboard.tsx`** (modified)
+- Change tab label from "Profile" to "My Profile"
 
