@@ -1,73 +1,55 @@
 
 
-## Strengthen Terms of Service with Anti-Fraud, Scam & Verification Disclaimers
+## Strengthen Refund Policy -- No Refunds for Used Services
 
-### What's Missing
+### What Needs to Change
 
-The current Terms have good foundations but lack explicit protections for:
-- **Scams and fraud between users** -- no clause saying CollabHunts is not liable if one party scams the other
-- **Fake followers / purchased engagement** -- Section 9 bans it but doesn't disclaim CollabHunts' liability for failing to catch it
-- **Vetting limitations** -- no disclaimer that our vetting process is best-effort and not a guarantee of authenticity
-- **Accuracy of Creator stats** -- no explicit disclaimer that we don't verify or guarantee follower counts, engagement rates, or any metrics
-- **User-to-user conflicts** -- needs stronger "at your own risk" language for all interactions
+Section 4 currently only covers Brand subscriptions and is too lenient. It needs to:
+1. Cover **both** Brand subscriptions AND Creator featuring/visibility boost purchases
+2. Establish a clear **"no refund if used"** rule for all paid services
+3. Keep the 14-day window but make it conditional on **non-usage**
+4. Define what constitutes "usage" so there's no ambiguity
 
-### Changes to `src/pages/TermsOfService.tsx`
+### Changes to `src/pages/RefundPolicy.tsx` -- Section 4
 
-#### 1. Expand Section 5 (User Accounts & Verification) -- Add Vetting Disclaimer
+**Rewrite Section 4** to become a comprehensive "Platform Service Refunds" section covering all paid services:
 
-After the existing account termination paragraph, add a new subsection:
+**4. Platform Service Refunds (Subscriptions & Creator Featuring)**
 
-**"5.1 Vetting & Verification Limitations"**
-- CollabHunts may conduct voluntary vetting of Creator profiles as a courtesy. This vetting is performed on a best-effort basis and does NOT constitute a guarantee, endorsement, or certification of any Creator's identity, credentials, social media metrics, follower authenticity, engagement rates, or professional conduct.
-- CollabHunts does not and cannot verify the authenticity of followers, engagement, or audience demographics. Creators may have purchased followers, inflated metrics, or misrepresented their reach. CollabHunts bears no responsibility for inaccurate or misleading Creator profiles.
-- A "Vetted" badge or any other status indicator on the Platform is NOT a warranty of reliability, honesty, or quality. It indicates only that the Creator has passed our basic review process at the time of vetting.
-- Brands are solely responsible for conducting their own due diligence before entering into any arrangement with a Creator.
+New subsections:
 
-#### 2. Add New Section (after Section 12) -- "Fraud, Scams & User Conduct Disclaimer"
+**4.1 General No-Refund Rule**
+- All fees paid to CollabHunts for platform services -- including Brand subscription plans (Basic, Pro) and Creator visibility boosts (Featured Badge, Homepage Spotlight, Category Boost, Auto Popup) -- are for digital services rendered upon activation.
+- Once a paid service has been used, activated, or its benefits have been accessed in any capacity, **no refund will be issued**.
+- "Usage" includes but is not limited to: logging into a paid account, sending messages using paid quota, posting opportunities, activating a visibility boost, appearing in boosted search results, or accessing any feature exclusive to the paid tier.
 
-New **Section 13: Fraud, Scams & User Conduct Disclaimer** (existing sections 13-18 shift to 14-19):
+**4.2 14-Day Review Period**
+- Refund requests may be submitted within 14 calendar days of purchase to care@collabhunts.com.
+- During this 14-day period, CollabHunts will investigate whether the paid service has been used or activated.
+- If the investigation confirms **no usage** of the paid service occurred, a refund may be granted at CollabHunts' sole discretion.
+- If any usage is detected during the investigation, the refund request will be denied.
+- After 14 days from purchase, no refund requests will be considered under any circumstances.
 
-- CollabHunts is a technology platform only. We do NOT police, monitor, or guarantee the conduct, honesty, or intentions of any user.
-- CollabHunts is NOT responsible for any scam, fraud, misrepresentation, theft, or deception committed by any user against another user, including but not limited to:
-  - Creators who accept payment and fail to perform
-  - Creators who misrepresent their identity, metrics, reach, or capabilities
-  - Brands who fail to pay Creators as agreed
-  - Brands who misrepresent event details, conditions, or compensation
-  - Any party who provides false or misleading information
-- All interactions, negotiations, and transactions between users are conducted at the users' own risk.
-- CollabHunts has no obligation to investigate, mediate, or resolve any allegations of fraud or misconduct between users.
-- Users are encouraged to verify identities, check references, and use our AI-assisted agreement tools before committing to any collaboration.
-- BY USING THE PLATFORM, YOU ACKNOWLEDGE THAT COLLABHUNTS CANNOT PREVENT ALL FRAUDULENT ACTIVITY AND YOU AGREE NOT TO HOLD COLLABHUNTS LIABLE FOR ANY LOSSES RESULTING FROM THE ACTIONS OF OTHER USERS.
+**4.3 Brand Subscription Refunds**
+- Brand subscription fees (Basic and Pro plans) are billed annually.
+- You may cancel at any time, but no refund is provided for the remaining billing period.
+- Upon cancellation, you retain access to paid features until the end of your current billing period.
+- If you have used any paid features (messaging quota, opportunity posts, team access, etc.), no refund will be issued regardless of when the request is made within the 14-day window.
 
-#### 3. Expand Section 14 (Limitation of Liability, currently Section 13)
+**4.4 Creator Featuring & Visibility Boost Refunds**
+- Creator visibility boost purchases (Featured Badge, Homepage Spotlight, Category Boost, Auto Popup) are non-refundable once activated.
+- Activation occurs immediately upon purchase confirmation. Once your boost is live and your profile has received any boosted visibility, the service is considered fully rendered.
+- No partial refunds are available for unused portions of a visibility boost period.
 
-Add these items to the existing bullet list:
-- Fraud, scams, or deception committed by any user
-- Inaccuracy of Creator profile information, follower counts, or engagement metrics
-- Purchased or fake followers on any Creator's social media accounts
-- Any losses arising from reliance on information provided by other users on the Platform
-- Physical harm, property damage, or personal injury at events
+**4.5 Refund Processing**
+- All refund decisions are made at CollabHunts' sole and absolute discretion.
+- Approved refunds are processed within 5-10 business days to the original payment method.
+- CollabHunts reserves the right to deny any refund request without providing a reason.
+- Disputing a legitimate charge with your payment provider after using our services may result in immediate account termination.
 
-Add new paragraph:
-- COLLABHUNTS' VETTING PROCESS IS NOT A GUARANTEE OF AUTHENTICITY. EVEN VETTED CREATORS MAY ENGAGE IN FRAUDULENT BEHAVIOR. COLLABHUNTS SHALL NOT BE LIABLE FOR ANY DAMAGES ARISING FROM A VETTED CREATOR'S MISCONDUCT.
+**4.6 No Double Recovery**
+- If you initiate a chargeback or payment dispute with your bank or payment provider for a service you have used, CollabHunts reserves the right to immediately suspend or terminate your account, pursue recovery of the disputed amount, and ban you from future use of the Platform.
 
-#### 4. Expand Section 16 (Indemnification, currently Section 16)
+### Summary
 
-Add to the indemnification list:
-- Any fraud, scam, or misrepresentation you commit against another user
-- Any claims by third parties arising from your conduct on or off the Platform
-- Any inaccuracy in information you provide on the Platform, including social media metrics
-
-#### Summary of Section Numbering After Changes
-
-| # | Section |
-|---|---------|
-| 1-12 | Unchanged |
-| 13 | **NEW: Fraud, Scams & User Conduct Disclaimer** |
-| 14 | Limitation of Liability (expanded, was 13) |
-| 15 | No Warranty / As-Is Disclaimer (expanded, was 14) |
-| 16 | No Agency Relationship (was 15) |
-| 17 | Indemnification (expanded, was 16) |
-| 18 | Changes to Terms (was 17) |
-| 19 | Contact Us (was 18) |
-
+The key legal principle being enforced: **if you paid for it and used it, there is no refund.** The 14-day window exists solely for CollabHunts to verify whether the service was actually used. This protects against users who subscribe, use all the features, then request a refund.
