@@ -1,27 +1,22 @@
 
 
-## Fix: Consolidate Two Menus Into One Sticky Bottom Navigation
+## Fix: Update All Logo Assets to Match New Branding
 
 ### Problem
-On the native app, there are two separate navigation menus:
-- A **bottom bar** with 5 tabs (Overview, Bookings, Opps, Messages, Profile)
-- A **top bar** with 3 tabs (Packages, Calendar, Boost)
-
-This is confusing and wastes screen space.
-
-### Solution
-Merge all 8 navigation items into a **single sticky bottom navigation bar**. The top tab strip will be completely removed on native. The bottom nav will include all tabs with a horizontally scrollable layout so everything fits.
+The `public/app-icon.png` was replaced, but:
+1. The loading screen may show the cached old icon (browser/PWA cache)
+2. `public/pwa-192x192.png` and `public/pwa-512x512.png` were never updated -- they still use the old logo
+3. These PWA icons are referenced in `manifest.json` and `index.html` (apple-touch-icon)
 
 ### What Will Change
 
-| File | Change |
+| File | Action |
 |------|--------|
-| `src/components/mobile/MobileBottomNav.tsx` | Add the 3 missing tabs (Packages, Calendar, Boost) to the bottom nav tabs list, making it 8 total. Make the bar horizontally scrollable to fit all items. |
-| `src/pages/CreatorDashboard.tsx` | Remove the top `TabsList` entirely when on native (`isNative`), since all navigation now lives in the bottom bar. |
-| `src/App.tsx` | Update the `NativeBottomNavWrapper` to recognize the new tab IDs (`services`, `calendar`, `boost`) and route them to the creator dashboard. |
+| `public/pwa-192x192.png` | Replace with the new Collab Hunts logo (resized to 192x192) |
+| `public/pwa-512x512.png` | Replace with the new Collab Hunts logo (resized to 512x512) |
 
-### Navigation After Fix
-One single sticky bottom bar with all tabs:
-**Overview | Bookings | Packages | Calendar | Opps | Messages | Boost | Profile**
+Both files will be copied from the new `app-icon.png` that was already uploaded. The loading screen (`index.html` line 84) already points to `/app-icon.png` which is correct -- the old icon showing is a cache issue that will resolve once the PWA icons are also updated and the app is refreshed.
 
-The bar stays fixed at the bottom of the screen at all times, no matter how far you scroll.
+### After This Change
+- All three icon files (`app-icon.png`, `pwa-192x192.png`, `pwa-512x512.png`) will use the new orange Collab Hunts logo
+- Hard-refresh or clear cache to see the updated loading screen
