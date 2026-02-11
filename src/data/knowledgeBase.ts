@@ -1376,7 +1376,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
           
           <h3>Opportunity Pricing</h3>
           <ul>
-            <li><strong>Standard Listing:</strong> $15 per opportunity</li>
+            <li><strong>Standard Listing:</strong> $40 per opportunity</li>
             <li><strong>Featured Upgrade:</strong> +$25 for prominent placement</li>
           </ul>
           
@@ -1647,7 +1647,7 @@ export const knowledgeBaseCategories: KBCategory[] = [
             <li><strong>Brand Subscriptions:</strong> Access features like messaging, CRM, and filters</li>
             <li><strong>Creator Boost:</strong> Paid visibility for creators ($29-79/week)</li>
             <li><strong>Verified Badges:</strong> $99/year for verified business status</li>
-            <li><strong>Opportunity Listings:</strong> $15 base + $25 for featured</li>
+            <li><strong>Opportunity Listings:</strong> $40 base + $25 for featured</li>
           </ul>
           
           <h3>Your Responsibilities</h3>
