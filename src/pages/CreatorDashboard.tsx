@@ -12,7 +12,7 @@ import OpportunitiesTab from "@/components/creator-dashboard/OpportunitiesTab";
 import FeaturingTab from "@/components/creator-dashboard/FeaturingTab";
 import StatsUpdateBanner from "@/components/creator-dashboard/StatsUpdateBanner";
 import { CalendarTab } from "@/components/calendar/CalendarTab";
-import MobileBottomNav from "@/components/mobile/MobileBottomNav";
+
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart3, User, Package, Calendar, CalendarDays, MessageSquare, Briefcase, Rocket } from "lucide-react";
 
@@ -168,9 +168,6 @@ const CreatorDashboard = () => {
         </div>
       </main>
 
-      {isNative && (
-        <MobileBottomNav activeTab={activeTab} onTabChange={handleTabChange} />
-      )}
     </div>
   );
 };
