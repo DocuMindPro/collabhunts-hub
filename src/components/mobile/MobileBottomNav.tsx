@@ -1,4 +1,4 @@
-import { BarChart3, Calendar, MessageSquare, User, Megaphone } from "lucide-react";
+import { BarChart3, Calendar, MessageSquare, User, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,8 +17,8 @@ interface TabConfig {
 
 const tabs: TabConfig[] = [
   { id: "overview", icon: BarChart3, label: "Overview" },
-  { id: "campaigns", icon: Megaphone, label: "Campaigns" },
   { id: "bookings", icon: Calendar, label: "Bookings" },
+  { id: "opportunities", icon: Briefcase, label: "Opps" },
   { id: "messages", icon: MessageSquare, label: "Messages" },
   { id: "profile", icon: User, label: "Profile" },
 ];
