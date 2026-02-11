@@ -1,65 +1,73 @@
 
-## Update All Legal Pages for Full Protection + Creator Response Disclaimer
 
-### Problems Found
+## Strengthen Terms of Service with Anti-Fraud, Scam & Verification Disclaimers
 
-**Contradictions with direct-payment model (must be fixed across all 3 pages):**
-- Terms of Service Section 6: Still references "50% deposit", "balance payment", "funds released" (escrow language)
-- Terms of Service Section 2: Mentions "Payment Processing: Secure escrow-based payment handling"
-- Terms of Service Section 12: Says "Circumvent platform payments" (no platform payments exist)
-- Privacy Policy Section 3.1: References "Process bookings and payments through our escrow system"
-- Privacy Policy Section 6: References "Escrow Protection" and "PCI-DSS compliant payment processing"
-- Refund Policy: The ENTIRE page is built around an escrow/managed-payment model (deposits, refund timelines, chargebacks, 15% platform fee, auto-approval, fund releases) -- none of this applies
+### What's Missing
 
-**Missing legal protections:**
-- No "Creator Response Not Guaranteed" disclaimer anywhere
-- No "Platform as Facilitator Only" / "No Agency Relationship" clause
-- No "As-Is / No Warranty" disclaimer in Terms of Service
+The current Terms have good foundations but lack explicit protections for:
+- **Scams and fraud between users** -- no clause saying CollabHunts is not liable if one party scams the other
+- **Fake followers / purchased engagement** -- Section 9 bans it but doesn't disclaim CollabHunts' liability for failing to catch it
+- **Vetting limitations** -- no disclaimer that our vetting process is best-effort and not a guarantee of authenticity
+- **Accuracy of Creator stats** -- no explicit disclaimer that we don't verify or guarantee follower counts, engagement rates, or any metrics
+- **User-to-user conflicts** -- needs stronger "at your own risk" language for all interactions
 
-### Changes by File
+### Changes to `src/pages/TermsOfService.tsx`
 
-#### 1. `src/pages/TermsOfService.tsx`
+#### 1. Expand Section 5 (User Accounts & Verification) -- Add Vetting Disclaimer
 
-| Section | Change |
-|---------|--------|
-| Section 2 (Service Description) | Remove "Payment Processing: Secure escrow-based payment handling". Replace with "Agreement Tools: AI-assisted agreement drafting for record-keeping" |
-| Section 6 (Booking Process) | Rewrite to remove deposit/escrow steps. New flow: Discovery -> Inquiry -> Negotiation -> Agreement -> Direct Payment between parties -> Event |
-| Section 9 (Creator Terms) | Add clear disclaimer: Creators are independent users. CollabHunts does not guarantee that any Creator will respond to messages, accept bookings, or be available. Response times vary and are outside our control. |
-| Section 12 (Prohibited Activities) | Remove "Circumvent platform payments or arrange off-platform transactions" since all payments ARE off-platform |
-| NEW Section (after 13) | Add "No Warranty / As-Is Disclaimer": THE PLATFORM IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. WE DO NOT GUARANTEE CREATOR AVAILABILITY, RESPONSE TIMES, OR QUALITY OF SERVICE. |
-| NEW Section (after 13) | Add "No Agency Relationship": CollabHunts is not an agent, employer, or representative of any Creator or Brand. We are a facilitator only. |
-| Version | Update to Version 4.0, date to February 11, 2026 |
+After the existing account termination paragraph, add a new subsection:
 
-#### 2. `src/pages/PrivacyPolicy.tsx`
+**"5.1 Vetting & Verification Limitations"**
+- CollabHunts may conduct voluntary vetting of Creator profiles as a courtesy. This vetting is performed on a best-effort basis and does NOT constitute a guarantee, endorsement, or certification of any Creator's identity, credentials, social media metrics, follower authenticity, engagement rates, or professional conduct.
+- CollabHunts does not and cannot verify the authenticity of followers, engagement, or audience demographics. Creators may have purchased followers, inflated metrics, or misrepresented their reach. CollabHunts bears no responsibility for inaccurate or misleading Creator profiles.
+- A "Vetted" badge or any other status indicator on the Platform is NOT a warranty of reliability, honesty, or quality. It indicates only that the Creator has passed our basic review process at the time of vetting.
+- Brands are solely responsible for conducting their own due diligence before entering into any arrangement with a Creator.
 
-| Section | Change |
-|---------|--------|
-| Section 3.1 | Change "Process bookings and payments through our escrow system" to "Facilitate connections and communication between parties" |
-| Section 6 (Data Security) | Remove "PCI-DSS compliant payment processing" and "Escrow Protection: Secure fund holding until service delivery" |
-| Version | Update to Version 4.0, date to February 11, 2026 |
+#### 2. Add New Section (after Section 12) -- "Fraud, Scams & User Conduct Disclaimer"
 
-#### 3. `src/pages/RefundPolicy.tsx`
+New **Section 13: Fraud, Scams & User Conduct Disclaimer** (existing sections 13-18 shift to 14-19):
 
-**Complete rewrite required.** The entire page assumes escrow/managed payments. It will be rewritten to reflect the direct-payment model:
+- CollabHunts is a technology platform only. We do NOT police, monitor, or guarantee the conduct, honesty, or intentions of any user.
+- CollabHunts is NOT responsible for any scam, fraud, misrepresentation, theft, or deception committed by any user against another user, including but not limited to:
+  - Creators who accept payment and fail to perform
+  - Creators who misrepresent their identity, metrics, reach, or capabilities
+  - Brands who fail to pay Creators as agreed
+  - Brands who misrepresent event details, conditions, or compensation
+  - Any party who provides false or misleading information
+- All interactions, negotiations, and transactions between users are conducted at the users' own risk.
+- CollabHunts has no obligation to investigate, mediate, or resolve any allegations of fraud or misconduct between users.
+- Users are encouraged to verify identities, check references, and use our AI-assisted agreement tools before committing to any collaboration.
+- BY USING THE PLATFORM, YOU ACKNOWLEDGE THAT COLLABHUNTS CANNOT PREVENT ALL FRAUDULENT ACTIVITY AND YOU AGREE NOT TO HOLD COLLABHUNTS LIABLE FOR ANY LOSSES RESULTING FROM THE ACTIONS OF OTHER USERS.
 
-New structure:
-1. **Overview** -- CollabHunts is a discovery and communication platform. All payments are handled directly between Brands and Creators. We do not process, hold, or manage any funds.
-2. **Creator Response Disclaimer** (PROMINENT) -- CollabHunts does not guarantee that Creators will respond to inquiries, accept bookings, or be available. We may attempt to assist, but if a Creator does not respond to us or the Brand, this is not the responsibility of CollabHunts. Brands should not expect guaranteed responses from any Creator.
-3. **Direct Payment Terms** -- All financial arrangements including deposits, payments, and refunds are negotiated and handled directly between Brands and Creators. CollabHunts has no involvement in these transactions.
-4. **Platform Subscription Refunds** -- For paid Brand subscriptions (Basic/Pro plans), refund policy for those platform fees only.
-5. **Cancellation Between Parties** -- Brands and Creators should agree on cancellation terms before confirming any collaboration. We recommend using our AI-assisted agreement tool. CollabHunts is not responsible for cancellation disputes.
-6. **Dispute Assistance** -- While we may offer voluntary mediation assistance, CollabHunts is not obligated to resolve disputes between parties. Any mediation is provided as a courtesy and is non-binding.
-7. **Limitation of Liability** -- CollabHunts is not liable for: Creator non-response, payment disputes, event cancellations, quality of service, or any losses arising from direct transactions between parties.
-8. **Force Majeure** -- Keep existing
-9. **Policy Changes** -- Keep existing
-10. **Contact** -- Keep existing
+#### 3. Expand Section 14 (Limitation of Liability, currently Section 13)
 
-### Key Disclaimers Added (appear in both Terms and Refund Policy)
+Add these items to the existing bullet list:
+- Fraud, scams, or deception committed by any user
+- Inaccuracy of Creator profile information, follower counts, or engagement metrics
+- Purchased or fake followers on any Creator's social media accounts
+- Any losses arising from reliance on information provided by other users on the Platform
+- Physical harm, property damage, or personal injury at events
 
-The "Creator may not respond" language will appear in THREE places for maximum legal coverage:
-1. Terms of Service Section 9 (Creator Terms)
-2. Terms of Service new "No Warranty" section
-3. Refund Policy Section 2 (prominent, highlighted box)
+Add new paragraph:
+- COLLABHUNTS' VETTING PROCESS IS NOT A GUARANTEE OF AUTHENTICITY. EVEN VETTED CREATORS MAY ENGAGE IN FRAUDULENT BEHAVIOR. COLLABHUNTS SHALL NOT BE LIABLE FOR ANY DAMAGES ARISING FROM A VETTED CREATOR'S MISCONDUCT.
 
-Sample language for the highlighted disclaimer:
-> **IMPORTANT: NO GUARANTEE OF CREATOR RESPONSE OR AVAILABILITY.** CollabHunts is a discovery platform that connects Brands with Creators. We do not employ, manage, or control Creators. Creators are independent users who may or may not respond to inquiries at their sole discretion. While CollabHunts may attempt to facilitate communication, we cannot compel any Creator to respond, and we bear no responsibility if a Creator fails to reply to a Brand's message or booking inquiry. By using the Platform, you acknowledge and accept this limitation.
+#### 4. Expand Section 16 (Indemnification, currently Section 16)
+
+Add to the indemnification list:
+- Any fraud, scam, or misrepresentation you commit against another user
+- Any claims by third parties arising from your conduct on or off the Platform
+- Any inaccuracy in information you provide on the Platform, including social media metrics
+
+#### Summary of Section Numbering After Changes
+
+| # | Section |
+|---|---------|
+| 1-12 | Unchanged |
+| 13 | **NEW: Fraud, Scams & User Conduct Disclaimer** |
+| 14 | Limitation of Liability (expanded, was 13) |
+| 15 | No Warranty / As-Is Disclaimer (expanded, was 14) |
+| 16 | No Agency Relationship (was 15) |
+| 17 | Indemnification (expanded, was 16) |
+| 18 | Changes to Terms (was 17) |
+| 19 | Contact Us (was 18) |
+
