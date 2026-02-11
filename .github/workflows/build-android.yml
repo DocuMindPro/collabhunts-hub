@@ -65,6 +65,21 @@ jobs:
         run: |
           sed -i 's/gradle-.*-bin\.zip/gradle-8.10-bin.zip/g' android/gradle/wrapper/gradle-wrapper.properties
 
+      - name: Setup icon assets
+        run: |
+          mkdir -p assets
+          cp public/app-icon.png assets/icon-only.png
+          cp public/app-icon.png assets/icon-foreground.png
+          cp public/app-icon.png assets/icon-background.png
+          cp public/app-icon.png assets/splash.png
+          cp public/app-icon.png assets/splash-dark.png
+
+      - name: Install capacitor-assets
+        run: npm install @capacitor/assets --save-dev --legacy-peer-deps
+
+      - name: Generate native assets
+        run: npx capacitor-assets generate --android
+
       - name: Sync Capacitor
         run: npx cap sync android
 
