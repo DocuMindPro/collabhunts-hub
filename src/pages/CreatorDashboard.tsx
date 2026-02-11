@@ -96,22 +96,7 @@ const CreatorDashboard = () => {
           )}
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 md:space-y-6">
-            {isNative ? (
-              <TabsList className="flex w-full h-auto overflow-x-auto gap-0.5 p-1">
-                <TabsTrigger value="services" className="flex flex-col items-center justify-center gap-0.5 shrink-0 min-w-[52px] px-1.5 py-1.5">
-                  <Package className="h-3.5 w-3.5" />
-                  <span className="text-[9px] leading-tight truncate">Packages</span>
-                </TabsTrigger>
-                <TabsTrigger value="calendar" className="flex flex-col items-center justify-center gap-0.5 shrink-0 min-w-[52px] px-1.5 py-1.5">
-                  <CalendarDays className="h-3.5 w-3.5" />
-                  <span className="text-[9px] leading-tight truncate">Calendar</span>
-                </TabsTrigger>
-                <TabsTrigger value="boost" className="flex flex-col items-center justify-center gap-0.5 shrink-0 min-w-[52px] px-1.5 py-1.5">
-                  <Rocket className="h-3.5 w-3.5" />
-                  <span className="text-[9px] leading-tight truncate">Boost</span>
-                </TabsTrigger>
-              </TabsList>
-            ) : (
+            {isNative ? null : (
             <TabsList className="flex w-full h-auto overflow-x-auto gap-0.5 p-1 sm:h-10 lg:w-auto lg:inline-flex">
                 <TabsTrigger value="overview" className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 shrink-0 min-w-[52px] px-1.5 py-1.5 sm:min-w-0 sm:px-3">
                   <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
