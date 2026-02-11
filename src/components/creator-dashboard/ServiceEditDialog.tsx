@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Save, Gift, Sparkles, Users, Wand2 } from "lucide-react";
+import AiBioSuggestions from "@/components/AiBioSuggestions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EVENT_PACKAGES, type PackageType } from "@/config/packages";
@@ -116,6 +117,11 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
       return;
     }
 
+    if (!description.trim()) {
+      toast.error("Please add a description for your package");
+      return;
+    }
+
     // Validate price (except for Custom which is negotiated)
     const priceValue = parseFloat(price);
     if (!isCustom && (!priceValue || priceValue < 10)) {
@@ -135,7 +141,7 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
         min_price_cents: priceCents,
         max_price_cents: priceCents,
         price_tier_id: null, // No longer using tiers
-        description: description || null,
+        description: description,
         delivery_days: parseInt(deliveryDays) || 7,
         is_active: isActive,
         story_upsell_price_cents: storyUpsellCents
@@ -281,13 +287,20 @@ const ServiceEditDialog = ({ service, creatorProfileId, isOpen, onClose, onSucce
           {/* Description */}
           {serviceType && (
             <div className="space-y-2">
-              <Label htmlFor="description">Description (optional)</Label>
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
                 placeholder="Add any special details about your offering..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
+              />
+              <AiBioSuggestions
+                text={description}
+                onSelect={setDescription}
+                type="description"
+                label="package description"
+                minLength={10}
               />
             </div>
           )}
