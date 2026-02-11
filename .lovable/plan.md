@@ -1,27 +1,38 @@
 
 
-## Raise Free Plan Opportunity Post Price from $15 to $40
+## Add "Open to Free Invites" Policy Section
 
-Update the opportunity posting fee for the Free plan from $15 to $40 across all references in the codebase.
+### What We're Adding
+
+A new subsection under Section 10 (Brand & Venue Terms) in the Terms of Service that clarifies CollabHunts' position on free invite collaborations. The language will make clear that:
+
+- "Open to Free Invites" is a voluntary signal -- creators opt in to show availability for complimentary/barter collaborations
+- Brands may request specific content but **cannot demand or force** any particular deliverables since no payment is involved
+- At minimum, a creator is expected to visit, experience, and share at their own discretion (a post, story, tag, photo -- whatever form they choose)
+- The content format, style, and timing are entirely at the creator's discretion
+- Any specific content requirements should be discussed and mutually agreed upon beforehand
+- CollabHunts is not a party to these arrangements and bears no responsibility for the outcome
+- Disputes arising from free invite collaborations are between the brand and creator
+
+We'll also add a brief matching note under Section 9 (Creator Terms) so creators understand their side.
 
 ### Files to Change
 
-1. **`src/components/brand-dashboard/CreateOpportunityDialog.tsx`**
-   - Change `OPPORTUNITY_POSTING_FEE` from `1500` to `4000` (cents)
-   - Update the button label from `"Continue to Payment ($15)"` to `"Continue to Payment ($40)"`
+**`src/pages/TermsOfService.tsx`**
 
-2. **`src/lib/stripe-mock.ts`**
-   - Update Free plan feature text from `"Pay $15 per opportunity post"` to `"Pay $40 per opportunity post"`
+1. **Section 9 (Creator Terms)** -- Add a subsection "9.1 Open to Free Invites" with a brief note that opting in signals willingness to consider complimentary invitations, not an obligation to accept or produce specific content.
 
-3. **`src/components/brand/BrandPricingSection.tsx`**
-   - Update Free plan feature text from `"$15 per opportunity post"` to `"$40 per opportunity post"`
+2. **Section 10 (Brand & Venue Terms)** -- Add a subsection "10.1 Free Invite Collaborations Policy" with the full policy language covering:
+   - Definition: complimentary invitations where no monetary payment is exchanged
+   - Creator autonomy: creators choose what, how, and when to post
+   - No forced deliverables: brands cannot mandate specific content types, quantities, or timelines
+   - Minimum expectation: visiting and sharing in their own way
+   - Mutual agreement: any specific requirements must be discussed and agreed upon
+   - Platform disclaimer: CollabHunts facilitates the connection only and is not liable for disputes
 
-4. **`src/components/brand-dashboard/UpgradePlanDialog.tsx`**
-   - Update Free plan feature text from `"$15 per opportunity post"` to `"$40 per opportunity post"`
+Both subsections will use the amber highlight box style (consistent with existing warnings in the Terms page) to draw attention.
 
-5. **`src/data/knowledgeBase.ts`**
-   - Update two references from `$15` to `$40` in the knowledge base articles
+### Why This Matters
 
-6. **`src/data/platformManual.ts`**
-   - Update two references from `$15` to `$40` in the platform manual pricing tables
+This protects the platform legally while setting the right tone -- free invites are a goodwill gesture, not a contract for specific deliverables. It also educates brands that if they want guaranteed content, they should use a paid collaboration instead.
 
