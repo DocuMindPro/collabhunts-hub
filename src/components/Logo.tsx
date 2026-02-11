@@ -8,10 +8,12 @@ interface LogoProps {
   size?: "sm" | "md" | "lg";
 }
 
+const LOCAL_ICON = "/app-icon.png";
+
 const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [iconUrl, setIconUrl] = useState<string | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const isNative = isNativePlatform();
 
   const sizes = {
@@ -41,34 +43,33 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
         if (primary?.value) setLogoUrl(primary.value);
         if (iconLogo?.value) setIconUrl(iconLogo.value);
       }
-      setIsLoaded(true);
     };
 
     fetchLogos();
   }, []);
 
   const displayLogoUrl = showText ? logoUrl : (iconUrl || logoUrl);
+  const src = displayLogoUrl || LOCAL_ICON;
 
-  // Show database logo once loaded
-  if (displayLogoUrl) {
+  if (imgError && !displayLogoUrl) {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
-        <img
-          src={displayLogoUrl}
-          alt="Collab Hunts"
-          style={{ height: logoHeight, width: "auto", maxWidth: showText ? 180 : logoHeight }}
-          className="flex-shrink-0 object-contain"
-        />
+        <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text} whitespace-nowrap`}>
+          Collab Hunts
+        </span>
       </div>
     );
   }
 
-  // Text fallback
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text} whitespace-nowrap`}>
-        Collab Hunts
-      </span>
+      <img
+        src={src}
+        alt="Collab Hunts"
+        style={{ height: logoHeight, width: "auto", maxWidth: showText ? 180 : logoHeight }}
+        className="flex-shrink-0 object-contain"
+        onError={() => setImgError(true)}
+      />
     </div>
   );
 };
