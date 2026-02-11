@@ -58,7 +58,7 @@ const Download = () => {
       
       <main className="flex-1 container mx-auto px-4 py-12">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl font-bold mb-4 text-center">Get CollabHunts on Your Phone</h1>
+          <h1 className="text-4xl font-bold mb-4 text-center">Get Collab Hunts on Your Phone</h1>
           <p className="text-muted-foreground text-lg mb-8 text-center">
             Download the Android app or install directly from your browser
           </p>
