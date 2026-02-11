@@ -1,43 +1,53 @@
 
 
-## Replace Generic "New Opportunities" with Personalized "Matching Opportunities"
+## Redesign Creator Profile Tab with Collapsible Menu Sections
 
-### Problem
-1. The "This Week" summary card shows "X new opportunities" which is redundant
-2. The "New Opportunities" section shows generic latest opportunities, not ones matched to the creator's stats
+### Current State
+The Profile tab displays 6 separate cards stacked vertically (Your Media, Profile Details, Privacy & Visibility, Social Accounts, VIP Badge, Team Access), requiring significant scrolling to reach all settings.
 
-### Solution
-Replace both with a smarter, personalized approach:
+### New Layout
+Replace the flat card layout with a single-page collapsible accordion menu. Each section becomes a clickable row that expands to reveal its settings. This dramatically reduces vertical space and lets creators jump to the exact setting they need.
 
-1. **Remove the "This Week" card entirely** (lines 263-300 in OverviewTab.tsx) -- the stat cards already cover key metrics
-2. **Rename "New Opportunities" to "Opportunities For You"** and change the logic to show opportunities that match the creator's profile based on:
-   - **Follower range match**: Compare creator's max follower count (from `creator_social_accounts`) against the opportunity's `follower_ranges` and `min_followers`
-   - **Category match**: Compare creator's `categories` against `required_categories`
-   - **Location match**: Compare creator's `location_city` against opportunity's `location_city`
-3. **Remove the "Recommended For You" card** since it becomes redundant -- the main section now IS the recommendation
-4. Remove the "X this week" badge from the header
-
-### Matching Algorithm (Scoring)
-Each open opportunity is scored against the creator:
-- **+3 points**: Creator's follower count falls within one of the opportunity's `follower_ranges`
-- **+2 points**: Creator shares at least one category with `required_categories`
-- **+1 point**: Creator's city matches opportunity's `location_city`
-- Show opportunities with score > 0, sorted by score descending, limit 5
-- If no matches found, fall back to showing latest 3 open opportunities with a note "Browse all to find your match"
+```text
++------------------------------------------+
+| Your Media                          [v]  |
+|------------------------------------------|
+| Profile Details                     [v]  |
+|   > Name & Bio                           |
+|   > Phone Number                         |
+|   > Location                             |
+|   > Categories                           |
+|   > Demographics & Languages             |
+|------------------------------------------|
+| Privacy & Visibility                [v]  |
+|------------------------------------------|
+| Social Accounts                     [v]  |
+|------------------------------------------|
+| VIP Badge                           [v]  |
+|------------------------------------------|
+| Team Access                         [v]  |
++------------------------------------------+
+|                          [Save Changes]  |
++------------------------------------------+
+```
 
 ### What Will Change
 
 | File | Change |
 |------|--------|
-| `src/components/creator-dashboard/OverviewTab.tsx` | Fetch creator's max follower count from `creator_social_accounts`. Remove "This Week" card. Merge "New Opportunities" and "Recommended For You" into a single "Opportunities For You" card with the scoring algorithm. Remove the weekly count badge. |
+| `src/components/creator-dashboard/ProfileTab.tsx` | Replace 6 separate `Card` components with a single `Accordion` component containing 6 collapsible items. Each item shows an icon + label as trigger, and the existing form content as the collapsible body. The first section ("Your Media") will be open by default. |
 
 ### Technical Details
 
-The `fetchDashboardStats` function will be updated to:
-1. Query `creator_social_accounts` for the creator's max `follower_count`
-2. Query open `brand_opportunities` with all relevant fields including `follower_ranges` and `min_followers`
-3. Score each opportunity using the algorithm above (using `checkFollowerEligibility` from `src/config/follower-ranges.ts`)
-4. Display top 5 matches as "Opportunities For You" with a target icon
+- Uses the existing `@radix-ui/react-accordion` component (already installed)
+- Accordion type will be `"multiple"` so users can have several sections open at once
+- Default open section: "media" (most commonly edited)
+- Each `AccordionItem` trigger shows the section icon + title in a clean row
+- All existing form fields, upload logic, and save functionality remain unchanged -- only the wrapping layout changes
+- The sticky "Save Changes" footer stays as-is at the bottom
 
-The section header will say "Opportunities For You" with a subtitle "Based on your profile and stats" instead of "New Opportunities" with "X this week".
+### Benefits
+- Much less scrolling -- collapsed sections take ~40px each vs 200-400px expanded
+- Creators can see all settings at a glance and expand only what they need
+- Cleaner, more app-like feel consistent with the compact UI design policy
 
