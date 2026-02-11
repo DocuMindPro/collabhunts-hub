@@ -13,12 +13,14 @@ import {
   XCircle,
   Loader2,
   ExternalLink,
+  Star,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { EVENT_PACKAGES } from "@/config/packages";
+import { ReviewDialog } from "@/components/ReviewDialog";
 
 interface Booking {
   id: string;
@@ -48,9 +50,19 @@ const BrandBookingsTab = ({ registrationCompleted = true }: BrandBookingsTabProp
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState<Record<string, { id: string; rating: number; review_text: string | null }>>({});
+  const [reviewDialog, setReviewDialog] = useState<{
+    open: boolean;
+    bookingId?: string;
+    creatorName: string;
+    creatorProfileId: string;
+    brandProfileId: string;
+    existingReview?: { id: string; rating: number; review_text: string | null };
+  }>({ open: false, creatorName: "", creatorProfileId: "", brandProfileId: "" });
 
   useEffect(() => {
     fetchBookings();
+    fetchReviews();
   }, []);
 
   const fetchBookings = async () => {
@@ -106,7 +118,40 @@ const BrandBookingsTab = ({ registrationCompleted = true }: BrandBookingsTabProp
     }
   };
 
-  const getStatusBadge = (status: string | null) => {
+  const fetchReviews = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: brandProfile } = await supabase
+        .from("brand_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!brandProfile) return;
+
+      const { data } = await supabase
+        .from("reviews")
+        .select("id, booking_id, rating, review_text")
+        .eq("brand_profile_id", brandProfile.id)
+        .not("booking_id", "is", null);
+
+      if (data) {
+        const map: Record<string, { id: string; rating: number; review_text: string | null }> = {};
+        data.forEach((r: any) => {
+          if (r.booking_id) map[r.booking_id] = { id: r.id, rating: r.rating, review_text: r.review_text };
+        });
+        setReviews(map);
+      }
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    }
+  };
+
+  const canReviewBooking = (booking: Booking) => {
+    return booking.status === "completed" || booking.status === "confirmed";
+  };
     switch (status) {
       case "confirmed":
         return <Badge className="bg-green-500">Confirmed</Badge>;
@@ -271,17 +316,46 @@ const BrandBookingsTab = ({ registrationCompleted = true }: BrandBookingsTabProp
                             </p>
                           )}
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            navigate(`/brand-dashboard?tab=messages&creator=${booking.creator_profile?.id}`)
-                          }
-                          className="w-full sm:w-auto"
-                        >
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          Message
-                        </Button>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                          {canReviewBooking(booking) && (
+                            <Button
+                              variant={reviews[booking.id] ? "ghost" : "outline"}
+                              size="sm"
+                              onClick={() => {
+                                const { data: brandProfile } = { data: { id: "" } };
+                                // We already fetched brandProfileId during fetchBookings
+                                supabase.auth.getUser().then(({ data: { user } }) => {
+                                  if (!user) return;
+                                  supabase.from("brand_profiles").select("id").eq("user_id", user.id).single().then(({ data: bp }) => {
+                                    if (!bp) return;
+                                    setReviewDialog({
+                                      open: true,
+                                      bookingId: booking.id,
+                                      creatorName: booking.creator_profile?.display_name || "Creator",
+                                      creatorProfileId: booking.creator_profile?.id || "",
+                                      brandProfileId: bp.id,
+                                      existingReview: reviews[booking.id],
+                                    });
+                                  });
+                                });
+                              }}
+                            >
+                              <Star className={`h-4 w-4 mr-1 ${reviews[booking.id] ? "fill-primary text-primary" : ""}`} />
+                              {reviews[booking.id] ? `${reviews[booking.id].rating}★` : "Review"}
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              navigate(`/brand-dashboard?tab=messages&creator=${booking.creator_profile?.id}`)
+                            }
+                            className="w-full sm:w-auto"
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Message
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -291,6 +365,16 @@ const BrandBookingsTab = ({ registrationCompleted = true }: BrandBookingsTabProp
           })}
         </div>
       )}
+
+      <ReviewDialog
+        open={reviewDialog.open}
+        onOpenChange={(open) => setReviewDialog((prev) => ({ ...prev, open }))}
+        bookingId={reviewDialog.bookingId}
+        creatorName={reviewDialog.creatorName}
+        creatorProfileId={reviewDialog.creatorProfileId}
+        brandProfileId={reviewDialog.brandProfileId}
+        existingReview={reviewDialog.existingReview}
+      />
     </div>
   );
 };
