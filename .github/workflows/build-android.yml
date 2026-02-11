@@ -80,8 +80,20 @@ jobs:
       - name: Generate native assets
         run: npx capacitor-assets generate --android
 
+      - name: Force app name in strings.xml
+        run: |
+          sed -i 's|<string name="app_name">.*</string>|<string name="app_name">Collab Hunts</string>|g' android/app/src/main/res/values/strings.xml
+          sed -i 's|<string name="title_activity_main">.*</string>|<string name="title_activity_main">Collab Hunts</string>|g' android/app/src/main/res/values/strings.xml
+
       - name: Sync Capacitor
         run: npx cap sync android
+
+      - name: Verify icon generation
+        run: |
+          echo "=== Checking generated icons ==="
+          ls -la android/app/src/main/res/mipmap-*/
+          echo "=== Checking app name ==="
+          cat android/app/src/main/res/values/strings.xml
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
@@ -102,7 +114,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          name: CollabHunts APK v${{ steps.version.outputs.version }}
+          name: Collab Hunts APK v${{ steps.version.outputs.version }}
           body: |
             ## Android APK Build
             
