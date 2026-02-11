@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { MessageSquare, Clock, AlertTriangle } from "lucide-react";
 import { formatDistanceToNow, isPast } from "date-fns";
+import { sendAdminEmail } from "@/lib/email-utils";
 
 interface DisputeResponseDialogProps {
   open: boolean;
@@ -53,6 +54,13 @@ export const DisputeResponseDialog = ({
       if (error) throw error;
 
       toast.success("Response submitted. An admin will review the dispute soon.");
+      
+      // Notify admin that dispute is ready for review
+      sendAdminEmail("admin_dispute_resolution_reminder", {
+        dispute_id: disputeId,
+        opener_name: openerName,
+      });
+      
       onOpenChange(false);
       onResponseSubmitted?.();
       setResponse("");

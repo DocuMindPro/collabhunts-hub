@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { DollarSign, Gift } from "lucide-react";
+import { sendBrandEmail } from "@/lib/email-utils";
 
 interface ApplyOpportunityDialogProps {
   opportunity: {
@@ -69,6 +70,23 @@ const ApplyOpportunityDialog = ({
         title: "Application Submitted!",
         description: "The brand will review your application and get back to you.",
       });
+      
+      // Email the brand about the new application
+      // Look up brand_profile_id from the opportunity
+      supabase
+        .from("brand_opportunities")
+        .select("brand_profile_id")
+        .eq("id", opportunity.id)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            sendBrandEmail("brand_new_application", data.brand_profile_id, {
+              opportunity_title: opportunity.title,
+              creator_name: "A creator",
+            });
+          }
+        });
+      
       onSuccess();
     }
 

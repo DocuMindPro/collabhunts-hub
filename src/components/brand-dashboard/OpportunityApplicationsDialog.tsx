@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Check, X, MessageSquare, DollarSign, Link as LinkIcon, ExternalLink, Clock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { sendCreatorEmail } from "@/lib/email-utils";
 
 interface Application {
   id: string;
@@ -132,6 +133,14 @@ const OpportunityApplicationsDialog = ({
     // Auto-create conversation when accepting (exempt from messaging limit)
     if (newStatus === "accepted" && application?.creator_profile_id) {
       const convId = await findOrCreateConversation(application.creator_profile_id);
+      
+      // Send acceptance email to creator
+      sendCreatorEmail("creator_application_accepted", application.creator_profile_id, {
+        campaign_title: "Opportunity",
+        brand_name: "Brand",
+        budget_cents: application.proposed_price_cents || 0,
+      });
+      
       if (convId) {
         toast({
           title: "Accepted!",
@@ -143,6 +152,16 @@ const OpportunityApplicationsDialog = ({
           description: "Application accepted, but conversation could not be created.",
         });
       }
+    } else if (newStatus === "rejected" && application?.creator_profile_id) {
+      // Send rejection email to creator
+      sendCreatorEmail("creator_application_rejected", application.creator_profile_id, {
+        campaign_title: "Opportunity",
+      });
+      
+      toast({
+        title: "Updated",
+        description: `Application ${newStatus}`,
+      });
     } else {
       toast({
         title: "Updated",

@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { EVENT_PACKAGES } from "@/config/packages";
 import { useToast } from "@/hooks/use-toast";
+import { sendBrandEmail } from "@/lib/email-utils";
 
 interface Booking {
   id: string;
@@ -119,6 +120,16 @@ const BookingsTab = () => {
       if (error) throw error;
 
       toast({ title: "Booking Confirmed", description: "The venue has been notified." });
+      
+      // Send email to brand
+      const booking = bookings.find(b => b.id === bookingId);
+      if (booking?.brand_profile?.id) {
+        sendBrandEmail("brand_booking_accepted", booking.brand_profile.id, {
+          creator_name: "Creator",
+          amount_cents: booking.total_price_cents,
+        });
+      }
+      
       fetchBookings();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -138,6 +149,16 @@ const BookingsTab = () => {
       if (error) throw error;
 
       toast({ title: "Booking Declined", description: "The venue has been notified." });
+      
+      // Send email to brand
+      const booking = bookings.find(b => b.id === bookingId);
+      if (booking?.brand_profile?.id) {
+        sendBrandEmail("brand_booking_declined", booking.brand_profile.id, {
+          creator_name: "Creator",
+          amount_cents: booking.total_price_cents,
+        });
+      }
+      
       fetchBookings();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });

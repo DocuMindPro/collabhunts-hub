@@ -44,6 +44,7 @@ import {
   Mail
 } from "lucide-react";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import { sendBrandEmail } from "@/lib/email-utils";
 
 interface VerificationRequest {
   id: string;
@@ -189,6 +190,11 @@ const AdminVerificationsTab = () => {
         description: `${selectedRequest.company_name} has been verified.`,
       });
 
+      // Send email to brand
+      sendBrandEmail("brand_verification_approved", selectedRequest.id, {
+        company_name: selectedRequest.company_name,
+      });
+
       setSelectedRequest(null);
       setAdminNotes("");
       fetchRequests();
@@ -236,6 +242,12 @@ const AdminVerificationsTab = () => {
       toast({
         title: "Verification Rejected",
         description: `${selectedRequest.company_name}'s verification was rejected.`,
+      });
+
+      // Send email to brand
+      sendBrandEmail("brand_verification_rejected", selectedRequest.id, {
+        company_name: selectedRequest.company_name,
+        rejection_reason: rejectionReason,
       });
 
       setSelectedRequest(null);

@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Calendar, DollarSign, Users, CheckCircle, XCircle, Clock } from "lucide-react";
 import { formatPrice } from "@/lib/stripe-mock";
+import { sendBrandEmail } from "@/lib/email-utils";
 
 interface Campaign {
   id: string;
@@ -70,6 +71,20 @@ const AdminCampaignsTab = () => {
       if (error) throw error;
 
       toast.success('Campaign approved successfully');
+      
+      // Send email to brand
+      const { data: campaignData } = await supabase
+        .from("campaigns")
+        .select("brand_profile_id")
+        .eq("id", campaignId)
+        .single();
+      if (campaignData) {
+        const campaign = campaigns.find(c => c.id === campaignId);
+        sendBrandEmail("brand_campaign_approved", campaignData.brand_profile_id, {
+          campaign_title: campaign?.title || "Campaign",
+        });
+      }
+      
       fetchCampaigns();
     } catch (error) {
       console.error('Error approving campaign:', error);
@@ -95,6 +110,22 @@ const AdminCampaignsTab = () => {
       if (error) throw error;
 
       toast.success('Campaign rejected');
+      
+      // Send email to brand
+      if (selectedCampaign) {
+        const { data: campaignData } = await supabase
+          .from("campaigns")
+          .select("brand_profile_id")
+          .eq("id", selectedCampaign.id)
+          .single();
+        if (campaignData) {
+          sendBrandEmail("brand_campaign_rejected", campaignData.brand_profile_id, {
+            campaign_title: selectedCampaign.title,
+            rejection_reason: rejectionReason,
+          });
+        }
+      }
+      
       setRejectDialogOpen(false);
       setRejectionReason("");
       setSelectedCampaign(null);

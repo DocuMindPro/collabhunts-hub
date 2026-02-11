@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AlertTriangle, Clock } from "lucide-react";
 import { addDays } from "date-fns";
+import { sendCreatorEmail, sendBrandEmail, sendAdminEmail } from "@/lib/email-utils";
 
 interface DisputeDialogProps {
   open: boolean;
@@ -68,6 +69,14 @@ export const DisputeDialog = ({
         .eq("id", bookingId);
 
       toast.success("Dispute opened successfully. The other party has 3 days to respond.");
+      
+      // Send dispute emails
+      sendAdminEmail("admin_new_dispute", {
+        brand_name: otherPartyName,
+        reason: reason.trim(),
+        amount_cents: totalPrice * 100,
+      });
+      
       onOpenChange(false);
       onDisputeCreated?.();
       setReason("");
