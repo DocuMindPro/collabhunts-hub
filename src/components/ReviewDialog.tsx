@@ -10,7 +10,8 @@ import { toast } from "@/hooks/use-toast";
 interface ReviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  bookingId: string;
+  bookingId?: string;
+  agreementId?: string;
   creatorName: string;
   creatorProfileId: string;
   brandProfileId: string;
@@ -25,6 +26,7 @@ export const ReviewDialog = ({
   open, 
   onOpenChange, 
   bookingId, 
+  agreementId,
   creatorName,
   creatorProfileId,
   brandProfileId,
@@ -66,15 +68,18 @@ export const ReviewDialog = ({
         });
       } else {
         // Create new review
+        const reviewData: any = {
+          brand_profile_id: brandProfileId,
+          creator_profile_id: creatorProfileId,
+          rating,
+          review_text: reviewText || null,
+        };
+        if (agreementId) reviewData.agreement_id = agreementId;
+        if (bookingId) reviewData.booking_id = bookingId;
+        
         const { error } = await supabase
           .from("reviews")
-          .insert({
-            booking_id: bookingId,
-            brand_profile_id: brandProfileId,
-            creator_profile_id: creatorProfileId,
-            rating,
-            review_text: reviewText || null,
-          });
+          .insert(reviewData);
 
         if (error) throw error;
 

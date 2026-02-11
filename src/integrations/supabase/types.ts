@@ -3213,7 +3213,8 @@ export type Database = {
       }
       reviews: {
         Row: {
-          booking_id: string
+          agreement_id: string | null
+          booking_id: string | null
           brand_profile_id: string
           created_at: string
           creator_profile_id: string
@@ -3223,7 +3224,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          booking_id: string
+          agreement_id?: string | null
+          booking_id?: string | null
           brand_profile_id: string
           created_at?: string
           creator_profile_id: string
@@ -3233,7 +3235,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          booking_id?: string
+          agreement_id?: string | null
+          booking_id?: string | null
           brand_profile_id?: string
           created_at?: string
           creator_profile_id?: string
@@ -3243,6 +3246,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reviews_agreement_id_fkey"
+            columns: ["agreement_id"]
+            isOneToOne: false
+            referencedRelation: "creator_agreements"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reviews_booking_id_fkey"
             columns: ["booking_id"]

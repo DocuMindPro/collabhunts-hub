@@ -4,7 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Check, X, Loader2, Calendar, DollarSign, Eye, CheckCircle2 } from "lucide-react";
+import { FileText, Check, X, Loader2, Calendar, DollarSign, Eye, CheckCircle2, Star } from "lucide-react";
+import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { AGREEMENT_TEMPLATES } from "@/config/agreement-templates";
+import { ReviewDialog } from "@/components/ReviewDialog";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,6 +40,8 @@ interface Agreement {
   status: string;
   confirmed_at: string | null;
   declined_at: string | null;
+  creator_profile_id: string;
+  brand_profile_id: string;
 }
 
 const AgreementMessage = ({ messageContent, isOwnMessage, onAgreementUpdated }: AgreementMessageProps) => {
@@ -43,9 +50,16 @@ const AgreementMessage = ({ messageContent, isOwnMessage, onAgreementUpdated }: 
   const [actionLoading, setActionLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [existingReview, setExistingReview] = useState<{ id: string; rating: number; review_text: string | null } | undefined>();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [creatorDisplayName, setCreatorDisplayName] = useState("");
 
   useEffect(() => {
     fetchAgreement();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setCurrentUserId(user.id);
+    });
   }, [messageContent.agreement_id]);
 
   const fetchAgreement = async () => {
@@ -62,6 +76,23 @@ const AgreementMessage = ({ messageContent, isOwnMessage, onAgreementUpdated }: 
           ...data,
           deliverables: (data.deliverables as { description: string; quantity: number }[]) || [],
         });
+
+        // Fetch creator name for review dialog
+        const { data: creator } = await supabase
+          .from("creator_profiles")
+          .select("display_name")
+          .eq("id", data.creator_profile_id)
+          .maybeSingle();
+        if (creator) setCreatorDisplayName(creator.display_name);
+
+        // Check for existing review on this agreement
+        const { data: review } = await supabase
+          .from("reviews")
+          .select("id, rating, review_text")
+          .eq("agreement_id", data.id)
+          .eq("brand_profile_id", data.brand_profile_id)
+          .maybeSingle();
+        if (review) setExistingReview(review);
       }
     } catch (error) {
       console.error("Error fetching agreement:", error);
@@ -132,6 +163,15 @@ const AgreementMessage = ({ messageContent, isOwnMessage, onAgreementUpdated }: 
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const canReview = () => {
+    if (!agreement || agreement.status !== 'confirmed' || !agreement.confirmed_at) return false;
+    // Only the brand (who sent the agreement = isOwnMessage) can review
+    if (!isOwnMessage) return false;
+    const eventPassed = agreement.event_date ? new Date(agreement.event_date) < new Date() : false;
+    const sevenDaysPassed = new Date(agreement.confirmed_at).getTime() + 7 * 24 * 60 * 60 * 1000 < Date.now();
+    return eventPassed || sevenDaysPassed;
   };
 
   const getStatusBadge = (status: string) => {
@@ -229,6 +269,18 @@ const AgreementMessage = ({ messageContent, isOwnMessage, onAgreementUpdated }: 
                   <X className="h-3.5 w-3.5" />
                 </Button>
               </>
+            )}
+
+            {canReview() && (
+              <Button
+                variant={existingReview ? "ghost" : "outline"}
+                size="sm"
+                onClick={() => setShowReviewDialog(true)}
+                className="flex-1"
+              >
+                <Star className={`h-3.5 w-3.5 mr-1 ${existingReview ? "fill-primary text-primary" : ""}`} />
+                {existingReview ? `${existingReview.rating}★ Edit` : "Leave Review"}
+              </Button>
             )}
           </div>
         </div>
@@ -338,6 +390,18 @@ const AgreementMessage = ({ messageContent, isOwnMessage, onAgreementUpdated }: 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {agreement && (
+        <ReviewDialog
+          open={showReviewDialog}
+          onOpenChange={setShowReviewDialog}
+          agreementId={agreement.id}
+          creatorName={creatorDisplayName || "Creator"}
+          creatorProfileId={agreement.creator_profile_id}
+          brandProfileId={agreement.brand_profile_id}
+          existingReview={existingReview}
+        />
+      )}
     </>
   );
 };
