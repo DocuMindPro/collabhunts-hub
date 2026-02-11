@@ -1,37 +1,43 @@
 
 
-## Fix: Add Missing Routes to Native App
+## Fix: Make Bottom Navigation Sticky and Global for Native App
 
 ### Problem
-On native platforms (BlueStacks/Android), the app uses `NativeAppRoutes` which only registers 3 routes:
-- `/` (redirects to dashboard)
-- `/creator-dashboard`
-- `/creator/:id`
-
-When you tap "View All", an opportunity row, or "Browse All", they all link to `/opportunities` which is **not registered** as a native route. The catch-all `*` route redirects back to `/creator-dashboard`, making it look like the page just reloads.
+The bottom navigation bar (`MobileBottomNav`) is currently rendered **only inside** `CreatorDashboard.tsx`. This causes two issues:
+1. When navigating to other pages like `/opportunities`, the bottom nav disappears entirely.
+2. On long pages, you have to scroll down to find the menu.
 
 ### Solution
-Add the `/opportunities` route (and its lazy-loaded `Opportunities` page) to the `NativeAppRoutes` in `src/App.tsx`.
+Move the `MobileBottomNav` out of `CreatorDashboard` and into the **global native app layout** in `App.tsx`, so it appears on every native screen and stays fixed at the bottom of the viewport at all times.
 
 ### Technical Details
 
 **File: `src/App.tsx`**
+- Import `MobileBottomNav` and add it inside `NativeAppRoutes`, rendered **outside** the `<Routes>` block so it persists across all pages.
+- Use a wrapper component with navigation logic so tapping tabs navigates to the correct route/tab.
 
-1. The `Opportunities` page is already lazy-loaded at line 53. It just needs to be added to the native routes block.
+**File: `src/pages/CreatorDashboard.tsx`**
+- Remove the `MobileBottomNav` rendering from this page (it will now come from the global layout).
+- Keep the `pb-20` padding so content doesn't hide behind the nav.
 
-2. Update `NativeAppRoutes` (lines 73-82) to include:
+**File: `src/pages/Opportunities.tsx`**
+- Add `pb-20` bottom padding when on native so content isn't hidden behind the fixed nav.
+
+**File: `src/components/mobile/MobileBottomNav.tsx`**
+- The component already has `fixed bottom-0` positioning, so no changes needed to its core styling. It will work correctly once placed at the app level.
+
+**New wrapper in `NativeAppRoutes`:**
+```text
+NativeAppRoutes
+  NativeAppGate
+    <div>
+      <Routes>...</Routes>
+      <MobileBottomNav />   <-- always visible, fixed at bottom
+    </div>
+  NativeAppGate
 ```
-<Route path="/opportunities" element={
-  <Suspense fallback={<PageLoader />}>
-    <Opportunities />
-  </Suspense>
-} />
-```
 
-3. Since the `Opportunities` page uses `Navbar` and `Footer` (web components), we should also verify it renders cleanly on native. The page at `src/pages/Opportunities.tsx` will need a quick check -- if it includes Navbar/Footer, those should be conditionally hidden on native to avoid broken navigation elements.
-
-**File: `src/pages/Opportunities.tsx`** (if needed)
-- Wrap `Navbar` and `Footer` with `!isNativePlatform()` checks so the page renders cleanly within the native app's bottom-nav layout.
-
-This is a minimal, targeted fix -- just registering the missing route so navigation works.
+The nav tabs will map to routes:
+- Overview, Campaigns, Bookings, Messages, Profile --> `/creator-dashboard?tab=X`
+- This keeps the current tab-based navigation working seamlessly.
 
