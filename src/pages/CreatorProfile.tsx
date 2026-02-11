@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { canBrandMessageCreator, incrementMessagingCounter } from "@/lib/subscription-utils";
+import { DELIVERABLE_PLATFORMS, CONTENT_TYPES, DURATION_OPTIONS, type DeliverablePlatform, type ContentType } from "@/config/packages";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,14 @@ interface CreatorData {
     price_cents: number;
     description: string | null;
     delivery_days: number;
+    deliverables?: Array<{
+      id: string;
+      platform: string;
+      content_type: string;
+      quantity: number;
+      duration_seconds: number | null;
+      price_cents: number;
+    }>;
   }>;
   reviews: Array<{
     id: string;
@@ -345,6 +354,28 @@ const CreatorProfile = () => {
         .eq("creator_profile_id", creatorId)
         .eq("is_active", true);
 
+      // Fetch deliverables for all services
+      const serviceIds = (servicesData || []).map(s => s.id);
+      let deliverablesMap: Record<string, any[]> = {};
+      if (serviceIds.length > 0) {
+        const { data: delData } = await supabase
+          .from("creator_service_deliverables")
+          .select("id, creator_service_id, platform, content_type, quantity, duration_seconds, price_cents")
+          .in("creator_service_id", serviceIds)
+          .order("sort_order");
+        if (delData) {
+          delData.forEach(d => {
+            if (!deliverablesMap[d.creator_service_id]) deliverablesMap[d.creator_service_id] = [];
+            deliverablesMap[d.creator_service_id].push(d);
+          });
+        }
+      }
+
+      const servicesWithDeliverables = (servicesData || []).map(s => ({
+        ...s,
+        deliverables: deliverablesMap[s.id] || [],
+      }));
+
       const { data: reviewsData } = await supabase
         .from("reviews")
         .select(`
@@ -388,7 +419,7 @@ const CreatorProfile = () => {
         verification_payment_status: profileData.verification_payment_status,
         verification_expires_at: profileData.verification_expires_at,
         social_accounts: socialData || [],
-        services: servicesData || [],
+        services: servicesWithDeliverables,
         reviews,
         avgRating,
         totalReviews: reviews.length,
@@ -894,6 +925,26 @@ const CreatorProfile = () => {
                                 )}
                               </div>
                             </div>
+
+                            {/* Custom Experience: show deliverables menu */}
+                            {packageType === 'custom' && service.deliverables && service.deliverables.length > 0 && (
+                              <div className="space-y-1.5 mb-3 p-2.5 bg-muted/50 rounded-lg">
+                                <p className="text-xs font-medium text-muted-foreground mb-1">Content Menu</p>
+                                {service.deliverables.map((d, di) => {
+                                  const durLabel = d.duration_seconds ? DURATION_OPTIONS.find(o => o.value === d.duration_seconds)?.label : null;
+                                  return (
+                                    <div key={di} className="flex items-center justify-between text-sm">
+                                      <span>
+                                        {d.quantity}x {DELIVERABLE_PLATFORMS[d.platform as DeliverablePlatform] || d.platform}{" "}
+                                        {CONTENT_TYPES[d.content_type as ContentType] || d.content_type}
+                                        {durLabel && <span className="text-muted-foreground"> ({durLabel})</span>}
+                                      </span>
+                                      <span className="font-medium">${(d.price_cents / 100).toLocaleString()}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
 
                             {!isOwnProfile && (
                               <Button 

@@ -261,3 +261,48 @@ export const calculateUpsellsTotal = (selectedUpsellIds: string[], packageType: 
 
 // Package type ordering for display
 export const PACKAGE_ORDER: PackageType[] = ['unbox_review', 'social_boost', 'meet_greet', 'competition', 'custom'];
+
+// ── Deliverable platform & content type constants ──
+
+export type DeliverablePlatform = 'instagram' | 'tiktok' | 'facebook' | 'youtube';
+
+export const DELIVERABLE_PLATFORMS: Record<DeliverablePlatform, string> = {
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  facebook: 'Facebook',
+  youtube: 'YouTube',
+};
+
+export type ContentType = 'reel' | 'story' | 'video' | 'short' | 'post' | 'carousel' | 'ugc_ad';
+
+export const CONTENT_TYPES: Record<ContentType, string> = {
+  reel: 'Reel',
+  story: 'Story',
+  video: 'Video',
+  short: 'Short',
+  post: 'Post',
+  carousel: 'Carousel',
+  ugc_ad: 'UGC Ad',
+};
+
+/** Which content types are available per platform */
+export const PLATFORM_CONTENT_TYPES: Record<DeliverablePlatform, ContentType[]> = {
+  instagram: ['reel', 'story', 'post', 'carousel'],
+  tiktok: ['video', 'story'],
+  facebook: ['story', 'post', 'reel'],
+  youtube: ['video', 'short'],
+};
+
+/** Platforms that support Stories (used for story add-ons on standard packages) */
+export const STORY_PLATFORMS: DeliverablePlatform[] = ['instagram', 'tiktok', 'facebook'];
+
+export const DURATION_OPTIONS = [
+  { value: 15, label: '15s' },
+  { value: 30, label: '30s' },
+  { value: 60, label: '60s' },
+  { value: 90, label: '90s' },
+  { value: 120, label: '2min' },
+  { value: 180, label: '3min' },
+  { value: 300, label: '5min' },
+  { value: 600, label: '10min' },
+];
