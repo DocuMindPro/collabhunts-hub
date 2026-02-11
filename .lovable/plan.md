@@ -1,39 +1,40 @@
 
 
-## Add AI Description Improvement + Make Description Required
+## Add Package Descriptions Inside the Dropdown
 
-Two changes to the **ServiceEditDialog** component:
+### Approach
 
-### 1. Make Description Required (not optional)
+Instead of cluttering the UI with extra panels, we'll add a **one-line hint** directly inside each dropdown option. This way creators immediately understand the difference before even selecting. The existing "Package Info" card (lines 219-225) already shows the full description after selection, so the dropdown hints just need to be short and clear.
 
-- Change the label from "Description (optional)" to "Description"
-- Add validation in `handleSave` to require a non-empty description before saving
-- Show an error toast if description is empty: "Please add a description for your package"
+### What It Looks Like
 
-### 2. Add "Improve with AI" Button
+Each dropdown item will show:
+- **Package name** (bold/normal weight)
+- **Short hint** underneath in smaller, muted text
 
-- Import and add the existing `AiBioSuggestions` component below the description textarea
-- Pass `type="description"` and `label="description"` so the AI prompt is contextualized for package descriptions
-- Wire `onSelect` to update the description state
-- Pass the current description text so AI can improve it
-- Set `minLength={10}` (lower threshold since package descriptions can be short)
+For example:
+- **Unbox & Review** — "Product shipped to you, review from home"
+- **Social Boost** — "Visit the brand's venue, create content on-site"
+- **Meet & Greet** — "Appear at the brand's location, meet fans"
+- **Custom Experience** — "Flexible, bespoke collaboration you negotiate"
 
 ### Technical Details
 
 **File: `src/components/creator-dashboard/ServiceEditDialog.tsx`**
 
-- Import `AiBioSuggestions` from `@/components/AiBioSuggestions`
-- In the Description section (~line 282-293):
-  - Change label text from `"Description (optional)"` to `"Description"`
-  - Add `<AiBioSuggestions text={description} onSelect={setDescription} type="description" label="package description" minLength={10} />` after the Textarea
-- In `handleSave` (~line 108), add validation:
-  ```
-  if (!description.trim()) {
-    toast.error("Please add a description for your package");
-    return;
-  }
-  ```
-- Update the save data to use `description` directly instead of `description || null` (line 138)
+1. Add a new constant `PACKAGE_HINTS` mapping each type to a short creator-facing hint:
+   ```
+   const PACKAGE_HINTS: Record<string, string> = {
+     unbox_review: "Product shipped to you — review from home",
+     social_boost: "Visit the brand's venue & create content",
+     meet_greet: "Appear at the brand's location, meet fans",
+     custom: "Flexible collab — you negotiate the details",
+   };
+   ```
 
-No new components or dependencies needed -- this reuses the existing `AiBioSuggestions` component which already calls the `improve-bio` edge function.
+2. Update the `SelectItem` rendering (lines 209-213) to show the hint below the name:
+   - Replace the plain text with a two-line layout using a flex column
+   - Name in normal weight, hint in `text-xs text-muted-foreground`
+   - Use `className="h-auto py-2"` on `SelectItem` so the taller items don't get clipped
 
+This keeps the dropdown clean — just 2 lines per option — while giving creators instant clarity about what each package involves (at-home vs. on-location).
