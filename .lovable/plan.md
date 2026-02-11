@@ -1,20 +1,43 @@
 
 
-## Fix: Eliminate Brief Flash of Old Text Logo on Reload
+## Replace Generic "New Opportunities" with Personalized "Matching Opportunities"
 
 ### Problem
-The `Logo` component in `src/components/Logo.tsx` initializes with `logoUrl = null`. While it fetches the logo URL from the database (takes ~0.5s), it renders an orange gradient "Collab Hunts" text as a fallback. Once the database responds, it swaps to the real logo image -- causing a visible flash.
+1. The "This Week" summary card shows "X new opportunities" which is redundant
+2. The "New Opportunities" section shows generic latest opportunities, not ones matched to the creator's stats
 
 ### Solution
-Instead of showing the text fallback during loading, show the local `/app-icon.png` as the immediate fallback. This way the new logo appears instantly, and when the database URL loads, it seamlessly replaces it (same logo, no flash).
+Replace both with a smarter, personalized approach:
+
+1. **Remove the "This Week" card entirely** (lines 263-300 in OverviewTab.tsx) -- the stat cards already cover key metrics
+2. **Rename "New Opportunities" to "Opportunities For You"** and change the logic to show opportunities that match the creator's profile based on:
+   - **Follower range match**: Compare creator's max follower count (from `creator_social_accounts`) against the opportunity's `follower_ranges` and `min_followers`
+   - **Category match**: Compare creator's `categories` against `required_categories`
+   - **Location match**: Compare creator's `location_city` against opportunity's `location_city`
+3. **Remove the "Recommended For You" card** since it becomes redundant -- the main section now IS the recommendation
+4. Remove the "X this week" badge from the header
+
+### Matching Algorithm (Scoring)
+Each open opportunity is scored against the creator:
+- **+3 points**: Creator's follower count falls within one of the opportunity's `follower_ranges`
+- **+2 points**: Creator shares at least one category with `required_categories`
+- **+1 point**: Creator's city matches opportunity's `location_city`
+- Show opportunities with score > 0, sorted by score descending, limit 5
+- If no matches found, fall back to showing latest 3 open opportunities with a note "Browse all to find your match"
 
 ### What Will Change
 
 | File | Change |
 |------|--------|
-| `src/components/Logo.tsx` | Use `/app-icon.png` as the default fallback image instead of the text-based "Collab Hunts" while the database logo URL loads. Only show the text fallback if the image itself fails to load. |
+| `src/components/creator-dashboard/OverviewTab.tsx` | Fetch creator's max follower count from `creator_social_accounts`. Remove "This Week" card. Merge "New Opportunities" and "Recommended For You" into a single "Opportunities For You" card with the scoring algorithm. Remove the weekly count badge. |
 
-### Technical Detail
+### Technical Details
 
-The component will render the local `app-icon.png` immediately on mount, then swap to the database URL once fetched. Since both are the same logo, there will be no visible flash. The text fallback will only appear if both the database fetch and the local image fail.
+The `fetchDashboardStats` function will be updated to:
+1. Query `creator_social_accounts` for the creator's max `follower_count`
+2. Query open `brand_opportunities` with all relevant fields including `follower_ranges` and `min_followers`
+3. Score each opportunity using the algorithm above (using `checkFollowerEligibility` from `src/config/follower-ranges.ts`)
+4. Display top 5 matches as "Opportunities For You" with a target icon
+
+The section header will say "Opportunities For You" with a subtitle "Based on your profile and stats" instead of "New Opportunities" with "X this week".
 
