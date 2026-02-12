@@ -29,10 +29,17 @@ const Download = () => {
   useEffect(() => {
     const fetchLatestRelease = async () => {
       try {
-        const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`);
+        const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases?per_page=5`);
         if (response.ok) {
-          const data = await response.json();
-          setLatestRelease(data);
+          const releases: GitHubRelease[] = await response.json();
+          const releaseWithApk = releases.find(r => r.assets.some(a => a.name.endsWith('.apk')));
+          if (releaseWithApk) {
+            setLatestRelease(releaseWithApk);
+          } else if (releases.length === 0) {
+            setError("No releases found yet. Push code to GitHub to trigger the first build.");
+          } else {
+            setError("No APK file found in recent releases. A new build may be in progress.");
+          }
         } else if (response.status === 404) {
           setError("No releases found yet. Push code to GitHub to trigger the first build.");
         } else {
@@ -108,6 +115,14 @@ const Download = () => {
                         Download APK
                       </a>
                     </Button>
+                    <a 
+                      href={`https://github.com/${GITHUB_REPO}/releases`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-muted-foreground hover:text-primary underline mt-1"
+                    >
+                      View all releases on GitHub
+                    </a>
                   </div>
 
                   {/* Installation Instructions */}
