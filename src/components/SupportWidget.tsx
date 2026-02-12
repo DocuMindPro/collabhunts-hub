@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,15 @@ interface SupportTicket {
   created_at: string;
 }
 
+const SUPPORT_CATEGORIES = [
+  { value: "booking_issue", label: "Booking Issue" },
+  { value: "payment_issue", label: "Payment Issue" },
+  { value: "account_problem", label: "Account Problem" },
+  { value: "technical_bug", label: "Technical Bug" },
+  { value: "partnership_question", label: "Partnership Question" },
+  { value: "other", label: "Other" },
+];
+
 const SupportWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -34,6 +45,10 @@ const SupportWidget = () => {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  // Intake form state
+  const [showIntake, setShowIntake] = useState(false);
+  const [intakeCategory, setIntakeCategory] = useState("");
+  const [intakeDescription, setIntakeDescription] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
@@ -67,7 +82,6 @@ const SupportWidget = () => {
     if (!userId) return;
     setLoading(true);
     try {
-      // Find existing open ticket
       const { data: tickets } = await supabase
         .from("support_tickets")
         .select("*")
@@ -80,6 +94,7 @@ const SupportWidget = () => {
       setTicket(existingTicket as SupportTicket | null);
 
       if (existingTicket) {
+        setShowIntake(false);
         const { data: msgs } = await supabase
           .from("support_messages")
           .select("*")
@@ -87,7 +102,6 @@ const SupportWidget = () => {
           .order("created_at", { ascending: true });
         setMessages((msgs || []) as SupportMessage[]);
 
-        // Mark admin messages as read
         await supabase
           .from("support_messages")
           .update({ is_read: true })
@@ -95,6 +109,9 @@ const SupportWidget = () => {
           .eq("is_admin", true)
           .eq("is_read", false);
         setUnreadCount(0);
+      } else {
+        // No existing ticket, show intake form
+        setShowIntake(true);
       }
     } finally {
       setLoading(false);
@@ -117,7 +134,7 @@ const SupportWidget = () => {
         filter: `ticket_id=eq.${ticket.id}`,
       }, (payload) => {
         const msg = payload.new as SupportMessage;
-        setMessages(prev => [...prev, msg]);
+        setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg]);
         if (msg.is_admin && isOpen) {
           supabase.from("support_messages").update({ is_read: true }).eq("id", msg.id).then();
         } else if (msg.is_admin) {
@@ -133,39 +150,75 @@ const SupportWidget = () => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!newMessage.trim() || !userId || sending) return;
+  // Submit intake form → create ticket + first message
+  const handleIntakeSubmit = async () => {
+    if (!intakeCategory || !intakeDescription.trim() || !userId || sending) return;
     setSending(true);
     try {
-      let ticketId = ticket?.id;
+      // Get user type from profiles
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("id", userId)
+        .single();
 
-      // Create ticket if none exists
-      if (!ticketId) {
-        const subject = newMessage.slice(0, 80) || "Support Request";
-        const { data: newTicket, error } = await supabase
-          .from("support_tickets")
-          .insert({ user_id: userId, subject })
-          .select()
-          .single();
-        if (error) throw error;
-        setTicket(newTicket as SupportTicket);
-        ticketId = newTicket.id;
-      }
+      const categoryLabel = SUPPORT_CATEGORIES.find(c => c.value === intakeCategory)?.label || intakeCategory;
+      const subject = `[${categoryLabel}] ${intakeDescription.slice(0, 60)}`;
 
-      const { data: msg, error } = await supabase
-        .from("support_messages")
+      const { data: newTicket, error } = await supabase
+        .from("support_tickets")
         .insert({
-          ticket_id: ticketId,
-          sender_id: userId,
-          content: newMessage.trim(),
-          is_admin: false,
+          user_id: userId,
+          subject,
+          category: intakeCategory,
+          user_type: profile?.user_type || null,
         })
         .select()
         .single();
-
       if (error) throw error;
-      // Optimistic: add if not already added by realtime
-      setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg as SupportMessage]);
+
+      // Send first message
+      await supabase
+        .from("support_messages")
+        .insert({
+          ticket_id: newTicket.id,
+          sender_id: userId,
+          content: intakeDescription.trim(),
+          is_admin: false,
+        });
+
+      setTicket(newTicket as SupportTicket);
+      setShowIntake(false);
+      setIntakeCategory("");
+      setIntakeDescription("");
+      // Load messages (the realtime sub will also pick them up)
+      const { data: msgs } = await supabase
+        .from("support_messages")
+        .select("*")
+        .eq("ticket_id", newTicket.id)
+        .order("created_at", { ascending: true });
+      setMessages((msgs || []) as SupportMessage[]);
+    } catch (err) {
+      console.error("Failed to create support ticket:", err);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // Send follow-up message (no optimistic insert — let realtime handle it)
+  const handleSend = async () => {
+    if (!newMessage.trim() || !userId || !ticket || sending) return;
+    setSending(true);
+    try {
+      const { error } = await supabase
+        .from("support_messages")
+        .insert({
+          ticket_id: ticket.id,
+          sender_id: userId,
+          content: newMessage.trim(),
+          is_admin: false,
+        });
+      if (error) throw error;
       setNewMessage("");
     } catch (err) {
       console.error("Failed to send support message:", err);
@@ -221,78 +274,127 @@ const SupportWidget = () => {
             </Button>
           </div>
 
-          {/* Messages */}
-          <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="text-center py-8">
-                <MessageCircleQuestion className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
-                <p className="text-sm text-muted-foreground">Need help? Send us a message!</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={cn(
-                      "flex",
-                      msg.is_admin ? "justify-start" : "justify-end"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "max-w-[80%] rounded-2xl px-3 py-2 text-sm",
-                        msg.is_admin
-                          ? "bg-muted text-foreground rounded-bl-sm"
-                          : "bg-primary text-primary-foreground rounded-br-sm"
-                      )}
-                    >
-                      {msg.is_admin && (
-                        <span className="text-[10px] font-medium text-muted-foreground block mb-0.5">Support Team</span>
-                      )}
-                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                      <span className={cn(
-                        "text-[10px] mt-1 block",
-                        msg.is_admin ? "text-muted-foreground" : "text-primary-foreground/70"
-                      )}>
-                        {format(new Date(msg.created_at), "h:mm a")}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-
-          {/* Input */}
-          <div className="p-3 border-t">
-            <div className="flex gap-2">
-              <Textarea
-                placeholder="Type your message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                className="min-h-[40px] max-h-[100px] resize-none text-sm"
-                rows={1}
-              />
-              <Button
-                size="icon"
-                onClick={handleSend}
-                disabled={!newMessage.trim() || sending}
-                className="shrink-0"
-              >
-                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </Button>
+          {loading ? (
+            <div className="flex-1 flex justify-center items-center">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-          </div>
+          ) : showIntake ? (
+            /* Intake Form */
+            <div className="flex-1 p-4 overflow-y-auto">
+              <div className="space-y-4">
+                <div className="text-center pb-2">
+                  <MessageCircleQuestion className="h-10 w-10 mx-auto text-primary/60 mb-2" />
+                  <h4 className="font-semibold text-sm">How can we help?</h4>
+                  <p className="text-xs text-muted-foreground">Tell us about your issue so we can assist you faster.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Issue Category</Label>
+                  <Select value={intakeCategory} onValueChange={setIntakeCategory}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Select a category..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUPPORT_CATEGORIES.map(c => (
+                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Describe your issue</Label>
+                  <Textarea
+                    placeholder="Please describe your problem in detail..."
+                    value={intakeDescription}
+                    onChange={(e) => setIntakeDescription(e.target.value)}
+                    className="min-h-[100px] text-sm resize-none"
+                    rows={4}
+                  />
+                </div>
+
+                <Button
+                  className="w-full"
+                  onClick={handleIntakeSubmit}
+                  disabled={!intakeCategory || !intakeDescription.trim() || sending}
+                >
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                  Submit Request
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* Chat Messages */
+            <>
+              <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+                {messages.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageCircleQuestion className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+                    <p className="text-sm text-muted-foreground">Need help? Send us a message!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={cn(
+                          "flex",
+                          msg.is_admin ? "justify-start" : "justify-end"
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "max-w-[80%] rounded-2xl px-3 py-2 text-sm",
+                            msg.is_admin
+                              ? "bg-muted text-foreground rounded-bl-sm"
+                              : "bg-primary text-primary-foreground rounded-br-sm"
+                          )}
+                        >
+                          {msg.is_admin && (
+                            <span className="text-[10px] font-medium text-muted-foreground block mb-0.5">Support Team</span>
+                          )}
+                          <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                          <span className={cn(
+                            "text-[10px] mt-1 block",
+                            msg.is_admin ? "text-muted-foreground" : "text-primary-foreground/70"
+                          )}>
+                            {format(new Date(msg.created_at), "h:mm a")}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+
+              {/* Input */}
+              <div className="p-3 border-t">
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder="Type your message..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    className="min-h-[40px] max-h-[100px] resize-none text-sm"
+                    rows={1}
+                  />
+                  <Button
+                    size="icon"
+                    onClick={handleSend}
+                    disabled={!newMessage.trim() || sending}
+                    className="shrink-0"
+                  >
+                    {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
     </>

@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Send, Loader2, ArrowLeft, CheckCircle, Clock, MessageSquare } from "lucide-react";
+import { Send, Loader2, ArrowLeft, CheckCircle, Clock, MessageSquare, User, Building2 } from "lucide-react";
 import { sendNotificationEmail } from "@/lib/email-utils";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +18,8 @@ interface Ticket {
   subject: string;
   status: string;
   priority: string;
+  category: string | null;
+  user_type: string | null;
   created_at: string;
   resolved_at: string | null;
   user_email?: string;
@@ -35,6 +37,15 @@ interface Message {
   is_read: boolean;
   created_at: string;
 }
+
+const CATEGORY_LABELS: Record<string, string> = {
+  booking_issue: "Booking Issue",
+  payment_issue: "Payment Issue",
+  account_problem: "Account Problem",
+  technical_bug: "Technical Bug",
+  partnership_question: "Partnership Question",
+  other: "Other",
+};
 
 const AdminSupportTab = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -62,12 +73,11 @@ const AdminSupportTab = () => {
       const { data: ticketsData } = await query;
       if (!ticketsData) { setTickets([]); return; }
 
-      // Enrich with user info and last message
       const enriched = await Promise.all(
         ticketsData.map(async (t) => {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("email, full_name")
+            .select("email, full_name, user_type")
             .eq("id", t.user_id)
             .single();
 
@@ -90,6 +100,7 @@ const AdminSupportTab = () => {
             ...t,
             user_email: profile?.email || "Unknown",
             user_name: profile?.full_name || profile?.email || "Unknown",
+            user_type: t.user_type || profile?.user_type || null,
             last_message: lastMsg?.content,
             unread_count: unread || 0,
           } as Ticket;
@@ -113,7 +124,6 @@ const AdminSupportTab = () => {
       .order("created_at", { ascending: true });
     setMessages((data || []) as Message[]);
 
-    // Mark user messages as read
     await supabase
       .from("support_messages")
       .update({ is_read: true })
@@ -164,7 +174,6 @@ const AdminSupportTab = () => {
         });
       if (error) throw error;
 
-      // Update ticket status to in_progress if it was open
       if (selectedTicket.status === "open") {
         await supabase
           .from("support_tickets")
@@ -173,7 +182,6 @@ const AdminSupportTab = () => {
         setSelectedTicket({ ...selectedTicket, status: "in_progress" });
       }
 
-      // Send email notification to user
       if (selectedTicket.user_email) {
         sendNotificationEmail(
           "support_reply",
@@ -213,6 +221,29 @@ const AdminSupportTab = () => {
     }
   };
 
+  const getUserTypeBadge = (userType: string | null) => {
+    if (!userType) return null;
+    if (userType === "brand") return (
+      <Badge variant="outline" className="text-[10px] gap-1 px-1.5 py-0 border-blue-300 text-blue-600">
+        <Building2 className="h-2.5 w-2.5" /> Brand
+      </Badge>
+    );
+    return (
+      <Badge variant="outline" className="text-[10px] gap-1 px-1.5 py-0 border-purple-300 text-purple-600">
+        <User className="h-2.5 w-2.5" /> Creator
+      </Badge>
+    );
+  };
+
+  const getCategoryBadge = (category: string | null) => {
+    if (!category) return null;
+    return (
+      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+        {CATEGORY_LABELS[category] || category}
+      </Badge>
+    );
+  };
+
   // Ticket detail view
   if (selectedTicket) {
     return (
@@ -227,9 +258,13 @@ const AdminSupportTab = () => {
                 <CardTitle className="text-base truncate">{selectedTicket.subject}</CardTitle>
                 {getStatusBadge(selectedTicket.status)}
               </div>
-              <CardDescription className="text-xs">
-                {selectedTicket.user_name} • {selectedTicket.user_email}
-              </CardDescription>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <CardDescription className="text-xs">
+                  {selectedTicket.user_name} • {selectedTicket.user_email}
+                </CardDescription>
+                {getUserTypeBadge(selectedTicket.user_type)}
+                {getCategoryBadge(selectedTicket.category)}
+              </div>
             </div>
             <Select value={selectedTicket.status} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-32">
@@ -353,7 +388,7 @@ const AdminSupportTab = () => {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm truncate">{t.subject}</span>
                     {(t.unread_count || 0) > 0 && (
                       <Badge variant="destructive" className="h-5 min-w-5 px-1 text-[10px]">
@@ -361,7 +396,11 @@ const AdminSupportTab = () => {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{t.user_name} • {t.user_email}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                    <p className="text-xs text-muted-foreground truncate">{t.user_name}</p>
+                    {getUserTypeBadge(t.user_type)}
+                    {getCategoryBadge(t.category)}
+                  </div>
                   {t.last_message && (
                     <p className="text-xs text-muted-foreground/70 truncate mt-0.5">{t.last_message}</p>
                   )}
