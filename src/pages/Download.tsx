@@ -115,14 +115,6 @@ const Download = () => {
                         Download APK
                       </a>
                     </Button>
-                    <a 
-                      href={`https://github.com/${GITHUB_REPO}/releases`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-xs text-muted-foreground hover:text-primary underline mt-1"
-                    >
-                      View all releases on GitHub
-                    </a>
                   </div>
 
                   {/* Installation Instructions */}
