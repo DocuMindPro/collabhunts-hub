@@ -365,11 +365,17 @@ const MessagesTab = () => {
 
   const renderConversationList = () => (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b">
+      <div className="p-4 border-b space-y-2">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />
           Messages
         </h2>
+        {isMobile && !isNative && (
+          <a href="/download" className="flex items-center gap-2 text-xs bg-primary/10 text-primary rounded-md px-3 py-1.5 hover:bg-primary/20 transition-colors">
+            <span>🔔</span>
+            <span>Get instant message notifications on the app</span>
+          </a>
+        )}
       </div>
       <div className="flex-1 overflow-y-auto">
         {conversations.length === 0 ? (

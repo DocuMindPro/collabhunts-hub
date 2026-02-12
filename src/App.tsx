@@ -13,6 +13,7 @@ import PushNotificationProvider from "./components/PushNotificationProvider";
 import NativeErrorBoundary from "./components/NativeErrorBoundary";
 import NativeAppGate from "./components/NativeAppGate";
 import type { NativeRole } from "./components/NativeAppGate";
+import SmartAppBanner from "./components/SmartAppBanner";
 
 import PageLoader from "./components/PageLoader";
 
@@ -267,7 +268,8 @@ const App = () => (
               <PageTransition>
                 {isNativePlatform ? <NativeAppRoutes /> : <WebAppRoutes />}
               </PageTransition>
-              {/* Only show cookie consent and support widget on web */}
+              {/* Only show cookie consent, support widget, and app banner on web */}
+              {!isNativePlatform && <SmartAppBanner />}
               {!isNativePlatform && <CookieConsent />}
               {!isNativePlatform && <SupportWidget />}
             </PushNotificationProvider>

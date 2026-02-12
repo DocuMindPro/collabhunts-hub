@@ -225,18 +225,24 @@ const Download = () => {
           {/* Benefits */}
           <div className="mt-12 p-6 bg-muted/50 rounded-xl">
             <h2 className="text-xl font-semibold mb-4 text-center">Why Use the App?</h2>
-            <div className="grid sm:grid-cols-3 gap-4 text-sm">
-              <div className="p-4 bg-background rounded-lg">
-                <p className="font-medium">⚡ Instant Access</p>
-                <p className="text-muted-foreground">Launch directly from your home screen</p>
+            <div className="grid sm:grid-cols-2 gap-4 text-sm">
+              <div className="p-4 bg-background rounded-lg border border-primary/20 relative overflow-hidden">
+                <span className="absolute top-2 right-2 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-1.5 py-0.5 rounded">App Exclusive</span>
+                <p className="font-medium">🔔 Instant Push Notifications</p>
+                <p className="text-muted-foreground mt-1">Get notified instantly when you receive new bookings, messages, or opportunity matches — only on the app</p>
+              </div>
+              <div className="p-4 bg-background rounded-lg border border-primary/20 relative overflow-hidden">
+                <span className="absolute top-2 right-2 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-1.5 py-0.5 rounded">App Exclusive</span>
+                <p className="font-medium">💬 Real-Time Messaging</p>
+                <p className="text-muted-foreground mt-1">Faster, smoother chat experience with typing indicators and instant delivery</p>
               </div>
               <div className="p-4 bg-background rounded-lg">
-                <p className="font-medium">📱 Full Screen</p>
-                <p className="text-muted-foreground">No browser bars - native app experience</p>
+                <p className="font-medium">📴 Offline Access</p>
+                <p className="text-muted-foreground mt-1">Browse creator profiles and manage your dashboard even without internet</p>
               </div>
               <div className="p-4 bg-background rounded-lg">
-                <p className="font-medium">🔔 Notifications</p>
-                <p className="text-muted-foreground">Get alerts for messages and bookings</p>
+                <p className="font-medium">⚡ One-Tap Actions</p>
+                <p className="text-muted-foreground mt-1">Accept bookings, respond to messages, and manage your profile with quick native controls</p>
               </div>
             </div>
           </div>

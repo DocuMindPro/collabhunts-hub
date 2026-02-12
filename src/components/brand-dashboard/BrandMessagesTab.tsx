@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { Capacitor } from "@capacitor/core";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -465,6 +466,12 @@ const BrandMessagesTab = ({ registrationCompleted = true }: BrandMessagesTabProp
           Messages
         </h2>
         <MessagingLimitBanner />
+        {isMobile && !Capacitor.isNativePlatform() && (
+          <a href="/download" className="flex items-center gap-2 text-xs bg-primary/10 text-primary rounded-md px-3 py-1.5 hover:bg-primary/20 transition-colors">
+            <span>🔔</span>
+            <span>Get instant message notifications on the app</span>
+          </a>
+        )}
       </div>
       <div className="flex-1 overflow-y-auto">
         {conversations.length === 0 ? (
