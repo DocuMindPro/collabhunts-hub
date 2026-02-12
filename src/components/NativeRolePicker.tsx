@@ -139,7 +139,7 @@ export function NativeRolePicker({
           )}
         </div>
 
-        {/* Sign out */}
+      {/* Sign out */}
         <Button
           variant="ghost"
           className="mt-8 text-muted-foreground"
@@ -148,6 +148,8 @@ export function NativeRolePicker({
           <LogOut className="h-4 w-4 mr-2" />
           Sign Out
         </Button>
+
+        <p className="mt-4 text-xs text-muted-foreground/60">v1.0.0 (build 1)</p>
       </div>
     </div>
   );
