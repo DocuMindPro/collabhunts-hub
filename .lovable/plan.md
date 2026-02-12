@@ -1,78 +1,53 @@
 
 
-## Fix Support Widget Issues and Add Intake Form
+## Add Native Brand Registration to the Mobile App
 
-### Problems to Fix
-
-1. **Duplicate messages**: The chat shows each message twice because both the realtime subscription AND the optimistic insert in `handleSend` add the same message. The realtime listener fires for the user's own messages too.
-
-2. **Missing user context for admin**: Admin only sees name and email but not whether the user is a brand or creator, and has no context about their issue.
-
-3. **No intake form**: Messages go straight through without gathering context first.
-
----
+### Current Problem
+When a user without a brand profile taps "Brand / Venue" in the role picker, they see a grayed-out card saying "Register on the website first." This is a poor mobile experience -- users should be able to register as a brand directly in the app.
 
 ### Solution
+Create a native brand signup and onboarding flow inside the app, following the same pattern used for creator onboarding (`NativeCreatorOnboarding`). This will be a multi-step wizard that combines Tier 1 (account creation) and Tier 2 (profile completion) into one smooth in-app flow.
 
-#### 1. Fix duplicate messages in SupportWidget
+### User Flow
 
-In `handleSend`, stop adding the message optimistically. Instead, let the realtime subscription handle all new messages. This means:
-- Remove the line that manually adds the message after insert
-- The realtime `INSERT` listener already handles adding new messages (including the user's own)
-- Also add a deduplication guard in the realtime handler (already exists but the optimistic add races with it)
+1. User taps "Brand / Venue" card (currently grayed out) in the role picker
+2. App shows a native brand registration wizard with these steps:
+   - **Step 1 - Account Info**: First name, last name, email, password, terms checkbox
+   - **Step 2 - Company Basics**: Company name, position/title, industry, company size
+   - **Step 3 - Location**: Country selector, business address
+   - **Step 4 - Logo and Social Media**: Logo upload, Facebook/Instagram/TikTok URLs
+3. On submit: creates auth account, creates brand_profiles row with `registration_completed = true`
+4. App auto-selects brand role and enters the brand dashboard
 
-#### 2. Add intake form before first message
+### Files to Create
 
-When there's no existing ticket, show a short intake form instead of a direct text input:
-- **Category** dropdown: "Booking Issue", "Payment Issue", "Account Problem", "Technical Bug", "Partnership Question", "Other"
-- **Describe your issue** text area
+**`src/pages/NativeBrandOnboarding.tsx`**
+- A full-screen, mobile-optimized multi-step wizard (similar to NativeCreatorOnboarding)
+- Steps with progress bar at top, back/next navigation
+- Handles both signup (auth.signUp) and profile creation (brand_profiles insert)
+- Sets `registration_completed: true` since all data is collected in one flow
+- Props: `user: User | null` (null = new signup, non-null = existing user adding brand role), `onComplete` callback
 
-When submitted, this creates the ticket with the category as subject, and the description as the first message. After the ticket is created, the widget switches to the normal chat view.
+### Files to Modify
 
-#### 3. Add user context to support tickets (database change)
+**`src/components/NativeRolePicker.tsx`**
+- Make the "Brand / Venue" card clickable (remove opacity/disabled state)
+- Change text from "Register on the website first" to "Set up your brand profile"
+- Add `onStartBrandOnboarding` callback prop (same pattern as `onStartCreatorOnboarding`)
 
-Add a `category` column to `support_tickets` so admin can see the issue type at a glance. Also store `user_type` from profiles for quick identification.
-
-**Migration:**
-```sql
-ALTER TABLE public.support_tickets 
-  ADD COLUMN category text DEFAULT 'other',
-  ADD COLUMN user_type text;
-```
-
-#### 4. Enrich admin view with user type
-
-In `AdminSupportTab`, fetch `user_type` from profiles and display it as a badge (Brand/Creator) next to the user name. Also show the ticket category.
-
----
-
-### Files to Change
-
-**Database:**
-- New migration adding `category` and `user_type` columns to `support_tickets`
-
-**Modified files:**
-- **`src/components/SupportWidget.tsx`**
-  - Remove optimistic message insert (fixes duplication)
-  - Add intake form state: when no ticket exists, show category selector + description field
-  - On submit, create ticket with category/user_type, then send first message
-  - After ticket created, switch to normal chat mode
-
-- **`src/components/admin/AdminSupportTab.tsx`**
-  - Fetch `user_type` from profiles alongside existing data
-  - Display user type badge (Brand/Creator) in ticket list and detail view
-  - Show ticket category as a tag
+**`src/components/NativeAppGate.tsx`**
+- Add `showBrandOnboarding` state (mirrors existing `showOnboarding` for creators)
+- Import and render `NativeBrandOnboarding` when active
+- Add `handleBrandOnboardingComplete` callback that refetches profiles and auto-selects brand role
+- Pass `onStartBrandOnboarding` to NativeRolePicker
 
 ### Technical Details
 
-**Intake form flow in SupportWidget:**
-1. User clicks support bubble
-2. No existing ticket found -> show intake form with category dropdown and text area
-3. User fills form and clicks "Submit"
-4. System creates ticket (with category, user_type from their profile) and first message
-5. Widget switches to chat view for follow-up conversation
+- The wizard reuses existing components: `Input`, `Select`, `CountrySelect`, `ProfileAvatar`, `Progress`
+- Logo upload uses the same `brand-logos` storage bucket pattern from the web onboarding
+- For new users (no auth account yet): Step 1 creates the account via `supabase.auth.signUp`, then subsequent steps build the profile
+- For existing users (already logged in but no brand profile): skips Step 1 and goes straight to company basics
+- Affiliate referral tracking is preserved (checks localStorage for `affiliate_referral_code`)
+- Social media fields use the same Facebook/Instagram/TikTok pattern as the web version
+- No phone verification in native flow (can be done later in the Account tab, matching the existing web behavior where phone is optional during signup when testing mode is on)
 
-**Duplicate fix:**
-- In `handleSend`, after successful insert, only clear the input -- do not add the message to state
-- The realtime subscription's `INSERT` handler will add it
-- Keep the existing dedup check in the realtime handler as a safety net
