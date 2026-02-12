@@ -146,9 +146,26 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
 
           // Auto-select role if only one profile exists
           if (mounted) {
-            if (creator && !brand) setSelectedRole('creator');
-            else if (brand && !creator) setSelectedRole('brand');
-            // If both or neither, user will pick via NativeRolePicker
+            if (creator && !brand) {
+              setSelectedRole('creator');
+            } else if (brand && !creator) {
+              setSelectedRole('brand');
+            } else if (!creator && !brand) {
+              const userType = session?.user?.user_metadata?.user_type;
+              // Retry after delay to catch profile insert race condition
+              setTimeout(async () => {
+                if (!mounted) return;
+                const retried = await refetchProfiles(session.user.id);
+                if (retried.brand && !retried.creator) {
+                  setSelectedRole('brand');
+                } else if (retried.creator && !retried.brand) {
+                  setSelectedRole('creator');
+                } else if (!retried.brand && !retried.creator) {
+                  if (userType === 'brand') setShowBrandOnboarding(true);
+                  else if (userType === 'creator') setShowOnboarding(true);
+                }
+              }, 1500);
+            }
           }
         }
       }
@@ -171,6 +188,10 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
       setSelectedRole('creator');
     } else if (brandProfile && !creatorProfile) {
       setSelectedRole('brand');
+    } else if (!creatorProfile && !brandProfile && user) {
+      const userType = user.user_metadata?.user_type;
+      if (userType === 'brand') setShowBrandOnboarding(true);
+      else if (userType === 'creator') setShowOnboarding(true);
     }
   }, [isLoading, user, creatorProfile, brandProfile, selectedRole]);
 
