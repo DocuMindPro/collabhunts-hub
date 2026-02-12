@@ -1,24 +1,38 @@
 
 
-## Clean Up Native Login Screen Branding
+## Add Android Permissions for Camera, Storage, and Media
 
-Remove the redundant "CollabHunts" text heading and the "Creators & Brands" tagline from the sign-in screen, keeping only the logo (which already represents the app identity).
+### Problem
+The app crashes with "Camera error" when users try to upload profile photos because the Android manifest lacks the required permissions.
 
 ### Change
 
-**File: `src/pages/NativeLogin.tsx`**
+**File: `.github/workflows/build-android.yml`**
 
-On the sign-in view (lines 461-462), remove these two lines:
+Add a new step after "Sync Capacitor" (line 89) and before "Verify icon generation" that injects all necessary permissions into the AndroidManifest.xml:
+
+```yaml
+- name: Add Android permissions
+  run: |
+    sed -i '/<uses-permission android:name="android.permission.INTERNET" \/>/a \
+        <uses-permission android:name="android.permission.CAMERA" \/>\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" \/>\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" \/>\n    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" \/>\n    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" \/>\n    <uses-permission android:name="android.permission.VIBRATE" \/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" \/>\n    <uses-feature android:name="android.hardware.camera" android:required="false" \/>' android/app/src/main/AndroidManifest.xml
 ```
-<h1 className="text-2xl font-bold text-foreground mb-1">CollabHunts</h1>
-<p className="text-muted-foreground mb-8">Creators & Brands</p>
-```
 
-And adjust the logo's bottom margin from `mb-8` to `mb-10` (line 458-460) so spacing still looks good without the text.
+### Permissions being added
 
-### Technical Details
+| Permission | Purpose |
+|---|---|
+| CAMERA | Take profile photos directly |
+| READ_EXTERNAL_STORAGE | Pick photos from gallery (Android 12 and below) |
+| WRITE_EXTERNAL_STORAGE | Save captured photos temporarily |
+| READ_MEDIA_IMAGES | Pick photos from gallery (Android 13+) |
+| READ_MEDIA_VIDEO | Pick videos from gallery (Android 13+) |
+| VIBRATE | Haptic feedback for notifications |
+| RECEIVE_BOOT_COMPLETED | Resume push notification listener after reboot |
+| camera hardware feature (required=false) | Declares camera usage without blocking install on devices without cameras |
 
-- **File modified**: `src/pages/NativeLogin.tsx`
-- Lines 458-462 updated: remove the `h1` and `p` elements, adjust `NativeAppLogo` wrapper margin
-- No other screens affected -- the role-select and signup views don't have this duplicate text
+### Files Modified
+- `.github/workflows/build-android.yml` -- one new step added
+
+Once merged, the next GitHub Actions build will produce an APK that automatically prompts users for camera/storage permissions when needed.
 
