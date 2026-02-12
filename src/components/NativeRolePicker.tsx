@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Mic2, Building2, LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { NativeAppLogo } from '@/components/NativeAppLogo';
 
 interface CreatorProfile {
   id: string;
@@ -51,9 +52,7 @@ export function NativeRolePicker({
       <div className="flex-1 flex flex-col items-center justify-center p-6">
         {/* App Logo */}
         <div className="mb-6">
-          <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-            <span className="text-3xl font-bold text-primary-foreground">CH</span>
-          </div>
+          <NativeAppLogo size="md" />
         </div>
 
         <h1 className="text-2xl font-bold text-foreground mb-2">
