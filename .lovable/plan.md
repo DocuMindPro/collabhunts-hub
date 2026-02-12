@@ -1,80 +1,50 @@
 
 
-## Smart App Download Banner + App-Exclusive Feature Highlights
+## Add Native App Logo to Admin Branding + Use It in App Screens
 
-This plan adds two features: a non-intrusive smart banner on the mobile web experience encouraging app downloads, and visible "app-exclusive" badges/messaging throughout the web to incentivize installs.
+The native app currently shows a hardcoded orange "CH" placeholder instead of the actual Collab Hunts logo. This plan adds a new "Native App Logo" upload slot to the admin Branding Assets page and updates all native app screens to display it.
 
 ---
 
-### 1. Smart App Download Banner Component
+### What Changes
 
-**New file: `src/components/SmartAppBanner.tsx`**
+#### 1. Add "Native App Logo" asset to Admin Branding page (`src/components/admin/AdminBrandingSeoTab.tsx`)
 
-A sticky banner that appears at the top of the page on **mobile web browsers only** (not on desktop, not inside the native app). It will:
+Add a new entry to the `ASSET_CONFIGS` array:
+- **Key**: `native_app_logo_url`
+- **Label**: "Native App Logo"
+- **Description**: "Logo shown on the mobile app login and role screens"
+- **Dimensions**: "Recommended: 512x512px, PNG (square, with rounded corners)"
+- **Accept**: `image/png,image/jpeg,image/svg+xml`
+- **Icon**: Smartphone icon
 
-- Show the app icon, app name ("Collab Hunts"), a short tagline, and a "Get the App" button linking to `/download`
-- Be dismissible with an X button (stores dismissal in localStorage for 7 days so it does not annoy users)
-- Only render when: viewport is mobile (`useIsMobile`), NOT a native Capacitor platform, and not already dismissed
-- Styled as a compact top bar (similar to iOS/Android smart banners) with the app's orange brand color
+This will automatically give it the same upload/replace/remove/preview functionality as the other branding assets.
 
-**Layout:**
-```
-[App Icon] Collab Hunts          [Get the App] [X]
-           Better on the app
-```
+#### 2. Create a reusable `NativeAppLogo` component (`src/components/NativeAppLogo.tsx`)
 
-### 2. Add Banner to App Layout
+A small component that:
+- Fetches `native_app_logo_url` from `site_settings` (with fallback to `logo_icon_url`)
+- Shows the uploaded logo image if available
+- Falls back to the orange "CH" placeholder if no logo is configured
+- Accepts `size` prop for consistent sizing across screens
 
-**File: `src/App.tsx`**
+#### 3. Update native screens to use `NativeAppLogo`
 
-- Import and render `SmartAppBanner` inside the web routes section, above the page content (only for `!isNativePlatform`)
-
-### 3. App-Exclusive Feature Highlights on Web
-
-**File: `src/pages/Download.tsx`**
-
-Update the "Why Use the App?" benefits section to emphasize exclusive features:
-
-- Replace generic benefits with specific app-exclusive perks:
-  - **Instant Push Notifications**: "Get notified instantly when you receive new bookings, messages, or opportunity matches -- only on the app"
-  - **Real-Time Messaging**: "Faster, smoother chat experience with typing indicators and instant delivery"
-  - **Offline Access**: "Browse creator profiles and manage your dashboard even without internet"
-  - **One-Tap Actions**: "Accept bookings, respond to messages, and manage your profile with quick native controls"
-- Add an "App Exclusive" badge/label next to push notifications and real-time messaging features
-
-### 4. App-Exclusive Badges in Dashboard (Web)
-
-**Files: `src/components/creator-dashboard/MessagesTab.tsx` and `src/components/brand-dashboard/BrandMessagesTab.tsx`**
-
-- Add a small subtle banner at the top of the messages tab on mobile web: "Get instant message notifications on the app" with a link to `/download`. This only shows on mobile web (not desktop, not native).
+Replace the hardcoded orange "CH" box in three places:
+- **`src/pages/NativeLogin.tsx`** -- sign-in view (line 458), role-select view (line 534)
+- **`src/components/NativeRolePicker.tsx`** -- top logo area (line 54)
 
 ---
 
 ### Technical Details
 
-**SmartAppBanner component logic:**
-```typescript
-// Only show on mobile web
-const isMobile = useIsMobile();
-const isNative = Capacitor.isNativePlatform();
-const [dismissed, setDismissed] = useState(false);
-
-useEffect(() => {
-  const dismissedAt = localStorage.getItem('app_banner_dismissed');
-  if (dismissedAt) {
-    const days = (Date.now() - parseInt(dismissedAt)) / (1000 * 60 * 60 * 24);
-    if (days < 7) setDismissed(true);
-  }
-}, []);
-
-if (!isMobile || isNative || dismissed) return null;
-```
+**New site_settings key**: `native_app_logo_url` -- the `upload-site-asset` edge function already handles arbitrary asset types via the `assetType` and `settingKey` form fields, so no backend changes are needed.
 
 **Files to create:**
-1. `src/components/SmartAppBanner.tsx` -- New smart banner component
+- `src/components/NativeAppLogo.tsx`
 
 **Files to modify:**
-1. `src/App.tsx` -- Add SmartAppBanner to web routes
-2. `src/pages/Download.tsx` -- Update benefits with app-exclusive highlights
-3. `src/components/creator-dashboard/MessagesTab.tsx` -- Add "get the app" nudge on mobile web
-4. `src/components/brand-dashboard/BrandMessagesTab.tsx` -- Add "get the app" nudge on mobile web
+- `src/components/admin/AdminBrandingSeoTab.tsx` -- add entry to ASSET_CONFIGS
+- `src/pages/NativeLogin.tsx` -- replace 2 hardcoded logo blocks with `<NativeAppLogo />`
+- `src/components/NativeRolePicker.tsx` -- replace 1 hardcoded logo block with `<NativeAppLogo />`
+
