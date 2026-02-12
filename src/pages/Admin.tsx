@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, Database, FlaskConical, Phone, X, BookOpen, BadgeCheck, ImageIcon, MapPin, CalendarDays, Crown, Briefcase, MessageSquareHeart } from "lucide-react";
+import { CheckCircle, XCircle, Eye, TrendingUp, DollarSign, Users, Building2, Palette, Search, KeyRound, Database, FlaskConical, Phone, X, BookOpen, BadgeCheck, ImageIcon, MapPin, CalendarDays, Crown, Briefcase, MessageSquareHeart, Headset } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import AdminTestingTab from "@/components/admin/AdminTestingTab";
 import AdminCreatorsTab from "@/components/admin/AdminCreatorsTab";
@@ -32,6 +32,7 @@ import AdminAnnouncementsTab from "@/components/admin/AdminAnnouncementsTab";
 import AdminCareersTab from "@/components/admin/AdminCareersTab";
 import AdminSubscriptionsTab from "@/components/admin/AdminSubscriptionsTab";
 import AdminFeedbacksTab from "@/components/admin/AdminFeedbacksTab";
+import AdminSupportTab from "@/components/admin/AdminSupportTab";
 import AdminQuickActions from "@/components/admin/AdminQuickActions";
 import { useAdminBadgeCounts } from "@/hooks/useAdminBadgeCounts";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -960,6 +961,15 @@ const Admin = () => {
                 <MessageSquareHeart className="h-4 w-4" />
                 <span className="hidden sm:inline">Feedbacks</span>
               </TabsTrigger>
+              <TabsTrigger value="support" className="gap-2 shrink-0">
+                <Headset className="h-4 w-4" />
+                <span className="hidden sm:inline">Support</span>
+                {getBadgeCount("support") > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
+                    {getBadgeCount("support")}
+                  </Badge>
+                )}
+              </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -1515,6 +1525,11 @@ const Admin = () => {
             {/* Feedbacks Tab */}
             <TabsContent value="feedbacks">
               <AdminFeedbacksTab />
+            </TabsContent>
+
+            {/* Support Tab */}
+            <TabsContent value="support">
+              <AdminSupportTab />
             </TabsContent>
           </Tabs>
         </div>

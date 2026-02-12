@@ -8,6 +8,7 @@ interface BadgeCounts {
   verifications: number;
   revenue: number;
   boostRequests: number;
+  support: number;
 }
 
 const EMPTY_COUNTS: BadgeCounts = {
@@ -17,6 +18,7 @@ const EMPTY_COUNTS: BadgeCounts = {
   verifications: 0,
   revenue: 0,
   boostRequests: 0,
+  support: 0,
 };
 
 type TabKey = keyof BadgeCounts;
@@ -37,6 +39,7 @@ export function useAdminBadgeCounts() {
         { count: franchisePayouts },
         { count: affiliatePayouts },
         { count: boostRequests },
+        { count: supportTickets },
       ] = await Promise.all([
         supabase.from("quotation_inquiries").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("creator_profiles").select("*", { count: "exact", head: true }).eq("status", "pending"),
@@ -45,6 +48,7 @@ export function useAdminBadgeCounts() {
         supabase.from("franchise_payout_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("affiliate_payout_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("boost_interest_requests").select("*", { count: "exact", head: true }).eq("seen_by_admin", false),
+        supabase.from("support_tickets").select("*", { count: "exact", head: true }).in("status", ["open", "in_progress"]),
       ]);
 
       setCounts({
@@ -54,6 +58,7 @@ export function useAdminBadgeCounts() {
         verifications: verifications || 0,
         revenue: (franchisePayouts || 0) + (affiliatePayouts || 0),
         boostRequests: boostRequests || 0,
+        support: supportTickets || 0,
       });
     } catch (error) {
       console.error("Error fetching admin badge counts:", error);
