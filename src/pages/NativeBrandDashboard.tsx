@@ -5,17 +5,35 @@ import BrandMessagesTab from "@/components/brand-dashboard/BrandMessagesTab";
 import BrandBookingsTab from "@/components/brand-dashboard/BrandBookingsTab";
 import NativeBrandNotifications from "@/components/mobile/NativeBrandNotifications";
 import NativeBrandSearch from "@/components/mobile/NativeBrandSearch";
+import NativeBrandHome from "@/components/mobile/NativeBrandHome";
 
 interface NativeBrandDashboardProps {
   brandName?: string;
 }
 
 const NativeBrandDashboard = ({ brandName }: NativeBrandDashboardProps) => {
-  const [searchParams] = useSearchParams();
-  const currentTab = searchParams.get("tab") || "messages";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentTab = searchParams.get("tab") || "home";
+
+  const handleTabChange = (tab: string) => {
+    setSearchParams({ tab });
+  };
+
+  const getTitle = () => {
+    switch (currentTab) {
+      case "home": return brandName || "Dashboard";
+      case "messages": return "Messages";
+      case "bookings": return "Bookings";
+      case "search": return "Find Creators";
+      case "notifications": return "Notifications";
+      default: return brandName || "Dashboard";
+    }
+  };
 
   const renderTab = () => {
     switch (currentTab) {
+      case "home":
+        return <NativeBrandHome brandName={brandName} onTabChange={handleTabChange} />;
       case "messages":
         return <BrandMessagesTab registrationCompleted />;
       case "bookings":
@@ -25,7 +43,7 @@ const NativeBrandDashboard = ({ brandName }: NativeBrandDashboardProps) => {
       case "search":
         return <NativeBrandSearch />;
       default:
-        return <BrandMessagesTab registrationCompleted />;
+        return <NativeBrandHome brandName={brandName} onTabChange={handleTabChange} />;
     }
   };
 
@@ -35,7 +53,7 @@ const NativeBrandDashboard = ({ brandName }: NativeBrandDashboardProps) => {
         {/* Header */}
         <div className="sticky top-0 z-40 bg-background border-b border-border px-4 py-3 safe-area-top">
           <h1 className="text-lg font-bold text-foreground truncate">
-            {brandName || "Brand Dashboard"}
+            {getTitle()}
           </h1>
         </div>
 
