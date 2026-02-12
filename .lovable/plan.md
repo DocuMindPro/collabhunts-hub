@@ -1,70 +1,79 @@
 
 
-## Improve Native Brand Experience: Login, Search, and Dashboard
+## Align Native App Signup Flows with Website
 
-This plan covers three major areas of improvement for brands using the mobile app.
+The native app currently has a generic login screen that only asks for email and password, then picks a role afterward. The website, however, collects role-specific information upfront (First Name, Last Name, Phone Verification, Terms acceptance for brands; Full Name, Phone, Terms for creators). This plan aligns both flows.
+
+---
+
+### Current Flow (App)
+1. Generic NativeLogin (email + password only)
+2. Role Picker (Creator or Brand)
+3. Role-specific onboarding wizard
+
+### New Flow (App - matching website)
+1. NativeLogin shows **Sign In** by default (for returning users)
+2. "Create one" switches to a **Role Selection** screen: "Join as Creator" or "Join as Brand"
+3. Selecting a role opens the **role-specific signup form** matching the website:
+   - **Brand**: First Name, Last Name, Email, Password, Phone Verification (optional/testing mode), Terms checkbox, then "Create Account"
+   - **Creator**: Full Name, Email, Password, Phone Verification, Terms checkbox, then "Continue" into the existing onboarding steps
+4. After account creation, flow continues into the existing onboarding wizards (NativeBrandOnboarding for company details, NativeCreatorOnboarding for profile setup)
 
 ---
 
-### 1. Enhanced Native Login (Confirm Password + Google Sign-In)
+### Changes
 
-**File: `src/pages/NativeLogin.tsx`**
+#### 1. Redesign NativeLogin signup mode (`src/pages/NativeLogin.tsx`)
 
-- Add a "Confirm Password" field that only appears in Sign Up mode. Validates that both passwords match before submitting.
-- Add a "Sign in with Google" button using the Lovable Cloud OAuth integration (`lovable.auth.signInWithOAuth("google")`). This requires first configuring social login via the tool, which generates the `src/integrations/lovable/` module.
-- Add a divider ("or") between Google sign-in and email/password form.
-- Phone sign-in is not natively supported by Lovable Cloud OAuth, so it won't be added here (the existing phone OTP flow on the web signup pages remains available).
+**When in Sign Up mode**, replace the simple email/password form with:
+- A role selection step first: two cards -- "Join as Creator" and "Join as Brand" (similar to NativeRolePicker's style)
+- Once role is selected, show the matching signup form:
 
-### 2. Overhauled Native Brand Search
+**Brand signup form** (matches `/brand-signup`):
+- First Name + Last Name (side by side)
+- Email
+- Password (min 8 chars)
+- Phone Verification section (optional/testing mode) with PhoneInput + Send Code + OTP verify
+- Checkbox: "I agree to the Terms of Service and the binding arbitration clause"
+- "Create Account" button
 
-**File: `src/components/mobile/NativeBrandSearch.tsx`**
+**Creator signup form** (matches `/creator-signup` step 1):
+- Full Name
+- Email
+- Password (min 8 chars)
+- Phone Verification section (optional/testing mode)
+- Checkbox: "I agree to the Terms of Service and the binding arbitration clause"
+- "Continue" button
 
-The current search is bare-bones -- just a text search with a flat list. This will be upgraded to a proper discovery experience:
+**Sign In mode** stays the same (email + password + Google).
 
-- **Category filter chips**: Horizontal scrollable row of category pills (Lifestyle, Fashion, Beauty, Travel, etc.) that filter results by category.
-- **Location filter**: A dropdown/select for filtering by city (using the existing Lebanese city data from `src/config/country-locations.ts`).
-- **Sort options**: Dropdown to sort by Rating, Featured, or Newest.
-- **Better creator cards**: Show avatar, name, category badge, location, rating stars, follower count from social accounts, and a "View Profile" button. Cards will be visually richer with proper spacing and borders.
-- **Empty state**: More helpful empty state with suggestions to try different filters.
-- **Result count**: Show "X creators found" at the top.
-- Increase the default fetch limit and add pagination or "Load more" button.
+#### 2. Update NativeLogin submit logic
 
-### 3. Richer Brand Dashboard with Overview Tab
+- **Brand signup**: Create auth user with `user_type: "brand"` metadata, create `brand_profiles` row with `first_name`, `last_name`, `phone_number`, `phone_verified`, `terms_accepted_at` (matching website's BrandSignup logic). After creation, the existing NativeBrandOnboarding handles company details.
+- **Creator signup**: Create auth user with `user_type: "creator"` metadata and store phone info. After creation, the existing NativeCreatorOnboarding handles the rest of the profile.
 
-**Files: `src/pages/NativeBrandDashboard.tsx`, `src/components/mobile/BrandBottomNav.tsx`**
+#### 3. Update NativeBrandOnboarding to skip account step for returning users
 
-Currently the brand lands on Messages with only 4 tabs. The experience needs a proper home/overview:
+The `NativeBrandOnboarding` already handles existing users (skips step 1). Since the new NativeLogin now handles account creation with all required fields, this should work seamlessly -- existing users go straight to company details.
 
-- **Add a "Home" tab** to `BrandBottomNav` (replacing the current default of Messages). This becomes the landing tab. The bottom nav becomes: Home, Messages, Bookings, Search (Alerts moved into Home as a section).
-- **Create `src/components/mobile/NativeBrandHome.tsx`**: A proper overview/home screen for brands containing:
-  - Welcome header with brand name
-  - Quick stats cards (unread messages, pending bookings, active opportunities)
-  - Recent notifications/alerts section (inline, replacing the dedicated Alerts tab)
-  - Quick action buttons: "Find Creators", "Post Opportunity", "View Bookings"
-  - A "Featured Creators" horizontal scroll carousel showing top creators
+#### 4. Update NativeCreatorOnboarding terms step
+
+Since terms are now accepted during signup (in NativeLogin), the onboarding's final terms step should either check if already accepted or still show it as a confirmation.
 
 ---
+
+### Files to Modify
+
+1. **`src/pages/NativeLogin.tsx`** -- Major rewrite of signup mode: add role selection, role-specific forms with all website fields (names, phone verification, terms), updated submit logic
+2. **`src/pages/NativeBrandOnboarding.tsx`** -- Minor: ensure it properly skips account step when user is already authenticated with a brand profile stub
+3. **`src/pages/NativeCreatorOnboarding.tsx`** -- Minor: handle pre-accepted terms from signup
 
 ### Technical Details
 
-**Google OAuth Setup:**
-- Will use the `configure-social-auth` tool to generate the Lovable integration module
-- Then import `lovable` from `@/integrations/lovable/index` in NativeLogin
-- Call `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })`
-
-**Search Improvements - Data Query:**
-```sql
--- The existing query will be enhanced to also fetch:
--- social_accounts (for follower counts)
--- services (for pricing info)
--- Filter by category, location_city
--- Order by is_featured desc, average_rating desc
-```
-
-**New/Modified Files:**
-1. `src/pages/NativeLogin.tsx` -- Add confirm password + Google sign-in
-2. `src/components/mobile/NativeBrandSearch.tsx` -- Full rewrite with filters and better cards
-3. `src/components/mobile/NativeBrandHome.tsx` -- New file: brand home/overview screen
-4. `src/components/mobile/BrandBottomNav.tsx` -- Update tabs (add Home, remove Alerts)
-5. `src/pages/NativeBrandDashboard.tsx` -- Add Home tab routing, update default tab
+- Import and use `PhoneInput` component (already exists at `src/components/PhoneInput.tsx`)
+- Import and use `useVerificationSettings` hook for phone verification mode
+- Use zod validation schemas matching the website (min 8 char password, min 2 char names, phone regex)
+- Terms link opens `/terms` in browser
+- Google Sign-In remains available in both sign-in and sign-up modes (via `lovable.auth.signInWithOAuth`)
+- Password minimum changed from 6 to 8 characters to match website
 
