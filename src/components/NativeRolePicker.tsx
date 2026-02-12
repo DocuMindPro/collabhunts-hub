@@ -23,6 +23,7 @@ interface NativeRolePickerProps {
   brandProfile: BrandProfile | null;
   onSelectRole: (role: 'creator' | 'brand') => void;
   onStartCreatorOnboarding: () => void;
+  onStartBrandOnboarding: () => void;
 }
 
 /**
@@ -35,6 +36,7 @@ export function NativeRolePicker({
   brandProfile,
   onSelectRole,
   onStartCreatorOnboarding,
+  onStartBrandOnboarding,
 }: NativeRolePickerProps) {
   const hasBoth = !!creatorProfile && !!brandProfile;
   const hasNeither = !creatorProfile && !brandProfile;
@@ -118,7 +120,10 @@ export function NativeRolePicker({
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-2 border-dashed opacity-70">
+            <Card
+              className="cursor-pointer border-2 border-dashed hover:border-primary transition-colors"
+              onClick={onStartBrandOnboarding}
+            >
               <CardContent className="flex items-center gap-4 p-5">
                 <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
                   <Building2 className="h-6 w-6 text-muted-foreground" />
@@ -126,7 +131,7 @@ export function NativeRolePicker({
                 <div className="flex-1">
                   <p className="font-semibold text-foreground">Brand / Venue</p>
                   <p className="text-sm text-muted-foreground">
-                    Register on the website first
+                    Set up your brand profile
                   </p>
                 </div>
               </CardContent>

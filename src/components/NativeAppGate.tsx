@@ -5,6 +5,7 @@ import { safeNativeAsync } from '@/lib/supabase-native';
 import NativeLoadingScreen from './NativeLoadingScreen';
 import NativeLogin from '@/pages/NativeLogin';
 import NativeCreatorOnboarding from '@/pages/NativeCreatorOnboarding';
+import NativeBrandOnboarding from '@/pages/NativeBrandOnboarding';
 import NativeRolePicker from './NativeRolePicker';
 
 interface CreatorProfile {
@@ -36,6 +37,7 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
   const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [selectedRole, setSelectedRole] = useState<NativeRole | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showBrandOnboarding, setShowBrandOnboarding] = useState(false);
 
   const refetchProfiles = useCallback(async (userId: string) => {
     const [creator, brand] = await Promise.all([
@@ -69,6 +71,16 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
     if (creator) {
       setSelectedRole('creator');
       setShowOnboarding(false);
+    }
+  }, [user, refetchProfiles]);
+
+  // After brand onboarding completes, refetch and auto-select brand
+  const handleBrandOnboardingComplete = useCallback(async () => {
+    if (!user) return;
+    const { brand } = await refetchProfiles(user.id);
+    if (brand) {
+      setSelectedRole('brand');
+      setShowBrandOnboarding(false);
     }
   }, [user, refetchProfiles]);
 
@@ -127,6 +139,7 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
           setBrandProfile(null);
           setSelectedRole(null);
           setShowOnboarding(false);
+          setShowBrandOnboarding(false);
         } else if (event === 'SIGNED_IN' && session?.user) {
           setUser(session.user);
           const { creator, brand } = await refetchProfiles(session.user.id);
@@ -169,6 +182,11 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
     return <NativeCreatorOnboarding user={user} onComplete={handleOnboardingComplete} />;
   }
 
+  // Show brand onboarding if user chose to create a brand profile
+  if (showBrandOnboarding) {
+    return <NativeBrandOnboarding user={user} onComplete={handleBrandOnboardingComplete} />;
+  }
+
   // Need role selection (both profiles, or neither)
   if (!selectedRole) {
     return (
@@ -178,6 +196,7 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
         brandProfile={brandProfile}
         onSelectRole={setSelectedRole}
         onStartCreatorOnboarding={() => setShowOnboarding(true)}
+        onStartBrandOnboarding={() => setShowBrandOnboarding(true)}
       />
     );
   }
