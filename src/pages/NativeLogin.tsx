@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import PhoneInput from '@/components/PhoneInput';
 import { useVerificationSettings } from '@/hooks/useVerificationSettings';
+import { NativeAppLogo } from '@/components/NativeAppLogo';
 
 // Validation schemas matching website
 const emailSchema = z.string().email("Invalid email address").max(255);
@@ -455,9 +456,7 @@ export function NativeLogin() {
       <div className="min-h-screen bg-background flex flex-col">
         <div className="flex-1 flex flex-col items-center justify-center p-6">
           <div className="mb-8">
-            <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-3xl font-bold text-primary-foreground">CH</span>
-            </div>
+            <NativeAppLogo size="md" />
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-1">CollabHunts</h1>
           <p className="text-muted-foreground mb-8">Creators & Brands</p>
@@ -531,9 +530,7 @@ export function NativeLogin() {
 
         <div className="flex-1 flex flex-col items-center justify-center p-6">
           <div className="mb-6">
-            <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-3xl font-bold text-primary-foreground">CH</span>
-            </div>
+            <NativeAppLogo size="md" />
           </div>
 
           <h1 className="text-2xl font-bold text-foreground mb-2">How will you use CollabHunts?</h1>

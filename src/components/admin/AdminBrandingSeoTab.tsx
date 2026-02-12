@@ -83,6 +83,14 @@ const ASSET_CONFIGS: AssetConfig[] = [
     accept: 'image/png,image/jpeg',
     icon: <Share2 className="h-5 w-5" />,
   },
+  {
+    key: 'native_app_logo_url',
+    label: 'Native App Logo',
+    description: 'Logo shown on the mobile app login and role screens',
+    dimensions: 'Recommended: 512x512px, PNG (square, with rounded corners)',
+    accept: 'image/png,image/jpeg,image/svg+xml',
+    icon: <Smartphone className="h-5 w-5" />,
+  },
 ];
 
 const AdminBrandingSeoTab = () => {
