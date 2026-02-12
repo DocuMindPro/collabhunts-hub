@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, HashRouter, Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import PageTransition from "./components/PageTransition";
+import SupportWidget from "./components/SupportWidget";
 import CookieConsent from "./components/CookieConsent";
 import useSiteSettings from "./hooks/useSiteSettings";
 import PushNotificationProvider from "./components/PushNotificationProvider";
@@ -266,8 +267,9 @@ const App = () => (
               <PageTransition>
                 {isNativePlatform ? <NativeAppRoutes /> : <WebAppRoutes />}
               </PageTransition>
-              {/* Only show cookie consent on web */}
+              {/* Only show cookie consent and support widget on web */}
               {!isNativePlatform && <CookieConsent />}
+              {!isNativePlatform && <SupportWidget />}
             </PushNotificationProvider>
           </Router>
         </TooltipProvider>
