@@ -455,11 +455,9 @@ export function NativeLogin() {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="mb-8">
+          <div className="mb-10">
             <NativeAppLogo size="md" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-1">CollabHunts</h1>
-          <p className="text-muted-foreground mb-8">Creators & Brands</p>
 
           <div className="w-full max-w-sm">
             <Button type="button" variant="outline" className="w-full h-12 text-base gap-3" onClick={handleGoogleSignIn} disabled={isGoogleLoading}>
