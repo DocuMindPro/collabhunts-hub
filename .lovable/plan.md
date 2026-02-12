@@ -1,117 +1,78 @@
 
 
-## Support Chat Widget -- Full Implementation Plan
+## Fix Support Widget Issues and Add Intake Form
 
-### How Professional Platforms Handle This
+### Problems to Fix
 
-Most SaaS platforms (Intercom, Zendesk, Crisp) use a **hybrid approach**:
-- A floating chat bubble (bottom-right corner)
-- Opens into a small chat window where users can type messages
-- Messages become "tickets" that support staff can reply to
-- If support is offline, the message is saved and the user gets an email reply
+1. **Duplicate messages**: The chat shows each message twice because both the realtime subscription AND the optimistic insert in `handleSend` add the same message. The realtime listener fires for the user's own messages too.
 
-This is exactly what we'll build -- a **built-in live chat + ticket system** native to your platform, no third-party needed.
+2. **Missing user context for admin**: Admin only sees name and email but not whether the user is a brand or creator, and has no context about their issue.
 
-### User Experience
+3. **No intake form**: Messages go straight through without gathering context first.
 
-**For Brands and Creators (logged-in users only):**
-1. A floating circle button appears bottom-right on every page (above the mobile bottom nav on mobile)
-2. Clicking it opens a chat panel with their conversation history
-3. They type a message -- it's instantly saved as a support ticket
-4. They see replies from admin in the same chat thread
-5. If they close and reopen, their full history is there
+---
 
-**For Admin:**
-- A new "Support" tab in the Admin dashboard
-- Shows all open/pending support conversations
-- Admin can reply directly in the chat thread
-- Can also mark tickets as resolved
-- Badge count shows unresolved tickets
+### Solution
 
-### Database Design
+#### 1. Fix duplicate messages in SupportWidget
 
-**New table: `support_tickets`**
-| Column | Type | Description |
-|---|---|---|
-| id | uuid | Primary key |
-| user_id | uuid | The user who opened the ticket (FK to auth.users) |
-| subject | text | Auto-generated from first message or category |
-| status | text | `open`, `in_progress`, `resolved`, `closed` |
-| priority | text | `low`, `medium`, `high` |
-| created_at | timestamptz | When opened |
-| resolved_at | timestamptz | When resolved |
+In `handleSend`, stop adding the message optimistically. Instead, let the realtime subscription handle all new messages. This means:
+- Remove the line that manually adds the message after insert
+- The realtime `INSERT` listener already handles adding new messages (including the user's own)
+- Also add a deduplication guard in the realtime handler (already exists but the optimistic add races with it)
 
-**New table: `support_messages`**
-| Column | Type | Description |
-|---|---|---|
-| id | uuid | Primary key |
-| ticket_id | uuid | FK to support_tickets |
-| sender_id | uuid | Who sent it (user or admin) |
-| content | text | Message text |
-| is_admin | boolean | Whether this message is from admin |
-| is_read | boolean | Read status |
-| created_at | timestamptz | Timestamp |
+#### 2. Add intake form before first message
 
-**RLS Policies:**
-- Users can only see their own tickets and messages
-- Admins can see all tickets and messages
-- Users can insert tickets and messages for their own tickets
-- Admins can insert messages and update ticket status
+When there's no existing ticket, show a short intake form instead of a direct text input:
+- **Category** dropdown: "Booking Issue", "Payment Issue", "Account Problem", "Technical Bug", "Partnership Question", "Other"
+- **Describe your issue** text area
 
-**Realtime:** Enable realtime on `support_messages` so both sides see replies instantly.
+When submitted, this creates the ticket with the category as subject, and the description as the first message. After the ticket is created, the widget switches to the normal chat view.
 
-### Files to Create
+#### 3. Add user context to support tickets (database change)
 
-1. **`src/components/SupportWidget.tsx`** -- The floating button + chat panel
-   - Floating circle button (bottom-right, z-50)
-   - On mobile: positioned above the bottom nav (bottom-20)
-   - Opens a slide-up panel with chat interface
-   - Shows previous messages, input field, send button
-   - Only renders for logged-in users
-   - Realtime subscription for new admin replies
+Add a `category` column to `support_tickets` so admin can see the issue type at a glance. Also store `user_type` from profiles for quick identification.
 
-2. **`src/components/admin/AdminSupportTab.tsx`** -- Admin support dashboard
-   - List of all tickets with status filters (open, in progress, resolved)
-   - Click a ticket to open the conversation
-   - Reply inline, change status, set priority
-   - Badge count for unresolved tickets
-   - Email notification option (uses existing email-utils)
+**Migration:**
+```sql
+ALTER TABLE public.support_tickets 
+  ADD COLUMN category text DEFAULT 'other',
+  ADD COLUMN user_type text;
+```
 
-### Files to Modify
+#### 4. Enrich admin view with user type
 
-3. **`src/App.tsx`** -- Add `SupportWidget` globally (after CookieConsent, only on web)
-4. **`src/pages/Admin.tsx`** -- Add "Support" tab with badge count
-5. **`src/hooks/useAdminBadgeCounts.ts`** -- Add open support ticket count
+In `AdminSupportTab`, fetch `user_type` from profiles and display it as a badge (Brand/Creator) next to the user name. Also show the ticket category.
+
+---
+
+### Files to Change
+
+**Database:**
+- New migration adding `category` and `user_type` columns to `support_tickets`
+
+**Modified files:**
+- **`src/components/SupportWidget.tsx`**
+  - Remove optimistic message insert (fixes duplication)
+  - Add intake form state: when no ticket exists, show category selector + description field
+  - On submit, create ticket with category/user_type, then send first message
+  - After ticket created, switch to normal chat mode
+
+- **`src/components/admin/AdminSupportTab.tsx`**
+  - Fetch `user_type` from profiles alongside existing data
+  - Display user type badge (Brand/Creator) in ticket list and detail view
+  - Show ticket category as a tag
 
 ### Technical Details
 
-- The widget uses a Sheet/Drawer pattern on mobile (slides up from bottom) and a fixed popover on desktop
-- Messages use optimistic updates (same pattern as `MessageDialog`)
-- Admin replies trigger an email notification to the user via `sendNotificationEmail`
-- The floating button shows an unread badge when admin has replied
-- On pages with bottom nav (native app), the button shifts up to avoid overlap
-- No new edge functions needed -- all handled via direct Supabase queries with RLS
+**Intake form flow in SupportWidget:**
+1. User clicks support bubble
+2. No existing ticket found -> show intake form with category dropdown and text area
+3. User fills form and clicks "Submit"
+4. System creates ticket (with category, user_type from their profile) and first message
+5. Widget switches to chat view for follow-up conversation
 
-### Visual Layout
-
-```text
-Desktop:                          Mobile:
-+---------------------------+     +------------------+
-|                           |     |                  |
-|       Page Content        |     |   Page Content   |
-|                           |     |                  |
-|                      [?]--+     |             [?]--+
-+---------------------------+     +--[nav bar]-------+
-
-When opened:
-+---------------------------+     +------------------+
-|                           |     | Support     [x]  |
-|       Page Content   +----|     |------------------|
-|                      |Chat|     | msg history      |
-|                      |hist|     |                  |
-|                      |    |     |                  |
-|                      |____|     | [type message..] |
-|                      |send|     +--[nav bar]-------+
-+---------------------------+
-```
-
+**Duplicate fix:**
+- In `handleSend`, after successful insert, only clear the input -- do not add the message to state
+- The realtime subscription's `INSERT` handler will add it
+- Keep the existing dedup check in the realtime handler as a safety net
