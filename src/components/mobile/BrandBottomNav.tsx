@@ -1,4 +1,4 @@
-import { MessageSquare, Calendar, Bell, Search } from "lucide-react";
+import { Home, MessageSquare, Calendar, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,16 +16,15 @@ interface TabConfig {
 }
 
 const tabs: TabConfig[] = [
+  { id: "home", icon: Home, label: "Home" },
   { id: "messages", icon: MessageSquare, label: "Messages" },
   { id: "bookings", icon: Calendar, label: "Bookings" },
-  { id: "notifications", icon: Bell, label: "Alerts" },
   { id: "search", icon: Search, label: "Search" },
 ];
 
 const BrandBottomNav = ({ activeTab, onTabChange }: BrandBottomNavProps) => {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingBookings, setPendingBookings] = useState(0);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
     fetchBadgeCounts();
@@ -45,7 +44,7 @@ const BrandBottomNav = ({ activeTab, onTabChange }: BrandBottomNavProps) => {
     const result = await safeNativeAsync(
       async () => {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return { unread: 0, pending: 0, notifications: 0 };
+        if (!user) return { unread: 0, pending: 0 };
 
         const { data: profile } = await supabase
           .from("brand_profiles")
@@ -53,13 +52,11 @@ const BrandBottomNav = ({ activeTab, onTabChange }: BrandBottomNavProps) => {
           .eq("user_id", user.id)
           .single();
 
-        if (!profile) return { unread: 0, pending: 0, notifications: 0 };
+        if (!profile) return { unread: 0, pending: 0 };
 
         let unread = 0;
         let pending = 0;
-        let notifications = 0;
 
-        // Unread messages
         const { data: conversations } = await supabase
           .from("conversations")
           .select("id")
@@ -76,7 +73,6 @@ const BrandBottomNav = ({ activeTab, onTabChange }: BrandBottomNavProps) => {
           unread = count || 0;
         }
 
-        // Pending bookings
         const { count: pendingCount } = await supabase
           .from("bookings")
           .select("*", { count: "exact", head: true })
@@ -84,30 +80,20 @@ const BrandBottomNav = ({ activeTab, onTabChange }: BrandBottomNavProps) => {
           .eq("status", "pending");
         pending = pendingCount || 0;
 
-        // Unread notifications
-        const { count: notifCount } = await supabase
-          .from("notifications")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .eq("read", false);
-        notifications = notifCount || 0;
-
-        return { unread, pending, notifications };
+        return { unread, pending };
       },
-      { unread: 0, pending: 0, notifications: 0 },
+      { unread: 0, pending: 0 },
       5000
     );
 
     setUnreadMessages(result.unread);
     setPendingBookings(result.pending);
-    setUnreadNotifications(result.notifications);
   };
 
   const getBadgeCount = (tabId: string): number => {
     switch (tabId) {
       case "messages": return unreadMessages;
       case "bookings": return pendingBookings;
-      case "notifications": return unreadNotifications;
       default: return 0;
     }
   };
