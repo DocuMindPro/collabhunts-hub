@@ -53,6 +53,9 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName 'Collab Hunts'" ios/App/App/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleName 'Collab Hunts'" ios/App/App/Info.plist
 
+      - name: Install CocoaPods
+        run: sudo gem install cocoapods
+
       - name: Sync Capacitor
         run: npx cap sync ios
 
