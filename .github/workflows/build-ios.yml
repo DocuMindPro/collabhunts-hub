@@ -55,8 +55,9 @@ jobs:
 
       - name: Set build number
         run: |
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" ios/App/App/Info.plist
-          echo "Build number set to: ${{ github.run_number }}"
+          BUILD_NUM=$(( ${{ github.run_number }} + 100 ))
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUM" ios/App/App/Info.plist
+          echo "Build number set to: $BUILD_NUM"
 
       - name: Sync Capacitor
         run: npx cap sync ios
