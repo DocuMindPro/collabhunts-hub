@@ -114,22 +114,35 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          cat > $RUNNER_TEMP/ExportOptions.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>teamID</key>
-            <string>${APPLE_TEAM_ID}</string>
-            <key>uploadSymbols</key>
-            <true/>
-            <key>destination</key>
-            <string>upload</string>
-          </dict>
-          </plist>
-          EOF
+          cat > $RUNNER_TEMP/ExportOptions.plist << 'PLISTEOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>method</key>
+  <string>app-store-connect</string>
+  <key>teamID</key>
+  <string>TEAM_PLACEHOLDER</string>
+  <key>signingStyle</key>
+  <string>manual</string>
+  <key>signingCertificate</key>
+  <string>Apple Distribution</string>
+  <key>provisioningProfiles</key>
+  <dict>
+    <key>app.lovable.f0d3858ae7f2489288d232504acaef78</key>
+    <string>PP_PLACEHOLDER</string>
+  </dict>
+  <key>uploadSymbols</key>
+  <true/>
+  <key>destination</key>
+  <string>upload</string>
+</dict>
+</plist>
+PLISTEOF
+
+          # Replace placeholders with actual values
+          sed -i "s|TEAM_PLACEHOLDER|$APPLE_TEAM_ID|g" $RUNNER_TEMP/ExportOptions.plist
+          sed -i "s|PP_PLACEHOLDER|$PP_NAME|g" $RUNNER_TEMP/ExportOptions.plist
 
           xcodebuild -exportArchive \
             -archivePath $RUNNER_TEMP/App.xcarchive \
