@@ -1,44 +1,39 @@
 
 
-## Fix: Switch iOS Build to Swift Package Manager (SPM)
+## Fix: Add Provisioning Profile Specifier to xcodebuild
+
+### What happened
+The SPM switch was successful -- the project was found and the build started. However, `xcodebuild` fails because it cannot find the provisioning profile to sign the app. Even though the profile is installed to `~/Library/MobileDevice/Provisioning Profiles/`, `xcodebuild` needs to be explicitly told which profile to use when `CODE_SIGN_STYLE=Manual`.
 
 ### Root Cause
-Capacitor 8 defaults to Swift Package Manager (SPM), not CocoaPods. SPM does not create a Podfile or .xcworkspace -- it uses .xcodeproj directly. The `--packagemanager CocoaPods` flag appears to be silently failing (possibly due to casing: the official docs show `Cocoapods` with lowercase 'p').
-
-Rather than continuing to fight CocoaPods compatibility, this plan switches the build to work with SPM, which is the default and officially supported approach for Capacitor 8.
+The `xcodebuild` command sets `CODE_SIGN_STYLE=Manual` but does not provide `PROVISIONING_PROFILE_SPECIFIER`. Without it, Xcode does not know which profile to apply to the "App" target.
 
 ### Changes to `.github/workflows/build-ios.yml`
 
-1. **Revert "Add iOS platform"** back to the default (no flag):
-   - `npx cap add ios` (SPM is the default in Cap 8)
+1. **Extract the provisioning profile name** after installing it (add to the existing certificate step):
+   ```yaml
+   PP_NAME=$(/usr/libexec/PlistBuddy -c "Print Name" /dev/stdin <<< $(/usr/bin/security cms -D -i $PP_PATH))
+   echo "PP_UUID=$PP_UUID" >> $GITHUB_ENV
+   echo "PP_NAME=$PP_NAME" >> $GITHUB_ENV
+   ```
 
-2. **Remove CocoaPods steps entirely**:
-   - Remove "Install CocoaPods" (`sudo gem install cocoapods`)
-   - Remove "Install CocoaPods dependencies" (`cd ios/App && pod install`)
+2. **Add `PROVISIONING_PROFILE_SPECIFIER` to the build command**:
+   ```yaml
+   xcodebuild -project App.xcodeproj \
+     -scheme App \
+     -sdk iphoneos \
+     -configuration Release \
+     -archivePath $RUNNER_TEMP/App.xcarchive \
+     archive \
+     DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+     CODE_SIGN_STYLE=Manual \
+     CODE_SIGN_IDENTITY="Apple Distribution" \
+     PROVISIONING_PROFILE_SPECIFIER="$PP_NAME" \
+     -allowProvisioningUpdates
+   ```
 
-3. **Update "Verify workspace exists"** to check for `.xcodeproj` instead:
-   - `ls ios/App/App.xcodeproj || (echo "ERROR: xcodeproj not found!" && exit 1)`
-
-4. **Update "Build archive"** to use `-project` instead of `-workspace`:
-   - From: `xcodebuild -workspace App.xcworkspace`
-   - To: `xcodebuild -project App.xcodeproj`
-
-### Updated workflow order (simplified):
-1. Checkout, setup Node, install deps, create .env
-2. Build web app
-3. Add iOS platform (SPM default)
-4. Setup icons and generate native assets
-5. Force app name in Info.plist
-6. Sync Capacitor
-7. Verify xcodeproj exists
-8. Install certificate and provisioning profile
-9. Build archive (using -project App.xcodeproj)
-10. Export IPA and upload to TestFlight
-11. Cleanup
-
-### Why this will work
-- Capacitor 8 creates the .xcodeproj by default with SPM
-- No dependency on CocoaPods at all
-- All Capacitor plugins (@capacitor/push-notifications, splash-screen, etc.) support SPM in v8
-- Fewer steps = fewer failure points
+### Why this fixes the error
+- `CODE_SIGN_STYLE=Manual` requires explicitly specifying the provisioning profile
+- By extracting the profile name during installation and passing it via `PROVISIONING_PROFILE_SPECIFIER`, Xcode can locate and apply the correct profile
+- No new secrets are needed -- the profile name is extracted from the already-configured `IOS_PROVISION_PROFILE_BASE64` secret
 
