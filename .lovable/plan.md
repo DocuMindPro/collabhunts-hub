@@ -1,34 +1,42 @@
 
 
-## Fix: "exportArchive Failed to Use Accounts" — Use Local Export Method
+## Fix: Upload to TestFlight — IPA File Not Found
 
-### Problem
-The `app-store-connect` export method forces Xcode to authenticate with Apple's servers during the export step itself. No amount of flags (`-allowProvisioningUpdates`) can bypass this — it's built into how that method works. Since the workflow already has a dedicated "Upload to TestFlight" step using `altool`, the export should just produce the IPA file locally.
+### What's happening now
+The Export IPA step is now **succeeding** (confirmed in your screenshot). The new failure is in "Upload to TestFlight" — it looks for `$RUNNER_TEMP/export/App.ipa` but the actual file has a different name (Xcode names it based on the scheme or display name, e.g., `Collab Hunts.ipa`).
 
 ### Solution
-Two changes in the ExportOptions.plist within `.github/workflows/build-ios.yml`:
+Replace the hardcoded `App.ipa` path with a dynamic lookup that finds the actual `.ipa` file in the export directory.
 
-1. **Change `method` from `app-store-connect` back to `app-store`** — This exports the IPA locally without trying to connect to Apple's servers. Yes, Apple shows a deprecation warning for this name, but it works correctly on CI and the separate `altool` upload handles the actual submission.
+### Changes to `.github/workflows/build-ios.yml`
 
-2. **Remove the `destination: upload` key** — This key tells Xcode to upload during export, which also requires account authentication. Since upload is handled separately, this key should be removed entirely.
+Update the "Upload to TestFlight" step (lines 151-160) to:
 
-### What stays the same
-- All signing configuration (`signingStyle`, `signingCertificate`, `provisioningProfiles`) remains unchanged
-- The separate "Upload to TestFlight" step using `altool` continues to handle the actual upload
-- No new secrets needed
-
-### Technical details
-
-In the "Export IPA" step, the plist changes from:
+```yaml
+      - name: Upload to TestFlight
+        env:
+          APPSTORE_CONNECT_USERNAME: ${{ secrets.APPSTORE_CONNECT_USERNAME }}
+          APPSTORE_CONNECT_PASSWORD: ${{ secrets.APPSTORE_CONNECT_PASSWORD }}
+        run: |
+          IPA_PATH=$(find $RUNNER_TEMP/export -name "*.ipa" | head -1)
+          echo "Found IPA at: $IPA_PATH"
+          if [ -z "$IPA_PATH" ]; then
+            echo "ERROR: No .ipa file found in $RUNNER_TEMP/export"
+            ls -la $RUNNER_TEMP/export/
+            exit 1
+          fi
+          xcrun altool --upload-app \
+            -f "$IPA_PATH" \
+            -t ios \
+            -u "$APPSTORE_CONNECT_USERNAME" \
+            -p "$APPSTORE_CONNECT_PASSWORD"
 ```
-method: app-store-connect
-destination: upload        <-- remove this
-```
-To:
-```
-method: app-store          <-- local export only
-(destination key removed)
-```
 
-The deprecation warning ("app-store" is deprecated, use "app-store-connect") will appear in logs but does not cause failure. This is the standard approach used by CI pipelines that separate export from upload.
+### What this does
+1. Searches the export directory for any `.ipa` file
+2. Prints the found path for debugging
+3. If no IPA is found, lists the directory contents (for debugging) and exits with an error
+4. Uses the discovered path for the upload
 
+### No new secrets or dependencies needed
+This is a single step update to handle the dynamic IPA filename.
