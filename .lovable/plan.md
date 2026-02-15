@@ -1,33 +1,38 @@
 
 
-## Fix: Explicitly Run `pod install` After Capacitor Sync
+## Fix: Force CocoaPods Package Manager for Capacitor 8
 
-### Problem
-CocoaPods is now installed (green check), and `cap sync` passes (green check), but the `.xcworkspace` is still not generated. `cap sync` is not triggering `pod install` on CI even though CocoaPods is available.
+### Root Cause
+Capacitor 8 defaults to **Swift Package Manager (SPM)** instead of CocoaPods. SPM does not create a `Podfile` or `App.xcworkspace`, which is why every attempt to run `pod install` fails with "No Podfile found" and the workspace verification also fails.
 
 ### Solution
-Add an explicit `pod install` step **after** `cap sync` and **before** workspace verification. This time it will work because:
-1. CocoaPods is already installed (step passes)
-2. `cap sync` has already created the `ios/App/Podfile` (step passes)
-3. We run `pod install` in the correct directory: `ios/App/`
+Force Capacitor to use CocoaPods by passing `--packagemanager CocoaPods` when adding the iOS platform. This ensures a `Podfile` and `App.xcworkspace` are generated as expected.
 
-### Change to `.github/workflows/build-ios.yml`
+### Changes to `.github/workflows/build-ios.yml`
 
-Insert a new step between "Sync Capacitor" and "Verify workspace exists":
+1. **Change "Add iOS platform" step** (line 34):
+   - From: `npx cap add ios`
+   - To: `npx cap add ios --packagemanager CocoaPods`
 
-```yaml
-- name: Install CocoaPods dependencies
-  run: |
-    cd ios/App
-    pod install
-```
+2. **Keep "Install CocoaPods"** step (before sync) -- still needed
+
+3. **Keep "Install CocoaPods dependencies"** step (after sync) -- will now work because a Podfile exists
+
+4. **Keep "Verify workspace exists"** -- will now pass because CocoaPods creates the workspace
 
 ### Updated workflow order:
-1. Install CocoaPods (gem install)
-2. Sync Capacitor (creates Podfile but skips pod install)
-3. **Install CocoaPods dependencies** (runs pod install in ios/App -- NEW)
-4. Verify workspace exists
-5. Install Apple certificate...
+1. Build web app
+2. Add iOS platform **with CocoaPods flag**
+3. Setup icons and assets
+4. Force app name in Info.plist
+5. Install CocoaPods (gem)
+6. Sync Capacitor
+7. Install CocoaPods dependencies (pod install)
+8. Verify workspace exists
+9. Install certificate, build, export, upload
 
-### Why this is different from before
-Our earlier attempt at `pod install` failed because CocoaPods wasn't installed yet. Now it is (step 1), and the Podfile exists after sync (step 2), so the explicit `pod install` in step 3 will succeed and generate the workspace.
+### Why this fixes everything
+- CocoaPods mode creates a `Podfile` during `cap add ios`
+- `pod install` finds the Podfile and generates `App.xcworkspace`
+- `xcodebuild -workspace App.xcworkspace` works as expected
+
