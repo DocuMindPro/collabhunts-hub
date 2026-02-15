@@ -1,36 +1,33 @@
 
 
-## Fix: Install CocoaPods BEFORE Capacitor Sync
+## Fix: Explicitly Run `pod install` After Capacitor Sync
 
 ### Problem
-`npx cap sync ios` internally tries to run `pod install`, but CocoaPods isn't available on the GitHub runner. It silently skips the pod step, so no `App.xcworkspace` is ever created.
+CocoaPods is now installed (green check), and `cap sync` passes (green check), but the `.xcworkspace` is still not generated. `cap sync` is not triggering `pod install` on CI even though CocoaPods is available.
 
-### Root Cause
-We've been trying to run CocoaPods **after** sync (wrong directory) or removing it entirely (no pods at all). The solution is to install CocoaPods **before** sync so that `cap sync` can use it.
+### Solution
+Add an explicit `pod install` step **after** `cap sync` and **before** workspace verification. This time it will work because:
+1. CocoaPods is already installed (step passes)
+2. `cap sync` has already created the `ios/App/Podfile` (step passes)
+3. We run `pod install` in the correct directory: `ios/App/`
 
-### Change
+### Change to `.github/workflows/build-ios.yml`
 
-**Update `.github/workflows/build-ios.yml`**
-
-Add a CocoaPods installation step **before** the "Sync Capacitor" step:
+Insert a new step between "Sync Capacitor" and "Verify workspace exists":
 
 ```yaml
-- name: Install CocoaPods
-  run: sudo gem install cocoapods
-
-- name: Sync Capacitor
-  run: npx cap sync ios
+- name: Install CocoaPods dependencies
+  run: |
+    cd ios/App
+    pod install
 ```
 
-`cap sync` will then detect CocoaPods on the PATH, run `pod install` in the correct directory (`ios/App`), and generate the workspace.
-
 ### Updated workflow order:
-1. Force app name in Info.plist
-2. **Install CocoaPods** (new -- ensures `cap sync` can find it)
-3. Sync Capacitor (now successfully runs pod install internally)
-4. Verify workspace exists (hard fail if missing)
+1. Install CocoaPods (gem install)
+2. Sync Capacitor (creates Podfile but skips pod install)
+3. **Install CocoaPods dependencies** (runs pod install in ios/App -- NEW)
+4. Verify workspace exists
 5. Install Apple certificate...
 
-### No Manual Action Required
-This change will auto-trigger the workflow when pushed.
-
+### Why this is different from before
+Our earlier attempt at `pod install` failed because CocoaPods wasn't installed yet. Now it is (step 1), and the Podfile exists after sync (step 2), so the explicit `pod install` in step 3 will succeed and generate the workspace.
