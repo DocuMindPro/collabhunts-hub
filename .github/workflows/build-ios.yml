@@ -31,7 +31,7 @@ jobs:
         run: npm run build
 
       - name: Add iOS platform
-        run: npx cap add ios --packagemanager CocoaPods
+        run: npx cap add ios
 
       - name: Setup icon assets
         run: |
@@ -53,20 +53,12 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName 'Collab Hunts'" ios/App/App/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleName 'Collab Hunts'" ios/App/App/Info.plist
 
-      - name: Install CocoaPods
-        run: sudo gem install cocoapods
-
       - name: Sync Capacitor
         run: npx cap sync ios
 
-      - name: Install CocoaPods dependencies
+      - name: Verify project exists
         run: |
-          cd ios/App
-          pod install
-
-      - name: Verify workspace exists
-        run: |
-          ls ios/App/App.xcworkspace || (echo "ERROR: xcworkspace not found!" && exit 1)
+          ls ios/App/App.xcodeproj || (echo "ERROR: xcodeproj not found!" && exit 1)
 
       - name: Install Apple certificate and provisioning profile
         env:
@@ -103,7 +95,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           cd ios/App
-          xcodebuild -workspace App.xcworkspace \
+          xcodebuild -project App.xcodeproj \
             -scheme App \
             -sdk iphoneos \
             -configuration Release \
