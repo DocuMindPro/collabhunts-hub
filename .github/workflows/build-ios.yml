@@ -56,19 +56,6 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
-      - name: Debug iOS directory
-        run: |
-          echo "=== ios/App contents ==="
-          ls -la ios/App/
-          echo "=== Podfile check ==="
-          cat ios/App/Podfile || echo "No Podfile found"
-
-      - name: Install CocoaPods dependencies
-        run: |
-          sudo gem install cocoapods
-          cd ios/App
-          pod install
-
       - name: Verify workspace exists
         run: |
           ls ios/App/App.xcworkspace || (echo "ERROR: xcworkspace not found!" && exit 1)
