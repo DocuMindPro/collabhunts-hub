@@ -1,28 +1,27 @@
 
 
-## Fix: iOS Build Number Conflict
+## Fix: Auto-Skip Export Compliance for iOS Builds
 
 ### Problem
-The `github.run_number` for the iOS workflow is currently `41`, but build version `41` was already uploaded to App Store Connect. Apple rejects any upload with a build number that's not strictly higher than the previous one.
+Every new TestFlight build gets stuck at "Missing Compliance" because Apple requires an export compliance declaration. You have to manually click "Manage" each time to proceed.
 
 ### Solution
-Add an offset to the build number calculation so it always exceeds any previously uploaded version. Using an offset of `100` will set the next build to `142` (41 + 100 + 1), safely above the existing `41`.
+Add `ITSAppUsesNonExemptEncryption = false` to the Info.plist during the CI build. This tells Apple your app does not use non-exempt encryption, so builds will automatically be approved for TestFlight without manual intervention.
 
-### Changes
+### Immediate Action (do this now)
+Click **"Manage"** next to build 143 in App Store Connect, answer **"No"** to the encryption question, and save. Build 143 will then appear in TestFlight.
+
+### CI Change (prevents this in the future)
 
 **File: `.github/workflows/build-ios.yml`**
 
-Update the "Set build number" step from:
+Add a new step after "Force app name in Info.plist" and before "Set build number":
+
 ```yaml
-/usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" ios/App/App/Info.plist
+- name: Set export compliance
+  run: |
+    /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" ios/App/App/Info.plist
 ```
 
-To:
-```yaml
-BUILD_NUM=$((  ${{ github.run_number }} + 100 ))
-/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUM" ios/App/App/Info.plist
-echo "Build number set to: $BUILD_NUM"
-```
-
-This ensures every future build number is well above `41` and will keep incrementing automatically.
+This single line ensures every future build skips the compliance hold automatically.
 
