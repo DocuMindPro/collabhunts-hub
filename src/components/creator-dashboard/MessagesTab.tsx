@@ -638,12 +638,15 @@ const MessagesTab = () => {
     );
   };
 
-  // Full-screen chat for native mobile platforms
+  // Native mobile layout - respects bottom nav
   if (isNative) {
     return (
       <div 
-        className="fixed inset-0 bg-background flex flex-col"
-        style={{ paddingBottom: keyboardHeight > 0 ? keyboardHeight : 80 }}
+        className="flex flex-col bg-background"
+        style={{ 
+          height: 'calc(100vh - 8rem)',
+          paddingBottom: keyboardHeight > 0 ? keyboardHeight : 0 
+        }}
       >
         {selectedConversation ? renderChatView() : renderConversationList()}
       </div>

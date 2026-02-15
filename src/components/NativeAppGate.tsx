@@ -12,6 +12,8 @@ interface CreatorProfile {
   id: string;
   display_name: string;
   status: string | null;
+  bio: string | null;
+  categories: string[] | null;
 }
 
 interface BrandProfile {
@@ -44,7 +46,7 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
       safeNativeAsync(async () => {
         const { data } = await supabase
           .from('creator_profiles')
-          .select('id, display_name, status')
+          .select('id, display_name, status, bio, categories')
           .eq('user_id', userId)
           .maybeSingle();
         return data;
@@ -147,9 +149,17 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
           // Auto-select role if only one profile exists
           if (mounted) {
             if (creator && !brand) {
-              setSelectedRole('creator');
+              if (isCreatorProfileComplete(creator)) {
+                setSelectedRole('creator');
+              } else {
+                setShowOnboarding(true);
+              }
             } else if (brand && !creator) {
-              setSelectedRole('brand');
+              if (brand.registration_completed) {
+                setSelectedRole('brand');
+              } else {
+                setShowBrandOnboarding(true);
+              }
             } else if (!creator && !brand) {
               const userType = session?.user?.user_metadata?.user_type;
               // Retry after delay to catch profile insert race condition
@@ -157,9 +167,11 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
                 if (!mounted) return;
                 const retried = await refetchProfiles(session.user.id);
                 if (retried.brand && !retried.creator) {
-                  setSelectedRole('brand');
+                  if (retried.brand.registration_completed) setSelectedRole('brand');
+                  else setShowBrandOnboarding(true);
                 } else if (retried.creator && !retried.brand) {
-                  setSelectedRole('creator');
+                  if (isCreatorProfileComplete(retried.creator)) setSelectedRole('creator');
+                  else setShowOnboarding(true);
                 } else if (!retried.brand && !retried.creator) {
                   if (userType === 'brand') setShowBrandOnboarding(true);
                   else if (userType === 'creator') setShowOnboarding(true);
@@ -179,15 +191,30 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
     };
   }, [refetchProfiles]);
 
+  // Helper to check if creator profile is complete enough to skip onboarding
+  const isCreatorProfileComplete = (profile: CreatorProfile) => {
+    return !!(profile.display_name && profile.bio && profile.categories && profile.categories.length > 0);
+  };
+
   // Auto-select role when profiles load (after initial check)
   useEffect(() => {
     if (isLoading || !user) return;
     if (selectedRole) return; // Already picked
 
     if (creatorProfile && !brandProfile) {
-      setSelectedRole('creator');
+      // Check if profile is actually complete
+      if (!isCreatorProfileComplete(creatorProfile)) {
+        setShowOnboarding(true);
+      } else {
+        setSelectedRole('creator');
+      }
     } else if (brandProfile && !creatorProfile) {
-      setSelectedRole('brand');
+      // Check if brand registration is complete
+      if (!brandProfile.registration_completed) {
+        setShowBrandOnboarding(true);
+      } else {
+        setSelectedRole('brand');
+      }
     } else if (!creatorProfile && !brandProfile && user) {
       const userType = user.user_metadata?.user_type;
       if (userType === 'brand') setShowBrandOnboarding(true);

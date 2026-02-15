@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Bell, Settings } from "lucide-react";
 import { BrandRegistrationContext } from "@/contexts/BrandRegistrationContext";
 import BrandMessagesTab from "@/components/brand-dashboard/BrandMessagesTab";
 import BrandBookingsTab from "@/components/brand-dashboard/BrandBookingsTab";
+import BrandAccountTab from "@/components/brand-dashboard/BrandAccountTab";
 import NativeBrandNotifications from "@/components/mobile/NativeBrandNotifications";
 import NativeBrandSearch from "@/components/mobile/NativeBrandSearch";
 import NativeBrandHome from "@/components/mobile/NativeBrandHome";
@@ -26,6 +28,7 @@ const NativeBrandDashboard = ({ brandName }: NativeBrandDashboardProps) => {
       case "bookings": return "Bookings";
       case "search": return "Find Creators";
       case "notifications": return "Notifications";
+      case "account": return "Account";
       default: return brandName || "Dashboard";
     }
   };
@@ -42,6 +45,8 @@ const NativeBrandDashboard = ({ brandName }: NativeBrandDashboardProps) => {
         return <NativeBrandNotifications />;
       case "search":
         return <NativeBrandSearch />;
+      case "account":
+        return <BrandAccountTab />;
       default:
         return <NativeBrandHome brandName={brandName} onTabChange={handleTabChange} />;
     }
@@ -52,9 +57,25 @@ const NativeBrandDashboard = ({ brandName }: NativeBrandDashboardProps) => {
       <div className="min-h-screen bg-background">
         {/* Header */}
         <div className="sticky top-0 z-40 bg-background border-b border-border px-4 py-3 safe-area-top">
-          <h1 className="text-lg font-bold text-foreground truncate">
-            {getTitle()}
-          </h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-lg font-bold text-foreground truncate">
+              {getTitle()}
+            </h1>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => handleTabChange("notifications")}
+                className="p-2 rounded-full hover:bg-muted transition-colors"
+              >
+                <Bell className="h-5 w-5 text-muted-foreground" />
+              </button>
+              <button
+                onClick={() => handleTabChange("account")}
+                className="p-2 rounded-full hover:bg-muted transition-colors"
+              >
+                <Settings className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Tab content */}
