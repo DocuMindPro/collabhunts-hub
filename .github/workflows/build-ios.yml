@@ -141,8 +141,8 @@ jobs:
           PLISTEOF
 
           # Replace placeholders with actual values
-          sed -i "s|TEAM_PLACEHOLDER|$APPLE_TEAM_ID|g" $RUNNER_TEMP/ExportOptions.plist
-          sed -i "s|PP_PLACEHOLDER|$PP_NAME|g" $RUNNER_TEMP/ExportOptions.plist
+          sed -i '' "s|TEAM_PLACEHOLDER|$APPLE_TEAM_ID|g" $RUNNER_TEMP/ExportOptions.plist
+          sed -i '' "s|PP_PLACEHOLDER|$PP_NAME|g" $RUNNER_TEMP/ExportOptions.plist
 
           xcodebuild -exportArchive \
             -archivePath $RUNNER_TEMP/App.xcarchive \
