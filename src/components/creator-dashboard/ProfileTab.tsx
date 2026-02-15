@@ -12,6 +12,7 @@ import { Loader2, Upload, X, Camera, Images, ImagePlus, Phone, CheckCircle, Shie
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Capacitor } from "@capacitor/core";
 import SocialAccountsSection from "./SocialAccountsSection";
 import PortfolioUploadSection from "./PortfolioUploadSection";
 import VerificationBadgeCard from "./VerificationBadgeCard";
@@ -281,8 +282,38 @@ const ProfileTab = () => {
     );
   }
 
+  const isNative = Capacitor.isNativePlatform();
+
   return (
     <>
+      {/* Quick Settings for native - visible at top */}
+      {isNative && (
+        <div className="rounded-lg border bg-card p-4 space-y-0 mb-4">
+          <h3 className="text-sm font-semibold mb-3">Quick Settings</h3>
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <Label htmlFor="native-open-invitations" className="text-sm font-medium">Open to Invitations</Label>
+              <p className="text-xs text-muted-foreground">Accept free collaborations</p>
+            </div>
+            <Switch id="native-open-invitations" checked={profile.open_to_invitations} onCheckedChange={handleOpenToInvitationsChange} />
+          </div>
+          <div className="flex items-center justify-between py-3 border-t">
+            <div>
+              <Label htmlFor="native-show-pricing" className="text-sm font-medium">Show Pricing</Label>
+              <p className="text-xs text-muted-foreground">Visible to all users</p>
+            </div>
+            <Switch id="native-show-pricing" checked={profile.show_pricing_to_public} onCheckedChange={(checked) => setProfile({ ...profile, show_pricing_to_public: checked })} />
+          </div>
+          <div className="flex items-center justify-between py-3 border-t">
+            <div>
+              <Label htmlFor="native-mass-messages" className="text-sm font-medium">Allow Mass Messages</Label>
+              <p className="text-xs text-muted-foreground">From brand outreach</p>
+            </div>
+            <Switch id="native-mass-messages" checked={profile.allow_mass_messages} onCheckedChange={(checked) => setProfile({ ...profile, allow_mass_messages: checked })} />
+          </div>
+        </div>
+      )}
+
       {/* Live Preview - what brands see */}
       <ProfilePreview
         creatorProfileId={profile.id}
