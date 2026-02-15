@@ -1,39 +1,66 @@
 
 
-## Fix: Add Provisioning Profile Specifier to xcodebuild
+## Fix: Export IPA Step — Update Method and Add Signing Info
 
 ### What happened
-The SPM switch was successful -- the project was found and the build started. However, `xcodebuild` fails because it cannot find the provisioning profile to sign the app. Even though the profile is installed to `~/Library/MobileDevice/Provisioning Profiles/`, `xcodebuild` needs to be explicitly told which profile to use when `CODE_SIGN_STYLE=Manual`.
+The build archive step now succeeds! The failure moved to "Export IPA" with two errors:
+- `Command line name "app-store" is deprecated. Use "app-store-connect" instead.`
+- `exportArchive Failed to Use Accounts`
 
-### Root Cause
-The `xcodebuild` command sets `CODE_SIGN_STYLE=Manual` but does not provide `PROVISIONING_PROFILE_SPECIFIER`. Without it, Xcode does not know which profile to apply to the "App" target.
+### Root Causes
+
+1. **Deprecated export method**: Apple renamed the export method from `app-store` to `app-store-connect` in recent Xcode versions.
+2. **Missing signing configuration in ExportOptions.plist**: When using `CODE_SIGN_STYLE=Manual`, the export plist must also specify the provisioning profile and signing certificate for the target.
+3. **Invalid XML**: The plist content has leading whitespace/indentation from the YAML heredoc, which can cause XML parsing issues.
 
 ### Changes to `.github/workflows/build-ios.yml`
 
-1. **Extract the provisioning profile name** after installing it (add to the existing certificate step):
-   ```yaml
-   PP_NAME=$(/usr/libexec/PlistBuddy -c "Print Name" /dev/stdin <<< $(/usr/bin/security cms -D -i $PP_PATH))
-   echo "PP_UUID=$PP_UUID" >> $GITHUB_ENV
-   echo "PP_NAME=$PP_NAME" >> $GITHUB_ENV
-   ```
+**Update the "Export IPA" step** with the following fixes:
 
-2. **Add `PROVISIONING_PROFILE_SPECIFIER` to the build command**:
-   ```yaml
-   xcodebuild -project App.xcodeproj \
-     -scheme App \
-     -sdk iphoneos \
-     -configuration Release \
-     -archivePath $RUNNER_TEMP/App.xcarchive \
-     archive \
-     DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-     CODE_SIGN_STYLE=Manual \
-     CODE_SIGN_IDENTITY="Apple Distribution" \
-     PROVISIONING_PROFILE_SPECIFIER="$PP_NAME" \
-     -allowProvisioningUpdates
-   ```
+1. Fix the heredoc indentation so the plist is valid XML (no leading spaces).
+2. Change `app-store` to `app-store-connect`.
+3. Add `signingStyle`, `signingCertificate`, and `provisioningProfiles` entries so Xcode knows how to sign the exported IPA.
 
-### Why this fixes the error
-- `CODE_SIGN_STYLE=Manual` requires explicitly specifying the provisioning profile
-- By extracting the profile name during installation and passing it via `PROVISIONING_PROFILE_SPECIFIER`, Xcode can locate and apply the correct profile
-- No new secrets are needed -- the profile name is extracted from the already-configured `IOS_PROVISION_PROFILE_BASE64` secret
+The updated ExportOptions.plist will look like:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>method</key>
+  <string>app-store-connect</string>
+  <key>teamID</key>
+  <string>${APPLE_TEAM_ID}</string>
+  <key>signingStyle</key>
+  <string>manual</string>
+  <key>signingCertificate</key>
+  <string>Apple Distribution</string>
+  <key>provisioningProfiles</key>
+  <dict>
+    <key>app.lovable.f0d3858ae7f2489288d232504acaef78</key>
+    <string>${PP_NAME}</string>
+  </dict>
+  <key>uploadSymbols</key>
+  <true/>
+  <key>destination</key>
+  <string>upload</string>
+</dict>
+</plist>
+```
+
+Key additions:
+- `method` changed from `app-store` to `app-store-connect`
+- `signingStyle` set to `manual` to match the build
+- `signingCertificate` set to `Apple Distribution`
+- `provisioningProfiles` maps the app bundle ID to the profile name (extracted earlier as `$PP_NAME`)
+
+### No new secrets required
+All values are derived from existing secrets and environment variables already in the workflow.
+
+### Technical details
+- The bundle ID `app.lovable.f0d3858ae7f2489288d232504acaef78` comes from the Capacitor config
+- `PP_NAME` is already extracted and stored in `$GITHUB_ENV` from the certificate installation step
+- The heredoc will use unindented content to produce valid XML
 
