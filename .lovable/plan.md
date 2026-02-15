@@ -1,31 +1,35 @@
 
 
-## Fix: Remove Failing CocoaPods Step (It's Already Handled)
+## Fix: Install CocoaPods BEFORE Capacitor Sync
 
 ### Problem
-The "Install CocoaPods dependencies" step fails with "No Podfile found" — but the "Sync Capacitor" step (which passed successfully) already runs `pod install` internally. The workspace should already exist after sync completes.
+`npx cap sync ios` internally tries to run `pod install`, but CocoaPods isn't available on the GitHub runner. It silently skips the pod step, so no `App.xcworkspace` is ever created.
 
 ### Root Cause
-`npx cap sync ios` handles CocoaPods automatically. Adding an explicit `pod install` step after it is redundant and fails because the working directory resolution differs.
+We've been trying to run CocoaPods **after** sync (wrong directory) or removing it entirely (no pods at all). The solution is to install CocoaPods **before** sync so that `cap sync` can use it.
 
 ### Change
 
 **Update `.github/workflows/build-ios.yml`**
 
-Remove these two steps:
-- "Debug iOS directory" (no longer needed)
-- "Install CocoaPods dependencies" (redundant, causes failure)
+Add a CocoaPods installation step **before** the "Sync Capacitor" step:
 
-Keep the "Verify workspace exists" step to confirm the workspace was created by `cap sync`.
+```yaml
+- name: Install CocoaPods
+  run: sudo gem install cocoapods
 
-### Updated workflow order (after sync):
-1. Sync Capacitor (runs pod install internally)
-2. Verify workspace exists (hard fail if missing)
-3. Install Apple certificate...
-4. Build archive...
+- name: Sync Capacitor
+  run: npx cap sync ios
+```
 
-### Technical Detail
-Lines 59-70 will be removed. The workflow goes directly from "Sync Capacitor" to "Verify workspace exists."
+`cap sync` will then detect CocoaPods on the PATH, run `pod install` in the correct directory (`ios/App`), and generate the workspace.
+
+### Updated workflow order:
+1. Force app name in Info.plist
+2. **Install CocoaPods** (new -- ensures `cap sync` can find it)
+3. Sync Capacitor (now successfully runs pod install internally)
+4. Verify workspace exists (hard fail if missing)
+5. Install Apple certificate...
 
 ### No Manual Action Required
 This change will auto-trigger the workflow when pushed.
