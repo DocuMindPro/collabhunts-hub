@@ -1,30 +1,34 @@
 
 
-## Fix: "exportArchive Failed to Use Accounts" in Export IPA
+## Fix: "exportArchive Failed to Use Accounts" — Use Local Export Method
 
 ### Problem
-The `xcodebuild -exportArchive` command with method `app-store-connect` attempts to communicate with Apple servers to validate the export. Since there are no Xcode accounts registered on the GitHub Actions runner, this fails with "Failed to Use Accounts".
+The `app-store-connect` export method forces Xcode to authenticate with Apple's servers during the export step itself. No amount of flags (`-allowProvisioningUpdates`) can bypass this — it's built into how that method works. Since the workflow already has a dedicated "Upload to TestFlight" step using `altool`, the export should just produce the IPA file locally.
 
 ### Solution
-Add `-allowProvisioningUpdates` to the `xcodebuild -exportArchive` command. This tells Xcode to use the locally installed provisioning profiles and certificates without requiring an authenticated Xcode account.
+Two changes in the ExportOptions.plist within `.github/workflows/build-ios.yml`:
 
-### Changes to `.github/workflows/build-ios.yml`
+1. **Change `method` from `app-store-connect` back to `app-store`** — This exports the IPA locally without trying to connect to Apple's servers. Yes, Apple shows a deprecation warning for this name, but it works correctly on CI and the separate `altool` upload handles the actual submission.
 
-Update the `xcodebuild -exportArchive` command (around line 147) to include `-allowProvisioningUpdates`:
+2. **Remove the `destination: upload` key** — This key tells Xcode to upload during export, which also requires account authentication. Since upload is handled separately, this key should be removed entirely.
 
-```yaml
-          xcodebuild -exportArchive \
-            -archivePath $RUNNER_TEMP/App.xcarchive \
-            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
-            -exportPath $RUNNER_TEMP/export \
-            -allowProvisioningUpdates
+### What stays the same
+- All signing configuration (`signingStyle`, `signingCertificate`, `provisioningProfiles`) remains unchanged
+- The separate "Upload to TestFlight" step using `altool` continues to handle the actual upload
+- No new secrets needed
+
+### Technical details
+
+In the "Export IPA" step, the plist changes from:
+```
+method: app-store-connect
+destination: upload        <-- remove this
+```
+To:
+```
+method: app-store          <-- local export only
+(destination key removed)
 ```
 
-### Why this fixes it
-- The archive step already has `-allowProvisioningUpdates` and succeeds
-- The export step was missing this flag, causing Xcode to attempt account-based verification
-- With this flag, Xcode uses the locally installed certificate and provisioning profile without needing a registered account
-
-### No new secrets or dependencies needed
-This is a single flag addition to the existing command.
+The deprecation warning ("app-store" is deprecated, use "app-store-connect") will appear in logs but does not cause failure. This is the standard approach used by CI pipelines that separate export from upload.
 
