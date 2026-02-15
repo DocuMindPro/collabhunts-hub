@@ -153,8 +153,15 @@ jobs:
           APPSTORE_CONNECT_USERNAME: ${{ secrets.APPSTORE_CONNECT_USERNAME }}
           APPSTORE_CONNECT_PASSWORD: ${{ secrets.APPSTORE_CONNECT_PASSWORD }}
         run: |
+          IPA_PATH=$(find $RUNNER_TEMP/export -name "*.ipa" | head -1)
+          echo "Found IPA at: $IPA_PATH"
+          if [ -z "$IPA_PATH" ]; then
+            echo "ERROR: No .ipa file found in $RUNNER_TEMP/export"
+            ls -la $RUNNER_TEMP/export/
+            exit 1
+          fi
           xcrun altool --upload-app \
-            -f $RUNNER_TEMP/export/App.ipa \
+            -f "$IPA_PATH" \
             -t ios \
             -u "$APPSTORE_CONNECT_USERNAME" \
             -p "$APPSTORE_CONNECT_PASSWORD"
