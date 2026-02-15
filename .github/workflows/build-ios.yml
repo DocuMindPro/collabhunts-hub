@@ -31,7 +31,7 @@ jobs:
         run: npm run build
 
       - name: Add iOS platform
-        run: npx cap add ios
+        run: npx cap add ios --packagemanager CocoaPods
 
       - name: Setup icon assets
         run: |
