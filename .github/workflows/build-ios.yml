@@ -53,6 +53,10 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName 'Collab Hunts'" ios/App/App/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleName 'Collab Hunts'" ios/App/App/Info.plist
 
+      - name: Set export compliance
+        run: |
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" ios/App/App/Info.plist
+
       - name: Set build number
         run: |
           BUILD_NUM=$(( ${{ github.run_number }} + 100 ))
