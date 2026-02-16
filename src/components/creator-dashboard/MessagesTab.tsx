@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Send, MessageSquare, ArrowLeft, Circle, FileText } from "lucide-react";
+import { Send, MessageSquare, ArrowLeft, Circle, FileText, RefreshCw } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
@@ -63,6 +64,7 @@ const MessagesTab = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({});
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -357,19 +359,38 @@ const MessagesTab = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="space-y-3 p-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="flex items-start gap-3">
+            <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchConversations();
+    setRefreshing(false);
+  };
+
   const renderConversationList = () => (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b space-y-2">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
-          Messages
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Messages
+          </h2>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleRefresh} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
         {isMobile && !isNative && (
           <a href="/download" className="flex items-center gap-2 text-xs bg-primary/10 text-primary rounded-md px-3 py-1.5 hover:bg-primary/20 transition-colors">
             <span>🔔</span>
@@ -387,7 +408,7 @@ const MessagesTab = () => {
             </p>
           </div>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y animate-fade-in">
             {conversations.map((conv) => {
               const brandUserId = conv.brand_profiles.user_id;
               const lastSeen = onlineStatus[brandUserId];

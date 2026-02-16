@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, DollarSign, Calendar, MessageSquare, ArrowRight, Building2, Target } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Eye, DollarSign, Calendar, MessageSquare, ArrowRight, Building2, Target, Pencil, Package, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 import { EVENT_PACKAGES, PackageType } from "@/config/packages";
@@ -24,7 +25,8 @@ interface OpportunityPreview {
   } | null;
 }
 
-const OverviewTab = () => {
+const OverviewTab = ({ onNavigateToTab }: { onNavigateToTab?: (tab: string) => void }) => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     profileViews: 0,
     totalEarnings: 0,
@@ -146,8 +148,14 @@ const OverviewTab = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="space-y-3 md:space-y-6">
+        <Skeleton className="h-6 w-24" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-24 md:h-28 rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-40 rounded-xl" />
       </div>
     );
   }
@@ -206,7 +214,7 @@ const OverviewTab = () => {
   };
 
   return (
-    <div className={`space-y-3 md:space-y-6 ${isNative ? 'pb-24' : ''}`}>
+    <div className={`space-y-3 md:space-y-6 ${isNative ? 'pb-24' : ''} animate-fade-in`}>
       {/* Inline Profile Status */}
       <div className="flex items-center gap-2">
         <span className="text-xs md:text-sm text-muted-foreground">Status:</span>
@@ -222,8 +230,8 @@ const OverviewTab = () => {
           { title: "Earnings", value: `$${stats.totalEarnings.toFixed(2)}`, icon: DollarSign, desc: "From completed bookings" },
           { title: "Pending", value: stats.pendingBookings, icon: Calendar, desc: "Awaiting your response" },
           { title: "Messages", value: stats.unreadMessages, icon: MessageSquare, desc: "New messages from brands" },
-        ].map((stat) => (
-          <Card key={stat.title}>
+        ].map((stat, idx) => (
+          <Card key={stat.title} className="animate-fade-in" style={{ animationDelay: `${idx * 75}ms` }}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3 md:pb-2 md:pt-6 md:px-6">
               <CardTitle className="text-[11px] md:text-sm font-medium">{stat.title}</CardTitle>
               <stat.icon className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
@@ -235,6 +243,39 @@ const OverviewTab = () => {
           </Card>
         ))}
       </div>
+
+      {/* Quick Actions - Native only */}
+      {isNative && (
+        <div className="flex gap-2 animate-fade-in" style={{ animationDelay: "300ms" }}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-9 text-xs"
+            onClick={() => onNavigateToTab?.("profile")}
+          >
+            <Pencil className="h-3.5 w-3.5 mr-1.5" />
+            Edit Profile
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-9 text-xs"
+            onClick={() => onNavigateToTab?.("services")}
+          >
+            <Package className="h-3.5 w-3.5 mr-1.5" />
+            Add Package
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-9 text-xs"
+            onClick={() => navigate("/opportunities")}
+          >
+            <Briefcase className="h-3.5 w-3.5 mr-1.5" />
+            Browse Opps
+          </Button>
+        </div>
+      )}
 
       {/* Opportunities For You */}
       {matchedOpportunities.length > 0 && (

@@ -82,7 +82,7 @@ const CreatorBottomNavWrapper = () => {
   const [searchParams] = useSearchParams();
 
   const currentTab = searchParams.get("tab") || "overview";
-  const dashboardTabs = ["overview", "bookings", "messages", "profile", "services", "calendar", "boost"];
+  const dashboardTabs = ["overview", "bookings", "messages", "profile", "services", "calendar", "boost", "account"];
   const activeTab = location.pathname === "/opportunities"
     ? "opportunities"
     : location.pathname === "/creator-dashboard"
