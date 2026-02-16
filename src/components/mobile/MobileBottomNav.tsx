@@ -1,4 +1,4 @@
-import { BarChart3, Calendar, MessageSquare, User, Briefcase, Package, CalendarDays, Rocket } from "lucide-react";
+import { BarChart3, Calendar, MessageSquare, Settings, Briefcase, Package, CalendarDays, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +23,7 @@ const tabs: TabConfig[] = [
   { id: "opportunities", icon: Briefcase, label: "Opps" },
   { id: "messages", icon: MessageSquare, label: "Messages" },
   { id: "boost", icon: Rocket, label: "Boost" },
-  { id: "profile", icon: User, label: "Profile" },
+  { id: "account", icon: Settings, label: "Account" },
 ];
 
 const MobileBottomNav = ({ activeTab, onTabChange }: MobileBottomNavProps) => {

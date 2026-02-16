@@ -10,6 +10,7 @@ import BookingsTab from "@/components/creator-dashboard/BookingsTab";
 import MessagesTab from "@/components/creator-dashboard/MessagesTab";
 import OpportunitiesTab from "@/components/creator-dashboard/OpportunitiesTab";
 import FeaturingTab from "@/components/creator-dashboard/FeaturingTab";
+import AccountTab from "@/components/creator-dashboard/AccountTab";
 import StatsUpdateBanner from "@/components/creator-dashboard/StatsUpdateBanner";
 import { CalendarTab } from "@/components/calendar/CalendarTab";
 
@@ -137,8 +138,8 @@ const CreatorDashboard = () => {
             </TabsList>
             )}
 
-            <TabsContent value="overview" className="space-y-6">
-              <OverviewTab />
+            <TabsContent value="overview" className="animate-fade-in">
+              <OverviewTab onNavigateToTab={handleTabChange} />
             </TabsContent>
 
             <TabsContent value="profile" className="space-y-4">
@@ -165,8 +166,13 @@ const CreatorDashboard = () => {
               {creatorProfileId && <FeaturingTab creatorProfileId={creatorProfileId} />}
             </TabsContent>
 
-            <TabsContent value="messages" className="space-y-6">
+            <TabsContent value="messages" className="animate-fade-in">
               <MessagesTab />
+            </TabsContent>
+
+            {/* Account tab - native only, but always rendered for routing */}
+            <TabsContent value="account" className="animate-fade-in">
+              <AccountTab onNavigateToTab={handleTabChange} />
             </TabsContent>
           </Tabs>
         </div>
