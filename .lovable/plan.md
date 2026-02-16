@@ -1,27 +1,53 @@
 
 
-## Fix: Auto-Skip Export Compliance for iOS Builds
+## Native iOS App Experience Upgrade
 
-### Problem
-Every new TestFlight build gets stuck at "Missing Compliance" because Apple requires an export compliance declaration. You have to manually click "Manage" each time to proceed.
+### 1. New "Account" Tab (replaces "Profile" in bottom nav)
 
-### Solution
-Add `ITSAppUsesNonExemptEncryption = false` to the Info.plist during the CI build. This tells Apple your app does not use non-exempt encryption, so builds will automatically be approved for TestFlight without manual intervention.
+The current bottom nav has 8 tabs with "Profile" at the end. We'll replace "Profile" with "Account" and restructure:
 
-### Immediate Action (do this now)
-Click **"Manage"** next to build 143 in App Store Connect, answer **"No"** to the encryption question, and save. Build 143 will then appear in TestFlight.
+- **Bottom nav tabs** (8 items, unchanged count): Overview, Bookings, Packages, Calendar, Opps, Messages, Boost, **Account**
+- The **Account tab** will be a new dedicated screen containing:
+  - **Profile header** (avatar, name, status badge)
+  - **Quick links**: "View My Profile" (opens profile preview), "Edit Profile" (opens edit drawer)
+  - **Quick Settings** cards (moved from current ProfileTab): Open to Invitations, Show Pricing, Allow Mass Messages
+  - **Account section**: Email display, phone verification status
+  - **Sign Out button** (prominent, at the bottom)
+  - **Switch to Brand** option (if user has a brand profile)
+  - App version info at the very bottom
 
-### CI Change (prevents this in the future)
+### 2. Dashboard Overview Improvements
 
-**File: `.github/workflows/build-ios.yml`**
+- Add **Quick Action buttons** row below stats: "Edit Profile", "Add Package", "Browse Opps"
+- Add a **Recent Activity** section showing latest booking status changes and new messages
+- Animate stat cards with fade-in on load
 
-Add a new step after "Force app name in Info.plist" and before "Set build number":
+### 3. Messages Experience Polish
 
-```yaml
-- name: Set export compliance
-  run: |
-    /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" ios/App/App/Info.plist
-```
+- Add **pull-to-refresh** style manual refresh button at the top of conversation list
+- Improve empty state with better illustration
+- Add subtle **animate-fade-in** to conversation items on load
+- Fix the "0" badge display (should not show "0", only show when count > 0 -- already handled but double-check alignment)
 
-This single line ensures every future build skips the compliance hold automatically.
+### 4. Visual Polish
 
+- Add `animate-fade-in` class to tab content transitions
+- Smoother loading states with skeleton placeholders instead of spinners
+- Ensure consistent card border radius and spacing across all tabs
+
+### Technical Details
+
+**Files to create:**
+- `src/components/creator-dashboard/AccountTab.tsx` -- New account/settings tab with sign-out
+
+**Files to modify:**
+- `src/components/mobile/MobileBottomNav.tsx` -- Replace "Profile" tab with "Account" (icon: Settings or UserCog)
+- `src/App.tsx` -- Update `CreatorBottomNavWrapper` to include "account" in dashboard tabs list
+- `src/pages/CreatorDashboard.tsx` -- Add AccountTab import, add TabsContent for "account", keep "profile" tab for web only
+- `src/components/creator-dashboard/OverviewTab.tsx` -- Add quick actions row and recent activity section with fade animations
+- `src/components/creator-dashboard/MessagesTab.tsx` -- Add refresh button, fade-in animations on conversation items
+
+**Sign-out implementation:**
+- The AccountTab will call `supabase.auth.signOut()` which triggers the `SIGNED_OUT` event in `NativeAppGate`, resetting state and showing the login screen automatically.
+
+**No database changes required** -- this is purely a UI/UX restructure.
