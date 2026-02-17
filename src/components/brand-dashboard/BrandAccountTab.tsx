@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, Phone, Mail, Globe, MapPin, Calendar, CheckCircle2, AlertCircle, Loader2, Camera, Crown, ArrowUpRight } from "lucide-react";
+import { Building2, Phone, Mail, Globe, MapPin, Calendar, CheckCircle2, AlertCircle, Loader2, Camera, Crown, ArrowUpRight, LogOut } from "lucide-react";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import PhoneInput from "@/components/PhoneInput";
 import { getCurrentPlanType } from "@/lib/subscription-utils";
@@ -12,6 +12,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import BrandVerificationBadgeCard from "./BrandVerificationBadgeCard";
 import TeamAccessCard from "@/components/team/TeamAccessCard";
 import UpgradePlanDialog from "./UpgradePlanDialog";
+import { Capacitor } from "@capacitor/core";
 
 interface BrandProfile {
   id: string;
@@ -28,6 +29,7 @@ interface BrandProfile {
 }
 
 const BrandAccountTab = () => {
+  const isNative = Capacitor.isNativePlatform();
   const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +42,7 @@ const BrandAccountTab = () => {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [planType, setPlanType] = useState<string>("free");
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     fetchBrandProfile();
@@ -155,6 +158,15 @@ const BrandAccountTab = () => {
       toast.error("Failed to upload logo");
     } finally {
       setUploadingLogo(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      setSigningOut(false);
     }
   };
 
@@ -385,6 +397,25 @@ const BrandAccountTab = () => {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Sign Out — native only */}
+      {isNative && (
+        <div className="pt-2 pb-6">
+          <Button
+            variant="outline"
+            className="w-full h-12 text-destructive border-destructive/30 hover:bg-destructive/10"
+            onClick={handleSignOut}
+            disabled={signingOut}
+          >
+            {signingOut ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <LogOut className="h-4 w-4 mr-2" />
+            )}
+            Sign Out
+          </Button>
+        </div>
       )}
     </div>
   );

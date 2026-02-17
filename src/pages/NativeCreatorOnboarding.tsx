@@ -41,13 +41,18 @@ const PLATFORMS = [
 ];
 
 const SERVICE_TYPES = [
-  'Meet & Greet',
-  'Workshop',
-  'Competition Event',
-  'Brand Activation',
-  'Private Event',
-  'Live Performance',
-  'Custom Experience',
+  'Instagram Post',
+  'Instagram Reel',
+  'Instagram Story Mention',
+  'TikTok Video',
+  'YouTube Integration',
+  'YouTube Short',
+  'Facebook Post',
+  'Live Stream',
+  'Twitter/X Post',
+  'LinkedIn Post',
+  'Podcast Mention',
+  'Custom Package',
 ];
 
 export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboardingProps) {
@@ -140,12 +145,8 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
       toast.error('Please enter your display name');
       return false;
     }
-    if (bio.length < 50) {
-      toast.error('Bio must be at least 50 characters');
-      return false;
-    }
-    if (!profileImage) {
-      toast.error('Please add a profile photo');
+    if (bio.length < 20) {
+      toast.error('Bio must be at least 20 characters');
       return false;
     }
     return true;
@@ -433,7 +434,7 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
                   </div>
                 )}
               </button>
-              <p className="text-xs text-muted-foreground mt-2">Tap to add profile photo</p>
+              <p className="text-xs text-muted-foreground mt-2">Optional — you can add it later</p>
             </div>
 
             {/* Display Name */}
@@ -450,7 +451,7 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
 
             {/* Bio */}
             <div className="space-y-2">
-              <Label htmlFor="bio">Bio * (min 50 characters)</Label>
+              <Label htmlFor="bio">Bio * (min 20 characters)</Label>
               <Textarea
                 id="bio"
                 value={bio}
@@ -458,8 +459,8 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
                 placeholder="Tell brands about yourself, your content style, and what makes you unique..."
                 className="min-h-[120px] text-base"
               />
-              <p className="text-xs text-muted-foreground text-right">
-                {bio.length}/50 characters
+              <p className={`text-xs text-right ${bio.length >= 20 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                {bio.length} characters {bio.length < 20 ? `(${20 - bio.length} more needed)` : '✓'}
               </p>
             </div>
           </div>

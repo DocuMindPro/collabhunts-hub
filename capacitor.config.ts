@@ -12,12 +12,9 @@ const config: CapacitorConfig = {
       // Show splash screen for 2 seconds while app loads
       launchShowDuration: 2000,
       launchAutoHide: true,
-      // Branded colors matching the app
-      backgroundColor: '#1a1a2e',
-      showSpinner: true,
-      spinnerColor: '#F97316',
-      // Android-specific splash settings
-      androidScaleType: 'CENTER_CROP',
+      // Clean branded orange background — no image crop issues
+      backgroundColor: '#F97316',
+      showSpinner: false,
     },
     StatusBar: {
       backgroundColor: '#F97316',
