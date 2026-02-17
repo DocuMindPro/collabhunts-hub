@@ -1,75 +1,78 @@
 
-## Native App Polish: Logo Fix + Safe Area + Simplified Navigation + Creator UX
+## Native Brand UX: 5 Critical Fixes
 
-### Problem 1: Logo Flickering (CH → Real Logo)
+### Issue 1: "Brand profile created!" Toast Gets Stuck
 
-The `NativeAppLogo` component has no loading state. On render it immediately shows the "CH" orange box fallback while the DB fetch runs. When the fetch completes (~300ms later), it swaps to the real logo image. This creates the visible "CH → Collab Hunts" flicker the user sees.
+**Root cause**: The toast notification that fires after brand profile creation is using the `sonner` toast library's default behavior — it persists until dismissed or until `duration` expires. On native mobile, the notification appears at the bottom and never auto-dismisses if the component that triggered it stays mounted.
 
-**Fix**: Add a `fetched` boolean state to `NativeAppLogo`. While fetching, render an invisible placeholder (same size, transparent). Only render the logo once the fetch resolves — either real URL or "CH" fallback. This eliminates the swap entirely.
+**Fix**: In `src/pages/NativeBrandOnboarding.tsx` (and wherever this toast fires), ensure `duration: 3000` is explicitly set, and verify the toast call uses `sonner` (not the shadcn `toast`) so it auto-dismisses. Additionally, add scroll-to-top behavior in `NativeBrandDashboard.tsx` when the tab changes so any lingering UI is cleared.
 
-File: `src/components/NativeAppLogo.tsx`
-
----
-
-### Problem 2: "Dashboard" Text Overlapping iPhone Status Bar
-
-The `CreatorDashboard` page has `py-4` top padding on native but no `safe-area-top` inset. On iPhone with a notch/Dynamic Island, the status bar sits ~44-59px tall. The "Dashboard" heading renders right below `py-4` (16px), which puts it under the iPhone clock/icons.
-
-**Fix**: Wrap the native header `<main>` with `safe-area-top` class so it respects `env(safe-area-inset-top)`. This pushes the content below the status bar automatically.
-
-File: `src/pages/CreatorDashboard.tsx`
+**Also**: Add `useEffect` scroll-to-top to `NativeBrandDashboard.tsx` when `currentTab` changes — same fix applied to creator dashboard.
 
 ---
 
-### Problem 3: Bottom Nav Has 8 Cramped Tabs
+### Issue 2: Bookings Tab Opens Mid-Page (Not Scrolled to Top)
 
-8 tabs with `min-w-[56px]` = 448px minimum content on a 390px screen — they're squeezed and labels are barely readable. This is too many items for a thumb-friendly bottom nav.
+**Root cause**: `NativeBrandDashboard.tsx` has no scroll-to-top logic. When `handleTabChange("bookings")` is called, `currentTab` changes but the page stays at its previous scroll position. `BrandBookingsTab` is a full component with content — it renders below the fold if the previous tab was long.
 
-**Solution**: Reduce from 8 to 5 tabs:
-- **Keep**: Overview, Messages, Bookings, Opportunities, Account
-- **Remove from nav**: Calendar (accessible from Bookings), Packages (accessible from Account/Overview quick actions), Boost (accessible from Account or Overview)
+**Fix**: Add `useEffect` to `NativeBrandDashboard.tsx`:
+```typescript
+useEffect(() => {
+  setTimeout(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, 0);
+}, [currentTab]);
+```
 
-These 3 removed tabs are still accessible via the dashboard — they just won't clutter the bottom nav. The 5 remaining tabs get proper `flex-1` spacing and more breathing room.
-
-File: `src/components/mobile/MobileBottomNav.tsx`
-
----
-
-### Problem 4: Tab Content Scrolling Issue
-
-The `window.scrollTo({ top: 0, behavior: 'instant' })` fires when `activeTab` changes but React may not have rendered the new tab content yet, so the DOM hasn't changed height when the scroll fires. The scroll to 0 works, but then if the previous tab's content briefly renders (Radix Tabs animation), it can appear mid-page.
-
-**Fix**: Use a `setTimeout(fn, 0)` to defer the scroll to after React paints the new tab content.
-
-File: `src/pages/CreatorDashboard.tsx`
+This mirrors the fix already applied to `CreatorDashboard.tsx`.
 
 ---
 
-### Problem 5: Creator Overview Tab — No Personalized Welcome
+### Issue 3: "Post Opportunity" Quick Action Does Nothing
 
-The native header just says "Dashboard" with no user name. Creators feel like they're using a generic tool, not a personalized platform.
+**Root cause**: In `NativeBrandHome.tsx`, the "Post Opportunity" quick action navigates to `/brand-dashboard?tab=opportunities`. However, the brand is already on the native dashboard (not the web `BrandDashboard` page). Navigating to `/brand-dashboard` on native would redirect to the native dashboard anyway, but the `tab=opportunities` param isn't handled by `NativeBrandDashboard` — the tab rendering only handles: `home`, `messages`, `bookings`, `search`, `notifications`, `account`.
 
-**Fix**: Replace "Dashboard" heading with a personalized greeting like "Hi, [Name] 👋" fetched from the creator profile. This is already fetched in `OverviewTab` but not surfaced at the page level. We'll add a `userName` state to `CreatorDashboard` and populate it alongside the profile fetch.
+**Fix**: Change the action to use `onTabChange` to switch to a native-handled tab. Since the native dashboard doesn't have an opportunities tab, we have two options:
+1. Open the web `/brand-dashboard?tab=opportunities` with `navigate()` — but this takes the user out of the native flow
+2. **Better**: Add a simple "Create Opportunity" flow using the existing `CreateOpportunityDialog` component rendered natively within the Home tab
 
-File: `src/pages/CreatorDashboard.tsx`
-
----
-
-### Problem 6: Creator Overview Tab — Quick Actions Don't Match New Navigation
-
-With the simplified bottom nav (Packages moved out), creators need a clear path to manage their packages from Overview. The Quick Actions row should prominently include "My Packages" and "Boost Profile".
-
-File: `src/components/creator-dashboard/OverviewTab.tsx`
+**Implementation**: Change the "Post Opportunity" action in `NativeBrandHome.tsx` to open `CreateOpportunityDialog` directly inline (it already exists in `BrandOpportunitiesTab`). Pass `brandProfileId` as a prop from `NativeBrandDashboard` to `NativeBrandHome`.
 
 ---
 
-### Summary of File Changes
+### Issue 4: Creator Badges (Vetted/Fast/Free Invites) Missing from Mobile Search
+
+**Root cause**: `NativeBrandSearch.tsx` fetches only: `id, display_name, profile_image_url, categories, location_city, location_country, average_rating, is_featured, bio`. It does NOT fetch:
+- `verification_payment_status` + `verification_expires_at` — needed for VIP/Vetted badge
+- `avg_response_minutes` — needed for Responds Fast badge
+- `open_to_invitations` — needed for Free Invites badge
+
+The web `Influencers.tsx` page fetches all of these and renders `VettedBadge`, `RespondsFastBadge`, `VIPCreatorBadge`, and `FeaturedBadge` on each card.
+
+**Fix**:
+1. Update the `CreatorCard` interface in `NativeBrandSearch.tsx` to include these fields
+2. Add them to the Supabase query `select()`
+3. Render inline badge pills below the creator name in each card using the same badge components (`VettedBadge`, `RespondsFastBadge`, `FeaturedBadge`), matching website behavior
+
+---
+
+### Issue 5: Brand UX — Additional Polish
+
+While reviewing the brand flow as a user:
+
+**A. BrandBookingsTab "Book a Creator" button navigates to `/influencers`** — on native this opens the web influencers page, breaking the native UX. It should call `onTabChange("search")` instead. This requires passing `onTabChange` as a prop to `BrandBookingsTab` when rendered in native context.
+
+However, since `BrandBookingsTab` is shared between web and native, the cleanest fix is to check if we're on a native platform inside the booking tab and navigate differently.
+
+**Implementation**: Pass a `onFindCreators` prop (optional) to `BrandBookingsTab`. When provided (native context), use it instead of `navigate("/influencers")`.
+
+---
+
+### Files to Modify
 
 | File | Change |
 |---|---|
-| `src/components/NativeAppLogo.tsx` | Add `fetched` state — show blank placeholder while loading, then show real logo or "CH" fallback. No more flicker. |
-| `src/pages/CreatorDashboard.tsx` | Add `safe-area-top` to native header wrapper; personalized greeting ("Hi, [Name]"); deferred scroll-to-top with `setTimeout`. |
-| `src/components/mobile/MobileBottomNav.tsx` | Reduce from 8 to 5 tabs: Overview, Messages, Bookings, Opps, Account. Remove Calendar, Packages, Boost from nav (still accessible via dashboard routing). |
-| `src/components/creator-dashboard/OverviewTab.tsx` | Update Quick Actions to include Packages and Boost now that they're removed from bottom nav. |
+| `src/pages/NativeBrandDashboard.tsx` | Add `useEffect` scroll-to-top on `currentTab` change; pass `brandProfileId` to `NativeBrandHome`; handle `onTabChange("post-opportunity")` |
+| `src/components/mobile/NativeBrandHome.tsx` | Fix "Post Opportunity" — fetch `brandProfileId` and open `CreateOpportunityDialog` directly; accept `onFindCreators` prop |
+| `src/components/mobile/NativeBrandSearch.tsx` | Add badge fields to query + `CreatorCard` interface; render `VettedBadge`, `RespondsFastBadge`, `FeaturedBadge` pills on cards |
+| `src/components/brand-dashboard/BrandBookingsTab.tsx` | Add optional `onFindCreators` prop; use it for the "Book a Creator" / "Find Creators" buttons when on native |
 
 **No database changes required.**
