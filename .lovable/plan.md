@@ -1,62 +1,50 @@
 
-## Native iOS App: Splash Screen Fix + UX Simplification
+## Native iOS App: Splash Screen + Scroll Fix + Logo Overlap + Creator UX
 
-### What's Wrong with the Current Splash Screen
+### Problem 1: Splash Screen Still Showing Cropped Logo
 
-The screenshot shows the Capacitor native splash screen using `app-icon.png` with `androidScaleType: 'CENTER_CROP'` — this zooms in and crops the image so only the center "OLLA ts" text is visible, giant and cut off. This is the **Capacitor SplashScreen plugin** behavior, not React code. The fix has two parts:
+The `capacitor.config.ts` config already has `backgroundColor: '#F97316'` and `showSpinner: false`. However, the cropped "OLLA ts" image is still appearing. This means the **Capacitor native project still has the old `app-icon.png` configured as the splash screen image** in the compiled iOS project (the `ios/` folder). Since we can only change the web code, the fix is to ensure that `capacitor.config.ts` has `splashScreenImage` explicitly removed (or pointed to nothing), and that the `launchShowDuration` is set to `0` so the native splash is essentially invisible — React takes over immediately with the orange loading screen.
 
-1. **Replace the splash screen image** — Capacitor needs a proper full-screen splash image (not a small icon). The `app-icon.png` is a small square icon, not designed to be a full-screen splash.
-2. **Update the React loading screen** — Make it a clean orange screen with a centered white spinner.
-
----
-
-### Part 1 — Splash Screen Fix
-
-**Root Cause**: `app-icon.png` is a small circular icon being stretched/cropped to fill the whole phone screen.
-
-**Fix in `capacitor.config.ts`**:
-- Change `backgroundColor` from `#1a1a2e` (dark navy) to `#F97316` (brand orange)
-- Change `showSpinner` to `false` — the Capacitor native spinner looks bad; React will show the loading UI instead
-- Remove `androidScaleType: 'CENTER_CROP'` — this is what causes the zoomed-in crop effect
-
-The result: the native splash will show a clean solid orange screen for 2 seconds before React loads. Simple, branded, zero crop issues.
-
-**Fix `src/components/NativeLoadingScreen.tsx`**:
-- Change background from `bg-background` (white/dark based on theme) to solid brand orange (`bg-[#F97316]`)
-- Change the spinning ring from `border-primary` to white (`border-white/30 border-t-white`)
-- Remove the app-icon image from the spinner center (no more stretched icon)
-- Change text to white
-- This creates a seamless transition: native splash (orange) → React loading (orange) → app
-
-**Fix `index.html` pre-React loader**:
-- Change `background: #1a1a2e` to `background: #F97316`
-- Change text/spinner colors to white
-- This prevents any dark "flash" between native splash and React hydration
-
-**Fix `src/components/PageLoader.tsx`**:
-- Same orange background treatment for consistency
+**Fix**: Set `launchShowDuration: 0` so the native splash disappears instantly and the React `NativeLoadingScreen` (already orange) handles the visible loading state. This removes the cropped image entirely from the user experience.
 
 ---
 
-### Part 2 — UX Gaps Found (Acting as User)
+### Problem 2: Logo Appearing and Disappearing (Overlap)
 
-After reviewing all native flows:
+The `Logo` component fetches the logo URL from the database asynchronously. On first render it shows `/app-icon.png` (fallback), then when the DB fetch completes it re-renders with the remote URL. This causes a flicker: the local icon shows → the remote logo loads → another repaint. The fix:
 
-#### A. Brand Dashboard — No Sign Out Button
-The `BrandAccountTab` (shown when brands tap "Account") has zero sign-out functionality. Brands are stuck — they cannot log out of the app. Fix: Add a **Sign Out** button at the bottom of `BrandAccountTab` when on native platform, similar to the creator `AccountTab`.
+- Add a loading state to `Logo.tsx` — render nothing (or a placeholder) while the DB fetch is in progress, then show the correct logo once resolved
+- Remove the initial fallback to `LOCAL_ICON` before the DB fetch completes — only use `LOCAL_ICON` if DB returns nothing
 
-#### B. Creator Onboarding — Too Much Friction on Step 1
-- **Profile photo is required** — Most users don't have a photo ready. Making it optional removes a major drop-off point. Photo can be added later from the dashboard.
-- **Bio requires 50 characters** — On mobile, typing 50 chars is annoying. Reduce to 20 characters minimum. Still enough to tell brands who they are.
+---
 
-#### C. Brand Onboarding — Location is a Separate Step (Wasted Step)
-The brand flow for existing users is: Company Details → **Location (entire screen just for country + address)** → Logo & Social. The Location step has only 2 fields. Merging it into Company Details reduces from 3 steps to 2 for existing brand users — much faster.
+### Problem 3: Tabs Open in the Middle of the Page (No Scroll-to-Top)
 
-#### D. Creator Onboarding — Service Types Are Wrong for Creators
-The service types listed are: "Meet & Greet", "Workshop", "Competition Event", etc. These are **event/venue services**, not influencer/creator services. A creator's services should be things like: "Instagram Post", "TikTok Video", "YouTube Integration", "Story Mention", "Reel", "Live Stream", etc. This is a significant gap that makes creators confused about what to offer.
+When tapping a tab in `MobileBottomNav`, the dashboard content changes but the scroll position stays wherever it was. There is **no `ScrollToTop` component** in the native app — the search confirmed none exists.
 
-#### E. Bio Counter Shows Wrong Max
-The bio counter shows `{bio.length}/50 characters` but 50 is the minimum, not the max. This is confusing. Should show min requirement clearly.
+**Fix**: Add a `useEffect` in `CreatorDashboard.tsx` that scrolls `window` to top `(0, 0)` whenever `activeTab` changes. This is the simplest, most reliable fix for native tab switching.
+
+```typescript
+useEffect(() => {
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}, [activeTab]);
+```
+
+---
+
+### Problem 4: Creator UX Gaps (Additional Improvements)
+
+After reviewing all the creator dashboard code as a user:
+
+**A. Dashboard header wastes space on native**: The "Dashboard" title + Notifications icon row at the top is not prominently useful. Replace with a welcome card showing the user's name and profile status badge — more personal and informative.
+
+**B. The "profile" tab is accessible on native but has no place in the bottom nav** (account replaced it): When users tap "Edit Profile" from AccountTab or OverviewTab, it navigates to `tab=profile` which works fine — no change needed here, it's fine as-is.
+
+**C. Profile tab on native lacks a "done/back" button**: When navigating to "Profile" from the Account tab's "Edit Profile" button, there's no easy way to go back. Add a back button at the top of `ProfileTab` when on native.
+
+**D. OverviewTab — "Opportunities For You" section doesn't show when no opps match**: The entire opportunities section is hidden with `matchedOpportunities.length > 0`. On mobile, add a fallback "Browse Opportunities" CTA card when the list is empty, so creators always have a path forward.
+
+**E. BookingsTab — needs scroll to top**: Same scroll issue.
 
 ---
 
@@ -64,12 +52,10 @@ The bio counter shows `{bio.length}/50 characters` but 50 is the minimum, not th
 
 | File | Change |
 |---|---|
-| `capacitor.config.ts` | Orange background, no spinner, no CENTER_CROP |
-| `src/components/NativeLoadingScreen.tsx` | Orange bg, white spinner ring, white text, no icon |
-| `index.html` | Pre-React loader: orange bg, white text/spinner |
-| `src/components/PageLoader.tsx` | Orange bg, white elements |
-| `src/components/brand-dashboard/BrandAccountTab.tsx` | Add Sign Out button at bottom |
-| `src/pages/NativeBrandOnboarding.tsx` | Merge Location step into Company Details (2 steps instead of 3 for existing users) |
-| `src/pages/NativeCreatorOnboarding.tsx` | Make photo optional, reduce bio min to 20 chars, fix bio counter label, fix service types to creator-relevant ones |
+| `capacitor.config.ts` | Set `launchShowDuration: 0` to eliminate the native splash image entirely |
+| `src/components/Logo.tsx` | Add loading state — don't render fallback icon while DB fetch is in progress; prevent flicker/overlap |
+| `src/pages/CreatorDashboard.tsx` | Add `useEffect` to scroll to top on tab change; improve native header to show user's name |
+| `src/components/creator-dashboard/ProfileTab.tsx` | Add "Back to Account" button at top for native users |
+| `src/components/creator-dashboard/OverviewTab.tsx` | Add "Browse Opportunities" CTA card when no matched opps; add welcome greeting |
 
 **No database changes required.**
