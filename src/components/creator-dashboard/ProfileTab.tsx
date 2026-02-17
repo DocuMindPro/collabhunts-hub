@@ -286,6 +286,20 @@ const ProfileTab = () => {
 
   return (
     <>
+      {/* Back button for native — go back to Account tab */}
+      {isNative && (
+        <button
+          onClick={() => {
+            // Dispatch a custom event that CreatorDashboard listens to
+            window.dispatchEvent(new CustomEvent('navigate-tab', { detail: 'account' }));
+          }}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground mb-3 hover:text-foreground transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Back to Account
+        </button>
+      )}
+
       {/* Quick Settings for native - visible at top */}
       {isNative && (
         <div className="rounded-lg border bg-card p-4 space-y-0 mb-4">
