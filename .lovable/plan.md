@@ -1,86 +1,75 @@
 
+## Native iOS App: Splash Screen Fix + UX Simplification
 
-## Native iOS App Polish and UX Simplification
+### What's Wrong with the Current Splash Screen
 
-This plan covers two areas: (1) fixing the splash/loading screen, and (2) simplifying the user experience for both brands and creators.
+The screenshot shows the Capacitor native splash screen using `app-icon.png` with `androidScaleType: 'CENTER_CROP'` — this zooms in and crops the image so only the center "OLLA ts" text is visible, giant and cut off. This is the **Capacitor SplashScreen plugin** behavior, not React code. The fix has two parts:
 
----
-
-### 1. Fix the Splash / Loading Screen
-
-**The Problem**: The current Capacitor splash screen shows the app-icon.png stretched/cropped badly on iOS (the zoomed-in orange screenshot you shared). This is the native Capacitor SplashScreen plugin using `CENTER_CROP` with `backgroundColor: '#1a1a2e'`.
-
-**The Fix**: Replace the current splash approach with a clean, branded orange screen with a simple white spinner in the center.
-
-**Changes:**
-
-- **`capacitor.config.ts`**: Change `backgroundColor` to `#F97316` (your brand orange), disable the default spinner since we'll rely on the React loading screen, and set `launchAutoHide: true` with a short duration.
-
-- **`src/components/NativeLoadingScreen.tsx`**: Redesign to a full orange background (`bg-[#F97316]`) with:
-  - White app icon (small, centered, not cropped)
-  - A subtle white pulsing dot loader below it
-  - "Collab Hunts" in white text
-  - No dark background -- pure brand orange
-
-- **`index.html`** (pre-React loader): Update the pre-React loader background from `#1a1a2e` (dark blue) to `#F97316` (orange) so there's no flash between native splash and React loading. The spinner and text colors change to white to match.
-
-- **`src/components/PageLoader.tsx`**: Also update to use the orange branded style for consistency.
+1. **Replace the splash screen image** — Capacitor needs a proper full-screen splash image (not a small icon). The `app-icon.png` is a small square icon, not designed to be a full-screen splash.
+2. **Update the React loading screen** — Make it a clean orange screen with a centered white spinner.
 
 ---
 
-### 2. UX Simplification -- Gaps Found
+### Part 1 — Splash Screen Fix
 
-After reviewing all native flows as a user, here are the issues and fixes:
+**Root Cause**: `app-icon.png` is a small circular icon being stretched/cropped to fill the whole phone screen.
 
-**A. Brand Account Tab has no Sign Out button on native**
-- The `BrandAccountTab` component is the web version and doesn't include a sign-out button for native users.
-- **Fix**: Add a sign-out button at the bottom of `BrandAccountTab` when running on native platform (similar to what was done for Creator's AccountTab).
+**Fix in `capacitor.config.ts`**:
+- Change `backgroundColor` from `#1a1a2e` (dark navy) to `#F97316` (brand orange)
+- Change `showSpinner` to `false` — the Capacitor native spinner looks bad; React will show the loading UI instead
+- Remove `androidScaleType: 'CENTER_CROP'` — this is what causes the zoomed-in crop effect
 
-**B. Brand onboarding is too many steps for mobile**
-- Currently 3-4 steps for existing users (Company Details, Location, Logo & Social). Most brand users on mobile just want to get in quickly.
-- **Fix**: Merge Location into the Company Details step (add country and address fields below industry/size). This reduces it from 3 steps to 2 for existing users: (1) Company Info + Location, (2) Logo & Social.
+The result: the native splash will show a clean solid orange screen for 2 seconds before React loads. Simple, branded, zero crop issues.
 
-**C. Creator onboarding requires a 50-character bio AND a profile photo just to proceed**
-- Mobile users want to get started fast. Requiring a photo upload and a 50-char bio on step 1 creates friction.
-- **Fix**: Make profile photo optional at onboarding (can add later). Reduce bio minimum from 50 to 20 characters.
+**Fix `src/components/NativeLoadingScreen.tsx`**:
+- Change background from `bg-background` (white/dark based on theme) to solid brand orange (`bg-[#F97316]`)
+- Change the spinning ring from `border-primary` to white (`border-white/30 border-t-white`)
+- Remove the app-icon image from the spinner center (no more stretched icon)
+- Change text to white
+- This creates a seamless transition: native splash (orange) → React loading (orange) → app
 
-**D. Creator signup form asks for "Full Name" but Brand signup asks for First/Last separately -- inconsistent**
-- **Fix**: No code change needed, this is intentional (brand needs first/last for business contact). Leave as-is but worth noting.
+**Fix `index.html` pre-React loader**:
+- Change `background: #1a1a2e` to `background: #F97316`
+- Change text/spinner colors to white
+- This prevents any dark "flash" between native splash and React hydration
 
-**E. No way for brands to sign out from the native brand dashboard**
-- The `NativeBrandDashboard` has an Account tab but it renders the web `BrandAccountTab` which lacks a native sign-out.
-- **Fix**: Add a sign-out section to the brand account experience on native.
+**Fix `src/components/PageLoader.tsx`**:
+- Same orange background treatment for consistency
 
 ---
 
-### Technical Details
+### Part 2 — UX Gaps Found (Acting as User)
 
-**Files to modify:**
+After reviewing all native flows:
 
-1. **`capacitor.config.ts`**
-   - Change `SplashScreen.backgroundColor` from `'#1a1a2e'` to `'#F97316'`
-   - Change `spinnerColor` to `'#FFFFFF'`
+#### A. Brand Dashboard — No Sign Out Button
+The `BrandAccountTab` (shown when brands tap "Account") has zero sign-out functionality. Brands are stuck — they cannot log out of the app. Fix: Add a **Sign Out** button at the bottom of `BrandAccountTab` when on native platform, similar to the creator `AccountTab`.
 
-2. **`src/components/NativeLoadingScreen.tsx`**
-   - Full redesign: orange background, white icon, white pulsing dots loader, white text
+#### B. Creator Onboarding — Too Much Friction on Step 1
+- **Profile photo is required** — Most users don't have a photo ready. Making it optional removes a major drop-off point. Photo can be added later from the dashboard.
+- **Bio requires 50 characters** — On mobile, typing 50 chars is annoying. Reduce to 20 characters minimum. Still enough to tell brands who they are.
 
-3. **`index.html`**
-   - Update pre-React loader `background` from `#1a1a2e` to `#F97316`
-   - Update text/spinner colors to white
-   - Update loader-ring border colors to white tones
+#### C. Brand Onboarding — Location is a Separate Step (Wasted Step)
+The brand flow for existing users is: Company Details → **Location (entire screen just for country + address)** → Logo & Social. The Location step has only 2 fields. Merging it into Company Details reduces from 3 steps to 2 for existing brand users — much faster.
 
-4. **`src/components/PageLoader.tsx`**
-   - Match the new orange branded style for native consistency
+#### D. Creator Onboarding — Service Types Are Wrong for Creators
+The service types listed are: "Meet & Greet", "Workshop", "Competition Event", etc. These are **event/venue services**, not influencer/creator services. A creator's services should be things like: "Instagram Post", "TikTok Video", "YouTube Integration", "Story Mention", "Reel", "Live Stream", etc. This is a significant gap that makes creators confused about what to offer.
 
-5. **`src/pages/NativeBrandOnboarding.tsx`**
-   - Merge Location step into Company Details step (reduce total steps by 1)
+#### E. Bio Counter Shows Wrong Max
+The bio counter shows `{bio.length}/50 characters` but 50 is the minimum, not the max. This is confusing. Should show min requirement clearly.
 
-6. **`src/pages/NativeCreatorOnboarding.tsx`**
-   - Make profile photo optional (remove validation requirement)
-   - Reduce bio minimum from 50 to 20 characters
+---
 
-7. **`src/components/brand-dashboard/BrandAccountTab.tsx`**
-   - Add a "Sign Out" button at the bottom when on native platform
+### Files to Modify
+
+| File | Change |
+|---|---|
+| `capacitor.config.ts` | Orange background, no spinner, no CENTER_CROP |
+| `src/components/NativeLoadingScreen.tsx` | Orange bg, white spinner ring, white text, no icon |
+| `index.html` | Pre-React loader: orange bg, white text/spinner |
+| `src/components/PageLoader.tsx` | Orange bg, white elements |
+| `src/components/brand-dashboard/BrandAccountTab.tsx` | Add Sign Out button at bottom |
+| `src/pages/NativeBrandOnboarding.tsx` | Merge Location step into Company Details (2 steps instead of 3 for existing users) |
+| `src/pages/NativeCreatorOnboarding.tsx` | Make photo optional, reduce bio min to 20 chars, fix bio counter label, fix service types to creator-relevant ones |
 
 **No database changes required.**
-
