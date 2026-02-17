@@ -16,9 +16,10 @@ const SIZES = {
 export function NativeAppLogo({ size = 'md', className = '' }: NativeAppLogoProps) {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [imgError, setImgError] = useState(false);
+  const [fetched, setFetched] = useState(false);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchLogo = async () => {
       const data = await safeNativeAsync(async () => {
         const res = await supabase
           .from('site_settings')
@@ -32,11 +33,17 @@ export function NativeAppLogo({ size = 'md', className = '' }: NativeAppLogoProp
         const iconLogo = data.find((d) => d.key === 'logo_icon_url');
         setLogoUrl(nativeLogo?.value || iconLogo?.value || null);
       }
+      setFetched(true);
     };
-    fetch();
+    fetchLogo();
   }, []);
 
   const sizeClass = SIZES[size];
+
+  // Show invisible placeholder while fetching — eliminates CH→logo flicker
+  if (!fetched) {
+    return <div className={`${sizeClass} ${className}`} />;
+  }
 
   if (logoUrl && !imgError) {
     return (
