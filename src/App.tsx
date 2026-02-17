@@ -138,7 +138,7 @@ const NativeAppRoutes = () => (
             <Routes>
               <Route path="/" element={<Navigate to="/brand-dashboard" replace />} />
               <Route path="/brand-dashboard" element={
-                <NativeBrandDashboard brandName={brandProfile?.company_name} />
+                <NativeBrandDashboard brandName={brandProfile?.company_name} brandProfileId={brandProfile?.id} />
               } />
               <Route path="/creator/:id" element={<CreatorProfile />} />
               <Route path="*" element={<Navigate to="/brand-dashboard" replace />} />

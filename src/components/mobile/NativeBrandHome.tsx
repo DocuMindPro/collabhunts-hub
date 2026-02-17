@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import CreateOpportunityDialog from "@/components/brand-dashboard/CreateOpportunityDialog";
 import {
   MessageSquare,
   Calendar,
@@ -42,11 +43,13 @@ interface RecentNotification {
 
 interface NativeBrandHomeProps {
   brandName?: string;
+  brandProfileId?: string;
   onTabChange: (tab: string) => void;
 }
 
-const NativeBrandHome = ({ brandName, onTabChange }: NativeBrandHomeProps) => {
+const NativeBrandHome = ({ brandName, brandProfileId, onTabChange }: NativeBrandHomeProps) => {
   const navigate = useNavigate();
+  const [showCreateOpportunity, setShowCreateOpportunity] = useState(false);
   const [stats, setStats] = useState<BrandHomeStats>({
     unreadMessages: 0,
     pendingBookings: 0,
@@ -147,7 +150,7 @@ const NativeBrandHome = ({ brandName, onTabChange }: NativeBrandHomeProps) => {
 
   const quickActions = [
     { icon: Search, label: "Find Creators", action: () => onTabChange("search") },
-    { icon: Megaphone, label: "Post Opportunity", action: () => navigate("/brand-dashboard?tab=opportunities") },
+    { icon: Megaphone, label: "Post Opportunity", action: () => setShowCreateOpportunity(true) },
     { icon: Calendar, label: "View Bookings", action: () => onTabChange("bookings") },
     { icon: MessageSquare, label: "Messages", action: () => onTabChange("messages") },
   ];
@@ -312,6 +315,16 @@ const NativeBrandHome = ({ brandName, onTabChange }: NativeBrandHomeProps) => {
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
         </div>
+      )}
+
+      {/* Post Opportunity Dialog */}
+      {brandProfileId && (
+        <CreateOpportunityDialog
+          brandProfileId={brandProfileId}
+          open={showCreateOpportunity}
+          onOpenChange={setShowCreateOpportunity}
+          onSuccess={() => setShowCreateOpportunity(false)}
+        />
       )}
     </div>
   );

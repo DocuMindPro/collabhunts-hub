@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Star, MapPin, SlidersHorizontal, ChevronRight } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import VettedBadge from "@/components/VettedBadge";
+import RespondsFastBadge from "@/components/RespondsFastBadge";
+import FeaturedBadge from "@/components/FeaturedBadge";
 
 interface CreatorCard {
   id: string;
@@ -20,6 +23,10 @@ interface CreatorCard {
   average_rating: number | null;
   is_featured: boolean | null;
   bio: string | null;
+  verification_payment_status: string | null;
+  verification_expires_at: string | null;
+  avg_response_minutes: number | null;
+  open_to_invitations: boolean | null;
 }
 
 const CATEGORIES = [
@@ -83,7 +90,7 @@ const NativeBrandSearch = () => {
       async () => {
         let q = supabase
           .from("creator_profiles")
-          .select("id, display_name, profile_image_url, categories, location_city, location_country, average_rating, is_featured, bio")
+          .select("id, display_name, profile_image_url, categories, location_city, location_country, average_rating, is_featured, bio, verification_payment_status, verification_expires_at, avg_response_minutes, open_to_invitations")
           .eq("status", "approved");
 
         if (query.trim()) {
@@ -273,12 +280,32 @@ const NativeBrandSearch = () => {
                       <p className="font-semibold text-sm text-foreground truncate">
                         {creator.display_name}
                       </p>
-                      {creator.is_featured && (
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                          ★ Featured
-                        </Badge>
-                      )}
                     </div>
+
+                    {/* Badges row */}
+                    {(() => {
+                      const isVetted = creator.verification_payment_status === 'paid' &&
+                        creator.verification_expires_at &&
+                        new Date(creator.verification_expires_at) > new Date();
+                      const isFast = creator.avg_response_minutes !== null &&
+                        creator.avg_response_minutes !== undefined &&
+                        creator.avg_response_minutes <= 60;
+                      const isFeatured = creator.is_featured;
+                      const isOpenInvite = creator.open_to_invitations;
+                      if (!isVetted && !isFast && !isFeatured && !isOpenInvite) return null;
+                      return (
+                        <div className="flex flex-wrap gap-1 mb-1.5">
+                          {isFeatured && <FeaturedBadge size="sm" variant="pill" showTooltip={false} />}
+                          {isVetted && <VettedBadge size="sm" variant="pill" showTooltip={false} />}
+                          {isFast && <RespondsFastBadge size="sm" variant="pill" showTooltip={false} />}
+                          {isOpenInvite && (
+                            <span className="inline-flex items-center gap-0.5 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-700 text-[10px] font-medium">
+                              Free Invites
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Categories */}
                     {creator.categories && creator.categories.length > 0 && (

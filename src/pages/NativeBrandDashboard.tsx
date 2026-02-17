@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Bell, Settings } from "lucide-react";
 import { BrandRegistrationContext } from "@/contexts/BrandRegistrationContext";
@@ -11,15 +11,21 @@ import NativeBrandHome from "@/components/mobile/NativeBrandHome";
 
 interface NativeBrandDashboardProps {
   brandName?: string;
+  brandProfileId?: string;
 }
 
-const NativeBrandDashboard = ({ brandName }: NativeBrandDashboardProps) => {
+const NativeBrandDashboard = ({ brandName, brandProfileId }: NativeBrandDashboardProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentTab = searchParams.get("tab") || "home";
 
   const handleTabChange = (tab: string) => {
     setSearchParams({ tab });
   };
+
+  // Scroll to top on tab change
+  useEffect(() => {
+    setTimeout(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, 0);
+  }, [currentTab]);
 
   const getTitle = () => {
     switch (currentTab) {
@@ -36,11 +42,11 @@ const NativeBrandDashboard = ({ brandName }: NativeBrandDashboardProps) => {
   const renderTab = () => {
     switch (currentTab) {
       case "home":
-        return <NativeBrandHome brandName={brandName} onTabChange={handleTabChange} />;
+        return <NativeBrandHome brandName={brandName} brandProfileId={brandProfileId} onTabChange={handleTabChange} />;
       case "messages":
         return <BrandMessagesTab registrationCompleted />;
       case "bookings":
-        return <BrandBookingsTab registrationCompleted />;
+        return <BrandBookingsTab registrationCompleted onFindCreators={() => handleTabChange("search")} />;
       case "notifications":
         return <NativeBrandNotifications />;
       case "search":
@@ -48,7 +54,7 @@ const NativeBrandDashboard = ({ brandName }: NativeBrandDashboardProps) => {
       case "account":
         return <BrandAccountTab />;
       default:
-        return <NativeBrandHome brandName={brandName} onTabChange={handleTabChange} />;
+        return <NativeBrandHome brandName={brandName} brandProfileId={brandProfileId} onTabChange={handleTabChange} />;
     }
   };
 
