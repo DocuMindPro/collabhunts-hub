@@ -30,9 +30,9 @@ const COMPANY_SIZES = [
 ];
 
 export function NativeBrandOnboarding({ user, onComplete }: NativeBrandOnboardingProps) {
-  // If user exists, skip step 1 (account creation)
+  // If user exists, skip step 1 (account creation) AND merge location into company details
   const isExistingUser = !!user;
-  const totalSteps = isExistingUser ? 3 : 4;
+  const totalSteps = isExistingUser ? 2 : 3;
   const stepOffset = isExistingUser ? 1 : 0;
 
   const [step, setStep] = useState(1);
@@ -70,7 +70,7 @@ export function NativeBrandOnboarding({ user, onComplete }: NativeBrandOnboardin
 
   // Map logical step to actual step (accounting for skipped step 1)
   const getActualStep = () => {
-    if (isExistingUser) return step + 1; // skip account step
+    if (isExistingUser) return step + 1; // skip account step, company+location merged = step 2
     return step;
   };
   const actualStep = getActualStep();
@@ -366,7 +366,7 @@ export function NativeBrandOnboarding({ user, onComplete }: NativeBrandOnboardin
           </div>
         )}
 
-        {/* Step 2: Company Basics */}
+        {/* Step 2: Company Basics + Location (merged) */}
         {actualStep === 2 && (
           <div className="space-y-5">
             <div>
@@ -420,18 +420,9 @@ export function NativeBrandOnboarding({ user, onComplete }: NativeBrandOnboardin
                 </SelectContent>
               </Select>
             </div>
-          </div>
-        )}
 
-        {/* Step 3: Location */}
-        {actualStep === 3 && (
-          <div className="space-y-5">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Location</h1>
-              <p className="text-muted-foreground mt-1">Where is your business based?</p>
-            </div>
-
-            <div className="space-y-2">
+            {/* Location fields merged in */}
+            <div className="space-y-2 pt-2 border-t border-border">
               <Label>Country</Label>
               <CountrySelect
                 value={locationCountry}
@@ -440,7 +431,7 @@ export function NativeBrandOnboarding({ user, onComplete }: NativeBrandOnboardin
               />
             </div>
             <div className="space-y-2">
-              <Label>Business Address</Label>
+              <Label>Business Address <span className="text-muted-foreground font-normal">(optional)</span></Label>
               <Input
                 value={venueAddress}
                 onChange={(e) => setVenueAddress(e.target.value)}
@@ -452,8 +443,8 @@ export function NativeBrandOnboarding({ user, onComplete }: NativeBrandOnboardin
           </div>
         )}
 
-        {/* Step 4: Logo & Social Media */}
-        {actualStep === 4 && (
+        {/* Step 3 (new users) / Step 3 (existing users actualStep 3): Logo & Social Media */}
+        {actualStep === 3 && (
           <div className="space-y-5">
             <div>
               <h1 className="text-xl font-bold text-foreground">Logo & Social Media</h1>
