@@ -23,6 +23,7 @@ const CreatorDashboard = () => {
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [creatorProfileId, setCreatorProfileId] = useState<string | null>(null);
   const [statsUpdateRequired, setStatsUpdateRequired] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
@@ -33,13 +34,14 @@ const CreatorDashboard = () => {
       // Check direct ownership first
       const { data } = await supabase
         .from("creator_profiles")
-        .select("id, stats_update_required")
+        .select("id, stats_update_required, display_name")
         .eq("user_id", user.id)
         .maybeSingle();
       
       if (data) {
         setCreatorProfileId(data.id);
         setStatsUpdateRequired(data.stats_update_required ?? false);
+        if (data.display_name) setUserName(data.display_name);
         return;
       }
 
@@ -67,9 +69,12 @@ const CreatorDashboard = () => {
     }
   }, [searchParams]);
 
-  // Scroll to top whenever tab changes (critical for native bottom nav)
+  // Deferred scroll to top — fires after React paints new tab content
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    }, 0);
+    return () => clearTimeout(timer);
   }, [activeTab]);
 
   // Listen for navigate-tab events dispatched by child components (e.g. ProfileTab back button)
@@ -92,12 +97,14 @@ const CreatorDashboard = () => {
     <div className={`min-h-screen flex flex-col ${isNative ? 'pb-20' : ''}`}>
       {!isNative && <Navbar />}
       
-      <main className="flex-1 py-4 md:py-8">
+      <main className={`flex-1 py-4 md:py-8 ${isNative ? 'safe-area-top' : ''}`}>
         <div className="container mx-auto px-4 max-w-7xl">
-          <div className={`${isNative ? 'mb-2' : 'mb-4 md:mb-8'}`}>
+          <div className={`${isNative ? 'mb-3' : 'mb-4 md:mb-8'}`}>
             <div className="flex items-center justify-between">
               <h1 className={`font-heading font-bold ${isNative ? 'text-xl' : 'text-2xl md:text-4xl'} mb-1 md:mb-2`}>
-                {isNative ? 'Dashboard' : 'My Dashboard'}
+                {isNative
+                  ? (userName ? `Hi, ${userName.split(' ')[0]} 👋` : 'Dashboard')
+                  : 'My Dashboard'}
               </h1>
               <Notifications />
             </div>
@@ -107,6 +114,7 @@ const CreatorDashboard = () => {
               </p>
             )}
           </div>
+
 
           {statsUpdateRequired && creatorProfileId && (
             <StatsUpdateBanner

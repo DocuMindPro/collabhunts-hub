@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, DollarSign, Calendar, MessageSquare, ArrowRight, Building2, Target, Pencil, Package, Briefcase } from "lucide-react";
+import { Eye, DollarSign, Calendar, MessageSquare, ArrowRight, Building2, Target, Pencil, Package, Briefcase, Rocket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 import { EVENT_PACKAGES, PackageType } from "@/config/packages";
@@ -246,11 +246,11 @@ const OverviewTab = ({ onNavigateToTab }: { onNavigateToTab?: (tab: string) => v
 
       {/* Quick Actions - Native only */}
       {isNative && (
-        <div className="flex gap-2 animate-fade-in" style={{ animationDelay: "300ms" }}>
+        <div className="grid grid-cols-2 gap-2 animate-fade-in" style={{ animationDelay: "300ms" }}>
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 h-9 text-xs"
+            className="h-10 text-xs"
             onClick={() => onNavigateToTab?.("profile")}
           >
             <Pencil className="h-3.5 w-3.5 mr-1.5" />
@@ -259,17 +259,26 @@ const OverviewTab = ({ onNavigateToTab }: { onNavigateToTab?: (tab: string) => v
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 h-9 text-xs"
+            className="h-10 text-xs"
             onClick={() => onNavigateToTab?.("services")}
           >
             <Package className="h-3.5 w-3.5 mr-1.5" />
-            Add Package
+            My Packages
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 h-9 text-xs"
-            onClick={() => navigate("/opportunities")}
+            className="h-10 text-xs"
+            onClick={() => onNavigateToTab?.("boost")}
+          >
+            <Rocket className="h-3.5 w-3.5 mr-1.5" />
+            Boost Profile
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 text-xs"
+            onClick={() => onNavigateToTab?.("opportunities")}
           >
             <Briefcase className="h-3.5 w-3.5 mr-1.5" />
             Browse Opps
