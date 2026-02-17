@@ -67,6 +67,22 @@ const CreatorDashboard = () => {
     }
   }, [searchParams]);
 
+  // Scroll to top whenever tab changes (critical for native bottom nav)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [activeTab]);
+
+  // Listen for navigate-tab events dispatched by child components (e.g. ProfileTab back button)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent).detail as string;
+      setActiveTab(tab);
+      setSearchParams({ tab });
+    };
+    window.addEventListener('navigate-tab', handler);
+    return () => window.removeEventListener('navigate-tab', handler);
+  }, [setSearchParams]);
+
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setSearchParams({ tab: value });

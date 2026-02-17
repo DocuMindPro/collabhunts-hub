@@ -278,7 +278,7 @@ const OverviewTab = ({ onNavigateToTab }: { onNavigateToTab?: (tab: string) => v
       )}
 
       {/* Opportunities For You */}
-      {matchedOpportunities.length > 0 && (
+      {matchedOpportunities.length > 0 ? (
         <Card>
           <CardHeader className="pb-2 pt-3 px-3 md:pb-3 md:pt-6 md:px-6">
             <div className="flex items-center justify-between">
@@ -302,6 +302,19 @@ const OverviewTab = ({ onNavigateToTab }: { onNavigateToTab?: (tab: string) => v
             {matchedOpportunities.map((opp) => (
               <OpportunityRow key={opp.id} opp={opp} highlight={!isFallback} />
             ))}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-8 px-4 text-center gap-3">
+            <Briefcase className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <p className="font-medium text-sm">No matching opportunities yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Complete your profile and add social stats to get matched</p>
+            </div>
+            <Button size="sm" asChild className="mt-1">
+              <Link to="/opportunities">Browse All Opportunities</Link>
+            </Button>
           </CardContent>
         </Card>
       )}

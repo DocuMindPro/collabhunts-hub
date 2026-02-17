@@ -9,10 +9,9 @@ const config: CapacitorConfig = {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
     SplashScreen: {
-      // Show splash screen for 2 seconds while app loads
-      launchShowDuration: 2000,
+      // Instant hide so React NativeLoadingScreen takes over immediately
+      launchShowDuration: 0,
       launchAutoHide: true,
-      // Clean branded orange background — no image crop issues
       backgroundColor: '#F97316',
       showSpinner: false,
     },

@@ -13,16 +13,15 @@ const LOCAL_ICON = "/app-icon.png";
 const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [iconUrl, setIconUrl] = useState<string | null>(null);
-  const [imgError, setImgError] = useState(false);
-  const isNative = isNativePlatform();
+  const [fetched, setFetched] = useState(false);
 
   const sizes = {
-    sm: { icon: 28, logoHeight: 32, text: "text-lg" },
-    md: { icon: 36, logoHeight: 40, text: "text-xl" },
-    lg: { icon: 44, logoHeight: 48, text: "text-2xl" },
+    sm: { logoHeight: 32 },
+    md: { logoHeight: 40 },
+    lg: { logoHeight: 48 },
   };
 
-  const { logoHeight, text } = sizes[size];
+  const { logoHeight } = sizes[size];
 
   useEffect(() => {
     const fetchLogos = async () => {
@@ -43,23 +42,19 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
         if (primary?.value) setLogoUrl(primary.value);
         if (iconLogo?.value) setIconUrl(iconLogo.value);
       }
+      setFetched(true);
     };
 
     fetchLogos();
   }, []);
 
+  // Don't render anything until we know what logo to show — prevents flicker/overlap
+  if (!fetched) {
+    return <div style={{ height: logoHeight, width: showText ? 120 : logoHeight }} className="flex-shrink-0" />;
+  }
+
   const displayLogoUrl = showText ? logoUrl : (iconUrl || logoUrl);
   const src = displayLogoUrl || LOCAL_ICON;
-
-  if (imgError && !displayLogoUrl) {
-    return (
-      <div className={`flex items-center gap-2 ${className}`}>
-        <span className={`font-heading font-bold bg-gradient-accent bg-clip-text text-transparent ${text} whitespace-nowrap`}>
-          Collab Hunts
-        </span>
-      </div>
-    );
-  }
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
@@ -68,7 +63,6 @@ const Logo = ({ className = "", showText = true, size = "md" }: LogoProps) => {
         alt="Collab Hunts"
         style={{ height: logoHeight, width: "auto", maxWidth: showText ? 180 : logoHeight }}
         className="flex-shrink-0 object-contain"
-        onError={() => setImgError(true)}
       />
     </div>
   );
