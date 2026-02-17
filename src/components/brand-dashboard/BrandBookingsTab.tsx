@@ -44,9 +44,10 @@ interface Booking {
 
 interface BrandBookingsTabProps {
   registrationCompleted?: boolean;
+  onFindCreators?: () => void;
 }
 
-const BrandBookingsTab = ({ registrationCompleted = true }: BrandBookingsTabProps) => {
+const BrandBookingsTab = ({ registrationCompleted = true, onFindCreators }: BrandBookingsTabProps) => {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -215,7 +216,7 @@ const BrandBookingsTab = ({ registrationCompleted = true }: BrandBookingsTabProp
           <h2 className="text-xl sm:text-2xl font-heading font-bold">My Bookings</h2>
           <p className="text-sm text-muted-foreground">Manage your creator event bookings</p>
         </div>
-        <Button onClick={() => navigate("/influencers")} className="w-full sm:w-auto">
+        <Button onClick={() => onFindCreators ? onFindCreators() : navigate("/influencers")} className="w-full sm:w-auto">
           <Users className="mr-2 h-4 w-4" />
           Book a Creator
         </Button>
@@ -231,7 +232,7 @@ const BrandBookingsTab = ({ registrationCompleted = true }: BrandBookingsTabProp
             <p className="text-muted-foreground max-w-md mb-6">
               Browse our marketplace to find creators and book them for live events at your venue.
             </p>
-            <Button onClick={() => navigate("/influencers")}>
+            <Button onClick={() => onFindCreators ? onFindCreators() : navigate("/influencers")}>
               <Users className="mr-2 h-4 w-4" />
               Find Creators
             </Button>

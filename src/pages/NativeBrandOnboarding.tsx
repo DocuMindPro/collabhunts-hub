@@ -269,7 +269,7 @@ export function NativeBrandOnboarding({ user, onComplete }: NativeBrandOnboardin
     setIsLoading(false);
 
     if (result) {
-      toast.success('Brand profile created!');
+      toast.success('Brand profile created!', { duration: 3000 });
       onComplete();
     } else {
       toast.error('Failed to create profile. Please try again.');
