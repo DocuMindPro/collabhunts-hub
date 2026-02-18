@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useKeyboardScrollIntoView } from '@/hooks/useKeyboardScrollIntoView';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { safeNativeAsync } from '@/lib/supabase-native';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Camera, Plus, Trash2, User as UserIcon, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTapTrigger } from '@/components/NativeDebugConsole';
 
 interface NativeCreatorOnboardingProps {
   user: User;
@@ -79,6 +80,12 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useKeyboardScrollIntoView<HTMLDivElement>();
+
+  // Debug console tap trigger
+  const openDebugConsole = useCallback(() => {
+    if (window.NATIVE_DEBUG_OPEN) window.NATIVE_DEBUG_OPEN();
+  }, []);
+  const handleDebugTap = useTapTrigger(openDebugConsole);
 
   // Step 1: Basic Info
   const [displayName, setDisplayName] = useState('');
@@ -220,7 +227,27 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
     if (!termsAccepted) { toast.error('Please accept the terms to continue'); return; }
     setIsLoading(true);
 
-    const result = await safeNativeAsync(async () => {
+    // ── Session validation before any DB/storage operations ──────────────────
+    // This prevents RLS failures caused by auth.uid() being null during the
+    // post-signup race condition (email confirmation or JWT propagation delay).
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        console.warn('NativeCreatorOnboarding: No session, attempting refresh...');
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshData.session) {
+          toast.error('Session expired. Please sign in again.');
+          setIsLoading(false);
+          return;
+        }
+        console.log('NativeCreatorOnboarding: Session refreshed successfully');
+      }
+    } catch (sessionErr) {
+      console.error('NativeCreatorOnboarding: Session check failed', sessionErr);
+    }
+
+    // ── Profile creation ──────────────────────────────────────────────────────
+    try {
       // Check if profile already exists
       const { data: existingProfile } = await supabase
         .from('creator_profiles')
@@ -228,98 +255,107 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (existingProfile) return true;
-
-      // 1. Upload profile image
-      let profileImageUrl = null;
-      if (profileImage) {
-        const fileExt = profileImage.name.split('.').pop();
-        const fileName = `${user.id}/profile.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('profile-images')
-          .upload(fileName, profileImage, { upsert: true });
-        if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage.from('profile-images').getPublicUrl(fileName);
-        profileImageUrl = urlData.publicUrl;
-      }
-
-      // 2. Create creator profile — now includes categories
-      const { data: profile, error: profileError } = await supabase
-        .from('creator_profiles')
-        .insert({
-          user_id: user.id,
-          display_name: displayName.trim(),
-          bio: bio.trim(),
-          profile_image_url: profileImageUrl,
-          categories: selectedCategories.length > 0 ? selectedCategories : null,
-          status: 'pending',
-          terms_accepted_at: new Date().toISOString(),
-          terms_version: '1.0',
-        })
-        .select()
-        .single();
-
-      if (profileError) {
-        if (profileError.code === '23505') return true; // already exists
-        throw profileError;
-      }
-
-      // 3. Social accounts + services — cleanup on failure
-      try {
-        const validSocial = socialAccounts.filter(a => a.platform && a.username && a.followerCount);
-        if (validSocial.length > 0) {
-          const { error } = await supabase.from('creator_social_accounts').insert(
-            validSocial.map(a => ({
-              creator_profile_id: profile.id,
-              platform: a.platform,
-              username: a.username,
-              follower_count: parseInt(a.followerCount.replace(/,/g, '')) || 0,
-            }))
-          );
-          if (error) throw error;
+      if (!existingProfile) {
+        // 1. Upload profile image
+        let profileImageUrl: string | null = null;
+        if (profileImage) {
+          const fileExt = profileImage.name.split('.').pop();
+          const fileName = `${user.id}/profile.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from('profile-images')
+            .upload(fileName, profileImage, { upsert: true });
+          if (uploadError) {
+            console.error('NativeCreatorOnboarding: Image upload error', uploadError);
+            throw new Error(`Image upload failed: ${uploadError.message} [${uploadError.name}]`);
+          }
+          const { data: urlData } = supabase.storage.from('profile-images').getPublicUrl(fileName);
+          profileImageUrl = urlData.publicUrl;
         }
 
-        const validServices = services.filter(s => s.serviceType && s.price && parseInt(s.price) > 0);
-        if (validServices.length > 0) {
-          const { error } = await supabase.from('creator_services').insert(
-            validServices.map(s => ({
-              creator_profile_id: profile.id,
-              service_type: s.serviceType,
-              price_cents: parseInt(s.price) * 100,
-              delivery_days: parseInt(s.deliveryDays) || 7,
-              is_active: true,
-            }))
-          );
-          if (error) throw error;
+        // 2. Create creator profile
+        const { data: profile, error: profileError } = await supabase
+          .from('creator_profiles')
+          .insert({
+            user_id: user.id,
+            display_name: displayName.trim(),
+            bio: bio.trim(),
+            profile_image_url: profileImageUrl,
+            categories: selectedCategories.length > 0 ? selectedCategories : null,
+            status: 'pending',
+            terms_accepted_at: new Date().toISOString(),
+            terms_version: '1.0',
+          })
+          .select()
+          .single();
+
+        if (profileError) {
+          if (profileError.code !== '23505') {
+            console.error('NativeCreatorOnboarding: Profile insert error', profileError);
+            throw new Error(`Profile insert failed: ${profileError.message} [code: ${profileError.code}]`);
+          }
+          // 23505 = duplicate key, profile already exists — treat as success
+        } else {
+          // 3. Social accounts + services
+          const validSocial = socialAccounts.filter(a => a.platform && a.username && a.followerCount);
+          if (validSocial.length > 0) {
+            const { error: socialError } = await supabase.from('creator_social_accounts').insert(
+              validSocial.map(a => ({
+                creator_profile_id: profile.id,
+                platform: a.platform,
+                username: a.username,
+                follower_count: parseInt(a.followerCount.replace(/,/g, '')) || 0,
+              }))
+            );
+            if (socialError) {
+              await supabase.from('creator_profiles').delete().eq('id', profile.id);
+              throw new Error(`Social accounts failed: ${socialError.message}`);
+            }
+          }
+
+          const validServices = services.filter(s => s.serviceType && s.price && parseInt(s.price) > 0);
+          if (validServices.length > 0) {
+            const { error: servicesError } = await supabase.from('creator_services').insert(
+              validServices.map(s => ({
+                creator_profile_id: profile.id,
+                service_type: s.serviceType,
+                price_cents: parseInt(s.price) * 100,
+                delivery_days: parseInt(s.deliveryDays) || 7,
+                is_active: true,
+              }))
+            );
+            if (servicesError) {
+              await supabase.from('creator_profiles').delete().eq('id', profile.id);
+              throw new Error(`Services failed: ${servicesError.message}`);
+            }
+          }
         }
-      } catch (insertError) {
-        console.error('Failed to create social/services, cleaning up:', insertError);
-        await supabase.from('creator_profiles').delete().eq('id', profile.id);
-        throw insertError;
       }
 
-      return true;
-    }, false, 15000);
+      // TikTok Live insights (non-blocking)
+      if (hasTiktokAccount && goesLiveTiktok !== null) {
+        try {
+          const { data: cp } = await supabase
+            .from('creator_profiles').select('id').eq('user_id', user.id).single();
+          if (cp) {
+            await supabase.from('creator_tiktok_live_insights').insert({
+              creator_profile_id: cp.id,
+              goes_live: goesLiveTiktok,
+              monthly_revenue_range: goesLiveTiktok ? tiktokMonthlyRevenue : null,
+              interest_in_going_live: !goesLiveTiktok ? tiktokLiveInterest : null,
+            });
+          }
+        } catch (e) { console.error('TikTok insights error:', e); }
+      }
 
-    // TikTok Live insights (non-blocking)
-    if (result && hasTiktokAccount && goesLiveTiktok !== null) {
-      try {
-        const { data: cp } = await supabase
-          .from('creator_profiles').select('id').eq('user_id', user.id).single();
-        if (cp) {
-          await supabase.from('creator_tiktok_live_insights').insert({
-            creator_profile_id: cp.id,
-            goes_live: goesLiveTiktok,
-            monthly_revenue_range: goesLiveTiktok ? tiktokMonthlyRevenue : null,
-            interest_in_going_live: !goesLiveTiktok ? tiktokLiveInterest : null,
-          });
-        }
-      } catch (e) { console.error('TikTok insights error:', e); }
+      setIsLoading(false);
+      toast.success('Profile created successfully!');
+      onComplete();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('NativeCreatorOnboarding: handleSubmit error', message);
+      setIsLoading(false);
+      toast.error(`Profile creation failed: ${message} (tap logo 5x for details)`, { duration: 8000 });
     }
-
-    setIsLoading(false);
-    if (result) { toast.success('Profile created successfully!'); onComplete(); }
-    else toast.error('Failed to create profile. Please try again.');
   };
 
   const handleSignOut = async () => { await supabase.auth.signOut(); };
@@ -333,7 +369,13 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
         <button onClick={step > 1 ? handleBack : handleSignOut} className="p-2 -ml-2 text-muted-foreground">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <span className="text-sm text-muted-foreground">Step {step} of {totalSteps}</span>
+        {/* Invisible 5-tap debug trigger on step counter */}
+        <button
+          onClick={handleDebugTap}
+          className="text-sm text-muted-foreground px-2 py-1 select-none"
+        >
+          Step {step} of {totalSteps}
+        </button>
         <div className="w-9" />
       </div>
 

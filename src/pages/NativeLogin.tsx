@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useKeyboardScrollIntoView } from '@/hooks/useKeyboardScrollIntoView';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
@@ -14,6 +14,7 @@ import { z } from 'zod';
 import PhoneInput from '@/components/PhoneInput';
 import { useVerificationSettings } from '@/hooks/useVerificationSettings';
 import { NativeAppLogo } from '@/components/NativeAppLogo';
+import { useTapTrigger } from '@/components/NativeDebugConsole';
 
 // Validation schemas matching website
 const emailSchema = z.string().email("Invalid email address").max(255);
@@ -31,6 +32,8 @@ type ViewMode = 'signin' | 'role-select' | 'brand-signup' | 'creator-signup';
 
 export function NativeLogin() {
   const { requirePhone, loading: verificationLoading } = useVerificationSettings();
+  const openDebugConsole = useCallback(() => { if (window.NATIVE_DEBUG_OPEN) window.NATIVE_DEBUG_OPEN(); }, []);
+  const handleDebugTap = useTapTrigger(openDebugConsole);
   // Keyboard scroll-into-view for brand/creator signup forms
   const brandScrollRef = useKeyboardScrollIntoView<HTMLDivElement>();
   const creatorScrollRef = useKeyboardScrollIntoView<HTMLDivElement>();
