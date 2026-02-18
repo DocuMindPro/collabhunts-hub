@@ -911,9 +911,9 @@ const CreatorSignup = () => {
         });
       }
 
-      // Navigate after a delay
+      // Navigate to get-app page after successful signup
       setTimeout(() => {
-        navigate("/");
+        navigate("/get-app");
       }, 2000);
 
     } catch (error: any) {

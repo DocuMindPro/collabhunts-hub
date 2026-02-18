@@ -2,8 +2,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Menu, Shield, LogOut, LayoutDashboard, ChevronDown, ChevronUp, BookOpen, Sparkles,
-  BarChart3, User as UserIcon, Package, Calendar, MessageSquare, Wallet, Crown, MapPin
+  Menu, Shield, LogOut, Smartphone, BookOpen, Sparkles,
+  MessageSquare, Crown, MapPin
 } from "lucide-react";
 import Notifications from "@/components/Notifications";
 import { useState, useEffect } from "react";
@@ -35,28 +35,10 @@ const Navbar = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [hasCreatorProfile, setHasCreatorProfile] = useState(false);
   const [hasBrandProfile, setHasBrandProfile] = useState(false);
-  const [creatorMenuOpen, setCreatorMenuOpen] = useState(false);
-  const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   const [hasNewUpdates, setHasNewUpdates] = useState(false);
   const [showRegistrationPrompt, setShowRegistrationPrompt] = useState(false);
   const { unreadCount: unreadMessages, getMessagesLink } = useUnreadMessages();
   const { count: newOppsCount, markAsViewed: markOppsViewed } = useNewOpportunitiesCount(hasCreatorProfile);
-  const creatorTabs = [
-    { value: "overview", label: "Overview", icon: BarChart3 },
-    { value: "availability", label: "Availability", icon: Calendar },
-    { value: "profile", label: "Profile", icon: UserIcon },
-    { value: "services", label: "Event Packages", icon: Package },
-    { value: "bookings", label: "Events", icon: MapPin },
-    { value: "payouts", label: "Earnings", icon: Wallet },
-    { value: "messages", label: "Messages", icon: MessageSquare },
-  ];
-
-  const brandTabs = [
-    { value: "overview", label: "Overview", icon: BarChart3 },
-    { value: "account", label: "Brand Profile", icon: UserIcon },
-    { value: "bookings", label: "Events", icon: Calendar },
-    { value: "messages", label: "Messages", icon: MessageSquare },
-  ];
 
   type NavLink = { to: string; label: string; icon?: typeof Sparkles };
   
@@ -285,19 +267,11 @@ const Navbar = () => {
                     </Button>
                   </Link>
                 )}
-                {hasCreatorProfile && (
-                  <Link to="/creator-dashboard">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <LayoutDashboard className="h-4 w-4" />
-                      Creator Dashboard
-                    </Button>
-                  </Link>
-                )}
-                {hasBrandProfile && (
-                  <Link to="/brand-dashboard">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <MapPin className="h-4 w-4" />
-                      Brand Dashboard
+                {(hasCreatorProfile || hasBrandProfile) && (
+                  <Link to="/get-app">
+                    <Button variant="default" size="sm" className="gap-2">
+                      <Smartphone className="h-4 w-4" />
+                      Open App
                     </Button>
                   </Link>
                 )}
@@ -404,66 +378,13 @@ const Navbar = () => {
                         </Link>
                       )}
                       
-                      {hasCreatorProfile && (
-                        <div className="space-y-1">
-                          <Button 
-                            variant="outline" 
-                            className="w-full gap-2 justify-between"
-                            onClick={() => setCreatorMenuOpen(!creatorMenuOpen)}
-                          >
-                            <span className="flex items-center gap-2">
-                              <LayoutDashboard className="h-4 w-4" />
-                              Creator Dashboard
-                            </span>
-                            {creatorMenuOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {(hasCreatorProfile || hasBrandProfile) && (
+                        <Link to="/get-app" onClick={() => setIsOpen(false)}>
+                          <Button variant="default" className="w-full gap-2">
+                            <Smartphone className="h-4 w-4" />
+                            Open App
                           </Button>
-                          {creatorMenuOpen && (
-                            <div className="ml-4 space-y-1 border-l-2 border-border pl-3">
-                              {creatorTabs.map((tab) => (
-                                <Link 
-                                  key={tab.value}
-                                  to={`/creator-dashboard?tab=${tab.value}`}
-                                  onClick={() => setIsOpen(false)}
-                                  className="flex items-center gap-2 py-2 px-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
-                                >
-                                  <tab.icon className="h-4 w-4" />
-                                  {tab.label}
-                                </Link>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {hasBrandProfile && (
-                        <div className="space-y-1">
-                          <Button 
-                            variant="outline" 
-                            className="w-full gap-2 justify-between"
-                            onClick={() => setBrandMenuOpen(!brandMenuOpen)}
-                          >
-                            <span className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4" />
-                              Brand Dashboard
-                            </span>
-                            {brandMenuOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                          </Button>
-                          {brandMenuOpen && (
-                            <div className="ml-4 space-y-1 border-l-2 border-border pl-3">
-                              {brandTabs.map((tab) => (
-                                <Link 
-                                  key={tab.value}
-                                  to={`/brand-dashboard?tab=${tab.value}`}
-                                  onClick={() => setIsOpen(false)}
-                                  className="flex items-center gap-2 py-2 px-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
-                                >
-                                  <tab.icon className="h-4 w-4" />
-                                  {tab.label}
-                                </Link>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                        </Link>
                       )}
 
                       <div className="pt-4 border-t border-border">

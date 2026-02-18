@@ -219,11 +219,11 @@ const BrandSignup = () => {
 
       toast({
         title: "Welcome to CollabHunts!",
-        description: "Your account has been created. Complete your brand registration to unlock all features.",
+        description: "Your account has been created. Download the app to complete your brand setup.",
       });
 
       setTimeout(() => {
-        navigate("/brand-dashboard");
+        navigate("/get-app");
       }, 1000);
 
     } catch (error: any) {
