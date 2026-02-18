@@ -13,54 +13,20 @@ import FeaturingTab from "@/components/creator-dashboard/FeaturingTab";
 import AccountTab from "@/components/creator-dashboard/AccountTab";
 import StatsUpdateBanner from "@/components/creator-dashboard/StatsUpdateBanner";
 import { CalendarTab } from "@/components/calendar/CalendarTab";
+import { useCreatorProfileId } from "@/hooks/useCreatorDashboard";
 
-import { supabase } from "@/integrations/supabase/client";
 import { BarChart3, User, Package, Calendar, CalendarDays, MessageSquare, Briefcase, Rocket } from "lucide-react";
 import Notifications from "@/components/Notifications";
 
 const CreatorDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
-  const [creatorProfileId, setCreatorProfileId] = useState<string | null>(null);
-  const [statsUpdateRequired, setStatsUpdateRequired] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null);
   const isNative = Capacitor.isNativePlatform();
 
-  useEffect(() => {
-    const fetchCreatorProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      
-      // Check direct ownership first
-      const { data } = await supabase
-        .from("creator_profiles")
-        .select("id, stats_update_required, display_name")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      if (data) {
-        setCreatorProfileId(data.id);
-        setStatsUpdateRequired(data.stats_update_required ?? false);
-        if (data.display_name) setUserName(data.display_name);
-        return;
-      }
-
-      // Check delegate access
-      const { data: delegate } = await supabase
-        .from("account_delegates")
-        .select("profile_id")
-        .eq("delegate_user_id", user.id)
-        .eq("account_type", "creator")
-        .eq("status", "active")
-        .limit(1)
-        .maybeSingle();
-
-      if (delegate) {
-        setCreatorProfileId(delegate.profile_id);
-      }
-    };
-    fetchCreatorProfile();
-  }, []);
+  const { data: profileData } = useCreatorProfileId();
+  const creatorProfileId = profileData?.id ?? null;
+  const statsUpdateRequired = profileData?.stats_update_required ?? false;
+  const userName = profileData?.display_name ?? null;
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -120,7 +86,7 @@ const CreatorDashboard = () => {
             <StatsUpdateBanner
               creatorProfileId={creatorProfileId}
               onNavigateToProfile={() => handleTabChange("profile")}
-              onDismissed={() => setStatsUpdateRequired(false)}
+              onDismissed={() => {}}
             />
           )}
 

@@ -10,7 +10,7 @@ import BrandAccountTab from "@/components/brand-dashboard/BrandAccountTab";
 import BrandOpportunitiesTab from "@/components/brand-dashboard/BrandOpportunitiesTab";
 import RegistrationBanner from "@/components/brand-dashboard/RegistrationBanner";
 import { CalendarTab } from "@/components/calendar/CalendarTab";
-import { supabase } from "@/integrations/supabase/client";
+import { useBrandProfileId } from "@/hooks/useBrandDashboard";
 import { useBrandRegistration } from "@/contexts/BrandRegistrationContext";
 import { BarChart3, Calendar, CalendarDays, MessageSquare, User, Briefcase, Users } from "lucide-react";
 
@@ -18,8 +18,9 @@ const BrandDashboard = () => {
   const { registrationCompleted } = useBrandRegistration();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
-  const [brandProfileId, setBrandProfileId] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const { data: brandProfileId } = useBrandProfileId();
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -27,40 +28,6 @@ const BrandDashboard = () => {
       setActiveTab(tab);
     }
   }, [searchParams]);
-
-  useEffect(() => {
-    const fetchBrandProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      
-      // Check direct ownership first
-      const { data } = await supabase
-        .from("brand_profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      if (data) {
-        setBrandProfileId(data.id);
-        return;
-      }
-
-      // Check delegate access
-      const { data: delegate } = await supabase
-        .from("account_delegates")
-        .select("profile_id")
-        .eq("delegate_user_id", user.id)
-        .eq("account_type", "brand")
-        .eq("status", "active")
-        .limit(1)
-        .maybeSingle();
-
-      if (delegate) {
-        setBrandProfileId(delegate.profile_id);
-      }
-    };
-    fetchBrandProfile();
-  }, []);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);

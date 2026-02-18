@@ -3708,6 +3708,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_ai_draft_counter: {
+        Args: { p_brand_profile_id: string }
+        Returns: undefined
+      }
+      increment_messaging_counter: {
+        Args: { p_brand_profile_id: string }
+        Returns: undefined
+      }
       is_franchise_owner_for_country: {
         Args: { _country_code: string; _user_id: string }
         Returns: boolean
