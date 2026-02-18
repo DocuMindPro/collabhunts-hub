@@ -186,57 +186,33 @@ export function NativeLogin() {
         password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: { full_name: `${firstName} ${lastName}`, user_type: 'brand' },
+          data: {
+            full_name: `${firstName} ${lastName}`,
+            user_type: 'brand',
+            // Store name in metadata so NativeBrandOnboarding can pre-fill it
+            first_name: firstName,
+            last_name: lastName,
+          },
         },
       });
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error('Failed to create user');
 
-      // Explicitly set session to ensure auth token is propagated before DB insert
-      if (authData.session) {
-        await supabase.auth.setSession(authData.session);
-      } else {
-        // Small delay to allow auth to propagate on native
-        await new Promise(resolve => setTimeout(resolve, 1500));
+      // Store phone info for onboarding to use if needed
+      if (phoneNumber) {
+        localStorage.setItem('signup_phone_number', phoneNumber);
+        localStorage.setItem('signup_phone_verified', phoneVerified ? '1' : '0');
       }
 
-      const { error: profileError } = await supabase
-        .from('brand_profiles')
-        .insert({
-          user_id: authData.user.id,
-          company_name: `${firstName}'s Brand`,
-          first_name: firstName,
-          last_name: lastName,
-          phone_number: phoneNumber || null,
-          phone_verified: phoneVerified,
-          terms_accepted_at: new Date().toISOString(),
-          terms_version: '1.0',
-        });
-      if (profileError) {
-        if (profileError.code === '42501') {
-          throw new Error('Permission denied. Please try signing in instead.');
-        }
-        throw profileError;
-      }
+      // NOTE: We do NOT insert brand_profiles here.
+      // The RLS policy requires auth.uid() = user_id, but when email confirmation
+      // is enabled, signUp() returns no session → auth.uid() is null → insert fails.
+      // Instead, NativeAppGate detects user_type='brand' from user_metadata and
+      // routes to NativeBrandOnboarding, which creates the profile after auth is confirmed.
 
-      // Track affiliate referral
-      const referralCode = localStorage.getItem('affiliate_referral_code');
-      if (referralCode) {
-        try {
-          const { data: affiliateId } = await supabase.rpc('get_affiliate_by_code', { _code: referralCode });
-          if (affiliateId) {
-            await supabase.from('referrals').insert({
-              affiliate_id: affiliateId,
-              referred_user_id: authData.user.id,
-              referred_user_type: 'brand',
-              referral_code_used: referralCode,
-            });
-          }
-          localStorage.removeItem('affiliate_referral_code');
-        } catch {}
-      }
-
-      toast.success('Account created! Complete your brand profile to unlock all features.');
+      toast.success('Account created! Setting up your brand profile...');
+      // NativeAppGate's onAuthStateChange will detect the new session and
+      // route to NativeBrandOnboarding automatically.
     } catch (error: any) {
       if (error.message?.includes('already registered')) {
         toast.error('This email is already registered. Please sign in instead.');
