@@ -450,8 +450,14 @@ export function NativeLogin() {
   if (viewMode === 'signin') {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="mb-10">
+        {/* Make the sign-in view a scrollable container so inputs stay visible
+            above the keyboard on iOS (useKeyboardScrollIntoView needs an
+            overflow-y-auto ancestor to scroll into) */}
+        <div
+          ref={brandScrollRef as React.RefObject<HTMLDivElement>}
+          className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-6"
+        >
+          <div className="mb-10" onClick={handleDebugTap}>
             <NativeAppLogo size="md" />
           </div>
 
@@ -502,14 +508,15 @@ export function NativeLogin() {
               Forgot password?
             </button>
           </div>
-        </div>
 
-        <div className="p-6 text-center">
-          <p className="text-xs text-muted-foreground">By continuing, you agree to our Terms of Service and Privacy Policy</p>
+          <div className="pt-8 text-center">
+            <p className="text-xs text-muted-foreground">By continuing, you agree to our Terms of Service and Privacy Policy</p>
+          </div>
         </div>
       </div>
     );
   }
+
 
   // ===================== ROLE SELECTION VIEW =====================
   if (viewMode === 'role-select') {

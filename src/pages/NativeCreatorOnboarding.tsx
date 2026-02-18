@@ -227,9 +227,11 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
     if (!termsAccepted) { toast.error('Please accept the terms to continue'); return; }
     setIsLoading(true);
 
-    // ── Session validation before any DB/storage operations ──────────────────
-    // This prevents RLS failures caused by auth.uid() being null during the
-    // post-signup race condition (email confirmation or JWT propagation delay).
+    // ── Session validation + iOS WKWebView auth header fix ───────────────────
+    // On iOS WKWebView, the Authorization header can be dropped on the first
+    // Supabase request after auth state change. We force setSession() to re-attach
+    // the tokens before any DB operation. This prevents RLS rejections (code 42501)
+    // where auth.uid() appears null even though the client has a valid session.
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
@@ -241,10 +243,19 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
           return;
         }
         console.log('NativeCreatorOnboarding: Session refreshed successfully');
+      } else {
+        // Force re-attach auth tokens — fixes iOS WKWebView header dropping
+        await supabase.auth.setSession({
+          access_token: sessionData.session.access_token,
+          refresh_token: sessionData.session.refresh_token,
+        });
+        // Small delay for WKWebView to propagate the updated auth header
+        await new Promise(r => setTimeout(r, 200));
       }
     } catch (sessionErr) {
       console.error('NativeCreatorOnboarding: Session check failed', sessionErr);
     }
+
 
     // ── Profile creation ──────────────────────────────────────────────────────
     try {
