@@ -1,3 +1,4 @@
+declare const __APP_VERSION__: string;
 import { User } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -148,7 +149,7 @@ export function NativeRolePicker({
           Sign Out
         </Button>
 
-        <p className="mt-4 text-xs text-muted-foreground/60">v1.0.0 (build 1)</p>
+        <p className="mt-4 text-xs text-muted-foreground/60">v{__APP_VERSION__}</p>
       </div>
     </div>
   );

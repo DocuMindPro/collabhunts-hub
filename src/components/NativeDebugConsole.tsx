@@ -260,7 +260,7 @@ export function NativeDebugProvider({ children }: { children: React.ReactNode })
         onPointerDown={(e) => { e.stopPropagation(); setIsOpen(true); }}
         style={{
           position: 'fixed',
-          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)',
+          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 112px)',
           right: 16,
           zIndex: 99998,
           backgroundColor: '#f97316',

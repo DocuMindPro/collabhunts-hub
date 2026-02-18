@@ -1,5 +1,8 @@
 # CollabHunts - Creator Marketplace Platform
 
+[![iOS Build](https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO-NAME/actions/workflows/build-ios.yml/badge.svg)](https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO-NAME/actions/workflows/build-ios.yml)
+[![Android Build](https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO-NAME/actions/workflows/build-android.yml/badge.svg)](https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO-NAME/actions/workflows/build-android.yml)
+
 ## Project Info
 
 **URL**: https://lovable.dev/projects/f0d3858a-e7f2-4892-88d2-32504acaef78  

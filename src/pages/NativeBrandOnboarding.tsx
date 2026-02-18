@@ -317,7 +317,7 @@ export function NativeBrandOnboarding({ user, onComplete }: NativeBrandOnboardin
       </div>
 
       {/* Content */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 pb-24">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 120px)' }}>
         {/* Step 1: Account Info (new users only) */}
         {actualStep === 1 && !isExistingUser && (
           <div className="space-y-5">
