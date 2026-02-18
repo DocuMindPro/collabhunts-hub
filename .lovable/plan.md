@@ -1,138 +1,140 @@
 
-# App Crash Investigation: Profile Image Upload & Other Crash Points
+## Root Cause Analysis + In-App Debug Console Plan
 
-## Root Cause Analysis
+### What I Found
 
-After examining all relevant files, edge function code, storage buckets, and RLS policies, I have identified **4 distinct crash causes** — one primary crash and three secondary ones that will cause silent failures or white screens.
-
----
-
-## Crash #1 (PRIMARY — Your Reported Crash): Missing `creator-images` Storage Bucket
-
-**Where it crashes:** `NativeCreatorOnboarding.tsx`, lines 238–243
-
-```typescript
-const { error: uploadError } = await supabase.storage
-  .from('creator-images')   // ← THIS BUCKET DOES NOT EXIST
-  .upload(fileName, profileImage, { upsert: true });
-if (uploadError) throw uploadError;  // ← THROWS, crashes the safeNativeAsync wrapper
-```
-
-**The evidence:** The storage buckets in the database are:
-- `brand-logos`
-- `career-cvs`
-- `portfolio-media`
-- `profile-images` ← correct bucket for images
-
-There is **no `creator-images` bucket**. When the user tries to upload a photo during onboarding Step 1 (or when submitting with a photo selected), the upload call throws an error, which propagates out of `safeNativeAsync`, and since the entire submit is wrapped inside it with a 15-second timeout that resolves `false` on error, the app shows "Failed to create profile" — but if the React state or toast rendering itself panics (on Android WebView), it can white-screen.
-
-**The second issue:** Even if the bucket existed, there is NO RLS INSERT policy for `creator-images`. The `profile-images` bucket does have all 4 correct policies (INSERT, SELECT, UPDATE, DELETE).
-
-**Fix:** Change the onboarding image upload to use the existing `profile-images` bucket instead of the non-existent `creator-images` bucket.
+After examining the RLS policies, storage buckets, auth settings, and all relevant code, I identified **two root causes** for "cannot create profile" and the crash:
 
 ---
 
-## Crash #2 (SECONDARY): `upload-profile-image` Edge Function Called Without R2 Secrets Being Fully Configured
+### Root Cause #1 — The Real Crash: Email Confirmation Race Condition
 
-**Where it crashes:** `ProfileTab.tsx` (post-onboarding profile editing), lines 155 and 182
+**The core problem:** When a user signs up in the app, `supabase.auth.signUp()` is called. Even though email verification is disabled in `site_settings`, the Supabase Auth project itself may still require email confirmation. When email confirmation is enabled at the Auth level:
 
-The `ProfileTab.tsx` uses a different upload path than onboarding — it calls the `upload-profile-image` **edge function** which uploads to Cloudflare R2. While R2 secrets ARE configured (`R2_ACCOUNT_ID`, `R2_BUCKET_NAME`, etc.), the edge function has **no logs** appearing in the analytics, meaning it is either timing out or the R2 endpoint itself is returning an error that crashes the function execution.
+- `signUp()` returns a user object but **no active session**
+- `auth.uid()` is `null` because the JWT is not yet active
+- The `NativeAppGate` `SIGNED_IN` event fires before the session is fully active
+- When `NativeCreatorOnboarding` tries to `INSERT` into `creator_profiles`, the RLS policy `Creators can insert own profile` checks `auth.uid() = user_id` — but `auth.uid()` is still null
+- **Result: INSERT fails with a permissions error** → the error message "Failed to create profile" appears, or the app crashes
 
-**The real crash risk:** In `ProfileTab.tsx`, line 155–157:
-```typescript
-const response = await supabase.functions.invoke('upload-profile-image', { body: formData });
-if (response.error) throw new Error(response.error.message);
-if (!response.data.success) throw new Error(response.data.error || 'Upload failed');
-```
+**Even if email confirm is off:** there is a secondary race condition — the `SIGNED_IN` event fires immediately after `signUp()`, but Supabase sometimes takes 200–500ms to fully commit the session. The `NativeAppGate` already has a 2-second retry for profile fetching, but the **actual INSERT in onboarding happens before the session is fully available** because `NativeAppGate` routes to `NativeCreatorOnboarding` as soon as it detects no profile, passing the `user` object — but that user object may have been retrieved before the session JWT was ready for RLS evaluation.
 
-On Android native, `supabase.functions.invoke()` with a `FormData` body can fail silently or throw a `TypeError` when the native WebView's `fetch` implementation doesn't support multipart form data in the same way. This `TypeError` is **not** caught by the try/catch if it happens at the network transport layer — it propagates up to React's render cycle and triggers the `NativeErrorBoundary`. This is the "crashed, shows error screen" scenario.
-
-**Fix:** Wrap the `supabase.functions.invoke()` with `FormData` in a safety net; also migrate both image upload paths (onboarding + profile tab) to use Supabase Storage `profile-images` bucket directly — bypassing the R2 edge function entirely for the native app. This is simpler, faster, and already has proper RLS policies.
+**Fix:** In `NativeCreatorOnboarding.handleSubmit`, before attempting any Supabase operations, call `supabase.auth.getSession()` and verify the session is active. If not, call `supabase.auth.refreshSession()` with a short wait. This ensures the JWT is valid before the INSERT runs.
 
 ---
 
-## Crash #3 (SECONDARY): Unhandled `response.data` Access When Edge Function Returns 401/500
+### Root Cause #2 — Storage Upload RLS Policy
 
-**Where it crashes:** `ProfileTab.tsx`, line 157:
-```typescript
-if (!response.data.success) throw new Error(response.data.error || 'Upload failed');
+The `profile-images` storage INSERT policy is:
+```sql
+with_check: (bucket_id = 'profile-images' AND (auth.uid())::text = (storage.foldername(name))[1])
 ```
 
-If the edge function returns a non-2xx response (e.g., 401 unauthorized, 500 R2 failure), `response.data` may be `null`. Accessing `.success` on `null` throws:
-```
-TypeError: Cannot read properties of null (reading 'success')
-```
-
-This is an **unguarded null access** — it bypasses the `catch` block because it throws synchronously inside the `try`, but on some Android WebView versions, unhandled type errors during async resolution cause a native crash rather than a caught JS error.
-
-**Fix:** Add a null guard: `if (!response.data?.success)`.
+The code uploads to path `${user.id}/profile.${fileExt}`. The `storage.foldername(name)[1]` returns the **first folder segment** (index 1, not 0 in Postgres arrays). This means for path `abc-123/profile.jpg`, it checks `auth.uid()::text = 'abc-123'` which should work — **but only if the session is active**. This circles back to Root Cause #1: if the session JWT isn't active, `auth.uid()` is null, so the storage upload also fails.
 
 ---
 
-## Crash #4 (SECONDARY): `PortfolioUploadSection` Uses Raw `XMLHttpRequest` Without Timeout
+### Root Cause #3 — No In-App Debug Visibility
 
-**Where it crashes:** `PortfolioUploadSection.tsx`, lines 65–106
-
-The `uploadWithProgress` function creates a raw `XMLHttpRequest` with **no timeout set**. On Android native, if the network request to the edge function hangs (common in Capacitor WebView), the XHR will hang indefinitely — no timeout, no rejection, no resolution. The component stays in `uploading: true` state forever, and in some cases the pending Promise prevents React from unmounting the component cleanly, causing a freeze or crash on navigation.
-
-**Fix:** Add `xhr.timeout = 30000` and an `xhr.addEventListener('timeout', ...)` handler.
+When something goes wrong on the phone, you currently have no way to see errors. The existing debug system only works during the initial load (pre-React loader). Once React is running, errors are invisible unless you have developer tools connected via USB.
 
 ---
 
-## Summary of All Fixes
+### The Fix Plan
 
-| # | Location | Bug | Fix |
-|---|---|---|---|
-| 1 | `NativeCreatorOnboarding.tsx` | Wrong bucket name `creator-images` (doesn't exist) | Change to `profile-images` |
-| 2 | `ProfileTab.tsx` | `FormData` with `supabase.functions.invoke` can silently fail on Android | Migrate to direct Supabase Storage upload |
-| 3 | `ProfileTab.tsx` | `response.data.success` crashes when `data` is null | Add `response.data?.success` null guard |
-| 4 | `PortfolioUploadSection.tsx` | XHR has no timeout, hangs indefinitely on native | Add 30s XHR timeout with error handler |
+#### Part 1: Fix Profile Creation (Critical)
+
+**File: `src/pages/NativeCreatorOnboarding.tsx`**
+
+In `handleSubmit`, before the `safeNativeAsync` block, add a session validation and refresh step:
+
+```typescript
+// Validate session before attempting INSERT
+const { data: { session } } = await supabase.auth.getSession();
+if (!session) {
+  // Try to refresh
+  const { data: refreshData } = await supabase.auth.refreshSession();
+  if (!refreshData.session) {
+    toast.error('Session expired. Please sign in again.');
+    setIsLoading(false);
+    return;
+  }
+}
+```
+
+Also: wrap the entire `safeNativeAsync` in better error handling to show the **specific error code** in the toast message for debugging (e.g., "RLS policy violation (42501)" or "Network timeout") — this helps you diagnose future issues from a screenshot alone.
+
+#### Part 2: Add In-App Debug Console (New Feature)
+
+Create a new component `src/components/NativeDebugConsole.tsx` — a floating debug overlay that:
+
+- Is **completely invisible** in normal use (no UI clutter)
+- **Activated by tapping the logo 5 times** in the NativeAppGate loading screen or login screen
+- Shows a full-screen dark overlay with all captured logs and errors
+- Captures: all `console.error`, `console.warn`, unhandled promise rejections, Supabase error responses
+- Shows device info (OS version, app version, screen size)
+- Has a **"Copy All"** button so you can paste logs into a message
+- Has a **"Clear"** button
+- Persists logs in `localStorage` so errors from previous sessions are visible
+
+Add a **persistent tiny debug trigger** in `NativeCreatorOnboarding` — a small invisible tap area in the top-right corner that opens the debug console when tapped 5 times. This way you can access debug info even when the app is mid-crash.
+
+Also add a global error interceptor in `src/main.tsx` that stores all errors in a `window.NATIVE_ERROR_LOG` array so the debug console can read them.
+
+**File structure:**
+- `src/components/NativeDebugConsole.tsx` — NEW: the debug overlay component
+- `src/main.tsx` — Add global error/rejection capture
+- `src/components/NativeAppGate.tsx` — Pass debug trigger to loading/login screens
+- `src/pages/NativeCreatorOnboarding.tsx` — Add session check + show error codes in toast + add debug tap trigger
+
+#### Part 3: Improve Error Messages in Onboarding
+
+Currently the error is just `'Failed to create profile. Please try again.'` — completely useless for debugging. Change it to show the actual error:
+
+```typescript
+// Before:
+toast.error('Failed to create profile. Please try again.');
+
+// After:
+toast.error(`Profile creation failed: ${lastError?.message || 'Unknown error'} (tap logo 5x for details)`);
+```
 
 ---
 
-## Technical Implementation Plan
-
-### Step 1 — Fix `NativeCreatorOnboarding.tsx` (Critical Crash Fix)
-
-Change lines 238–243 from `creator-images` to `profile-images`:
-
-```typescript
-// BEFORE (broken):
-await supabase.storage.from('creator-images').upload(fileName, profileImage, { upsert: true });
-
-// AFTER (correct):
-await supabase.storage.from('profile-images').upload(fileName, profileImage, { upsert: true });
-const { data: urlData } = supabase.storage.from('profile-images').getPublicUrl(fileName);
-```
-
-The `profile-images` bucket is public and already has the correct INSERT RLS policy (`Users can upload their own profile image`).
-
-### Step 2 — Fix `ProfileTab.tsx` (Null Guard + Native-Safe Upload)
-
-Two changes:
-
-**2a.** Add null guard on `response.data` access:
-```typescript
-if (response.error) throw new Error(response.error.message || 'Upload error');
-if (!response.data?.success) throw new Error(response.data?.error || 'Upload failed');
-```
-
-**2b.** Add a fallback path for native: if `supabase.functions.invoke` fails on native, fall back to direct Supabase Storage upload into `profile-images` bucket. This prevents the Android-specific `FormData` hang.
-
-### Step 3 — Fix `PortfolioUploadSection.tsx` (XHR Timeout)
-
-Add timeout handling to prevent silent hangs on native:
-```typescript
-xhr.timeout = 30000; // 30 seconds
-xhr.addEventListener('timeout', () => reject(new Error('Upload timed out. Please try again.')));
-```
-
-### Files to Modify
+### Files to Create/Modify
 
 | File | Change |
 |---|---|
-| `src/pages/NativeCreatorOnboarding.tsx` | Line ~239: `creator-images` → `profile-images` |
-| `src/components/creator-dashboard/ProfileTab.tsx` | Null guard on `response.data`, add native fallback |
-| `src/components/creator-dashboard/PortfolioUploadSection.tsx` | Add XHR timeout (30s) |
+| `src/components/NativeDebugConsole.tsx` | NEW: Full debug overlay with log capture, device info, copy button |
+| `src/pages/NativeCreatorOnboarding.tsx` | Session validation before INSERT, better error messages, debug trigger |
+| `src/main.tsx` | Global error/rejection interceptor writing to `window.NATIVE_ERROR_LOG` |
+| `src/components/NativeAppGate.tsx` | Integrate debug console, pass logo-tap trigger |
 
-**No database migrations needed.** The `profile-images` bucket already exists with correct public access and RLS policies for authenticated uploads.
+---
+
+### How the Debug Console Works (User Flow)
+
+```text
+App crashes or shows error
+     ↓
+Tap the Collab Hunts logo 5 times quickly (on any screen)
+     ↓
+Full-screen debug overlay opens
+     ↓
+Shows:
+  - Device: Android 13, Screen: 390x844
+  - Session: Active (or Expired)
+  - Last 50 errors/warnings with timestamps
+  - Unhandled promise rejections
+  - Supabase error codes
+     ↓
+Tap "Copy All" → paste into chat message to me
+```
+
+This gives you full visibility into every crash without needing developer tools or a USB connection.
+
+---
+
+### No Database Changes Required
+
+All fixes are in the React/TypeScript layer. The database schema and RLS policies are correct — the issue is the session not being ready before the INSERT runs.
