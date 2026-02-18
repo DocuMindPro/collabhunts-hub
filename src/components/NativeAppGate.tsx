@@ -144,10 +144,15 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
           setShowBrandOnboarding(false);
         } else if (event === 'SIGNED_IN' && session?.user) {
           setUser(session.user);
-          const { creator, brand } = await refetchProfiles(session.user.id);
+          // Defer refetch to avoid Supabase auth deadlock (never await inside onAuthStateChange)
+          const userId = session.user.id;
+          const userType = session.user.user_metadata?.user_type;
+          setTimeout(async () => {
+            if (!mounted) return;
+            const { creator, brand } = await refetchProfiles(userId);
 
-          // Auto-select role if only one profile exists
-          if (mounted) {
+            // Auto-select role if only one profile exists
+            if (!mounted) return;
             if (creator && !brand) {
               if (isCreatorProfileComplete(creator)) {
                 setSelectedRole('creator');
@@ -161,11 +166,10 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
                 setShowBrandOnboarding(true);
               }
             } else if (!creator && !brand) {
-              const userType = session?.user?.user_metadata?.user_type;
               // Retry after delay to catch profile insert race condition
               setTimeout(async () => {
                 if (!mounted) return;
-                const retried = await refetchProfiles(session.user.id);
+                const retried = await refetchProfiles(userId);
                 if (retried.brand && !retried.creator) {
                   if (retried.brand.registration_completed) setSelectedRole('brand');
                   else setShowBrandOnboarding(true);
@@ -178,7 +182,7 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
                 }
               }, 1500);
             }
-          }
+          }, 0);
         }
       }
     );
@@ -192,8 +196,9 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
   }, [refetchProfiles]);
 
   // Helper to check if creator profile is complete enough to skip onboarding
+  // Only require display_name and bio — categories are optional during native onboarding
   const isCreatorProfileComplete = (profile: CreatorProfile) => {
-    return !!(profile.display_name && profile.bio && profile.categories && profile.categories.length > 0);
+    return !!(profile.display_name && profile.bio);
   };
 
   // Auto-select role when profiles load (after initial check)
