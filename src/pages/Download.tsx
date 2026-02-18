@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Smartphone, Apple, Download as DownloadIcon, ExternalLink, Package, Shield, AlertTriangle } from "lucide-react";
+import {
+  Smartphone, Apple, Download as DownloadIcon, ExternalLink,
+  Shield, AlertTriangle, Bell, MessageSquare, Zap, WifiOff,
+  CheckCircle2, ChevronRight, Star,
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Logo from "@/components/Logo";
 
 const GITHUB_REPO = "DocuMindPro/collabhunts-hub";
 const APP_URL = "https://collabhunts-hub.lovable.app";
@@ -21,232 +25,345 @@ interface GitHubRelease {
   }>;
 }
 
+/* ─── Feature highlights ─────────────────────────────────────── */
+const appFeatures = [
+  {
+    icon: Bell,
+    label: "Instant Notifications",
+    desc: "Know the moment a brand books you or a creator responds.",
+    badge: "App exclusive",
+  },
+  {
+    icon: MessageSquare,
+    label: "Real-Time Messaging",
+    desc: "Typing indicators, instant delivery — no refreshing required.",
+    badge: "App exclusive",
+  },
+  {
+    icon: Zap,
+    label: "One-Tap Actions",
+    desc: "Accept bookings, apply to opportunities, and manage your profile at speed.",
+  },
+  {
+    icon: WifiOff,
+    label: "Offline Access",
+    desc: "Browse creator profiles and your dashboard even without signal.",
+  },
+];
+
+/* ─── Social proof ───────────────────────────────────────────── */
+const stats = [
+  { value: "500+", label: "Brands" },
+  { value: "2 000+", label: "Creators" },
+  { value: "4.8 ★", label: "Avg rating" },
+];
+
 const Download = () => {
   const [latestRelease, setLatestRelease] = useState<GitHubRelease | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [apkError, setApkError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchLatestRelease = async () => {
+    (async () => {
       try {
-        const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases?per_page=5`);
-        if (response.ok) {
-          const releases: GitHubRelease[] = await response.json();
-          const releaseWithApk = releases.find(r => r.assets.some(a => a.name.endsWith('.apk')));
-          if (releaseWithApk) {
-            setLatestRelease(releaseWithApk);
-          } else if (releases.length === 0) {
-            setError("No releases found yet. Push code to GitHub to trigger the first build.");
-          } else {
-            setError("No APK file found in recent releases. A new build may be in progress.");
-          }
-        } else if (response.status === 404) {
-          setError("No releases found yet. Push code to GitHub to trigger the first build.");
+        const res = await fetch(
+          `https://api.github.com/repos/${GITHUB_REPO}/releases?per_page=5`
+        );
+        if (res.ok) {
+          const releases: GitHubRelease[] = await res.json();
+          const withApk = releases.find((r) =>
+            r.assets.some((a) => a.name.endsWith(".apk"))
+          );
+          if (withApk) setLatestRelease(withApk);
+          else setApkError("Build in progress — check back shortly.");
         } else {
-          setError("Could not fetch release information.");
+          setApkError("Could not fetch release info.");
         }
-      } catch (err) {
-        setError("Could not connect to GitHub. The APK download will be available after the first build.");
+      } catch {
+        setApkError("Could not connect to GitHub. Try again later.");
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchLatestRelease();
+    })();
   }, []);
 
-  const apkAsset = latestRelease?.assets.find(a => a.name.endsWith('.apk'));
+  const apkAsset = latestRelease?.assets.find((a) => a.name.endsWith(".apk"));
   const apkUrl = apkAsset?.browser_download_url;
   const apkSize = apkAsset ? (apkAsset.size / (1024 * 1024)).toFixed(1) : null;
+
+  /* ── Hero QR value: direct APK if available, else app URL ── */
+  const heroQrValue = apkUrl ?? APP_URL;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      
-      <main className="flex-1 container mx-auto px-4 py-12">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl font-bold mb-4 text-center">Get Collab Hunts on Your Phone</h1>
-          <p className="text-muted-foreground text-lg mb-8 text-center">
-            Download the Android app or install directly from your browser
-          </p>
 
-          {/* Android APK Download Section */}
-          <Card className="mb-8 border-primary/20">
-            <CardHeader className="bg-primary/5">
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-primary" />
-                Android APK Download
-              </CardTitle>
-              <CardDescription>
-                Download and install the native Android app
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-                  <p className="text-muted-foreground">Checking for latest build...</p>
-                </div>
-              ) : error ? (
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              ) : apkUrl ? (
-                <div className="flex flex-col items-center gap-6">
-                  <div className="bg-white p-4 rounded-xl shadow-lg">
-                    <QRCodeSVG 
-                      value={apkUrl} 
-                      size={180}
-                      level="H"
-                      includeMargin={true}
-                      bgColor="#ffffff"
-                      fgColor="#000000"
-                    />
-                  </div>
-                  
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Version: {latestRelease?.tag_name} • Size: {apkSize} MB
-                    </p>
-                    <Button asChild size="lg" className="gap-2">
-                      <a href={apkUrl} download>
-                        <DownloadIcon className="h-5 w-5" />
-                        Download APK
-                      </a>
-                    </Button>
-                  </div>
+      {/* ── HERO ─────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden border-b border-border">
+        {/* subtle radial glow */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="h-[600px] w-[600px] rounded-full bg-primary/5 blur-3xl" />
+        </div>
 
-                  {/* Installation Instructions */}
-                  <div className="w-full mt-4 p-4 bg-muted/50 rounded-lg">
-                    <h3 className="font-semibold flex items-center gap-2 mb-3">
-                      <Shield className="h-4 w-4" />
-                      Installation Steps
-                    </h3>
-                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                      <li>Scan the QR code or tap "Download APK"</li>
-                      <li>Open your phone's <strong>Settings → Security</strong></li>
-                      <li>Enable <strong>"Install from Unknown Sources"</strong> for your browser</li>
-                      <li>Open the downloaded APK file</li>
-                      <li>Tap <strong>"Install"</strong> when prompted</li>
-                    </ol>
-                  </div>
-                </div>
-              ) : (
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    No APK file found in the latest release. A new build may be in progress.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
+        <div className="relative container mx-auto px-4 py-20 md:py-28 flex flex-col items-center text-center gap-6">
+          <Logo size="lg" />
 
-          {/* PWA Option */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-center gap-2">
-                <ExternalLink className="h-5 w-5" />
-                Quick Install (Web App)
-              </CardTitle>
-              <CardDescription className="text-center">
-                Install directly from your browser - no download needed
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-6">
-              <div className="bg-white p-4 rounded-xl shadow-lg">
-                <QRCodeSVG 
-                  value={APP_URL} 
-                  size={160}
-                  level="H"
-                  includeMargin={true}
-                  bgColor="#ffffff"
-                  fgColor="#000000"
-                />
-              </div>
-              
-              <Button asChild variant="outline" className="gap-2">
-                <a href={APP_URL} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" />
-                  Open Web App
-                </a>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Platform Instructions */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* iOS Instructions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Apple className="h-5 w-5" />
-                  iPhone / iPad
-                </CardTitle>
-                <CardDescription>Web App Installation</CardDescription>
-              </CardHeader>
-              <CardContent className="text-left">
-                <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                  <li>Scan the Web App QR code above</li>
-                  <li>Tap the notification to open Safari</li>
-                  <li>Tap the <strong>Share</strong> button (box with arrow)</li>
-                  <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
-                  <li>Tap <strong>"Add"</strong> in the top right</li>
-                </ol>
-              </CardContent>
-            </Card>
-
-            {/* Android Instructions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Smartphone className="h-5 w-5" />
-                  Android
-                </CardTitle>
-                <CardDescription>Native App or Web App</CardDescription>
-              </CardHeader>
-              <CardContent className="text-left">
-                <p className="text-sm font-medium mb-2">Option 1: Native APK (Recommended)</p>
-                <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground mb-4">
-                  <li>Scan the APK QR code above</li>
-                  <li>Enable "Unknown Sources" in Settings</li>
-                  <li>Install the downloaded APK</li>
-                </ol>
-                <p className="text-sm font-medium mb-2">Option 2: Web App</p>
-                <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
-                  <li>Scan the Web App QR code</li>
-                  <li>Tap menu (⋮) → "Install app"</li>
-                </ol>
-              </CardContent>
-            </Card>
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary">
+            <Star className="h-3 w-3 fill-primary" />
+            Android app available now
           </div>
 
-          {/* Benefits */}
-          <div className="mt-12 p-6 bg-muted/50 rounded-xl">
-            <h2 className="text-xl font-semibold mb-4 text-center">Why Use the App?</h2>
-            <div className="grid sm:grid-cols-2 gap-4 text-sm">
-              <div className="p-4 bg-background rounded-lg border border-primary/20 relative overflow-hidden">
-                <span className="absolute top-2 right-2 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-1.5 py-0.5 rounded">App Exclusive</span>
-                <p className="font-medium">🔔 Instant Push Notifications</p>
-                <p className="text-muted-foreground mt-1">Get notified instantly when you receive new bookings, messages, or opportunity matches — only on the app</p>
+          <h1 className="text-4xl md:text-6xl font-heading font-bold text-foreground leading-tight max-w-2xl">
+            Your creator workspace,
+            <span className="text-primary"> in your pocket</span>
+          </h1>
+
+          <p className="max-w-xl text-muted-foreground text-lg">
+            Download Collab Hunts and manage bookings, messages, and
+            opportunities — all from your phone.
+          </p>
+
+          {/* Social proof */}
+          <div className="flex items-center gap-8 mt-2">
+            {stats.map((s) => (
+              <div key={s.label} className="text-center">
+                <p className="text-2xl font-bold text-foreground">{s.value}</p>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
               </div>
-              <div className="p-4 bg-background rounded-lg border border-primary/20 relative overflow-hidden">
-                <span className="absolute top-2 right-2 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-1.5 py-0.5 rounded">App Exclusive</span>
-                <p className="font-medium">💬 Real-Time Messaging</p>
-                <p className="text-muted-foreground mt-1">Faster, smoother chat experience with typing indicators and instant delivery</p>
+            ))}
+          </div>
+
+          {/* Primary download CTA */}
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+            {loading ? (
+              <Button size="lg" disabled className="gap-2 min-w-[200px]">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                Checking for build…
+              </Button>
+            ) : apkUrl ? (
+              <Button asChild size="lg" className="gap-2 gradient-hero hover:opacity-90">
+                <a href={apkUrl} download>
+                  <DownloadIcon className="h-5 w-5" />
+                  Download Android APK
+                  {apkSize && (
+                    <span className="opacity-70 text-xs">· {apkSize} MB</span>
+                  )}
+                </a>
+              </Button>
+            ) : (
+              <Button size="lg" disabled className="gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                Build coming soon
+              </Button>
+            )}
+
+            <Button asChild size="lg" variant="outline" className="gap-2">
+              <a href={APP_URL} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4" />
+                Open as Web App
+              </a>
+            </Button>
+          </div>
+
+          {/* Version tag */}
+          {latestRelease && (
+            <p className="text-xs text-muted-foreground">
+              Latest build: {latestRelease.tag_name} ·{" "}
+              {new Date(latestRelease.published_at).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+      </section>
+
+      <main className="flex-1 container mx-auto px-4 py-16 space-y-20 max-w-5xl">
+
+        {/* ── FEATURE GRID ─────────────────────────────────────────── */}
+        <section>
+          <h2 className="text-2xl md:text-3xl font-heading font-bold text-center mb-3">
+            Everything you need, faster on mobile
+          </h2>
+          <p className="text-muted-foreground text-center mb-10">
+            The web experience is great — but the app is where the magic happens.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-5">
+            {appFeatures.map(({ icon: Icon, label, desc, badge }) => (
+              <div
+                key={label}
+                className="relative rounded-2xl border border-border bg-card p-6 flex gap-4"
+              >
+                {badge && (
+                  <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                    {badge}
+                  </span>
+                )}
+                <div className="shrink-0 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+                  <Icon className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground mb-1">{label}</p>
+                  <p className="text-sm text-muted-foreground">{desc}</p>
+                </div>
               </div>
-              <div className="p-4 bg-background rounded-lg">
-                <p className="font-medium">📴 Offline Access</p>
-                <p className="text-muted-foreground mt-1">Browse creator profiles and manage your dashboard even without internet</p>
+            ))}
+          </div>
+        </section>
+
+        {/* ── DOWNLOAD CARDS ───────────────────────────────────────── */}
+        <section>
+          <h2 className="text-2xl md:text-3xl font-heading font-bold text-center mb-10">
+            Get the app on your device
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-8">
+
+            {/* Android */}
+            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+              <div className="flex items-center gap-3 border-b border-border px-6 py-4 bg-muted/40">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                  <Smartphone className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">Android</p>
+                  <p className="text-xs text-muted-foreground">Native APK · Recommended</p>
+                </div>
+                <span className="ml-auto text-[10px] font-bold uppercase bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 px-2 py-0.5 rounded-full">
+                  Available now
+                </span>
               </div>
-              <div className="p-4 bg-background rounded-lg">
-                <p className="font-medium">⚡ One-Tap Actions</p>
-                <p className="text-muted-foreground mt-1">Accept bookings, respond to messages, and manage your profile with quick native controls</p>
+
+              <div className="p-6 flex flex-col items-center gap-6">
+                {/* QR */}
+                {loading ? (
+                  <div className="flex h-44 w-44 items-center justify-center rounded-xl bg-muted">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  </div>
+                ) : apkError ? (
+                  <Alert className="w-full">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>{apkError}</AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="rounded-xl bg-card p-3 shadow-md ring-1 ring-border">
+                    <QRCodeSVG value={heroQrValue} size={160} level="H" includeMargin bgColor="#ffffff" fgColor="#000000" />
+                  </div>
+                )}
+
+                {apkUrl && (
+                  <Button asChild size="lg" className="w-full gap-2 gradient-hero hover:opacity-90">
+                    <a href={apkUrl} download>
+                      <DownloadIcon className="h-4 w-4" />
+                      Download APK
+                      {apkSize && <span className="opacity-70 text-xs">· {apkSize} MB</span>}
+                    </a>
+                  </Button>
+                )}
+
+                {/* Steps */}
+                <div className="w-full rounded-xl bg-muted/50 p-4">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                    <Shield className="h-3.5 w-3.5" />
+                    Installation steps
+                  </p>
+                  <ol className="space-y-2">
+                    {[
+                      "Scan the QR code or tap Download APK",
+                      "Open Settings → Security → Unknown Sources",
+                      'Enable "Install from Unknown Sources" for your browser',
+                      "Open the downloaded .apk file",
+                      'Tap "Install" when prompted',
+                    ].map((step, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+                          {i + 1}
+                        </span>
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            {/* iOS / PWA */}
+            <div className="flex flex-col gap-6">
+
+              {/* iOS */}
+              <div className="flex-1 rounded-2xl border border-border bg-card overflow-hidden">
+                <div className="flex items-center gap-3 border-b border-border px-6 py-4 bg-muted/40">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                    <Apple className="h-5 w-5 text-foreground/70" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">iPhone / iPad</p>
+                    <p className="text-xs text-muted-foreground">Add to Home Screen</p>
+                  </div>
+                  <span className="ml-auto text-[10px] font-bold uppercase bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full">
+                    Coming soon
+                  </span>
+                </div>
+                <div className="p-6">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    While the native iOS app is in review, iPhone users can install
+                    the web app directly from Safari — it works just like a native app.
+                  </p>
+                  <ol className="space-y-2">
+                    {[
+                      "Open collabhunts-hub.lovable.app in Safari",
+                      'Tap the Share button (□↑)',
+                      'Scroll down → tap "Add to Home Screen"',
+                      'Tap "Add" — done!',
+                    ].map((step, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                        <ChevronRight className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                  <Button asChild variant="outline" className="w-full gap-2 mt-5">
+                    <a href={APP_URL} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4" />
+                      Open in Safari
+                    </a>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Desktop QR */}
+              <div className="rounded-2xl border border-border bg-card p-6 flex gap-5 items-center">
+                <div className="rounded-lg bg-white p-2 shadow-sm shrink-0">
+                  <QRCodeSVG value={APP_URL} size={90} level="H" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground mb-1">On a desktop?</p>
+                  <p className="text-sm text-muted-foreground">
+                    Scan this QR code with your phone camera to open Collab Hunts instantly.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* ── REASSURANCE ──────────────────────────────────────────── */}
+        <section className="rounded-2xl border border-border bg-card p-8 text-center">
+          <CheckCircle2 className="h-10 w-10 text-primary mx-auto mb-4" />
+          <h2 className="text-xl font-heading font-bold mb-2">Safe to install</h2>
+          <p className="text-muted-foreground max-w-xl mx-auto text-sm">
+            The Collab Hunts APK is built directly from our open-source GitHub
+            repository using automated CI/CD pipelines. You can inspect every
+            build at{" "}
+            <a
+              href={`https://github.com/${GITHUB_REPO}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline"
+            >
+              github.com/{GITHUB_REPO}
+            </a>
+            .
+          </p>
+        </section>
+
       </main>
 
       <Footer />
