@@ -236,10 +236,10 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
         const fileExt = profileImage.name.split('.').pop();
         const fileName = `${user.id}/profile.${fileExt}`;
         const { error: uploadError } = await supabase.storage
-          .from('creator-images')
+          .from('profile-images')
           .upload(fileName, profileImage, { upsert: true });
         if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage.from('creator-images').getPublicUrl(fileName);
+        const { data: urlData } = supabase.storage.from('profile-images').getPublicUrl(fileName);
         profileImageUrl = urlData.publicUrl;
       }
 

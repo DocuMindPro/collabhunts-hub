@@ -149,13 +149,32 @@ const ProfileTab = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No session found");
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('image_type', 'profile');
-      const response = await supabase.functions.invoke('upload-profile-image', { body: formData });
-      if (response.error) throw new Error(response.error.message);
-      if (!response.data.success) throw new Error(response.data.error || 'Upload failed');
-      setProfile({ ...profile, profile_image_url: response.data.url });
+
+      let imageUrl: string | null = null;
+
+      // Try edge function first, fall back to direct Storage upload (safer on Android native)
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('image_type', 'profile');
+        const response = await supabase.functions.invoke('upload-profile-image', { body: formData });
+        if (response.error) throw new Error(response.error.message || 'Upload error');
+        if (!response.data?.success) throw new Error(response.data?.error || 'Upload failed');
+        imageUrl = response.data.url;
+      } catch (edgeFnError) {
+        console.warn('[ProfileTab] Edge function upload failed, falling back to Storage:', edgeFnError);
+        // Fallback: upload directly to Supabase Storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${session.user.id}/profile.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('profile-images')
+          .upload(fileName, file, { upsert: true });
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from('profile-images').getPublicUrl(fileName);
+        imageUrl = urlData.publicUrl;
+      }
+
+      setProfile({ ...profile, profile_image_url: imageUrl });
       toast({ title: "Success", description: "Profile image uploaded successfully" });
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -176,13 +195,31 @@ const ProfileTab = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No session found");
       const coverKey = index === 0 ? 'cover_image_url' : index === 1 ? 'cover_image_url_2' : 'cover_image_url_3';
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('image_type', `cover-${index + 1}`);
-      const response = await supabase.functions.invoke('upload-profile-image', { body: formData });
-      if (response.error) throw new Error(response.error.message);
-      if (!response.data.success) throw new Error(response.data.error || 'Upload failed');
-      setProfile({ ...profile, [coverKey]: response.data.url });
+
+      let imageUrl: string | null = null;
+
+      // Try edge function first, fall back to direct Storage upload (safer on Android native)
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('image_type', `cover-${index + 1}`);
+        const response = await supabase.functions.invoke('upload-profile-image', { body: formData });
+        if (response.error) throw new Error(response.error.message || 'Upload error');
+        if (!response.data?.success) throw new Error(response.data?.error || 'Upload failed');
+        imageUrl = response.data.url;
+      } catch (edgeFnError) {
+        console.warn('[ProfileTab] Edge function upload failed, falling back to Storage:', edgeFnError);
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${session.user.id}/cover-${index + 1}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('profile-images')
+          .upload(fileName, file, { upsert: true });
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from('profile-images').getPublicUrl(fileName);
+        imageUrl = urlData.publicUrl;
+      }
+
+      setProfile({ ...profile, [coverKey]: imageUrl });
       toast({ title: "Success", description: `Cover image ${index + 1} uploaded successfully` });
     } catch (error) {
       console.error("Error uploading cover image:", error);
