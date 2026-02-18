@@ -1,6 +1,11 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { installNativeErrorInterceptors } from "./components/NativeDebugConsole";
+
+// Install global error interceptors BEFORE React renders
+// so every crash, rejection, and warning is captured for the debug console.
+installNativeErrorInterceptors();
 
 // Extend window for TypeScript
 declare global {

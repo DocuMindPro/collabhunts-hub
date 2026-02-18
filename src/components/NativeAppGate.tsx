@@ -7,6 +7,7 @@ import NativeLogin from '@/pages/NativeLogin';
 import NativeCreatorOnboarding from '@/pages/NativeCreatorOnboarding';
 import NativeBrandOnboarding from '@/pages/NativeBrandOnboarding';
 import NativeRolePicker from './NativeRolePicker';
+import { NativeDebugProvider } from './NativeDebugConsole';
 
 interface CreatorProfile {
   id: string;
@@ -344,7 +345,11 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
     );
   }
 
-  return <>{children(selectedRole, brandProfile)}</>;
+  return (
+    <NativeDebugProvider>
+      {children(selectedRole, brandProfile)}
+    </NativeDebugProvider>
+  );
 }
 
 export default NativeAppGate;
