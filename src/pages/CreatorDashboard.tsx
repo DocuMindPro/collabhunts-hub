@@ -94,7 +94,7 @@ const CreatorDashboard = () => {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col ${isNative ? 'pb-20' : ''}`}>
+    <div className="min-h-screen flex flex-col" style={isNative ? { paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)' } : {}}>
       {!isNative && <Navbar />}
       
       <main className={`flex-1 py-4 md:py-8 ${isNative ? 'safe-area-top' : ''}`}>
