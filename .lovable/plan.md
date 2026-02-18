@@ -1,182 +1,90 @@
 
-# README Build Badge + Complete iOS Gap Audit
+# Root Cause: Apple TestFlight Upload Rate Limit (HTTP 409)
 
-## Part 1: Build Status Badges for README
+## What Is Actually Wrong (Not a Code Bug)
 
-### What needs to change
-The `README.md` file needs two GitHub Actions status badges added at the top — one for the iOS TestFlight build and one for the Android APK build. These badges auto-update to show passing/failing status on every push to `main`.
+The error from screenshot 4 is unambiguous:
 
-The badge URLs follow the GitHub Actions standard format:
 ```
-https://github.com/{OWNER}/{REPO}/actions/workflows/{workflow-filename}/badge.svg
+Validation failed (409) Upload limit reached.
+The upload limit for your application has been reached.
+Please wait 1 day and try again.
 ```
 
-Both workflow files are already defined:
-- `.github/workflows/build-ios.yml` → workflow name: `Build iOS & Upload to TestFlight`
-- `.github/workflows/build-android.yml` → workflow name: `Build Android APK`
+**This is Apple's TestFlight upload rate limit — not a code error.** Apple enforces a hard cap on how many builds you can upload per app per day via `altool`. Every single Lovable code commit (including plan file updates, safe area tweaks, badge additions) has been triggering a full iOS build and upload to TestFlight. Looking at the Actions list in screenshot 2, builds #72, #73, #74, #75 all fired within 31 minutes — Apple's limit was hit fast.
 
-**Important:** Since this is a Lovable-connected repo, the GitHub username and repo name aren't hardcoded in the project files. The badge will use a placeholder that the user replaces once — OR we can use a relative path approach that works once the repo is known. The cleanest approach is to add the badges with a clear `YOUR-GITHUB-USERNAME/YOUR-REPO-NAME` placeholder so you can fill it in once.
-
-Badges will be added right at the top of `README.md`, before "Project Info", so they are immediately visible on the GitHub repo homepage.
+The previous screenshot 1 shows a separate older error: a `502 Bad Gateway` from Apple servers — that was a transient Apple outage, unrelated to code.
 
 ---
 
-## Part 2: Gap Audit — What's Still Missing or Wrong
+## The Real Problem: Wrong Trigger Strategy
 
-After reading every relevant native file, here is the complete list of remaining gaps:
+Currently the iOS workflow triggers on **every push to `main`**:
+```yaml
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+```
+
+This means **every Lovable edit** — including plan file saves, README tweaks, minor CSS fixes — burns one TestFlight upload slot. Apple's limit is typically **25 builds per day per app**. With Lovable pushing multiple commits per session, this is exhausted in minutes.
+
+Android APK builds have no such limit (they just create GitHub Releases), so Android can safely keep the `push` trigger. iOS cannot.
 
 ---
 
-### Gap 1: `NativeBrandDashboard.tsx` — Content Hidden Behind Bottom Nav (CRITICAL)
+## The Fix: Two Changes to the iOS Workflow
 
-**Problem:** The dashboard renders tab content in `<div className="pb-20">`. On iPhone with the home indicator, the bottom nav has `safe-area-bottom` which adds `~34px` to its visual height on top of `64px (h-16)`. Total nav height = ~98px. But `pb-20` = only `80px`. This means the last ~18px of every tab's content is **hidden behind the bottom nav on iPhone X and later**.
+### Change 1 — Remove the automatic `push` trigger from iOS
 
-**Fix:** Change `pb-20` to `pb-24` AND add `safe-area-bottom` padding to account for the home indicator:
-```tsx
-// BEFORE
-<div className="pb-20">{renderTab()}</div>
+Change the iOS workflow to **only run manually** (`workflow_dispatch`) or on **version tags**. This gives you full control over when a TestFlight build is sent — you trigger it once when you're happy with a batch of changes, not on every single commit.
 
-// AFTER
-<div className="pb-24 safe-area-bottom">{renderTab()}</div>
+```yaml
+# BEFORE
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# AFTER — manual trigger only + optional version tag trigger
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'  # Only trigger on version tags like v1.0.1, v1.1.0
 ```
+
+This way:
+- Android still auto-builds on every push (no rate limit)
+- iOS only builds when YOU decide to release (manual trigger or git tag)
+
+### Change 2 — Modernize `altool` to `xcrun notarytool` / `xcrun altool` with API key
+
+The `xcrun altool --upload-app` command used with username + password (App-Specific Password) is **deprecated** by Apple as of Xcode 14. While it still works, Apple increasingly rate-limits and rejects it under load. The modern replacement is using **App Store Connect API Key** with `xcrun altool` using `--apiKey` and `--apiIssuer` flags, or using `xcrun notarytool`.
+
+However, this requires new secrets (`APPSTORE_CONNECT_API_KEY_ID`, `APPSTORE_CONNECT_API_ISSUER`, `APPSTORE_CONNECT_API_KEY_BASE64`) — so this is optional and only if the user wants to add the API key. **The primary fix is Change 1 alone.**
 
 ---
 
-### Gap 2: `CreatorDashboard.tsx` — Same Bottom Nav Content Overlap (CRITICAL)
+## Files to Change
 
-**Problem:** The creator dashboard wrapper in `App.tsx` line 120: `<div className="min-h-screen bg-background pb-20">`. Same issue — `pb-20` only covers the 64px nav bar height but misses the `env(safe-area-inset-bottom, ~34px)` extra spacing on iPhone.
+| File | Change |
+|---|---|
+| `.github/workflows/build-ios.yml` | Remove `push: branches: [main]` trigger; keep only `workflow_dispatch` + optional `push: tags: v*` |
 
-**Fix:** Change the wrapper in `App.tsx` (the `NativeAppRoutes` component) from `pb-20` to `pb-24 safe-area-bottom`. Also, `CreatorDashboard.tsx` itself uses `pb-20` on the outer wrapper — change it too.
-
----
-
-### Gap 3: `NativeCreatorOnboarding.tsx` — Fixed Footer Button Hidden Behind Home Indicator (CRITICAL)
-
-**Problem:** The "Continue" / "Create Profile" fixed footer button uses:
-```tsx
-<div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border safe-area-bottom">
-```
-This has `safe-area-bottom` ✅ — BUT `safe-area-bottom` only adds `padding-bottom: env(safe-area-inset-bottom, 0px)`. The button inside the footer still sits at `bottom: 0`. The button's touch area is fine BUT the scroll container `pb-24` may not be tall enough since the footer + safe area can be ~110px tall. The scrollable content area needs `pb-28 safe-area-bottom` to ensure the last input/element isn't hidden behind the footer.
-
-**Fix:** Change the scroll container from `pb-24` to:
-```tsx
-<div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4" 
-  style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 120px)' }}>
-```
-Using inline style here is safer because we need additive math (`safe-area + footer-height`), which CSS utility classes can't do without a calc() expression.
+That's the only file that needs changing. The rate limit will reset after 24 hours automatically — no other action needed.
 
 ---
 
-### Gap 4: `MobileBottomNav.tsx` — Nav Height Mismatch Causes Content Clip (MEDIUM)
+## After This Fix
 
-**Problem:** `MobileBottomNav` has `safe-area-bottom` on the `<nav>` — this is correct. BUT `h-16` (64px) is the height of the tab row ABOVE the safe area. The total nav height varies by device:
-- iPhone without home indicator: 64px
-- iPhone with home indicator (X/11/12/13/14/15): 64px + ~34px = ~98px
-
-The creator dashboard wrapper uses a fixed `pb-20 (80px)` — not enough for newer iPhones. This is the same root cause as Gap 2.
-
-**Fix:** Covered by Gap 2 fix.
+- **iOS builds will no longer auto-trigger** on every Lovable commit
+- **To release a new TestFlight build**: Go to GitHub → Actions → "Build iOS & Upload to TestFlight" → click "Run workflow" button → Done
+- **Android APK** continues to auto-build on every push as before
+- **The 409 rate limit resets after 24 hours** from when it was hit — so the next manual trigger will succeed
 
 ---
 
-### Gap 5: `NativeRolePicker.tsx` — Version Number is Hardcoded `v1.0.0 (build 1)` (MINOR)
+## Optional: Version Tag Releases
 
-**Problem:** At the bottom of the role picker screen:
-```tsx
-<p className="mt-4 text-xs text-muted-foreground/60">v1.0.0 (build 1)</p>
-```
-This is hardcoded and will never update. As you push new builds (the Android CI already bumps build numbers automatically), this shows a stale version.
-
-**Fix:** Use `VITE_APP_VERSION` from the environment, or simply remove the hardcoded string and replace with `import.meta.env.VITE_APP_VERSION || 'v1.0'`. We also add `VITE_APP_VERSION` to the Android + iOS CI workflows as a build step so it stays current.
-
-Actually, the simpler fix is to inject the version dynamically from `package.json` via `vite.config.ts`. Vite already has access to `process.env` during build. We add:
-```typescript
-// vite.config.ts
-define: {
-  __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
-}
-```
-Then in `NativeRolePicker.tsx`:
-```tsx
-declare const __APP_VERSION__: string;
-<p>v{__APP_VERSION__}</p>
-```
-
----
-
-### Gap 6: `NativeDebugConsole.tsx` — Debug Button Overlaps Bottom Nav (MEDIUM)
-
-**Problem:** The floating debug button is positioned at:
-```tsx
-bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)',
-```
-This puts it 96px above the bottom of the screen. But the bottom nav is `h-16 (64px) + safe-area-inset-bottom`. On newer iPhones with ~34px safe area, the nav is ~98px tall. So `96px` barely clears it — the debug button visually overlaps or sits right on top of the nav edge.
-
-**Fix:** Change to `112px` base offset:
-```tsx
-bottom: 'calc(env(safe-area-inset-bottom, 0px) + 112px)',
-```
-
----
-
-### Gap 7: `NativeBrandOnboarding.tsx` — Missing `safe-area-bottom` on Scroll Content
-
-**Problem:** Looking at how `NativeCreatorOnboarding` handles its scroll container vs `NativeBrandOnboarding` — both have a fixed footer button. The brand onboarding scroll content similarly risks being hidden behind the footer + home indicator on newer iPhones.
-
-**Fix:** Apply the same `paddingBottom: calc(...)` inline style to the scroll container in `NativeBrandOnboarding.tsx`.
-
----
-
-## Complete File Change List
-
-| File | Change | Priority |
-|---|---|---|
-| `README.md` | Add iOS + Android build status badges at top | High |
-| `src/App.tsx` | Change `pb-20` → `pb-24 safe-area-bottom` in `NativeAppRoutes` wrapper div | Critical |
-| `src/pages/NativeBrandDashboard.tsx` | Change `pb-20` → inline `paddingBottom: calc(...)` on content wrapper | Critical |
-| `src/pages/NativeCreatorOnboarding.tsx` | Fix scroll container bottom padding to include footer height + safe area | Critical |
-| `src/pages/NativeBrandOnboarding.tsx` | Same scroll container fix as onboarding | Critical |
-| `src/components/NativeDebugConsole.tsx` | Bump floating button offset from 96px → 112px | Medium |
-| `src/components/NativeRolePicker.tsx` | Replace hardcoded version string with dynamic from package.json | Minor |
-| `vite.config.ts` | Inject `__APP_VERSION__` from package.json | Minor |
-
----
-
-## Technical Implementation Details
-
-### README Badges (exact markdown)
-```markdown
-[![iOS Build](https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO-NAME/actions/workflows/build-ios.yml/badge.svg)](https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO-NAME/actions/workflows/build-ios.yml)
-[![Android Build](https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO-NAME/actions/workflows/build-android.yml/badge.svg)](https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO-NAME/actions/workflows/build-android.yml)
-```
-
-**After I make the change, you need to replace `YOUR-GITHUB-USERNAME/YOUR-REPO-NAME` with your actual GitHub username and repository name.** You can find this in your GitHub repo URL: `https://github.com/YOUR-USERNAME/YOUR-REPO`. It's a one-time, 30-second edit.
-
-### Content Padding Fix (the right formula)
-
-The bottom nav is always `64px (h-16)` for the visible tabs. On top of that, `safe-area-inset-bottom` (usually `~34px` on modern iPhones, `0px` on Android and older iPhones). The scroll content must clear BOTH:
-
-```
-required padding = nav-height (64px) + safe-area-inset-bottom + extra breathing room (16px)
-= calc(env(safe-area-inset-bottom, 0px) + 80px)
-```
-
-This is applied as an inline style so CSS `calc()` with `env()` works correctly (Tailwind can't compose these two values together without JIT arbitrary values which are less readable).
-
-### Version Injection
-
-In `vite.config.ts`, inside `defineConfig`:
-```typescript
-define: {
-  __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '1.0.0'),
-},
-```
-
-In `NativeRolePicker.tsx`, declare the global and use it:
-```typescript
-declare const __APP_VERSION__: string;
-// ...
-<p className="mt-4 text-xs text-muted-foreground/60">v{__APP_VERSION__}</p>
-```
-
-`npm_package_version` is automatically set by npm/bun when running scripts, so this works in both local dev and CI without any extra steps.
+If you want iOS builds to trigger automatically but only on deliberate releases, we can also support version tags. Running `git tag v1.2.0 && git push --tags` from your GitHub repo would trigger the iOS build. The `push: tags: v*` line in the trigger handles this. We'll include this in the workflow so you have both options.
