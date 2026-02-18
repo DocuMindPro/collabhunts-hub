@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Camera, Plus, Trash2, User as UserIcon, Loader2 } from 'lucide-react';
+import { ArrowLeft, Camera, Plus, Trash2, User as UserIcon, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface NativeCreatorOnboardingProps {
@@ -31,36 +31,53 @@ interface Service {
 }
 
 const PLATFORMS = [
-  'Instagram',
-  'TikTok',
-  'YouTube',
-  'Twitter/X',
-  'Facebook',
-  'Snapchat',
-  'LinkedIn',
-  'Twitch',
+  'Instagram', 'TikTok', 'YouTube', 'Twitter/X',
+  'Facebook', 'Snapchat', 'LinkedIn', 'Twitch',
 ];
 
 const SERVICE_TYPES = [
-  'Instagram Post',
-  'Instagram Reel',
-  'Instagram Story Mention',
-  'TikTok Video',
-  'YouTube Integration',
-  'YouTube Short',
-  'Facebook Post',
-  'Live Stream',
-  'Twitter/X Post',
-  'LinkedIn Post',
-  'Podcast Mention',
-  'Custom Package',
+  'Instagram Post', 'Instagram Reel', 'Instagram Story Mention',
+  'TikTok Video', 'YouTube Integration', 'YouTube Short',
+  'Facebook Post', 'Live Stream', 'Twitter/X Post',
+  'LinkedIn Post', 'Podcast Mention', 'Custom Package',
 ];
+
+// Content categories for creator matching with brand opportunities
+const CONTENT_CATEGORIES = [
+  { id: 'Fashion', emoji: '👗', label: 'Fashion' },
+  { id: 'Beauty', emoji: '💄', label: 'Beauty' },
+  { id: 'Lifestyle', emoji: '✨', label: 'Lifestyle' },
+  { id: 'Food & Beverage', emoji: '🍔', label: 'Food & Beverage' },
+  { id: 'Technology', emoji: '💻', label: 'Technology' },
+  { id: 'Travel', emoji: '✈️', label: 'Travel' },
+  { id: 'Fitness', emoji: '💪', label: 'Fitness' },
+  { id: 'Health & Wellness', emoji: '🌿', label: 'Health & Wellness' },
+  { id: 'Gaming', emoji: '🎮', label: 'Gaming' },
+  { id: 'Music', emoji: '🎵', label: 'Music' },
+  { id: 'Entertainment', emoji: '🎬', label: 'Entertainment' },
+  { id: 'Sports', emoji: '⚽', label: 'Sports' },
+  { id: 'Education', emoji: '📚', label: 'Education' },
+  { id: 'Finance', emoji: '💰', label: 'Finance' },
+  { id: 'Automotive', emoji: '🚗', label: 'Automotive' },
+  { id: 'Home & Garden', emoji: '🏡', label: 'Home & Garden' },
+  { id: 'Pets', emoji: '🐾', label: 'Pets' },
+  { id: 'Art & Design', emoji: '🎨', label: 'Art & Design' },
+  { id: 'Comedy', emoji: '😂', label: 'Comedy' },
+  { id: 'Business', emoji: '💼', label: 'Business' },
+];
+
+// Steps:
+// 1 → Basic Info (name, bio, photo)
+// 2 → Categories (NEW)
+// 3 → Social Accounts
+// 4 → TikTok Live (conditional, if TikTok added)
+// 4/5 → Services
+// 5/6 → Terms
 
 export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboardingProps) {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // Scroll focused fields into view above keyboard on native
   const scrollContainerRef = useKeyboardScrollIntoView<HTMLDivElement>();
 
   // Step 1: Basic Info
@@ -69,41 +86,55 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // Step 2: Social Accounts
+  // Step 2: Categories (NEW)
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  // Step 3: Social Accounts
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([
     { platform: '', username: '', followerCount: '' }
   ]);
 
-  // Step 3: TikTok Live (conditional)
+  // Step 4: TikTok Live (conditional)
   const [goesLiveTiktok, setGoesLiveTiktok] = useState<boolean | null>(null);
-  const [tiktokMonthlyRevenue, setTiktokMonthlyRevenue] = useState("");
-  const [tiktokLiveInterest, setTiktokLiveInterest] = useState("");
+  const [tiktokMonthlyRevenue, setTiktokMonthlyRevenue] = useState('');
+  const [tiktokLiveInterest, setTiktokLiveInterest] = useState('');
 
-  // Step 3 or 4: Services
+  // Step 4/5: Services
   const [services, setServices] = useState<Service[]>([
     { serviceType: '', price: '', deliveryDays: '7' }
   ]);
 
-  // Step 4 or 5: Terms
+  // Final step: Terms
   const [termsAccepted, setTermsAccepted] = useState(false);
 
+  // Step accounting:
+  // Steps 1-2 are always present (basic + categories)
+  // Step 3 is social accounts
+  // Step 4 is TikTok Live (only if TikTok added) → shifts services/terms
+  // Steps 4/5 = services, 5/6 = terms
   const hasTiktokAccount = socialAccounts.some(a => a.platform === 'TikTok');
-  const totalSteps = hasTiktokAccount ? 5 : 4;
+  const FIXED_STEPS_BEFORE_TIKTOK = 3; // basic, categories, social
+  const totalSteps = FIXED_STEPS_BEFORE_TIKTOK + (hasTiktokAccount ? 1 : 0) + 2; // + services + terms
+
+  // Map internal step to logical step label (skipping TikTok slot when no TikTok)
+  // Internal steps: 1=basic, 2=categories, 3=social, 4=tiktok(opt), 4/5=services, 5/6=terms
   const getEffectiveStep = () => {
-    // If no TikTok and step >= 3, skip TikTok step mapping
-    if (!hasTiktokAccount && step >= 3) return step + 1;
+    if (!hasTiktokAccount && step >= 4) return step + 1; // skip TikTok slot
     return step;
   };
   const effectiveStep = getEffectiveStep();
   const progress = (step / totalSteps) * 100;
 
+  const toggleCategory = (cat: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
+  };
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image must be less than 5MB');
-        return;
-      }
+      if (file.size > 5 * 1024 * 1024) { toast.error('Image must be less than 5MB'); return; }
       setProfileImage(file);
       const reader = new FileReader();
       reader.onload = () => setImagePreview(reader.result as string);
@@ -111,302 +142,210 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
     }
   };
 
-  const addSocialAccount = () => {
-    setSocialAccounts([...socialAccounts, { platform: '', username: '', followerCount: '' }]);
-  };
-
+  const addSocialAccount = () => setSocialAccounts([...socialAccounts, { platform: '', username: '', followerCount: '' }]);
   const removeSocialAccount = (index: number) => {
-    if (socialAccounts.length > 1) {
-      setSocialAccounts(socialAccounts.filter((_, i) => i !== index));
-    }
+    if (socialAccounts.length > 1) setSocialAccounts(socialAccounts.filter((_, i) => i !== index));
   };
-
   const updateSocialAccount = (index: number, field: keyof SocialAccount, value: string) => {
-    const updated = [...socialAccounts];
-    updated[index][field] = value;
-    setSocialAccounts(updated);
+    const updated = [...socialAccounts]; updated[index][field] = value; setSocialAccounts(updated);
   };
 
-  const addService = () => {
-    setServices([...services, { serviceType: '', price: '', deliveryDays: '7' }]);
-  };
-
+  const addService = () => setServices([...services, { serviceType: '', price: '', deliveryDays: '7' }]);
   const removeService = (index: number) => {
-    if (services.length > 1) {
-      setServices(services.filter((_, i) => i !== index));
-    }
+    if (services.length > 1) setServices(services.filter((_, i) => i !== index));
+  };
+  const updateService = (index: number, field: keyof Service, value: string) => {
+    const updated = [...services]; updated[index][field] = value; setServices(updated);
   };
 
-  const updateService = (index: number, field: keyof Service, value: string) => {
-    const updated = [...services];
-    updated[index][field] = value;
-    setServices(updated);
-  };
+  // ── Validators ──────────────────────────────────────────────────────────────
 
   const validateStep1 = () => {
-    if (!displayName.trim()) {
-      toast.error('Please enter your display name');
-      return false;
-    }
-    if (bio.length < 20) {
-      toast.error('Bio must be at least 20 characters');
-      return false;
-    }
+    if (!displayName.trim()) { toast.error('Please enter your display name'); return false; }
+    if (bio.length < 20) { toast.error('Bio must be at least 20 characters'); return false; }
     return true;
   };
 
   const validateStep2 = () => {
-    const validAccounts = socialAccounts.filter(
-      a => a.platform && a.username && a.followerCount
-    );
-    if (validAccounts.length === 0) {
-      toast.error('Please add at least one social account');
+    if (selectedCategories.length === 0) {
+      toast.error('Please select at least one content category');
       return false;
     }
-    
-    // Validate follower counts don't exceed max (10 billion)
-    const MAX_FOLLOWER_COUNT = 10_000_000_000;
-    for (const account of validAccounts) {
-      const count = parseInt(account.followerCount.replace(/,/g, '')) || 0;
-      if (count > MAX_FOLLOWER_COUNT) {
-        toast.error(`Follower count for ${account.platform} seems too high. Please enter an accurate number.`);
-        return false;
-      }
-    }
-    
     return true;
   };
 
-  const validateStep3TikTok = () => {
-    if (goesLiveTiktok === null) {
-      toast.error('Please answer if you go live on TikTok');
-      return false;
+  const validateStep3 = () => {
+    const validAccounts = socialAccounts.filter(a => a.platform && a.username && a.followerCount);
+    if (validAccounts.length === 0) { toast.error('Please add at least one social account'); return false; }
+    const MAX = 10_000_000_000;
+    for (const a of validAccounts) {
+      if ((parseInt(a.followerCount.replace(/,/g, '')) || 0) > MAX) {
+        toast.error(`Follower count for ${a.platform} seems too high.`); return false;
+      }
     }
-    if (goesLiveTiktok && !tiktokMonthlyRevenue) {
-      toast.error('Please select your monthly revenue range');
-      return false;
-    }
-    if (!goesLiveTiktok && !tiktokLiveInterest) {
-      toast.error('Please let us know your interest level');
-      return false;
-    }
+    return true;
+  };
+
+  const validateTikTokStep = () => {
+    if (goesLiveTiktok === null) { toast.error('Please answer if you go live on TikTok'); return false; }
+    if (goesLiveTiktok && !tiktokMonthlyRevenue) { toast.error('Please select your monthly revenue range'); return false; }
+    if (!goesLiveTiktok && !tiktokLiveInterest) { toast.error('Please let us know your interest level'); return false; }
     return true;
   };
 
   const validateServices = () => {
-    const validServices = services.filter(
-      s => s.serviceType && s.price && parseInt(s.price) > 0
-    );
-    if (validServices.length === 0) {
-      toast.error('Please add at least one service with pricing');
-      return false;
-    }
+    const valid = services.filter(s => s.serviceType && s.price && parseInt(s.price) > 0);
+    if (valid.length === 0) { toast.error('Please add at least one service with pricing'); return false; }
     return true;
   };
+
+  // ── Navigation ───────────────────────────────────────────────────────────────
 
   const handleNext = () => {
     if (step === 1 && !validateStep1()) return;
     if (step === 2 && !validateStep2()) return;
-    
-    if (step === 2) {
-      // After social accounts, go to TikTok Live step if TikTok is added
-      if (hasTiktokAccount) {
-        setStep(3);
-      } else {
-        setStep(3); // services step (effectiveStep maps it)
-      }
-      return;
-    }
-    
-    if (hasTiktokAccount) {
-      if (step === 3 && !validateStep3TikTok()) return;
-      if (step === 4 && !validateServices()) return;
-    } else {
-      if (step === 3 && !validateServices()) return;
-    }
-    
+    if (step === 3 && !validateStep3()) return;
+    if (hasTiktokAccount && step === 4 && !validateTikTokStep()) return;
+    // Services validation: step 4 (no TikTok) or step 5 (with TikTok)
+    const servicesStep = hasTiktokAccount ? 5 : 4;
+    if (step === servicesStep && !validateServices()) return;
     setStep(step + 1);
   };
 
-  const handleBack = () => {
-    if (step > 1) setStep(step - 1);
-  };
+  const handleBack = () => { if (step > 1) setStep(step - 1); };
+
+  // ── Submit ───────────────────────────────────────────────────────────────────
 
   const handleSubmit = async () => {
-    if (!termsAccepted) {
-      toast.error('Please accept the terms to continue');
-      return;
-    }
-
+    if (!termsAccepted) { toast.error('Please accept the terms to continue'); return; }
     setIsLoading(true);
 
-    const result = await safeNativeAsync(
-      async () => {
-        // Check if profile already exists for this user
-        const { data: existingProfile } = await supabase
-          .from('creator_profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
+    const result = await safeNativeAsync(async () => {
+      // Check if profile already exists
+      const { data: existingProfile } = await supabase
+        .from('creator_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-        if (existingProfile) {
-          // Profile already exists - just complete
-          return true;
-        }
+      if (existingProfile) return true;
 
-        // 1. Upload profile image
-        let profileImageUrl = null;
-        if (profileImage) {
-          const fileExt = profileImage.name.split('.').pop();
-          const fileName = `${user.id}/profile.${fileExt}`;
-          
-          const { error: uploadError } = await supabase.storage
-            .from('creator-images')
-            .upload(fileName, profileImage, { upsert: true });
+      // 1. Upload profile image
+      let profileImageUrl = null;
+      if (profileImage) {
+        const fileExt = profileImage.name.split('.').pop();
+        const fileName = `${user.id}/profile.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('creator-images')
+          .upload(fileName, profileImage, { upsert: true });
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from('creator-images').getPublicUrl(fileName);
+        profileImageUrl = urlData.publicUrl;
+      }
 
-          if (uploadError) throw uploadError;
+      // 2. Create creator profile — now includes categories
+      const { data: profile, error: profileError } = await supabase
+        .from('creator_profiles')
+        .insert({
+          user_id: user.id,
+          display_name: displayName.trim(),
+          bio: bio.trim(),
+          profile_image_url: profileImageUrl,
+          categories: selectedCategories.length > 0 ? selectedCategories : null,
+          status: 'pending',
+          terms_accepted_at: new Date().toISOString(),
+          terms_version: '1.0',
+        })
+        .select()
+        .single();
 
-          const { data: urlData } = supabase.storage
-            .from('creator-images')
-            .getPublicUrl(fileName);
-          
-          profileImageUrl = urlData.publicUrl;
-        }
+      if (profileError) {
+        if (profileError.code === '23505') return true; // already exists
+        throw profileError;
+      }
 
-        // 2. Create creator profile
-        const { data: profile, error: profileError } = await supabase
-          .from('creator_profiles')
-          .insert({
-            user_id: user.id,
-            display_name: displayName.trim(),
-            bio: bio.trim(),
-            profile_image_url: profileImageUrl,
-            status: 'pending',
-            terms_accepted_at: new Date().toISOString(),
-            terms_version: '1.0',
-          })
-          .select()
-          .single();
-
-        if (profileError) {
-          // Handle unique constraint violation (profile already exists)
-          if (profileError.code === '23505') {
-            return true; // Profile exists, treat as success
-          }
-          throw profileError;
-        }
-
-        // 3. Add social accounts and services - with cleanup on failure
-        try {
-          const validSocialAccounts = socialAccounts.filter(
-            a => a.platform && a.username && a.followerCount
+      // 3. Social accounts + services — cleanup on failure
+      try {
+        const validSocial = socialAccounts.filter(a => a.platform && a.username && a.followerCount);
+        if (validSocial.length > 0) {
+          const { error } = await supabase.from('creator_social_accounts').insert(
+            validSocial.map(a => ({
+              creator_profile_id: profile.id,
+              platform: a.platform,
+              username: a.username,
+              follower_count: parseInt(a.followerCount.replace(/,/g, '')) || 0,
+            }))
           );
-
-          if (validSocialAccounts.length > 0) {
-            const { error: socialError } = await supabase
-              .from('creator_social_accounts')
-              .insert(
-                validSocialAccounts.map(a => ({
-                  creator_profile_id: profile.id,
-                  platform: a.platform,
-                  username: a.username,
-                  follower_count: parseInt(a.followerCount.replace(/,/g, '')) || 0,
-                }))
-              );
-
-            if (socialError) throw socialError;
-          }
-
-          // 4. Add services
-          const validServices = services.filter(
-            s => s.serviceType && s.price && parseInt(s.price) > 0
-          );
-
-          if (validServices.length > 0) {
-            const { error: servicesError } = await supabase
-              .from('creator_services')
-              .insert(
-                validServices.map(s => ({
-                  creator_profile_id: profile.id,
-                  service_type: s.serviceType,
-                  price_cents: parseInt(s.price) * 100,
-                  delivery_days: parseInt(s.deliveryDays) || 7,
-                  is_active: true,
-                }))
-              );
-
-            if (servicesError) throw servicesError;
-          }
-        } catch (insertError: any) {
-          // Clean up partial profile if social/services insertion fails
-          console.error("Failed to create social accounts/services, cleaning up profile:", insertError);
-          await supabase.from("creator_profiles").delete().eq("id", profile.id);
-          throw insertError;
+          if (error) throw error;
         }
 
-        return true;
-      },
-      false,
-      15000 // 15 second timeout for full signup
-    );
+        const validServices = services.filter(s => s.serviceType && s.price && parseInt(s.price) > 0);
+        if (validServices.length > 0) {
+          const { error } = await supabase.from('creator_services').insert(
+            validServices.map(s => ({
+              creator_profile_id: profile.id,
+              service_type: s.serviceType,
+              price_cents: parseInt(s.price) * 100,
+              delivery_days: parseInt(s.deliveryDays) || 7,
+              is_active: true,
+            }))
+          );
+          if (error) throw error;
+        }
+      } catch (insertError) {
+        console.error('Failed to create social/services, cleaning up:', insertError);
+        await supabase.from('creator_profiles').delete().eq('id', profile.id);
+        throw insertError;
+      }
 
-    // Insert TikTok Live insights (non-blocking)
+      return true;
+    }, false, 15000);
+
+    // TikTok Live insights (non-blocking)
     if (result && hasTiktokAccount && goesLiveTiktok !== null) {
       try {
-        const { data: creatorProfile } = await supabase
-          .from('creator_profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (creatorProfile) {
+        const { data: cp } = await supabase
+          .from('creator_profiles').select('id').eq('user_id', user.id).single();
+        if (cp) {
           await supabase.from('creator_tiktok_live_insights').insert({
-            creator_profile_id: creatorProfile.id,
+            creator_profile_id: cp.id,
             goes_live: goesLiveTiktok,
             monthly_revenue_range: goesLiveTiktok ? tiktokMonthlyRevenue : null,
             interest_in_going_live: !goesLiveTiktok ? tiktokLiveInterest : null,
           });
         }
-      } catch (tiktokError) {
-        console.error("Failed to save TikTok insights:", tiktokError);
-      }
+      } catch (e) { console.error('TikTok insights error:', e); }
     }
 
     setIsLoading(false);
-
-    if (result) {
-      toast.success('Profile created successfully!');
-      onComplete();
-    } else {
-      toast.error('Failed to create profile. Please try again.');
-    }
+    if (result) { toast.success('Profile created successfully!'); onComplete(); }
+    else toast.error('Failed to create profile. Please try again.');
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-  };
+  const handleSignOut = async () => { await supabase.auth.signOut(); };
+
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center justify-between z-10">
-        <button
-          onClick={step > 1 ? handleBack : handleSignOut}
-          className="p-2 -ml-2 text-muted-foreground"
-        >
+        <button onClick={step > 1 ? handleBack : handleSignOut} className="p-2 -ml-2 text-muted-foreground">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <span className="text-sm text-muted-foreground">Step {step} of {totalSteps}</span>
         <div className="w-9" />
       </div>
 
-      {/* Progress Bar */}
+      {/* Progress */}
       <div className="px-4 py-3">
         <Progress value={progress} className="h-2" />
       </div>
 
-      {/* Content */}
+      {/* Scrollable Content */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 pb-24">
+
+        {/* ── Step 1: Basic Info ─────────────────────────────────────────── */}
         {step === 1 && (
           <div className="space-y-6">
             <div>
@@ -414,54 +353,29 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
               <p className="text-muted-foreground mt-1">Tell brands who you are</p>
             </div>
 
-            {/* Profile Photo */}
             <div className="flex flex-col items-center">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="user"
-                onChange={handleImageSelect}
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="relative w-28 h-28 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-border"
-              >
-                {imagePreview ? (
-                  <img src={imagePreview} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="flex flex-col items-center text-muted-foreground">
-                    <Camera className="h-8 w-8" />
-                    <span className="text-xs mt-1">Add photo</span>
-                  </div>
-                )}
+              <input ref={fileInputRef} type="file" accept="image/*" capture="user" onChange={handleImageSelect} className="hidden" />
+              <button onClick={() => fileInputRef.current?.click()}
+                className="relative w-28 h-28 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-border">
+                {imagePreview
+                  ? <img src={imagePreview} alt="Profile" className="w-full h-full object-cover" />
+                  : <div className="flex flex-col items-center text-muted-foreground"><Camera className="h-8 w-8" /><span className="text-xs mt-1">Add photo</span></div>
+                }
               </button>
               <p className="text-xs text-muted-foreground mt-2">Optional — you can add it later</p>
             </div>
 
-            {/* Display Name */}
             <div className="space-y-2">
               <Label htmlFor="displayName">Display Name *</Label>
-              <Input
-                id="displayName"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Your creator name"
-                className="h-12 text-base"
-              />
+              <Input id="displayName" value={displayName} onChange={e => setDisplayName(e.target.value)}
+                placeholder="Your creator name" className="h-12 text-base" />
             </div>
 
-            {/* Bio */}
             <div className="space-y-2">
               <Label htmlFor="bio">Bio * (min 20 characters)</Label>
-              <Textarea
-                id="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
+              <Textarea id="bio" value={bio} onChange={e => setBio(e.target.value)}
                 placeholder="Tell brands about yourself, your content style, and what makes you unique..."
-                className="min-h-[120px] text-base"
-              />
+                className="min-h-[120px] text-base" />
               <p className={`text-xs text-right ${bio.length >= 20 ? 'text-green-600' : 'text-muted-foreground'}`}>
                 {bio.length} characters {bio.length < 20 ? `(${20 - bio.length} more needed)` : '✓'}
               </p>
@@ -469,7 +383,51 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
           </div>
         )}
 
+        {/* ── Step 2: Categories (NEW) ────────────────────────────────────── */}
         {step === 2 && (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-xl font-bold text-foreground">What do you create?</h1>
+              <p className="text-muted-foreground mt-1">
+                Select your content categories — this helps brands find you for the right campaigns.
+              </p>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              {selectedCategories.length === 0
+                ? 'Select at least 1 category'
+                : `${selectedCategories.length} selected`}
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              {CONTENT_CATEGORIES.map(cat => {
+                const isSelected = selectedCategories.includes(cat.id);
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => toggleCategory(cat.id)}
+                    className={`relative flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all active:scale-95 ${
+                      isSelected
+                        ? 'border-primary bg-primary/8'
+                        : 'border-border bg-muted/30'
+                    }`}
+                  >
+                    <span className="text-2xl leading-none">{cat.emoji}</span>
+                    <span className="text-sm font-medium text-foreground leading-tight">{cat.label}</span>
+                    {isSelected && (
+                      <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 3: Social Accounts ────────────────────────────────────── */}
+        {step === 3 && (
           <div className="space-y-6">
             <div>
               <h1 className="text-xl font-bold text-foreground">Add your social accounts</h1>
@@ -481,59 +439,32 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Account {index + 1}</span>
                   {socialAccounts.length > 1 && (
-                    <button
-                      onClick={() => removeSocialAccount(index)}
-                      className="text-destructive p-1"
-                    >
+                    <button onClick={() => removeSocialAccount(index)} className="text-destructive p-1">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   )}
                 </div>
-
-                <Select
-                  value={account.platform}
-                  onValueChange={(value) => updateSocialAccount(index, 'platform', value)}
-                >
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Select platform" />
-                  </SelectTrigger>
+                <Select value={account.platform} onValueChange={v => updateSocialAccount(index, 'platform', v)}>
+                  <SelectTrigger className="h-12"><SelectValue placeholder="Select platform" /></SelectTrigger>
                   <SelectContent>
-                    {PLATFORMS.map((p) => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
-                    ))}
+                    {PLATFORMS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                   </SelectContent>
                 </Select>
-
-                <Input
-                  value={account.username}
-                  onChange={(e) => updateSocialAccount(index, 'username', e.target.value)}
-                  placeholder="@username"
-                  className="h-12"
-                />
-
-                <Input
-                  value={account.followerCount}
-                  onChange={(e) => updateSocialAccount(index, 'followerCount', e.target.value)}
-                  placeholder="Follower count (e.g., 10000)"
-                  type="number"
-                  className="h-12"
-                />
+                <Input value={account.username} onChange={e => updateSocialAccount(index, 'username', e.target.value)}
+                  placeholder="@username" className="h-12" />
+                <Input value={account.followerCount} onChange={e => updateSocialAccount(index, 'followerCount', e.target.value)}
+                  placeholder="Follower count (e.g., 10000)" type="number" className="h-12" />
               </div>
             ))}
 
-            <Button
-              variant="outline"
-              onClick={addSocialAccount}
-              className="w-full h-12"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Another Account
+            <Button variant="outline" onClick={addSocialAccount} className="w-full h-12">
+              <Plus className="h-4 w-4 mr-2" />Add Another Account
             </Button>
           </div>
         )}
 
-        {/* TikTok Live Step (only if TikTok account added) */}
-        {effectiveStep === 3 && hasTiktokAccount && (
+        {/* ── Step 4 (TikTok Live — only shown if TikTok added) ──────────── */}
+        {effectiveStep === 4 && hasTiktokAccount && (
           <div className="space-y-6">
             <div>
               <h1 className="text-xl font-bold text-foreground">TikTok Live</h1>
@@ -543,25 +474,13 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
             <div className="space-y-3">
               <p className="font-medium text-foreground">Do you go live on TikTok?</p>
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => { setGoesLiveTiktok(true); setTiktokLiveInterest(""); }}
-                  className={`p-4 rounded-lg border-2 text-left transition-all ${
-                    goesLiveTiktok === true
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                >
+                <button onClick={() => { setGoesLiveTiktok(true); setTiktokLiveInterest(''); }}
+                  className={`p-4 rounded-lg border-2 text-left transition-all ${goesLiveTiktok === true ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
                   <p className="font-medium">Yes, I go live</p>
                   <p className="text-xs text-muted-foreground mt-1">I broadcast regularly</p>
                 </button>
-                <button
-                  onClick={() => { setGoesLiveTiktok(false); setTiktokMonthlyRevenue(""); }}
-                  className={`p-4 rounded-lg border-2 text-left transition-all ${
-                    goesLiveTiktok === false
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                >
+                <button onClick={() => { setGoesLiveTiktok(false); setTiktokMonthlyRevenue(''); }}
+                  className={`p-4 rounded-lg border-2 text-left transition-all ${goesLiveTiktok === false ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
                   <p className="font-medium">No, I don't</p>
                   <p className="text-xs text-muted-foreground mt-1">Haven't gone live yet</p>
                 </button>
@@ -571,11 +490,8 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
             {goesLiveTiktok === true && (
               <div className="space-y-2">
                 <p className="font-medium text-foreground">Average monthly revenue from TikTok Live?</p>
-                <select
-                  value={tiktokMonthlyRevenue}
-                  onChange={(e) => setTiktokMonthlyRevenue(e.target.value)}
-                  className="w-full h-12 px-3 rounded-md border border-input bg-background text-base"
-                >
+                <select value={tiktokMonthlyRevenue} onChange={e => setTiktokMonthlyRevenue(e.target.value)}
+                  className="w-full h-12 px-3 rounded-md border border-input bg-background text-base">
                   <option value="">Select range</option>
                   <option value="under_100">Under $100</option>
                   <option value="100_500">$100 - $500</option>
@@ -591,21 +507,14 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
                 <p className="font-medium text-foreground">Interested in going live if it generates income?</p>
                 <div className="space-y-2">
                   {[
-                    { value: "yes_definitely", label: "Yes, definitely!", desc: "I'd love to start" },
-                    { value: "maybe", label: "Maybe — I'd like to learn more", desc: "I'm curious" },
-                    { value: "not_now", label: "Not right now", desc: "Focused on other content" },
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => setTiktokLiveInterest(option.value)}
-                      className={`w-full p-3 rounded-lg border-2 text-left transition-all ${
-                        tiktokLiveInterest === option.value
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <p className="font-medium text-sm">{option.label}</p>
-                      <p className="text-xs text-muted-foreground">{option.desc}</p>
+                    { value: 'yes_definitely', label: "Yes, definitely!", desc: "I'd love to start" },
+                    { value: 'maybe', label: "Maybe — I'd like to learn more", desc: "I'm curious" },
+                    { value: 'not_now', label: "Not right now", desc: "Focused on other content" },
+                  ].map(opt => (
+                    <button key={opt.value} onClick={() => setTiktokLiveInterest(opt.value)}
+                      className={`w-full p-3 rounded-lg border-2 text-left transition-all ${tiktokLiveInterest === opt.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
+                      <p className="font-medium text-sm">{opt.label}</p>
+                      <p className="text-xs text-muted-foreground">{opt.desc}</p>
                     </button>
                   ))}
                 </div>
@@ -614,12 +523,12 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
           </div>
         )}
 
-        {/* Services Step */}
-        {((hasTiktokAccount && effectiveStep === 4) || (!hasTiktokAccount && effectiveStep === 3)) && (
+        {/* ── Services Step (effectiveStep 4 without TikTok, 5 with) ─────── */}
+        {((hasTiktokAccount && effectiveStep === 5) || (!hasTiktokAccount && effectiveStep === 4)) && (
           <div className="space-y-6">
             <div>
               <h1 className="text-xl font-bold text-foreground">Set your services & pricing</h1>
-              <p className="text-muted-foreground mt-1">Add at least one event experience you offer</p>
+              <p className="text-muted-foreground mt-1">Add at least one service you offer</p>
             </div>
 
             {services.map((service, index) => (
@@ -627,65 +536,38 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Service {index + 1}</span>
                   {services.length > 1 && (
-                    <button
-                      onClick={() => removeService(index)}
-                      className="text-destructive p-1"
-                    >
+                    <button onClick={() => removeService(index)} className="text-destructive p-1">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   )}
                 </div>
-
-                <Select
-                  value={service.serviceType}
-                  onValueChange={(value) => updateService(index, 'serviceType', value)}
-                >
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Select service type" />
-                  </SelectTrigger>
+                <Select value={service.serviceType} onValueChange={v => updateService(index, 'serviceType', v)}>
+                  <SelectTrigger className="h-12"><SelectValue placeholder="Select service type" /></SelectTrigger>
                   <SelectContent>
-                    {SERVICE_TYPES.map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
+                    {SERVICE_TYPES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
-
                 <div className="flex gap-3">
                   <div className="flex-1">
-                    <Input
-                      value={service.price}
-                      onChange={(e) => updateService(index, 'price', e.target.value)}
-                      placeholder="Price ($)"
-                      type="number"
-                      className="h-12"
-                    />
+                    <Input value={service.price} onChange={e => updateService(index, 'price', e.target.value)}
+                      placeholder="Price ($)" type="number" className="h-12" />
                   </div>
                   <div className="w-24">
-                    <Input
-                      value={service.deliveryDays}
-                      onChange={(e) => updateService(index, 'deliveryDays', e.target.value)}
-                      placeholder="Days"
-                      type="number"
-                      className="h-12"
-                    />
+                    <Input value={service.deliveryDays} onChange={e => updateService(index, 'deliveryDays', e.target.value)}
+                      placeholder="Days" type="number" className="h-12" />
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">Price in USD, delivery in days</p>
               </div>
             ))}
 
-            <Button
-              variant="outline"
-              onClick={addService}
-              className="w-full h-12"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Another Service
+            <Button variant="outline" onClick={addService} className="w-full h-12">
+              <Plus className="h-4 w-4 mr-2" />Add Another Service
             </Button>
           </div>
         )}
 
-        {/* Terms Step */}
+        {/* ── Terms Step (last step) ─────────────────────────────────────── */}
         {step === totalSteps && (
           <div className="space-y-6">
             <div>
@@ -693,25 +575,35 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
               <p className="text-muted-foreground mt-1">Review and accept our terms</p>
             </div>
 
-            {/* Summary */}
             <div className="space-y-4">
               <div className="p-4 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-3">
-                  {imagePreview ? (
-                    <img src={imagePreview} alt="" className="w-12 h-12 rounded-full object-cover" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                      <UserIcon className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                  )}
+                  {imagePreview
+                    ? <img src={imagePreview} alt="" className="w-12 h-12 rounded-full object-cover" />
+                    : <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center"><UserIcon className="h-6 w-6 text-muted-foreground" /></div>
+                  }
                   <div>
                     <p className="font-medium">{displayName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {socialAccounts.filter(a => a.platform).length} social accounts
-                    </p>
+                    <p className="text-sm text-muted-foreground">{socialAccounts.filter(a => a.platform).length} social account{socialAccounts.filter(a => a.platform).length !== 1 ? 's' : ''}</p>
                   </div>
                 </div>
               </div>
+
+              {selectedCategories.length > 0 && (
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <p className="font-medium mb-2">Content Categories</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCategories.map(cat => {
+                      const found = CONTENT_CATEGORIES.find(c => c.id === cat);
+                      return (
+                        <span key={cat} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                          {found?.emoji} {cat}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="font-medium mb-2">Your Services</p>
@@ -724,14 +616,9 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
               </div>
             </div>
 
-            {/* Terms */}
             <div className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg">
-              <Checkbox
-                id="terms"
-                checked={termsAccepted}
-                onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
-                className="mt-1"
-              />
+              <Checkbox id="terms" checked={termsAccepted}
+                onCheckedChange={checked => setTermsAccepted(checked as boolean)} className="mt-1" />
               <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed">
                 I agree to the Terms of Service and Privacy Policy. I understand my profile will be reviewed before going live.
               </label>
@@ -740,25 +627,15 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
         )}
       </div>
 
+      {/* Footer CTA */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border safe-area-bottom">
         {step < totalSteps ? (
-          <Button onClick={handleNext} className="w-full h-12 text-base">
-            Continue
-          </Button>
+          <Button onClick={handleNext} className="w-full h-12 text-base">Continue</Button>
         ) : (
-          <Button
-            onClick={handleSubmit}
-            disabled={!termsAccepted || isLoading}
-            className="w-full h-12 text-base"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating Profile...
-              </>
-            ) : (
-              'Create My Profile'
-            )}
+          <Button onClick={handleSubmit} disabled={!termsAccepted || isLoading} className="w-full h-12 text-base">
+            {isLoading
+              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating Profile...</>
+              : 'Create My Profile'}
           </Button>
         )}
       </div>
