@@ -1,140 +1,167 @@
 
-## Root Cause Analysis + In-App Debug Console Plan
+# Three Issues — Root Causes and Fixes
 
-### What I Found
+## Issue 1: Keyboard Covering Phone Number Input
 
-After examining the RLS policies, storage buckets, auth settings, and all relevant code, I identified **two root causes** for "cannot create profile" and the crash:
+**Root cause:** The `useKeyboardScrollIntoView` hook is attached to the scrollable `div` container in both `NativeLogin.tsx` and `NativeCreatorOnboarding.tsx`. When the user taps the Phone Number input (which is rendered by `PhoneInput`), the hook fires `target.scrollIntoView({ behavior: 'smooth', block: 'center' })`. This scrolls the input to the center of the **entire viewport** — not the center of the **visible area above the keyboard**.
 
----
+The real problem is that on Android, when the soft keyboard opens, the WebView viewport **does not shrink** (unless `Keyboard.resize` is set to `native` or `ionic`). This means `block: 'center'` centers the element relative to the full screen height — which puts it behind the keyboard.
 
-### Root Cause #1 — The Real Crash: Email Confirmation Race Condition
+Additionally, the `PhoneInput` component renders a country code dropdown. When the dropdown opens (inside the phone input), the focusin event fires on a `button` (the flag selector), not on an `INPUT`, so the scroll doesn't always trigger at the right time.
 
-**The core problem:** When a user signs up in the app, `supabase.auth.signUp()` is called. Even though email verification is disabled in `site_settings`, the Supabase Auth project itself may still require email confirmation. When email confirmation is enabled at the Auth level:
+**The real fix:** Replace the generic `useKeyboardScrollIntoView` hook approach with a more reliable method:
+1. Use `window.visualViewport` API (which reports the actual visible area above the keyboard) instead of `scrollIntoView`
+2. Add a `visualViewport.resize` listener that fires when the keyboard appears/disappears and repositions the focused input
 
-- `signUp()` returns a user object but **no active session**
-- `auth.uid()` is `null` because the JWT is not yet active
-- The `NativeAppGate` `SIGNED_IN` event fires before the session is fully active
-- When `NativeCreatorOnboarding` tries to `INSERT` into `creator_profiles`, the RLS policy `Creators can insert own profile` checks `auth.uid() = user_id` — but `auth.uid()` is still null
-- **Result: INSERT fails with a permissions error** → the error message "Failed to create profile" appears, or the app crashes
-
-**Even if email confirm is off:** there is a secondary race condition — the `SIGNED_IN` event fires immediately after `signUp()`, but Supabase sometimes takes 200–500ms to fully commit the session. The `NativeAppGate` already has a 2-second retry for profile fetching, but the **actual INSERT in onboarding happens before the session is fully available** because `NativeAppGate` routes to `NativeCreatorOnboarding` as soon as it detects no profile, passing the `user` object — but that user object may have been retrieved before the session JWT was ready for RLS evaluation.
-
-**Fix:** In `NativeCreatorOnboarding.handleSubmit`, before attempting any Supabase operations, call `supabase.auth.getSession()` and verify the session is active. If not, call `supabase.auth.refreshSession()` with a short wait. This ensures the JWT is valid before the INSERT runs.
+The fix in `useKeyboardScrollIntoView.ts`:
+- Change from `scrollIntoView({ block: 'center' })` to computing the position relative to `window.visualViewport` and scrolling the container manually to ensure the input is visible above the keyboard height
 
 ---
 
-### Root Cause #2 — Storage Upload RLS Policy
+## Issue 2: Debug Console Not Working — Add Visible Button
 
-The `profile-images` storage INSERT policy is:
-```sql
-with_check: (bucket_id = 'profile-images' AND (auth.uid())::text = (storage.foldername(name))[1])
+**Root cause:** The `NativeDebugConsole` / `NativeDebugProvider` is ONLY rendered inside `NativeAppGate` at the very end — after the user is logged in and past onboarding. The code in `NativeAppGate.tsx` is:
+
+```tsx
+return (
+  <NativeDebugProvider>
+    {children(selectedRole, brandProfile)}
+  </NativeDebugProvider>
+);
 ```
 
-The code uploads to path `${user.id}/profile.${fileExt}`. The `storage.foldername(name)[1]` returns the **first folder segment** (index 1, not 0 in Postgres arrays). This means for path `abc-123/profile.jpg`, it checks `auth.uid()::text = 'abc-123'` which should work — **but only if the session is active**. This circles back to Root Cause #1: if the session JWT isn't active, `auth.uid()` is null, so the storage upload also fails.
+But `NativeLogin` and `NativeCreatorOnboarding` are rendered **before** this — they are returned directly from `NativeAppGate` without being wrapped in `NativeDebugProvider`:
 
----
-
-### Root Cause #3 — No In-App Debug Visibility
-
-When something goes wrong on the phone, you currently have no way to see errors. The existing debug system only works during the initial load (pre-React loader). Once React is running, errors are invisible unless you have developer tools connected via USB.
-
----
-
-### The Fix Plan
-
-#### Part 1: Fix Profile Creation (Critical)
-
-**File: `src/pages/NativeCreatorOnboarding.tsx`**
-
-In `handleSubmit`, before the `safeNativeAsync` block, add a session validation and refresh step:
-
-```typescript
-// Validate session before attempting INSERT
-const { data: { session } } = await supabase.auth.getSession();
-if (!session) {
-  // Try to refresh
-  const { data: refreshData } = await supabase.auth.refreshSession();
-  if (!refreshData.session) {
-    toast.error('Session expired. Please sign in again.');
-    setIsLoading(false);
-    return;
-  }
-}
+```tsx
+if (!user) return <NativeLogin />;          // No debug provider!
+if (showOnboarding) return <NativeCreatorOnboarding ... />;  // No debug provider!
 ```
 
-Also: wrap the entire `safeNativeAsync` in better error handling to show the **specific error code** in the toast message for debugging (e.g., "RLS policy violation (42501)" or "Network timeout") — this helps you diagnose future issues from a screenshot alone.
+So `window.NATIVE_DEBUG_OPEN` is **never set** when the user is on the login or onboarding screens, because `NativeDebugProvider` hasn't mounted yet. Tapping 5 times calls `window.NATIVE_DEBUG_OPEN()` which is `undefined`, so nothing happens.
 
-#### Part 2: Add In-App Debug Console (New Feature)
-
-Create a new component `src/components/NativeDebugConsole.tsx` — a floating debug overlay that:
-
-- Is **completely invisible** in normal use (no UI clutter)
-- **Activated by tapping the logo 5 times** in the NativeAppGate loading screen or login screen
-- Shows a full-screen dark overlay with all captured logs and errors
-- Captures: all `console.error`, `console.warn`, unhandled promise rejections, Supabase error responses
-- Shows device info (OS version, app version, screen size)
-- Has a **"Copy All"** button so you can paste logs into a message
-- Has a **"Clear"** button
-- Persists logs in `localStorage` so errors from previous sessions are visible
-
-Add a **persistent tiny debug trigger** in `NativeCreatorOnboarding` — a small invisible tap area in the top-right corner that opens the debug console when tapped 5 times. This way you can access debug info even when the app is mid-crash.
-
-Also add a global error interceptor in `src/main.tsx` that stores all errors in a `window.NATIVE_ERROR_LOG` array so the debug console can read them.
-
-**File structure:**
-- `src/components/NativeDebugConsole.tsx` — NEW: the debug overlay component
-- `src/main.tsx` — Add global error/rejection capture
-- `src/components/NativeAppGate.tsx` — Pass debug trigger to loading/login screens
-- `src/pages/NativeCreatorOnboarding.tsx` — Add session check + show error codes in toast + add debug tap trigger
-
-#### Part 3: Improve Error Messages in Onboarding
-
-Currently the error is just `'Failed to create profile. Please try again.'` — completely useless for debugging. Change it to show the actual error:
-
-```typescript
-// Before:
-toast.error('Failed to create profile. Please try again.');
-
-// After:
-toast.error(`Profile creation failed: ${lastError?.message || 'Unknown error'} (tap logo 5x for details)`);
-```
+**The fix:**
+1. Wrap ALL returns in `NativeAppGate` with `NativeDebugProvider` — not just the final authenticated screen
+2. Add a **visible debug button** (a small floating "🐛 Debug" button in the bottom-right corner) that is visible on native platforms, so you don't need to tap 5 times. This is a temporary button that can be removed later.
 
 ---
 
-### Files to Create/Modify
+## Issue 3: App Crashes When Tapping "Add Photo" (Optional)
 
-| File | Change |
+**Root cause (critical):** In `NativeCreatorOnboarding.tsx`, the photo button is:
+
+```tsx
+<input ref={fileInputRef} type="file" accept="image/*" capture="user" onChange={handleImageSelect} className="hidden" />
+<button onClick={() => fileInputRef.current?.click()} ...>
+```
+
+The `capture="user"` attribute on the `<input type="file">` element forces the device to **open the camera directly** instead of showing the gallery/file picker. On Android WebView (Capacitor), this can crash because:
+
+1. The Android WebView's file chooser requires a specific `onShowFileChooser` callback implementation in the native Capacitor bridge. When `capture="user"` is set, it bypasses the standard file chooser and tries to start the camera intent directly. In some Android WebView versions, this causes a `NullPointerException` in the native layer.
+
+2. The app has no camera permission handling in the Capacitor config or `handleImageSelect`. On Android, opening the camera without the `CAMERA` permission declared in AndroidManifest causes an immediate crash.
+
+**The fix:**
+- Remove `capture="user"` from the file input so it shows the standard Android file picker (Gallery + Camera option) instead of forcing the camera directly. This is the standard pattern used by all production Android apps.
+- Add proper error handling in `handleImageSelect` with a try/catch that shows a helpful toast on failure
+- For the onboarding case specifically, make the entire photo button more crash-safe by wrapping the click handler in a try/catch
+
+---
+
+## Implementation Plan
+
+### Files to Modify
+
+| File | Changes |
 |---|---|
-| `src/components/NativeDebugConsole.tsx` | NEW: Full debug overlay with log capture, device info, copy button |
-| `src/pages/NativeCreatorOnboarding.tsx` | Session validation before INSERT, better error messages, debug trigger |
-| `src/main.tsx` | Global error/rejection interceptor writing to `window.NATIVE_ERROR_LOG` |
-| `src/components/NativeAppGate.tsx` | Integrate debug console, pass logo-tap trigger |
+| `src/hooks/useKeyboardScrollIntoView.ts` | Use `visualViewport` API for accurate above-keyboard scroll positioning |
+| `src/components/NativeAppGate.tsx` | Wrap ALL renders (login, onboarding, etc.) in `NativeDebugProvider`; add visible floating debug button |
+| `src/pages/NativeCreatorOnboarding.tsx` | Remove `capture="user"` from file input; add try/catch around fileInputRef click; add visible debug button |
+| `src/pages/NativeLogin.tsx` | Add visible debug button; improve scroll behavior for phone input area |
 
----
+### Fix Details
 
-### How the Debug Console Works (User Flow)
+#### Fix 1 — `useKeyboardScrollIntoView.ts`
 
-```text
-App crashes or shows error
-     ↓
-Tap the Collab Hunts logo 5 times quickly (on any screen)
-     ↓
-Full-screen debug overlay opens
-     ↓
-Shows:
-  - Device: Android 13, Screen: 390x844
-  - Session: Active (or Expired)
-  - Last 50 errors/warnings with timestamps
-  - Unhandled promise rejections
-  - Supabase error codes
-     ↓
-Tap "Copy All" → paste into chat message to me
+Replace `scrollIntoView` with `visualViewport`-aware scrolling:
+
+```typescript
+const handleFocusIn = (e: FocusEvent) => {
+  const target = e.target as HTMLElement;
+  if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && target.tagName !== 'SELECT') return;
+  
+  setTimeout(() => {
+    const vv = window.visualViewport;
+    if (!vv) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    // Get position of the input relative to the visual viewport
+    const rect = target.getBoundingClientRect();
+    const visibleBottom = vv.height; // height = visible area above keyboard
+    const inputBottom = rect.bottom;
+    
+    if (inputBottom > visibleBottom - 20) {
+      // Input is below or near the keyboard — scroll container
+      const container = containerRef.current;
+      if (container) {
+        const scrollAmount = inputBottom - visibleBottom + 80; // 80px padding above keyboard
+        container.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+      }
+    }
+  }, 350); // slightly longer delay for keyboard to fully open
+};
 ```
 
-This gives you full visibility into every crash without needing developer tools or a USB connection.
+#### Fix 2 — `NativeAppGate.tsx`
 
----
+Restructure all the `if/return` branches to be inside `NativeDebugProvider`:
 
-### No Database Changes Required
+```tsx
+// BEFORE:
+if (!user) return <NativeLogin />;
+if (showOnboarding) return <NativeCreatorOnboarding ... />;
+// ...
+return (
+  <NativeDebugProvider>
+    {children(selectedRole, brandProfile)}
+  </NativeDebugProvider>
+);
 
-All fixes are in the React/TypeScript layer. The database schema and RLS policies are correct — the issue is the session not being ready before the INSERT runs.
+// AFTER:
+return (
+  <NativeDebugProvider>
+    {/* Floating debug button - always visible on native */}
+    <FloatingDebugButton />
+    
+    {!user && <NativeLogin />}
+    {user && showOnboarding && <NativeCreatorOnboarding ... />}
+    {user && showBrandOnboarding && <NativeBrandOnboarding ... />}
+    {user && !showOnboarding && !showBrandOnboarding && !selectedRole && <NativeRolePicker ... />}
+    {user && selectedRole && children(selectedRole, brandProfile)}
+  </NativeDebugProvider>
+);
+```
+
+The `FloatingDebugButton` is a small orange bug icon button fixed to the bottom-right, only visible on `Capacitor.isNativePlatform()`.
+
+#### Fix 3 — `NativeCreatorOnboarding.tsx`
+
+```tsx
+// BEFORE:
+<input ref={fileInputRef} type="file" accept="image/*" capture="user" onChange={handleImageSelect} className="hidden" />
+<button onClick={() => fileInputRef.current?.click()} ...>
+
+// AFTER:
+<input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+<button onClick={() => { try { fileInputRef.current?.click(); } catch (e) { console.error('File picker error:', e); toast.error('Could not open photo picker'); } }} ...>
+```
+
+Removing `capture="user"` lets Android show its standard bottom sheet with "Camera" and "Gallery" options — which is both safer and more user-friendly.
+
+### Summary
+
+| Issue | Root Cause | Fix |
+|---|---|---|
+| Keyboard covers phone input | `scrollIntoView` doesn't account for visual viewport above keyboard | Use `visualViewport.height` to scroll only the needed amount |
+| Debug console not working | `NativeDebugProvider` not rendered around login/onboarding screens | Wrap all `NativeAppGate` returns in the provider; add visible floating button |
+| Photo tap crashes app | `capture="user"` forces camera intent directly, crashes Android WebView | Remove `capture="user"` attribute; add try/catch on click handler |
