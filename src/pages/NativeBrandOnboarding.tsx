@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useKeyboardScrollIntoView } from '@/hooks/useKeyboardScrollIntoView';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { safeNativeAsync } from '@/lib/supabase-native';
@@ -38,6 +39,8 @@ export function NativeBrandOnboarding({ user, onComplete }: NativeBrandOnboardin
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  // Scroll focused fields into view above keyboard on native
+  const scrollContainerRef = useKeyboardScrollIntoView<HTMLDivElement>();
 
   // Step 1 (new users only): Account Info
   const [firstName, setFirstName] = useState('');
@@ -298,7 +301,7 @@ export function NativeBrandOnboarding({ user, onComplete }: NativeBrandOnboardin
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 pb-24">
         {/* Step 1: Account Info (new users only) */}
         {actualStep === 1 && !isExistingUser && (
           <div className="space-y-5">

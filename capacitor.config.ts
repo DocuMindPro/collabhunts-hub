@@ -20,7 +20,7 @@ const config: CapacitorConfig = {
       style: 'LIGHT',
     },
     Keyboard: {
-      resize: 'body',
+      resize: 'ionic',
       resizeOnFullScreen: true,
     },
   },

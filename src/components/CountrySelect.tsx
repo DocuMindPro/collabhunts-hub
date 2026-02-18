@@ -16,7 +16,9 @@ interface CountrySelectProps {
 const CountrySelect = ({ value, onChange, disabled, placeholder = "Select your country", className }: CountrySelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [openUpward, setOpenUpward] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const selectedCountry = COUNTRIES.find(c => c.code === value);
@@ -40,6 +42,18 @@ const CountrySelect = ({ value, onChange, disabled, placeholder = "Select your c
     }
   }, [isOpen]);
 
+  const handleOpenDropdown = () => {
+    if (disabled) return;
+    // Measure button position to decide direction
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      // Open upward if button is in the lower 55% of the screen
+      setOpenUpward(rect.bottom > viewportHeight * 0.45);
+    }
+    setIsOpen(!isOpen);
+  };
+
   const filteredCountries = COUNTRIES.filter(
     (country) =>
       country.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -55,10 +69,11 @@ const CountrySelect = ({ value, onChange, disabled, placeholder = "Select your c
   return (
     <div className={cn("relative", className)} ref={dropdownRef}>
       <Button
+        ref={triggerRef}
         type="button"
         variant="outline"
         className="w-full flex items-center justify-between gap-2 h-10"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={handleOpenDropdown}
         disabled={disabled}
       >
         {selectedCountry ? (
@@ -76,8 +91,16 @@ const CountrySelect = ({ value, onChange, disabled, placeholder = "Select your c
       </Button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-hidden">
-          <div className="p-2 border-b sticky top-0 bg-background">
+        <div
+          className={cn(
+            "absolute z-[200] w-full bg-background border rounded-lg shadow-xl overflow-hidden",
+            openUpward
+              ? "bottom-full mb-1"
+              : "top-full mt-1"
+          )}
+          style={{ maxHeight: '240px' }}
+        >
+          <div className="p-2 border-b sticky top-0 bg-background z-10">
             <div className="relative">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -90,7 +113,7 @@ const CountrySelect = ({ value, onChange, disabled, placeholder = "Select your c
               />
             </div>
           </div>
-          <div className="overflow-y-auto max-h-48">
+          <div className="overflow-y-auto" style={{ maxHeight: '192px' }}>
             {filteredCountries.length === 0 ? (
               <div className="p-3 text-center text-muted-foreground text-sm">
                 No countries found

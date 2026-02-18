@@ -188,6 +188,14 @@ export function NativeLogin() {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error('Failed to create user');
 
+      // Explicitly set session to ensure auth token is propagated before DB insert
+      if (authData.session) {
+        await supabase.auth.setSession(authData.session);
+      } else {
+        // Small delay to allow auth to propagate on native
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+
       const { error: profileError } = await supabase
         .from('brand_profiles')
         .insert({
@@ -200,7 +208,12 @@ export function NativeLogin() {
           terms_accepted_at: new Date().toISOString(),
           terms_version: '1.0',
         });
-      if (profileError) throw profileError;
+      if (profileError) {
+        if (profileError.code === '42501') {
+          throw new Error('Permission denied. Please try signing in instead.');
+        }
+        throw profileError;
+      }
 
       // Track affiliate referral
       const referralCode = localStorage.getItem('affiliate_referral_code');
