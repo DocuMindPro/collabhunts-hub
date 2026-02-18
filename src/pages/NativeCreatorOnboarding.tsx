@@ -396,8 +396,8 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
             </div>
 
             <div className="flex flex-col items-center">
-              <input ref={fileInputRef} type="file" accept="image/*" capture="user" onChange={handleImageSelect} className="hidden" />
-              <button onClick={() => fileInputRef.current?.click()}
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+              <button onClick={() => { try { fileInputRef.current?.click(); } catch (e) { console.error('File picker error:', e); toast.error('Could not open photo picker'); } }}
                 className="relative w-28 h-28 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-border">
                 {imagePreview
                   ? <img src={imagePreview} alt="Profile" className="w-full h-full object-cover" />

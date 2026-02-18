@@ -8,6 +8,8 @@ import NativeCreatorOnboarding from '@/pages/NativeCreatorOnboarding';
 import NativeBrandOnboarding from '@/pages/NativeBrandOnboarding';
 import NativeRolePicker from './NativeRolePicker';
 import { NativeDebugProvider } from './NativeDebugConsole';
+import { Capacitor } from '@capacitor/core';
+import { Bug } from 'lucide-react';
 
 interface CreatorProfile {
   id: string;
@@ -321,33 +323,65 @@ export function NativeAppGate({ children }: NativeAppGateProps) {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  if (isLoading) return <NativeLoadingScreen />;
-  if (!user) return <NativeLogin />;
-
-  if (showOnboarding) {
-    return <NativeCreatorOnboarding user={user} onComplete={handleOnboardingComplete} />;
-  }
-
-  if (showBrandOnboarding) {
-    return <NativeBrandOnboarding user={user} onComplete={handleBrandOnboardingComplete} />;
-  }
-
-  if (!selectedRole) {
+  // Floating debug button — visible on native platforms only (temporary)
+  const FloatingDebugButton = () => {
+    if (!Capacitor.isNativePlatform()) return null;
     return (
-      <NativeRolePicker
-        user={user}
-        creatorProfile={creatorProfile}
-        brandProfile={brandProfile}
-        onSelectRole={setSelectedRole}
-        onStartCreatorOnboarding={() => setShowOnboarding(true)}
-        onStartBrandOnboarding={() => setShowBrandOnboarding(true)}
-      />
+      <button
+        onClick={() => window.NATIVE_DEBUG_OPEN?.()}
+        style={{
+          position: 'fixed',
+          bottom: 24,
+          right: 16,
+          zIndex: 99998,
+          backgroundColor: '#f97316',
+          border: 'none',
+          borderRadius: 24,
+          padding: '8px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          cursor: 'pointer',
+          opacity: 0.85,
+        }}
+      >
+        <Bug size={16} color="#fff" />
+        <span style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>Debug</span>
+      </button>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <NativeDebugProvider>
+        <FloatingDebugButton />
+        <NativeLoadingScreen />
+      </NativeDebugProvider>
     );
   }
 
   return (
     <NativeDebugProvider>
-      {children(selectedRole, brandProfile)}
+      <FloatingDebugButton />
+      {!user && <NativeLogin />}
+      {user && showOnboarding && (
+        <NativeCreatorOnboarding user={user} onComplete={handleOnboardingComplete} />
+      )}
+      {user && showBrandOnboarding && (
+        <NativeBrandOnboarding user={user} onComplete={handleBrandOnboardingComplete} />
+      )}
+      {user && !showOnboarding && !showBrandOnboarding && !selectedRole && (
+        <NativeRolePicker
+          user={user}
+          creatorProfile={creatorProfile}
+          brandProfile={brandProfile}
+          onSelectRole={setSelectedRole}
+          onStartCreatorOnboarding={() => setShowOnboarding(true)}
+          onStartBrandOnboarding={() => setShowBrandOnboarding(true)}
+        />
+      )}
+      {user && selectedRole && children(selectedRole, brandProfile)}
     </NativeDebugProvider>
   );
 }
