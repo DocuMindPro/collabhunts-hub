@@ -396,7 +396,7 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
       </div>
 
       {/* Scrollable Content */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 pb-24">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 120px)' }}>
 
         {/* ── Step 1: Basic Info ─────────────────────────────────────────── */}
         {step === 1 && (

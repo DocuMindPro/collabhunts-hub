@@ -85,7 +85,7 @@ const NativeBrandDashboard = ({ brandName, brandProfileId }: NativeBrandDashboar
         </div>
 
         {/* Tab content */}
-        <div className="pb-20">{renderTab()}</div>
+        <div style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)' }}>{renderTab()}</div>
       </div>
     </BrandRegistrationContext.Provider>
   );

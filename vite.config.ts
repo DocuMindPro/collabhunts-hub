@@ -38,6 +38,9 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '1.0.0'),
+  },
   build: {
     // Removed manualChunks for native app compatibility
     // Code splitting with dynamic imports doesn't work reliably with Capacitor's file:// protocol

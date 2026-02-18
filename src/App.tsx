@@ -117,7 +117,7 @@ const BrandBottomNavWrapper = () => {
 const NativeAppRoutes = () => (
   <NativeAppGate>
     {(role, brandProfile) => (
-      <div className="min-h-screen bg-background pb-20">
+      <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)' }}>
         {role === 'creator' ? (
           <>
             <Routes>
