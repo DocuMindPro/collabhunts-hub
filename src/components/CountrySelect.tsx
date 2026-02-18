@@ -16,7 +16,7 @@ interface CountrySelectProps {
 const CountrySelect = ({ value, onChange, disabled, placeholder = "Select your country", className }: CountrySelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [openUpward, setOpenUpward] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -44,12 +44,29 @@ const CountrySelect = ({ value, onChange, disabled, placeholder = "Select your c
 
   const handleOpenDropdown = () => {
     if (disabled) return;
-    // Measure button position to decide direction
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
-      // Open upward if button is in the lower 55% of the screen
-      setOpenUpward(rect.bottom > viewportHeight * 0.45);
+      const dropdownHeight = 240;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const openUpward = spaceBelow < dropdownHeight + 16;
+      if (openUpward) {
+        setDropdownStyle({
+          position: 'fixed',
+          bottom: viewportHeight - rect.top + 4,
+          left: rect.left,
+          width: rect.width || 280,
+          zIndex: 9999,
+        });
+      } else {
+        setDropdownStyle({
+          position: 'fixed',
+          top: rect.bottom + 4,
+          left: rect.left,
+          width: rect.width || 280,
+          zIndex: 9999,
+        });
+      }
     }
     setIsOpen(!isOpen);
   };
@@ -92,13 +109,8 @@ const CountrySelect = ({ value, onChange, disabled, placeholder = "Select your c
 
       {isOpen && (
         <div
-          className={cn(
-            "absolute z-[200] w-full bg-background border rounded-lg shadow-xl overflow-hidden",
-            openUpward
-              ? "bottom-full mb-1"
-              : "top-full mt-1"
-          )}
-          style={{ maxHeight: '240px' }}
+          className="bg-background border rounded-lg shadow-xl overflow-hidden"
+          style={{ maxHeight: '240px', ...dropdownStyle }}
         >
           <div className="p-2 border-b sticky top-0 bg-background z-10">
             <div className="relative">

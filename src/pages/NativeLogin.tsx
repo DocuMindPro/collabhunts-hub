@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useKeyboardScrollIntoView } from '@/hooks/useKeyboardScrollIntoView';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,9 @@ type ViewMode = 'signin' | 'role-select' | 'brand-signup' | 'creator-signup';
 
 export function NativeLogin() {
   const { requirePhone, loading: verificationLoading } = useVerificationSettings();
+  // Keyboard scroll-into-view for brand/creator signup forms
+  const brandScrollRef = useKeyboardScrollIntoView<HTMLDivElement>();
+  const creatorScrollRef = useKeyboardScrollIntoView<HTMLDivElement>();
 
   // View state
   const [viewMode, setViewMode] = useState<ViewMode>('signin');
@@ -594,7 +598,7 @@ export function NativeLogin() {
           <span className="flex-1 text-center text-sm font-medium text-foreground pr-9">Register Your Brand</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div ref={brandScrollRef} className="flex-1 overflow-y-auto p-6">
           <div className="max-w-sm mx-auto">
             <div className="mb-6">
               <h1 className="text-xl font-bold text-foreground">Quick Signup</h1>
@@ -665,7 +669,7 @@ export function NativeLogin() {
         <span className="flex-1 text-center text-sm font-medium text-foreground pr-9">Join as Creator</span>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <div ref={creatorScrollRef} className="flex-1 overflow-y-auto p-6">
         <div className="max-w-sm mx-auto">
           <div className="mb-6">
             <h1 className="text-xl font-bold text-foreground">Create Your Account</h1>
