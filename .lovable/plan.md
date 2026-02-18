@@ -1,237 +1,182 @@
 
-# iOS-Specific Fix Plan: Keyboard, Debug Console & Profile Creation Crash
+# README Build Badge + Complete iOS Gap Audit
 
-## Why iOS Was Never Actually Fixed
+## Part 1: Build Status Badges for README
 
-The previous fixes were applied assuming Android behavior. Here's what's different on iOS and why everything is still broken:
+### What needs to change
+The `README.md` file needs two GitHub Actions status badges added at the top — one for the iOS TestFlight build and one for the Android APK build. These badges auto-update to show passing/failing status on every push to `main`.
 
----
-
-## Issue 1: Keyboard Covering Phone Input (iOS-Specific Root Cause)
-
-### What's Different on iOS
-
-The `capacitor.config.ts` has `Keyboard.resize: 'ionic'`. On **Android**, `ionic` mode shrinks the `window.visualViewport.height` when the keyboard opens, which is exactly what `useKeyboardScrollIntoView` relies on. 
-
-On **iOS (WKWebView)**, `ionic` resize mode works **differently** — the viewport does NOT shrink via `visualViewport.height`. Instead, iOS uses a completely different approach: the page body shifts upward, and `window.visualViewport.offsetTop` changes. The result:
-
-- `vv.height` does NOT decrease on iOS when keyboard opens
-- `vv.offsetTop` increases instead
-- The current code uses `visibleBottom = vv.offsetTop + vv.height` — this returns the **full screen height** on iOS, so `inputBottom > visibleBottom - 20` is **always false**, meaning the scroll **never fires**
-
-### Second iOS Problem: Sign-In Screen Has No Scroll Container
-
-The sign-in form (`viewMode === 'signin'`) in `NativeLogin.tsx` uses `min-h-screen` with `justify-center` — there is **no overflow-y-auto container**, and **no `scrollContainerRef` attached**. Even if the hook worked perfectly, it has nothing to scroll because the sign-in view is not a scrollable container. The `useKeyboardScrollIntoView` refs are only attached to `brandScrollRef` and `creatorScrollRef` — the main sign-in view with email/password inputs has **no scroll hook at all**.
-
-### The Real iOS Fix
-
-**Two-part fix:**
-
-**Part A** — Fix `useKeyboardScrollIntoView.ts` to handle iOS correctly:
-
-On iOS, instead of relying on `visualViewport` height changes, we use the `@capacitor/keyboard` plugin's `keyboardWillShow` event which provides the **exact keyboard height in pixels**. This is the most reliable cross-platform approach:
-
-```typescript
-// On iOS native: use Capacitor Keyboard plugin for exact keyboard height
-// On Android: use visualViewport (already works)
-// On web: no-op
+The badge URLs follow the GitHub Actions standard format:
+```
+https://github.com/{OWNER}/{REPO}/actions/workflows/{workflow-filename}/badge.svg
 ```
 
-When keyboard shows on iOS: scroll the container by `inputBottom - (screenHeight - keyboardHeight) + 80px padding`.
+Both workflow files are already defined:
+- `.github/workflows/build-ios.yml` → workflow name: `Build iOS & Upload to TestFlight`
+- `.github/workflows/build-android.yml` → workflow name: `Build Android APK`
 
-**Part B** — Fix the sign-in view to be a scrollable container and attach the scroll ref to it.
+**Important:** Since this is a Lovable-connected repo, the GitHub username and repo name aren't hardcoded in the project files. The badge will use a placeholder that the user replaces once — OR we can use a relative path approach that works once the repo is known. The cleanest approach is to add the badges with a clear `YOUR-GITHUB-USERNAME/YOUR-REPO-NAME` placeholder so you can fill it in once.
 
-**The simplest and most reliable solution for iOS** is to use the `Keyboard` plugin's `keyboardWillShow` event to get the exact keyboard height, then use CSS `padding-bottom` on the scroll container equal to the keyboard height. This is the standard iOS pattern and works 100% of the time:
-
-```typescript
-// When keyboard shows: add padding-bottom = keyboardHeight to scroll container
-// Then scroll focused input into view
-// When keyboard hides: remove padding
-```
-
-This avoids all the `visualViewport` iOS quirks entirely.
+Badges will be added right at the top of `README.md`, before "Project Info", so they are immediately visible on the GitHub repo homepage.
 
 ---
 
-## Issue 2: Debug Console Button Not Working
+## Part 2: Gap Audit — What's Still Missing or Wrong
 
-### The Real Problem
-
-Looking at the code carefully:
-
-1. `NativeDebugProvider` IS now wrapping all views in `NativeAppGate` ✓
-2. `NativeDebugConsole` sets `window.NATIVE_DEBUG_OPEN = () => setIsOpen(true)` ✓  
-3. The floating `FloatingDebugButton` calls `window.NATIVE_DEBUG_OPEN?.()` ✓
-
-**But:** `FloatingDebugButton` is defined as a component **inside** the `NativeAppGate` function body, which means it's re-created on every render. More critically — it only renders when `Capacitor.isNativePlatform()` returns `true`. **On the iOS Capacitor WebView, `Capacitor.isNativePlatform()` should return `true`.**
-
-The real issue is: **`NativeDebugProvider` is being mounted TWICE** — once for the loading state and once for the main render. Each mount calls `installNativeErrorInterceptors` separately, and each `NativeDebugProvider` instance has its own `setIsOpen` state. When the loading screen `NativeDebugProvider` unmounts (after loading completes), its `window.NATIVE_DEBUG_OPEN` reference is **replaced** by the new main `NativeDebugProvider`'s `setIsOpen`. But during the brief loading→main transition, `window.NATIVE_DEBUG_OPEN` may point to a stale closure.
-
-**The fix:** There should be only **ONE** `NativeDebugProvider` instance for the entire app, not two separate ones (one for loading, one for main). The loading screen should be a conditional render **inside** a single provider. Additionally, the `FloatingDebugButton` needs to be moved **inside** the `NativeDebugProvider` so it always has access to the correct `setIsOpen` state — instead of relying on the global `window.NATIVE_DEBUG_OPEN`.
-
-### What to change
-
-- Remove the double `NativeDebugProvider` (remove the loading-state one, keep only the main one)
-- Move `NativeLoadingScreen` **inside** the single `NativeDebugProvider` as a conditional render
-- Make `FloatingDebugButton` part of `NativeDebugProvider` itself (not in `NativeAppGate`) so it directly calls the provider's `setIsOpen` without needing the global `window` bridge
-- The button should have `touchAction: 'manipulation'` and a larger tap target (min 44×44pt per Apple HIG) since iOS is strict about tap targets
+After reading every relevant native file, here is the complete list of remaining gaps:
 
 ---
 
-## Issue 3: Profile Creation Still Crashing
+### Gap 1: `NativeBrandDashboard.tsx` — Content Hidden Behind Bottom Nav (CRITICAL)
 
-### The Real Problem on iOS
+**Problem:** The dashboard renders tab content in `<div className="pb-20">`. On iPhone with the home indicator, the bottom nav has `safe-area-bottom` which adds `~34px` to its visual height on top of `64px (h-16)`. Total nav height = ~98px. But `pb-20` = only `80px`. This means the last ~18px of every tab's content is **hidden behind the bottom nav on iPhone X and later**.
 
-The previous fix added a session check, but on iOS, the **actual failure** is different from Android:
-
-On iOS WKWebView with Capacitor, after `supabase.auth.signUp()`, the auth session **IS** immediately available (iOS handles the session cookie differently from Android). So the session check passes. But then the `INSERT` into `creator_profiles` fails because of **a different reason on iOS**: the Supabase JS client on iOS WKWebView sometimes drops the `Authorization` header on the first request after auth state change due to WKWebView's strict content security policy handling.
-
-**Evidence:** The error toast would say `Profile insert failed: ... [code: 42501]` — that's `insufficient_privilege`, meaning RLS rejected it because `auth.uid()` was null even though a session exists client-side.
-
-**The fix:** Before the INSERT, explicitly call `supabase.auth.setSession()` with the tokens from `getSession()` to force the Supabase client to re-attach the auth headers:
-
-```typescript
-const { data: { session } } = await supabase.auth.getSession();
-if (session) {
-  // Force re-attach auth headers (fixes iOS WKWebView header dropping)
-  await supabase.auth.setSession({
-    access_token: session.access_token,
-    refresh_token: session.refresh_token,
-  });
-}
-```
-
-Additionally, after `signUp()` in `NativeLogin.tsx`, if `authData.session` is null (email confirmation required), we need to handle this gracefully by showing a "Check your email" message instead of routing to onboarding.
-
----
-
-## Complete List of Files to Change
-
-| File | Changes |
-|---|---|
-| `src/hooks/useKeyboardScrollIntoView.ts` | Complete rewrite: use `@capacitor/keyboard` events for iOS, visualViewport for Android |
-| `src/components/NativeAppGate.tsx` | Single `NativeDebugProvider` wrapping everything incl. loading screen; move `FloatingDebugButton` into provider |
-| `src/components/NativeDebugConsole.tsx` | Move floating debug button into `NativeDebugProvider`; fix button tap target size for iOS |
-| `src/pages/NativeLogin.tsx` | Fix sign-in view to be scrollable; attach scroll ref to sign-in form too |
-| `src/pages/NativeCreatorOnboarding.tsx` | Add `supabase.auth.setSession()` force re-attach before INSERT |
-
----
-
-## Technical Details of Each Fix
-
-### Fix 1A — Keyboard Hook (iOS + Android)
-
-```typescript
-import { Capacitor } from '@capacitor/core';
-import { Keyboard } from '@capacitor/keyboard';
-
-export function useKeyboardScrollIntoView<T extends HTMLElement>() {
-  const containerRef = useRef<T>(null);
-  const keyboardHeightRef = useRef(0); // tracks current keyboard height
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const scrollFocusedIntoView = (target: HTMLElement, kbHeight: number) => {
-      const rect = target.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const visibleBottom = viewportHeight - kbHeight;
-      const inputBottom = rect.bottom;
-
-      if (inputBottom > visibleBottom - 20) {
-        const scrollAmount = inputBottom - visibleBottom + 100;
-        container.scrollBy({ top: scrollAmount, behavior: 'smooth' });
-      }
-    };
-
-    if (Capacitor.isNativePlatform()) {
-      // Use Capacitor Keyboard plugin for reliable cross-platform keyboard height
-      const showHandle = Keyboard.addListener('keyboardWillShow', (info) => {
-        keyboardHeightRef.current = info.keyboardHeight;
-        const activeEl = document.activeElement as HTMLElement | null;
-        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA') && container.contains(activeEl)) {
-          setTimeout(() => scrollFocusedIntoView(activeEl, info.keyboardHeight), 100);
-        }
-      });
-
-      const hideHandle = Keyboard.addListener('keyboardWillHide', () => {
-        keyboardHeightRef.current = 0;
-      });
-
-      // Also handle focus events (for when keyboard is already open)
-      const handleFocusIn = (e: FocusEvent) => {
-        const target = e.target as HTMLElement;
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-          setTimeout(() => scrollFocusedIntoView(target, keyboardHeightRef.current), 350);
-        }
-      };
-      container.addEventListener('focusin', handleFocusIn);
-
-      return () => {
-        showHandle.then(h => h.remove());
-        hideHandle.then(h => h.remove());
-        container.removeEventListener('focusin', handleFocusIn);
-      };
-    } else {
-      // Web fallback using visualViewport
-      const handleFocusIn = (e: FocusEvent) => { ... };
-      // (same as current web fallback)
-    }
-  }, []);
-
-  return containerRef;
-}
-```
-
-### Fix 1B — Sign-In View Scrollable Container
-
-The sign-in view needs to be wrapped in a scrollable div with the scroll ref:
+**Fix:** Change `pb-20` to `pb-24` AND add `safe-area-bottom` padding to account for the home indicator:
 ```tsx
-// BEFORE: <div className="min-h-screen bg-background flex flex-col">
-//           <div className="flex-1 flex flex-col items-center justify-center p-6">
+// BEFORE
+<div className="pb-20">{renderTab()}</div>
 
-// AFTER:  <div className="min-h-screen bg-background flex flex-col">
-//           <div ref={signinScrollRef} className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-6">
-```
-
-### Fix 2 — Single NativeDebugProvider
-
-```tsx
-// NativeAppGate render:
-return (
-  <NativeDebugProvider>  {/* ONE provider only */}
-    <FloatingDebugButton />  {/* Defined inside NativeDebugConsole, uses direct state */}
-    {isLoading && <NativeLoadingScreen />}
-    {!isLoading && !user && <NativeLogin />}
-    {!isLoading && user && showOnboarding && <NativeCreatorOnboarding ... />}
-    {/* etc. */}
-  </NativeDebugProvider>
-);
-```
-
-### Fix 3 — Force Session Re-Attach on iOS
-
-```typescript
-// In NativeCreatorOnboarding handleSubmit, BEFORE the INSERT:
-const { data: { session } } = await supabase.auth.getSession();
-if (session) {
-  await supabase.auth.setSession({
-    access_token: session.access_token,
-    refresh_token: session.refresh_token,
-  });
-  // Small wait for iOS WKWebView to propagate the auth header
-  await new Promise(r => setTimeout(r, 200));
-}
+// AFTER
+<div className="pb-24 safe-area-bottom">{renderTab()}</div>
 ```
 
 ---
 
-## Summary
+### Gap 2: `CreatorDashboard.tsx` — Same Bottom Nav Content Overlap (CRITICAL)
 
-| Issue | iOS Root Cause | Fix |
+**Problem:** The creator dashboard wrapper in `App.tsx` line 120: `<div className="min-h-screen bg-background pb-20">`. Same issue — `pb-20` only covers the 64px nav bar height but misses the `env(safe-area-inset-bottom, ~34px)` extra spacing on iPhone.
+
+**Fix:** Change the wrapper in `App.tsx` (the `NativeAppRoutes` component) from `pb-20` to `pb-24 safe-area-bottom`. Also, `CreatorDashboard.tsx` itself uses `pb-20` on the outer wrapper — change it too.
+
+---
+
+### Gap 3: `NativeCreatorOnboarding.tsx` — Fixed Footer Button Hidden Behind Home Indicator (CRITICAL)
+
+**Problem:** The "Continue" / "Create Profile" fixed footer button uses:
+```tsx
+<div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border safe-area-bottom">
+```
+This has `safe-area-bottom` ✅ — BUT `safe-area-bottom` only adds `padding-bottom: env(safe-area-inset-bottom, 0px)`. The button inside the footer still sits at `bottom: 0`. The button's touch area is fine BUT the scroll container `pb-24` may not be tall enough since the footer + safe area can be ~110px tall. The scrollable content area needs `pb-28 safe-area-bottom` to ensure the last input/element isn't hidden behind the footer.
+
+**Fix:** Change the scroll container from `pb-24` to:
+```tsx
+<div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4" 
+  style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 120px)' }}>
+```
+Using inline style here is safer because we need additive math (`safe-area + footer-height`), which CSS utility classes can't do without a calc() expression.
+
+---
+
+### Gap 4: `MobileBottomNav.tsx` — Nav Height Mismatch Causes Content Clip (MEDIUM)
+
+**Problem:** `MobileBottomNav` has `safe-area-bottom` on the `<nav>` — this is correct. BUT `h-16` (64px) is the height of the tab row ABOVE the safe area. The total nav height varies by device:
+- iPhone without home indicator: 64px
+- iPhone with home indicator (X/11/12/13/14/15): 64px + ~34px = ~98px
+
+The creator dashboard wrapper uses a fixed `pb-20 (80px)` — not enough for newer iPhones. This is the same root cause as Gap 2.
+
+**Fix:** Covered by Gap 2 fix.
+
+---
+
+### Gap 5: `NativeRolePicker.tsx` — Version Number is Hardcoded `v1.0.0 (build 1)` (MINOR)
+
+**Problem:** At the bottom of the role picker screen:
+```tsx
+<p className="mt-4 text-xs text-muted-foreground/60">v1.0.0 (build 1)</p>
+```
+This is hardcoded and will never update. As you push new builds (the Android CI already bumps build numbers automatically), this shows a stale version.
+
+**Fix:** Use `VITE_APP_VERSION` from the environment, or simply remove the hardcoded string and replace with `import.meta.env.VITE_APP_VERSION || 'v1.0'`. We also add `VITE_APP_VERSION` to the Android + iOS CI workflows as a build step so it stays current.
+
+Actually, the simpler fix is to inject the version dynamically from `package.json` via `vite.config.ts`. Vite already has access to `process.env` during build. We add:
+```typescript
+// vite.config.ts
+define: {
+  __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+}
+```
+Then in `NativeRolePicker.tsx`:
+```tsx
+declare const __APP_VERSION__: string;
+<p>v{__APP_VERSION__}</p>
+```
+
+---
+
+### Gap 6: `NativeDebugConsole.tsx` — Debug Button Overlaps Bottom Nav (MEDIUM)
+
+**Problem:** The floating debug button is positioned at:
+```tsx
+bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)',
+```
+This puts it 96px above the bottom of the screen. But the bottom nav is `h-16 (64px) + safe-area-inset-bottom`. On newer iPhones with ~34px safe area, the nav is ~98px tall. So `96px` barely clears it — the debug button visually overlaps or sits right on top of the nav edge.
+
+**Fix:** Change to `112px` base offset:
+```tsx
+bottom: 'calc(env(safe-area-inset-bottom, 0px) + 112px)',
+```
+
+---
+
+### Gap 7: `NativeBrandOnboarding.tsx` — Missing `safe-area-bottom` on Scroll Content
+
+**Problem:** Looking at how `NativeCreatorOnboarding` handles its scroll container vs `NativeBrandOnboarding` — both have a fixed footer button. The brand onboarding scroll content similarly risks being hidden behind the footer + home indicator on newer iPhones.
+
+**Fix:** Apply the same `paddingBottom: calc(...)` inline style to the scroll container in `NativeBrandOnboarding.tsx`.
+
+---
+
+## Complete File Change List
+
+| File | Change | Priority |
 |---|---|---|
-| Keyboard hides inputs | `visualViewport.height` doesn't change on iOS; `Keyboard.resize='ionic'` works differently on iOS vs Android | Use `@capacitor/keyboard` `keyboardWillShow` event for exact height |
-| Sign-in inputs hidden | Sign-in view has no scroll container | Make sign-in view scrollable + attach ref |
-| Debug button not working | Two `NativeDebugProvider` instances cause stale closure; button tap target too small for iOS | Single provider wrapping everything; inline button state |
-| Profile creation fails | iOS WKWebView drops `Authorization` header on first post-auth request | Force `setSession()` re-attach + 200ms wait before INSERT |
+| `README.md` | Add iOS + Android build status badges at top | High |
+| `src/App.tsx` | Change `pb-20` → `pb-24 safe-area-bottom` in `NativeAppRoutes` wrapper div | Critical |
+| `src/pages/NativeBrandDashboard.tsx` | Change `pb-20` → inline `paddingBottom: calc(...)` on content wrapper | Critical |
+| `src/pages/NativeCreatorOnboarding.tsx` | Fix scroll container bottom padding to include footer height + safe area | Critical |
+| `src/pages/NativeBrandOnboarding.tsx` | Same scroll container fix as onboarding | Critical |
+| `src/components/NativeDebugConsole.tsx` | Bump floating button offset from 96px → 112px | Medium |
+| `src/components/NativeRolePicker.tsx` | Replace hardcoded version string with dynamic from package.json | Minor |
+| `vite.config.ts` | Inject `__APP_VERSION__` from package.json | Minor |
+
+---
+
+## Technical Implementation Details
+
+### README Badges (exact markdown)
+```markdown
+[![iOS Build](https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO-NAME/actions/workflows/build-ios.yml/badge.svg)](https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO-NAME/actions/workflows/build-ios.yml)
+[![Android Build](https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO-NAME/actions/workflows/build-android.yml/badge.svg)](https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO-NAME/actions/workflows/build-android.yml)
+```
+
+**After I make the change, you need to replace `YOUR-GITHUB-USERNAME/YOUR-REPO-NAME` with your actual GitHub username and repository name.** You can find this in your GitHub repo URL: `https://github.com/YOUR-USERNAME/YOUR-REPO`. It's a one-time, 30-second edit.
+
+### Content Padding Fix (the right formula)
+
+The bottom nav is always `64px (h-16)` for the visible tabs. On top of that, `safe-area-inset-bottom` (usually `~34px` on modern iPhones, `0px` on Android and older iPhones). The scroll content must clear BOTH:
+
+```
+required padding = nav-height (64px) + safe-area-inset-bottom + extra breathing room (16px)
+= calc(env(safe-area-inset-bottom, 0px) + 80px)
+```
+
+This is applied as an inline style so CSS `calc()` with `env()` works correctly (Tailwind can't compose these two values together without JIT arbitrary values which are less readable).
+
+### Version Injection
+
+In `vite.config.ts`, inside `defineConfig`:
+```typescript
+define: {
+  __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '1.0.0'),
+},
+```
+
+In `NativeRolePicker.tsx`, declare the global and use it:
+```typescript
+declare const __APP_VERSION__: string;
+// ...
+<p className="mt-4 text-xs text-muted-foreground/60">v{__APP_VERSION__}</p>
+```
+
+`npm_package_version` is automatically set by npm/bun when running scripts, so this works in both local dev and CI without any extra steps.
