@@ -97,6 +97,8 @@ const PortfolioUploadSection = ({ creatorProfileId, compact = false }: Portfolio
       
       xhr.addEventListener('error', () => reject(new Error('Upload failed')));
       xhr.addEventListener('abort', () => reject(new Error('Upload aborted')));
+      xhr.timeout = 30000; // 30 seconds — prevents indefinite hangs on Android native
+      xhr.addEventListener('timeout', () => reject(new Error('Upload timed out. Please try again.')));
       
       const url = `${supabaseUrl}/functions/v1/upload-portfolio-media`;
       xhr.open('POST', url);
