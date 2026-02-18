@@ -1,9 +1,10 @@
 name: Build iOS & Upload to TestFlight
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+  push:
+    tags:
+      - 'v*'  # Only trigger on version tags like v1.0.1, v1.1.0
 
 jobs:
   build:
