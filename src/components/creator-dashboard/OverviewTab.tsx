@@ -1,15 +1,13 @@
-import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Eye, DollarSign, Calendar, MessageSquare, ArrowRight, Building2, Target, Pencil, Package, Briefcase, Rocket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
+import { isNativePlatform } from "@/lib/supabase-native";
 import { EVENT_PACKAGES, PackageType } from "@/config/packages";
-import { checkFollowerEligibility } from "@/config/follower-ranges";
 import { format } from "date-fns";
+import { useCreatorStats } from "@/hooks/useCreatorDashboard";
 
 interface OpportunityPreview {
   id: string;
@@ -27,124 +25,17 @@ interface OpportunityPreview {
 
 const OverviewTab = ({ onNavigateToTab }: { onNavigateToTab?: (tab: string) => void }) => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
-    profileViews: 0,
-    totalEarnings: 0,
-    pendingBookings: 0,
-    unreadMessages: 0,
-    profileStatus: "pending" as string,
-  });
-  const [loading, setLoading] = useState(true);
-  const [matchedOpportunities, setMatchedOpportunities] = useState<OpportunityPreview[]>([]);
-  const [isFallback, setIsFallback] = useState(false);
+  const { data, isLoading: loading } = useCreatorStats();
 
-  useEffect(() => {
-    fetchDashboardStats();
-  }, []);
-
-  const fetchDashboardStats = async () => {
-    const defaultStats = {
-      profileViews: 0,
-      totalEarnings: 0,
-      pendingBookings: 0,
-      unreadMessages: 0,
-      profileStatus: "pending" as string,
-    };
-
-    const result = await safeNativeAsync(
-      async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return defaultStats;
-
-        const { data: profile } = await supabase
-          .from("creator_profiles")
-          .select("id, status, categories, location_city")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (!profile) return defaultStats;
-
-        const { data: conversationsData } = await supabase
-          .from("conversations")
-          .select("id")
-          .eq("creator_profile_id", profile.id);
-
-        const conversationIds = conversationsData?.map(c => c.id) || [];
-
-        const [viewsData, bookingsData, messagesData, socialData, oppsData] = await Promise.all([
-          supabase
-            .from("profile_views")
-            .select("*", { count: "exact", head: true })
-            .eq("creator_profile_id", profile.id),
-          supabase
-            .from("bookings")
-            .select("status, total_price_cents")
-            .eq("creator_profile_id", profile.id),
-          conversationIds.length > 0
-            ? supabase
-                .from("messages")
-                .select("id, is_read")
-                .eq("is_read", false)
-                .in("conversation_id", conversationIds)
-            : { data: [] },
-          supabase
-            .from("creator_social_accounts")
-            .select("follower_count")
-            .eq("creator_profile_id", profile.id),
-          supabase
-            .from("brand_opportunities")
-            .select("id, title, package_type, event_date, is_paid, budget_cents, required_categories, location_city, follower_ranges, min_followers, brand_profiles(company_name, venue_name, logo_url)")
-            .eq("status", "open")
-            .gte("event_date", new Date().toISOString().split('T')[0])
-            .order("created_at", { ascending: false })
-            .limit(30),
-        ]);
-
-        // Calculate max follower count
-        const maxFollowers = socialData.data?.reduce((max, acc) => {
-          const count = Number(acc.follower_count) || 0;
-          return count > max ? count : max;
-        }, 0) || 0;
-
-        // Score opportunities
-        const allOpps = oppsData.data || [];
-        const scored = allOpps.map((opp: any) => {
-          let score = 0;
-          if (maxFollowers > 0 && checkFollowerEligibility(maxFollowers, opp.follower_ranges)) score += 3;
-          if (opp.required_categories?.some((cat: string) => profile.categories?.includes(cat))) score += 2;
-          if (opp.location_city && opp.location_city === profile.location_city) score += 1;
-          return { ...opp, score };
-        });
-
-        const matched = scored.filter((o: any) => o.score > 0).sort((a: any, b: any) => b.score - a.score).slice(0, 5);
-
-        if (matched.length > 0) {
-          setMatchedOpportunities(matched as unknown as OpportunityPreview[]);
-          setIsFallback(false);
-        } else {
-          setMatchedOpportunities((allOpps.slice(0, 3)) as unknown as OpportunityPreview[]);
-          setIsFallback(true);
-        }
-
-        const completedBookings = bookingsData.data?.filter(b => b.status === "completed") || [];
-        const totalEarnings = completedBookings.reduce((sum, b) => sum + b.total_price_cents, 0);
-        const pendingBookings = bookingsData.data?.filter(b => b.status === "pending").length || 0;
-
-        return {
-          profileViews: viewsData.count || 0,
-          totalEarnings: totalEarnings / 100,
-          pendingBookings,
-          unreadMessages: messagesData.data?.length || 0,
-          profileStatus: profile.status,
-        };
-      },
-      defaultStats,
-      8000
-    );
-
-    setStats(result);
-    setLoading(false);
+  const stats = {
+    profileViews: data?.profileViews ?? 0,
+    totalEarnings: data?.totalEarnings ?? 0,
+    pendingBookings: data?.pendingBookings ?? 0,
+    unreadMessages: data?.unreadMessages ?? 0,
+    profileStatus: data?.profileStatus ?? "pending",
   };
+  const matchedOpportunities = (data?.matchedOpportunities ?? []) as unknown as OpportunityPreview[];
+  const isFallback = data?.isFallback ?? false;
 
   if (loading) {
     return (
@@ -247,39 +138,19 @@ const OverviewTab = ({ onNavigateToTab }: { onNavigateToTab?: (tab: string) => v
       {/* Quick Actions - Native only */}
       {isNative && (
         <div className="grid grid-cols-2 gap-2 animate-fade-in" style={{ animationDelay: "300ms" }}>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-10 text-xs"
-            onClick={() => onNavigateToTab?.("profile")}
-          >
+          <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => onNavigateToTab?.("profile")}>
             <Pencil className="h-3.5 w-3.5 mr-1.5" />
             Edit Profile
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-10 text-xs"
-            onClick={() => onNavigateToTab?.("services")}
-          >
+          <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => onNavigateToTab?.("services")}>
             <Package className="h-3.5 w-3.5 mr-1.5" />
             My Packages
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-10 text-xs"
-            onClick={() => onNavigateToTab?.("boost")}
-          >
+          <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => onNavigateToTab?.("boost")}>
             <Rocket className="h-3.5 w-3.5 mr-1.5" />
             Boost Profile
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-10 text-xs"
-            onClick={() => onNavigateToTab?.("opportunities")}
-          >
+          <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => onNavigateToTab?.("opportunities")}>
             <Briefcase className="h-3.5 w-3.5 mr-1.5" />
             Browse Opps
           </Button>

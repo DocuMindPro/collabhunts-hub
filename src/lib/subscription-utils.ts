@@ -195,19 +195,9 @@ export const canBrandUseAiDraft = async (
 };
 
 // Increment the AI draft counter after a successful AI improvement
+// Uses atomic server-side increment to avoid race conditions
 export const incrementAiDraftCounter = async (brandProfileId: string): Promise<void> => {
-  const { data: brand } = await supabase
-    .from('brand_profiles')
-    .select('ai_drafts_used_this_month')
-    .eq('id', brandProfileId)
-    .single();
-
-  if (brand) {
-    await supabase
-      .from('brand_profiles')
-      .update({ ai_drafts_used_this_month: brand.ai_drafts_used_this_month + 1 })
-      .eq('id', brandProfileId);
-  }
+  await supabase.rpc('increment_ai_draft_counter', { p_brand_profile_id: brandProfileId });
 };
 
 // Check if a brand can message a new creator (enforces monthly limit)
@@ -289,17 +279,7 @@ export const canBrandMessageCreator = async (
 };
 
 // Increment the messaging counter after a new conversation is created
+// Uses atomic server-side increment to avoid race conditions
 export const incrementMessagingCounter = async (brandProfileId: string): Promise<void> => {
-  const { data: brand } = await supabase
-    .from('brand_profiles')
-    .select('creators_messaged_this_month')
-    .eq('id', brandProfileId)
-    .single();
-
-  if (brand) {
-    await supabase
-      .from('brand_profiles')
-      .update({ creators_messaged_this_month: brand.creators_messaged_this_month + 1 })
-      .eq('id', brandProfileId);
-  }
+  await supabase.rpc('increment_messaging_counter', { p_brand_profile_id: brandProfileId });
 };
