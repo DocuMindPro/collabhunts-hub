@@ -242,17 +242,61 @@ export function NativeDebugProvider({ children }: { children: React.ReactNode })
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Expose global open trigger so any component can call window.NATIVE_DEBUG_OPEN()
+    // Expose global open trigger so tap-based triggers (5x logo tap) can also open it
     window.NATIVE_DEBUG_OPEN = () => setIsOpen(true);
   }, []);
+
+  // FloatingDebugButton is defined here so it has DIRECT access to setIsOpen
+  // without going through the window.NATIVE_DEBUG_OPEN bridge (which can be stale
+  // if the provider remounts, as happened when we had two providers).
+  const FloatingDebugButton = () => {
+    // Only show on native platforms (Capacitor.isNativePlatform())
+    // Use dynamic import-like check to avoid importing Capacitor here
+    const isNative = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform?.();
+    if (!isNative) return null;
+
+    return (
+      <button
+        onPointerDown={(e) => { e.stopPropagation(); setIsOpen(true); }}
+        style={{
+          position: 'fixed',
+          bottom: 32,
+          right: 16,
+          zIndex: 99998,
+          backgroundColor: '#f97316',
+          border: 'none',
+          borderRadius: 28,
+          // Minimum 44×44pt tap target per Apple HIG
+          minWidth: 80,
+          minHeight: 44,
+          padding: '0 14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.35)',
+          cursor: 'pointer',
+          opacity: 0.9,
+          WebkitTapHighlightColor: 'transparent',
+          touchAction: 'manipulation',
+          userSelect: 'none',
+        }}
+      >
+        <span style={{ fontSize: 18 }}>🐛</span>
+        <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>Debug</span>
+      </button>
+    );
+  };
 
   return (
     <>
       {children}
+      <FloatingDebugButton />
       <NativeDebugConsole isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 }
+
 
 // ── Install global error/rejection interceptors ───────────────────────────────
 // Call this ONCE from main.tsx before React renders.
