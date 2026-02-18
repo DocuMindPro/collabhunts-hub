@@ -1,78 +1,77 @@
 
-## Native Brand UX: 5 Critical Fixes
+## Native App: 4 Critical Bug Fixes
 
-### Issue 1: "Brand profile created!" Toast Gets Stuck
+### Bug 1: Session Lost on Second App Launch (Auth Race Condition)
 
-**Root cause**: The toast notification that fires after brand profile creation is using the `sonner` toast library's default behavior — it persists until dismissed or until `duration` expires. On native mobile, the notification appears at the bottom and never auto-dismisses if the component that triggered it stays mounted.
+**Root cause**: `NativeAppGate.tsx` has a fundamental race condition. It runs BOTH `checkAuthAndProfile()` (initial load) AND `onAuthStateChange` simultaneously. When the app is re-opened, the auth state change listener fires `SIGNED_IN` and immediately calls `refetchProfiles` — but by this point, `isLoading` may still be `true`. The subsequent `useEffect` that watches `[isLoading, user, creatorProfile, brandProfile, selectedRole]` then finds `creatorProfile` present but `isCreatorProfileComplete()` returns `false` because the **`categories` field is not populated during the creator onboarding** (`NativeCreatorOnboarding.tsx` never writes `categories` to the profile). This causes the gate to show onboarding again instead of the dashboard.
 
-**Fix**: In `src/pages/NativeBrandOnboarding.tsx` (and wherever this toast fires), ensure `duration: 3000` is explicitly set, and verify the toast call uses `sonner` (not the shadcn `toast`) so it auto-dismisses. Additionally, add scroll-to-top behavior in `NativeBrandDashboard.tsx` when the tab changes so any lingering UI is cleared.
+**Two sub-fixes**:
 
-**Also**: Add `useEffect` scroll-to-top to `NativeBrandDashboard.tsx` when `currentTab` changes — same fix applied to creator dashboard.
+1. **`NativeCreatorOnboarding.tsx` does not set `categories`**: The creator profile is inserted without a `categories` array. `isCreatorProfileComplete` checks for `categories.length > 0` — it will always fail. This is why the user gets kicked to onboarding on second launch. Fix: Remove the `categories` check from `isCreatorProfileComplete`, or add a category selection step to onboarding, OR simply relax the check to only require `display_name` and `bio`.
 
----
+2. **`NativeAppGate.tsx` race condition**: The `onAuthStateChange` listener fires async calls including `await refetchProfiles(...)` directly inside the callback. Per Supabase docs, awaiting inside `onAuthStateChange` can cause deadlocks. Fix: wrap profile refetch in `setTimeout(..., 0)` to avoid blocking the auth state change.
 
-### Issue 2: Bookings Tab Opens Mid-Page (Not Scrolled to Top)
-
-**Root cause**: `NativeBrandDashboard.tsx` has no scroll-to-top logic. When `handleTabChange("bookings")` is called, `currentTab` changes but the page stays at its previous scroll position. `BrandBookingsTab` is a full component with content — it renders below the fold if the previous tab was long.
-
-**Fix**: Add `useEffect` to `NativeBrandDashboard.tsx`:
-```typescript
-useEffect(() => {
-  setTimeout(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, 0);
-}, [currentTab]);
-```
-
-This mirrors the fix already applied to `CreatorDashboard.tsx`.
+**Files**: `src/components/NativeAppGate.tsx`, `src/pages/NativeCreatorOnboarding.tsx`
 
 ---
 
-### Issue 3: "Post Opportunity" Quick Action Does Nothing
+### Bug 2: Keyboard Covers Country/Phone Dropdowns (Cannot Select Fields)
 
-**Root cause**: In `NativeBrandHome.tsx`, the "Post Opportunity" quick action navigates to `/brand-dashboard?tab=opportunities`. However, the brand is already on the native dashboard (not the web `BrandDashboard` page). Navigating to `/brand-dashboard` on native would redirect to the native dashboard anyway, but the `tab=opportunities` param isn't handled by `NativeBrandDashboard` — the tab rendering only handles: `home`, `messages`, `bookings`, `search`, `notifications`, `account`.
+**Root cause**: Both `PhoneInput.tsx` and `CountrySelect.tsx` render their dropdown menus using `position: absolute` with `z-50`. On iOS/Android, when the soft keyboard is open, it shrinks the viewport. The dropdown appears below the button — but that area is now under the keyboard. The dropdown is physically rendered in the DOM but visually hidden behind the keyboard.
 
-**Fix**: Change the action to use `onTabChange` to switch to a native-handled tab. Since the native dashboard doesn't have an opportunities tab, we have two options:
-1. Open the web `/brand-dashboard?tab=opportunities` with `navigate()` — but this takes the user out of the native flow
-2. **Better**: Add a simple "Create Opportunity" flow using the existing `CreateOpportunityDialog` component rendered natively within the Home tab
+**The proper fix for Capacitor native**: The dropdowns need to open **upward** (above the button) when the input is near the bottom of the screen. Additionally, all the signup/onboarding forms need `scrollIntoView` behavior when inputs are focused — the form should scroll up so the keyboard doesn't cover inputs.
 
-**Implementation**: Change the "Post Opportunity" action in `NativeBrandHome.tsx` to open `CreateOpportunityDialog` directly inline (it already exists in `BrandOpportunitiesTab`). Pass `brandProfileId` as a prop from `NativeBrandDashboard` to `NativeBrandHome`.
+**Specific changes**:
 
----
+1. **`PhoneInput.tsx`**: Change the dropdown to render fixed/upward. Add a `ref` to the trigger button, measure its position relative to viewport, and render the dropdown above the button if it's in the lower half of the screen. Add `onFocus` to auto-scroll the field into view.
 
-### Issue 4: Creator Badges (Vetted/Fast/Free Invites) Missing from Mobile Search
+2. **`CountrySelect.tsx`**: Same fix — render dropdown upward when near bottom of screen.
 
-**Root cause**: `NativeBrandSearch.tsx` fetches only: `id, display_name, profile_image_url, categories, location_city, location_country, average_rating, is_featured, bio`. It does NOT fetch:
-- `verification_payment_status` + `verification_expires_at` — needed for VIP/Vetted badge
-- `avg_response_minutes` — needed for Responds Fast badge
-- `open_to_invitations` — needed for Free Invites badge
+3. **`NativeLogin.tsx`**: Wrap the entire scrollable form in a `div` that responds to keyboard height. When the phone input section is focused, use `scrollIntoView({ behavior: 'smooth', block: 'center' })` to bring it into view automatically.
 
-The web `Influencers.tsx` page fetches all of these and renders `VettedBadge`, `RespondsFastBadge`, `VIPCreatorBadge`, and `FeaturedBadge` on each card.
+4. **`capacitor.config.ts`**: Currently has `resize: 'body'` for the Keyboard plugin. Change this to `resize: 'none'` and handle keyboard avoidance in CSS via `interactive-widget: resizes-content` — this gives more predictable behavior for dropdowns.
 
-**Fix**:
-1. Update the `CreatorCard` interface in `NativeBrandSearch.tsx` to include these fields
-2. Add them to the Supabase query `select()`
-3. Render inline badge pills below the creator name in each card using the same badge components (`VettedBadge`, `RespondsFastBadge`, `FeaturedBadge`), matching website behavior
+**Files**: `src/components/PhoneInput.tsx`, `src/components/CountrySelect.tsx`, `src/pages/NativeLogin.tsx`, `src/pages/NativeCreatorOnboarding.tsx`, `src/pages/NativeBrandOnboarding.tsx`
 
 ---
 
-### Issue 5: Brand UX — Additional Polish
+### Bug 3: Brand Account Creation "Load Failed"
 
-While reviewing the brand flow as a user:
+**Root cause**: In `NativeLogin.tsx`, when a brand user completes signup via `handleBrandSignup`, it calls `supabase.auth.signUp(...)` and then immediately tries to `supabase.from('brand_profiles').insert(...)` using `authData.user.id`. On native, the `signUp` call sometimes returns a user object but the session is not yet fully established in Supabase — the subsequent DB insert happens before the auth token is propagated, causing an RLS policy violation ("load failed" = network/auth error).
 
-**A. BrandBookingsTab "Book a Creator" button navigates to `/influencers`** — on native this opens the web influencers page, breaking the native UX. It should call `onTabChange("search")` instead. This requires passing `onTabChange` as a prop to `BrandBookingsTab` when rendered in native context.
+**Fix**: In `handleBrandSignup`, add a small delay (or session refresh) between the `signUp` call and the `brand_profiles` insert. Specifically:
+- After `supabase.auth.signUp()`, call `supabase.auth.setSession(authData.session)` explicitly to ensure the session is active before the DB insert
+- Wrap the entire operation in `safeNativeAsync` with a 15s timeout (same pattern as `NativeBrandOnboarding.tsx` already does correctly)
+- Show a more descriptive error if the insert fails due to RLS
 
-However, since `BrandBookingsTab` is shared between web and native, the cleanest fix is to check if we're on a native platform inside the booking tab and navigate differently.
+**Also**: The `handleBrandSignup` in `NativeLogin.tsx` does NOT use `safeNativeAsync` — it's raw async without any timeout wrapper. On slow/unreliable mobile networks, this hangs indefinitely showing a spinner.
 
-**Implementation**: Pass a `onFindCreators` prop (optional) to `BrandBookingsTab`. When provided (native context), use it instead of `navigate("/influencers")`.
+**File**: `src/pages/NativeLogin.tsx`
 
 ---
 
-### Files to Modify
+### Bug 4: All Onboarding Forms — Keyboard Overlap via Scroll-into-View
 
-| File | Change |
+**Root cause**: `NativeCreatorOnboarding.tsx` and `NativeBrandOnboarding.tsx` have `overflow-y-auto` on the content div but no automatic scroll-to-focused-field behavior. When the keyboard opens, it doesn't push the form up — iOS WebView just shrinks the visible area and the form stays put.
+
+**Fix**: Add a global `onFocus` handler on the scrollable container that calls `(e.target as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })` for all input/textarea/select elements. This ensures that when the user taps any field, it scrolls into the center of the visible area — above the keyboard.
+
+This can be implemented as a simple React utility hook `useKeyboardScrollIntoView()` that attaches a `focusin` event listener to the container div.
+
+**Files**: `src/pages/NativeCreatorOnboarding.tsx`, `src/pages/NativeBrandOnboarding.tsx`
+
+---
+
+### Summary of All File Changes
+
+| File | Changes |
 |---|---|
-| `src/pages/NativeBrandDashboard.tsx` | Add `useEffect` scroll-to-top on `currentTab` change; pass `brandProfileId` to `NativeBrandHome`; handle `onTabChange("post-opportunity")` |
-| `src/components/mobile/NativeBrandHome.tsx` | Fix "Post Opportunity" — fetch `brandProfileId` and open `CreateOpportunityDialog` directly; accept `onFindCreators` prop |
-| `src/components/mobile/NativeBrandSearch.tsx` | Add badge fields to query + `CreatorCard` interface; render `VettedBadge`, `RespondsFastBadge`, `FeaturedBadge` pills on cards |
-| `src/components/brand-dashboard/BrandBookingsTab.tsx` | Add optional `onFindCreators` prop; use it for the "Book a Creator" / "Find Creators" buttons when on native |
+| `src/components/NativeAppGate.tsx` | Fix auth race condition: wrap `refetchProfiles` in `onAuthStateChange` with `setTimeout`; relax `isCreatorProfileComplete` to not require `categories` |
+| `src/pages/NativeLogin.tsx` | Fix brand signup "load failed": wrap brand profile insert in `safeNativeAsync` with timeout; set session explicitly before DB insert |
+| `src/components/PhoneInput.tsx` | Add upward-opening dropdown when near bottom of screen; add `onFocus` scroll-into-view |
+| `src/components/CountrySelect.tsx` | Add upward-opening dropdown when near bottom of screen |
+| `src/pages/NativeCreatorOnboarding.tsx` | Add `focusin` scroll-into-view on container; fix `categories` not being set in profile insert |
+| `src/pages/NativeBrandOnboarding.tsx` | Add `focusin` scroll-into-view on container |
+| `capacitor.config.ts` | Change `Keyboard.resize` from `'body'` to `'ionic'` for better native keyboard behavior |
 
 **No database changes required.**
