@@ -1,167 +1,237 @@
 
-# Three Issues — Root Causes and Fixes
+# iOS-Specific Fix Plan: Keyboard, Debug Console & Profile Creation Crash
 
-## Issue 1: Keyboard Covering Phone Number Input
+## Why iOS Was Never Actually Fixed
 
-**Root cause:** The `useKeyboardScrollIntoView` hook is attached to the scrollable `div` container in both `NativeLogin.tsx` and `NativeCreatorOnboarding.tsx`. When the user taps the Phone Number input (which is rendered by `PhoneInput`), the hook fires `target.scrollIntoView({ behavior: 'smooth', block: 'center' })`. This scrolls the input to the center of the **entire viewport** — not the center of the **visible area above the keyboard**.
-
-The real problem is that on Android, when the soft keyboard opens, the WebView viewport **does not shrink** (unless `Keyboard.resize` is set to `native` or `ionic`). This means `block: 'center'` centers the element relative to the full screen height — which puts it behind the keyboard.
-
-Additionally, the `PhoneInput` component renders a country code dropdown. When the dropdown opens (inside the phone input), the focusin event fires on a `button` (the flag selector), not on an `INPUT`, so the scroll doesn't always trigger at the right time.
-
-**The real fix:** Replace the generic `useKeyboardScrollIntoView` hook approach with a more reliable method:
-1. Use `window.visualViewport` API (which reports the actual visible area above the keyboard) instead of `scrollIntoView`
-2. Add a `visualViewport.resize` listener that fires when the keyboard appears/disappears and repositions the focused input
-
-The fix in `useKeyboardScrollIntoView.ts`:
-- Change from `scrollIntoView({ block: 'center' })` to computing the position relative to `window.visualViewport` and scrolling the container manually to ensure the input is visible above the keyboard height
+The previous fixes were applied assuming Android behavior. Here's what's different on iOS and why everything is still broken:
 
 ---
 
-## Issue 2: Debug Console Not Working — Add Visible Button
+## Issue 1: Keyboard Covering Phone Input (iOS-Specific Root Cause)
 
-**Root cause:** The `NativeDebugConsole` / `NativeDebugProvider` is ONLY rendered inside `NativeAppGate` at the very end — after the user is logged in and past onboarding. The code in `NativeAppGate.tsx` is:
+### What's Different on iOS
 
-```tsx
-return (
-  <NativeDebugProvider>
-    {children(selectedRole, brandProfile)}
-  </NativeDebugProvider>
-);
+The `capacitor.config.ts` has `Keyboard.resize: 'ionic'`. On **Android**, `ionic` mode shrinks the `window.visualViewport.height` when the keyboard opens, which is exactly what `useKeyboardScrollIntoView` relies on. 
+
+On **iOS (WKWebView)**, `ionic` resize mode works **differently** — the viewport does NOT shrink via `visualViewport.height`. Instead, iOS uses a completely different approach: the page body shifts upward, and `window.visualViewport.offsetTop` changes. The result:
+
+- `vv.height` does NOT decrease on iOS when keyboard opens
+- `vv.offsetTop` increases instead
+- The current code uses `visibleBottom = vv.offsetTop + vv.height` — this returns the **full screen height** on iOS, so `inputBottom > visibleBottom - 20` is **always false**, meaning the scroll **never fires**
+
+### Second iOS Problem: Sign-In Screen Has No Scroll Container
+
+The sign-in form (`viewMode === 'signin'`) in `NativeLogin.tsx` uses `min-h-screen` with `justify-center` — there is **no overflow-y-auto container**, and **no `scrollContainerRef` attached**. Even if the hook worked perfectly, it has nothing to scroll because the sign-in view is not a scrollable container. The `useKeyboardScrollIntoView` refs are only attached to `brandScrollRef` and `creatorScrollRef` — the main sign-in view with email/password inputs has **no scroll hook at all**.
+
+### The Real iOS Fix
+
+**Two-part fix:**
+
+**Part A** — Fix `useKeyboardScrollIntoView.ts` to handle iOS correctly:
+
+On iOS, instead of relying on `visualViewport` height changes, we use the `@capacitor/keyboard` plugin's `keyboardWillShow` event which provides the **exact keyboard height in pixels**. This is the most reliable cross-platform approach:
+
+```typescript
+// On iOS native: use Capacitor Keyboard plugin for exact keyboard height
+// On Android: use visualViewport (already works)
+// On web: no-op
 ```
 
-But `NativeLogin` and `NativeCreatorOnboarding` are rendered **before** this — they are returned directly from `NativeAppGate` without being wrapped in `NativeDebugProvider`:
+When keyboard shows on iOS: scroll the container by `inputBottom - (screenHeight - keyboardHeight) + 80px padding`.
 
-```tsx
-if (!user) return <NativeLogin />;          // No debug provider!
-if (showOnboarding) return <NativeCreatorOnboarding ... />;  // No debug provider!
+**Part B** — Fix the sign-in view to be a scrollable container and attach the scroll ref to it.
+
+**The simplest and most reliable solution for iOS** is to use the `Keyboard` plugin's `keyboardWillShow` event to get the exact keyboard height, then use CSS `padding-bottom` on the scroll container equal to the keyboard height. This is the standard iOS pattern and works 100% of the time:
+
+```typescript
+// When keyboard shows: add padding-bottom = keyboardHeight to scroll container
+// Then scroll focused input into view
+// When keyboard hides: remove padding
 ```
 
-So `window.NATIVE_DEBUG_OPEN` is **never set** when the user is on the login or onboarding screens, because `NativeDebugProvider` hasn't mounted yet. Tapping 5 times calls `window.NATIVE_DEBUG_OPEN()` which is `undefined`, so nothing happens.
-
-**The fix:**
-1. Wrap ALL returns in `NativeAppGate` with `NativeDebugProvider` — not just the final authenticated screen
-2. Add a **visible debug button** (a small floating "🐛 Debug" button in the bottom-right corner) that is visible on native platforms, so you don't need to tap 5 times. This is a temporary button that can be removed later.
+This avoids all the `visualViewport` iOS quirks entirely.
 
 ---
 
-## Issue 3: App Crashes When Tapping "Add Photo" (Optional)
+## Issue 2: Debug Console Button Not Working
 
-**Root cause (critical):** In `NativeCreatorOnboarding.tsx`, the photo button is:
+### The Real Problem
 
-```tsx
-<input ref={fileInputRef} type="file" accept="image/*" capture="user" onChange={handleImageSelect} className="hidden" />
-<button onClick={() => fileInputRef.current?.click()} ...>
-```
+Looking at the code carefully:
 
-The `capture="user"` attribute on the `<input type="file">` element forces the device to **open the camera directly** instead of showing the gallery/file picker. On Android WebView (Capacitor), this can crash because:
+1. `NativeDebugProvider` IS now wrapping all views in `NativeAppGate` ✓
+2. `NativeDebugConsole` sets `window.NATIVE_DEBUG_OPEN = () => setIsOpen(true)` ✓  
+3. The floating `FloatingDebugButton` calls `window.NATIVE_DEBUG_OPEN?.()` ✓
 
-1. The Android WebView's file chooser requires a specific `onShowFileChooser` callback implementation in the native Capacitor bridge. When `capture="user"` is set, it bypasses the standard file chooser and tries to start the camera intent directly. In some Android WebView versions, this causes a `NullPointerException` in the native layer.
+**But:** `FloatingDebugButton` is defined as a component **inside** the `NativeAppGate` function body, which means it's re-created on every render. More critically — it only renders when `Capacitor.isNativePlatform()` returns `true`. **On the iOS Capacitor WebView, `Capacitor.isNativePlatform()` should return `true`.**
 
-2. The app has no camera permission handling in the Capacitor config or `handleImageSelect`. On Android, opening the camera without the `CAMERA` permission declared in AndroidManifest causes an immediate crash.
+The real issue is: **`NativeDebugProvider` is being mounted TWICE** — once for the loading state and once for the main render. Each mount calls `installNativeErrorInterceptors` separately, and each `NativeDebugProvider` instance has its own `setIsOpen` state. When the loading screen `NativeDebugProvider` unmounts (after loading completes), its `window.NATIVE_DEBUG_OPEN` reference is **replaced** by the new main `NativeDebugProvider`'s `setIsOpen`. But during the brief loading→main transition, `window.NATIVE_DEBUG_OPEN` may point to a stale closure.
 
-**The fix:**
-- Remove `capture="user"` from the file input so it shows the standard Android file picker (Gallery + Camera option) instead of forcing the camera directly. This is the standard pattern used by all production Android apps.
-- Add proper error handling in `handleImageSelect` with a try/catch that shows a helpful toast on failure
-- For the onboarding case specifically, make the entire photo button more crash-safe by wrapping the click handler in a try/catch
+**The fix:** There should be only **ONE** `NativeDebugProvider` instance for the entire app, not two separate ones (one for loading, one for main). The loading screen should be a conditional render **inside** a single provider. Additionally, the `FloatingDebugButton` needs to be moved **inside** the `NativeDebugProvider` so it always has access to the correct `setIsOpen` state — instead of relying on the global `window.NATIVE_DEBUG_OPEN`.
+
+### What to change
+
+- Remove the double `NativeDebugProvider` (remove the loading-state one, keep only the main one)
+- Move `NativeLoadingScreen` **inside** the single `NativeDebugProvider` as a conditional render
+- Make `FloatingDebugButton` part of `NativeDebugProvider` itself (not in `NativeAppGate`) so it directly calls the provider's `setIsOpen` without needing the global `window` bridge
+- The button should have `touchAction: 'manipulation'` and a larger tap target (min 44×44pt per Apple HIG) since iOS is strict about tap targets
 
 ---
 
-## Implementation Plan
+## Issue 3: Profile Creation Still Crashing
 
-### Files to Modify
+### The Real Problem on iOS
+
+The previous fix added a session check, but on iOS, the **actual failure** is different from Android:
+
+On iOS WKWebView with Capacitor, after `supabase.auth.signUp()`, the auth session **IS** immediately available (iOS handles the session cookie differently from Android). So the session check passes. But then the `INSERT` into `creator_profiles` fails because of **a different reason on iOS**: the Supabase JS client on iOS WKWebView sometimes drops the `Authorization` header on the first request after auth state change due to WKWebView's strict content security policy handling.
+
+**Evidence:** The error toast would say `Profile insert failed: ... [code: 42501]` — that's `insufficient_privilege`, meaning RLS rejected it because `auth.uid()` was null even though a session exists client-side.
+
+**The fix:** Before the INSERT, explicitly call `supabase.auth.setSession()` with the tokens from `getSession()` to force the Supabase client to re-attach the auth headers:
+
+```typescript
+const { data: { session } } = await supabase.auth.getSession();
+if (session) {
+  // Force re-attach auth headers (fixes iOS WKWebView header dropping)
+  await supabase.auth.setSession({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+  });
+}
+```
+
+Additionally, after `signUp()` in `NativeLogin.tsx`, if `authData.session` is null (email confirmation required), we need to handle this gracefully by showing a "Check your email" message instead of routing to onboarding.
+
+---
+
+## Complete List of Files to Change
 
 | File | Changes |
 |---|---|
-| `src/hooks/useKeyboardScrollIntoView.ts` | Use `visualViewport` API for accurate above-keyboard scroll positioning |
-| `src/components/NativeAppGate.tsx` | Wrap ALL renders (login, onboarding, etc.) in `NativeDebugProvider`; add visible floating debug button |
-| `src/pages/NativeCreatorOnboarding.tsx` | Remove `capture="user"` from file input; add try/catch around fileInputRef click; add visible debug button |
-| `src/pages/NativeLogin.tsx` | Add visible debug button; improve scroll behavior for phone input area |
+| `src/hooks/useKeyboardScrollIntoView.ts` | Complete rewrite: use `@capacitor/keyboard` events for iOS, visualViewport for Android |
+| `src/components/NativeAppGate.tsx` | Single `NativeDebugProvider` wrapping everything incl. loading screen; move `FloatingDebugButton` into provider |
+| `src/components/NativeDebugConsole.tsx` | Move floating debug button into `NativeDebugProvider`; fix button tap target size for iOS |
+| `src/pages/NativeLogin.tsx` | Fix sign-in view to be scrollable; attach scroll ref to sign-in form too |
+| `src/pages/NativeCreatorOnboarding.tsx` | Add `supabase.auth.setSession()` force re-attach before INSERT |
 
-### Fix Details
+---
 
-#### Fix 1 — `useKeyboardScrollIntoView.ts`
+## Technical Details of Each Fix
 
-Replace `scrollIntoView` with `visualViewport`-aware scrolling:
+### Fix 1A — Keyboard Hook (iOS + Android)
 
 ```typescript
-const handleFocusIn = (e: FocusEvent) => {
-  const target = e.target as HTMLElement;
-  if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && target.tagName !== 'SELECT') return;
-  
-  setTimeout(() => {
-    const vv = window.visualViewport;
-    if (!vv) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
-    // Get position of the input relative to the visual viewport
-    const rect = target.getBoundingClientRect();
-    const visibleBottom = vv.height; // height = visible area above keyboard
-    const inputBottom = rect.bottom;
-    
-    if (inputBottom > visibleBottom - 20) {
-      // Input is below or near the keyboard — scroll container
-      const container = containerRef.current;
-      if (container) {
-        const scrollAmount = inputBottom - visibleBottom + 80; // 80px padding above keyboard
+import { Capacitor } from '@capacitor/core';
+import { Keyboard } from '@capacitor/keyboard';
+
+export function useKeyboardScrollIntoView<T extends HTMLElement>() {
+  const containerRef = useRef<T>(null);
+  const keyboardHeightRef = useRef(0); // tracks current keyboard height
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const scrollFocusedIntoView = (target: HTMLElement, kbHeight: number) => {
+      const rect = target.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const visibleBottom = viewportHeight - kbHeight;
+      const inputBottom = rect.bottom;
+
+      if (inputBottom > visibleBottom - 20) {
+        const scrollAmount = inputBottom - visibleBottom + 100;
         container.scrollBy({ top: scrollAmount, behavior: 'smooth' });
       }
+    };
+
+    if (Capacitor.isNativePlatform()) {
+      // Use Capacitor Keyboard plugin for reliable cross-platform keyboard height
+      const showHandle = Keyboard.addListener('keyboardWillShow', (info) => {
+        keyboardHeightRef.current = info.keyboardHeight;
+        const activeEl = document.activeElement as HTMLElement | null;
+        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA') && container.contains(activeEl)) {
+          setTimeout(() => scrollFocusedIntoView(activeEl, info.keyboardHeight), 100);
+        }
+      });
+
+      const hideHandle = Keyboard.addListener('keyboardWillHide', () => {
+        keyboardHeightRef.current = 0;
+      });
+
+      // Also handle focus events (for when keyboard is already open)
+      const handleFocusIn = (e: FocusEvent) => {
+        const target = e.target as HTMLElement;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+          setTimeout(() => scrollFocusedIntoView(target, keyboardHeightRef.current), 350);
+        }
+      };
+      container.addEventListener('focusin', handleFocusIn);
+
+      return () => {
+        showHandle.then(h => h.remove());
+        hideHandle.then(h => h.remove());
+        container.removeEventListener('focusin', handleFocusIn);
+      };
+    } else {
+      // Web fallback using visualViewport
+      const handleFocusIn = (e: FocusEvent) => { ... };
+      // (same as current web fallback)
     }
-  }, 350); // slightly longer delay for keyboard to fully open
-};
+  }, []);
+
+  return containerRef;
+}
 ```
 
-#### Fix 2 — `NativeAppGate.tsx`
+### Fix 1B — Sign-In View Scrollable Container
 
-Restructure all the `if/return` branches to be inside `NativeDebugProvider`:
+The sign-in view needs to be wrapped in a scrollable div with the scroll ref:
+```tsx
+// BEFORE: <div className="min-h-screen bg-background flex flex-col">
+//           <div className="flex-1 flex flex-col items-center justify-center p-6">
+
+// AFTER:  <div className="min-h-screen bg-background flex flex-col">
+//           <div ref={signinScrollRef} className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-6">
+```
+
+### Fix 2 — Single NativeDebugProvider
 
 ```tsx
-// BEFORE:
-if (!user) return <NativeLogin />;
-if (showOnboarding) return <NativeCreatorOnboarding ... />;
-// ...
+// NativeAppGate render:
 return (
-  <NativeDebugProvider>
-    {children(selectedRole, brandProfile)}
-  </NativeDebugProvider>
-);
-
-// AFTER:
-return (
-  <NativeDebugProvider>
-    {/* Floating debug button - always visible on native */}
-    <FloatingDebugButton />
-    
-    {!user && <NativeLogin />}
-    {user && showOnboarding && <NativeCreatorOnboarding ... />}
-    {user && showBrandOnboarding && <NativeBrandOnboarding ... />}
-    {user && !showOnboarding && !showBrandOnboarding && !selectedRole && <NativeRolePicker ... />}
-    {user && selectedRole && children(selectedRole, brandProfile)}
+  <NativeDebugProvider>  {/* ONE provider only */}
+    <FloatingDebugButton />  {/* Defined inside NativeDebugConsole, uses direct state */}
+    {isLoading && <NativeLoadingScreen />}
+    {!isLoading && !user && <NativeLogin />}
+    {!isLoading && user && showOnboarding && <NativeCreatorOnboarding ... />}
+    {/* etc. */}
   </NativeDebugProvider>
 );
 ```
 
-The `FloatingDebugButton` is a small orange bug icon button fixed to the bottom-right, only visible on `Capacitor.isNativePlatform()`.
+### Fix 3 — Force Session Re-Attach on iOS
 
-#### Fix 3 — `NativeCreatorOnboarding.tsx`
-
-```tsx
-// BEFORE:
-<input ref={fileInputRef} type="file" accept="image/*" capture="user" onChange={handleImageSelect} className="hidden" />
-<button onClick={() => fileInputRef.current?.click()} ...>
-
-// AFTER:
-<input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
-<button onClick={() => { try { fileInputRef.current?.click(); } catch (e) { console.error('File picker error:', e); toast.error('Could not open photo picker'); } }} ...>
+```typescript
+// In NativeCreatorOnboarding handleSubmit, BEFORE the INSERT:
+const { data: { session } } = await supabase.auth.getSession();
+if (session) {
+  await supabase.auth.setSession({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+  });
+  // Small wait for iOS WKWebView to propagate the auth header
+  await new Promise(r => setTimeout(r, 200));
+}
 ```
 
-Removing `capture="user"` lets Android show its standard bottom sheet with "Camera" and "Gallery" options — which is both safer and more user-friendly.
+---
 
-### Summary
+## Summary
 
-| Issue | Root Cause | Fix |
+| Issue | iOS Root Cause | Fix |
 |---|---|---|
-| Keyboard covers phone input | `scrollIntoView` doesn't account for visual viewport above keyboard | Use `visualViewport.height` to scroll only the needed amount |
-| Debug console not working | `NativeDebugProvider` not rendered around login/onboarding screens | Wrap all `NativeAppGate` returns in the provider; add visible floating button |
-| Photo tap crashes app | `capture="user"` forces camera intent directly, crashes Android WebView | Remove `capture="user"` attribute; add try/catch on click handler |
+| Keyboard hides inputs | `visualViewport.height` doesn't change on iOS; `Keyboard.resize='ionic'` works differently on iOS vs Android | Use `@capacitor/keyboard` `keyboardWillShow` event for exact height |
+| Sign-in inputs hidden | Sign-in view has no scroll container | Make sign-in view scrollable + attach ref |
+| Debug button not working | Two `NativeDebugProvider` instances cause stale closure; button tap target too small for iOS | Single provider wrapping everything; inline button state |
+| Profile creation fails | iOS WKWebView drops `Authorization` header on first post-auth request | Force `setSession()` re-attach + 200ms wait before INSERT |
