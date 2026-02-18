@@ -449,13 +449,13 @@ export function NativeLogin() {
   // ===================== SIGN IN VIEW =====================
   if (viewMode === 'signin') {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col safe-area-top">
         {/* Make the sign-in view a scrollable container so inputs stay visible
             above the keyboard on iOS (useKeyboardScrollIntoView needs an
             overflow-y-auto ancestor to scroll into) */}
         <div
           ref={brandScrollRef as React.RefObject<HTMLDivElement>}
-          className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-6"
+          className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 safe-area-bottom"
         >
           <div className="mb-10" onClick={handleDebugTap}>
             <NativeAppLogo size="md" />
@@ -522,14 +522,14 @@ export function NativeLogin() {
   if (viewMode === 'role-select') {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center z-10">
+        <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center z-10 safe-area-top">
           <button onClick={() => setViewMode('signin')} className="p-2 -ml-2 text-muted-foreground">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <span className="flex-1 text-center text-sm font-medium text-foreground pr-9">Create Account</span>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 safe-area-bottom">
           <div className="mb-6">
             <NativeAppLogo size="md" />
           </div>
@@ -577,14 +577,14 @@ export function NativeLogin() {
   if (viewMode === 'brand-signup') {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center z-10">
+        <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center z-10 safe-area-top">
           <button onClick={() => setViewMode('role-select')} className="p-2 -ml-2 text-muted-foreground">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <span className="flex-1 text-center text-sm font-medium text-foreground pr-9">Register Your Brand</span>
         </div>
 
-        <div ref={brandScrollRef} className="flex-1 overflow-y-auto p-6">
+        <div ref={brandScrollRef} className="flex-1 overflow-y-auto p-6 safe-area-bottom">
           <div className="max-w-sm mx-auto">
             <div className="mb-6">
               <h1 className="text-xl font-bold text-foreground">Quick Signup</h1>
@@ -648,14 +648,14 @@ export function NativeLogin() {
   // ===================== CREATOR SIGNUP VIEW =====================
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center z-10">
+      <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center z-10 safe-area-top">
         <button onClick={() => setViewMode('role-select')} className="p-2 -ml-2 text-muted-foreground">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <span className="flex-1 text-center text-sm font-medium text-foreground pr-9">Join as Creator</span>
       </div>
 
-      <div ref={creatorScrollRef} className="flex-1 overflow-y-auto p-6">
+      <div ref={creatorScrollRef} className="flex-1 overflow-y-auto p-6 safe-area-bottom">
         <div className="max-w-sm mx-auto">
           <div className="mb-6">
             <h1 className="text-xl font-bold text-foreground">Create Your Account</h1>

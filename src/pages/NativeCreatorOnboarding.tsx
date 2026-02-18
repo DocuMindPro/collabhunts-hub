@@ -376,7 +376,7 @@ export function NativeCreatorOnboarding({ user, onComplete }: NativeCreatorOnboa
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center justify-between z-10">
+      <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center justify-between z-10 safe-area-top">
         <button onClick={step > 1 ? handleBack : handleSignOut} className="p-2 -ml-2 text-muted-foreground">
           <ArrowLeft className="h-5 w-5" />
         </button>
