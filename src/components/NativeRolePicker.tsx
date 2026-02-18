@@ -48,7 +48,7 @@ export function NativeRolePicker({
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col safe-area-top safe-area-bottom">
       <div className="flex-1 flex flex-col items-center justify-center p-6">
         {/* App Logo */}
         <div className="mb-6">
