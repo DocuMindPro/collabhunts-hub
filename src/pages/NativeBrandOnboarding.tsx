@@ -43,8 +43,16 @@ export function NativeBrandOnboarding({ user, onComplete }: NativeBrandOnboardin
   const scrollContainerRef = useKeyboardScrollIntoView<HTMLDivElement>();
 
   // Step 1 (new users only): Account Info
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  // Pre-fill name from user metadata (set during signup in NativeLogin) or fallback
+  const metaFirstName = user?.user_metadata?.first_name
+    || user?.user_metadata?.full_name?.split(' ')[0]
+    || '';
+  const metaLastName = user?.user_metadata?.last_name
+    || user?.user_metadata?.full_name?.split(' ').slice(1).join(' ')
+    || '';
+
+  const [firstName, setFirstName] = useState(metaFirstName);
+  const [lastName, setLastName] = useState(metaLastName);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -230,13 +238,18 @@ export function NativeBrandOnboarding({ user, onComplete }: NativeBrandOnboardin
           .eq('id', existing.id);
         if (error) throw error;
       } else {
+        // Create new profile — pick up phone from localStorage if set during signup
+        const storedPhone = localStorage.getItem('signup_phone_number');
+        const storedPhoneVerified = localStorage.getItem('signup_phone_verified') === '1';
         // Create new profile
         const { error } = await supabase
           .from('brand_profiles')
           .insert({
             user_id: userId,
-            first_name: firstName || user?.user_metadata?.full_name?.split(' ')[0] || null,
-            last_name: lastName || user?.user_metadata?.full_name?.split(' ').slice(1).join(' ') || null,
+            first_name: firstName || user?.user_metadata?.first_name || user?.user_metadata?.full_name?.split(' ')[0] || null,
+            last_name: lastName || user?.user_metadata?.last_name || user?.user_metadata?.full_name?.split(' ').slice(1).join(' ') || null,
+            phone_number: storedPhone || null,
+            phone_verified: storedPhoneVerified,
             terms_accepted_at: new Date().toISOString(),
             terms_version: '1.0',
             ...profileData,
@@ -245,6 +258,9 @@ export function NativeBrandOnboarding({ user, onComplete }: NativeBrandOnboardin
           if (error.code === '23505') return true; // Already exists
           throw error;
         }
+        // Clean up stored phone data
+        localStorage.removeItem('signup_phone_number');
+        localStorage.removeItem('signup_phone_verified');
       }
 
       // Track affiliate referral
