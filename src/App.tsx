@@ -24,12 +24,12 @@ import NativeBrandDashboard from "./pages/NativeBrandDashboard";
 import MobileBottomNav from "./components/mobile/MobileBottomNav";
 import BrandBottomNav from "./components/mobile/BrandBottomNav";
 
-// Protected route components (small, used immediately)
+// Protected route component (admin only — dashboards now gated to app)
 import ProtectedRoute from "./components/ProtectedRoute";
-import CreatorProtectedRoute from "./components/CreatorProtectedRoute";
-import BrandProtectedRoute from "./components/BrandProtectedRoute";
 
 // Lazy load web-only pages for code splitting
+const GetApp = lazy(() => import("./pages/GetApp"));
+const WebAppGate = lazy(() => import("./components/WebAppGate"));
 const Index = lazy(() => import("./pages/Index"));
 const Login = lazy(() => import("./pages/Login"));
 const Influencers = lazy(() => import("./pages/Influencers"));
@@ -44,7 +44,7 @@ const BrandSignup = lazy(() => import("./pages/BrandSignup"));
 const BrandOnboarding = lazy(() => import("./pages/BrandOnboarding"));
 const BrandWelcome = lazy(() => import("./pages/BrandWelcome"));
 const CreatorSignup = lazy(() => import("./pages/CreatorSignup"));
-const BrandDashboard = lazy(() => import("./pages/BrandDashboard"));
+// BrandDashboard is only used in native app (web users see WebAppGate)
 const Admin = lazy(() => import("./pages/Admin"));
 const BackupHistory = lazy(() => import("./pages/BackupHistory"));
 const KnowledgeBase = lazy(() => import("./pages/KnowledgeBase"));
@@ -178,19 +178,11 @@ const WebAppRoutes = () => (
       <Route path="/creator/:id" element={<CreatorProfile />} />
       <Route 
         path="/creator-dashboard" 
-        element={
-          <CreatorProtectedRoute>
-            <CreatorDashboard />
-          </CreatorProtectedRoute>
-        } 
+        element={<WebAppGate featureName="Creator Dashboard" />}
       />
       <Route 
         path="/brand-dashboard" 
-        element={
-          <BrandProtectedRoute>
-            <BrandDashboard />
-          </BrandProtectedRoute>
-        } 
+        element={<WebAppGate featureName="Brand Dashboard" />}
       />
       <Route 
         path="/admin" 
@@ -250,6 +242,7 @@ const WebAppRoutes = () => (
         } 
       />
       <Route path="/download" element={<Download />} />
+      <Route path="/get-app" element={<GetApp />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   </Suspense>
