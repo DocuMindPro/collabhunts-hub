@@ -229,31 +229,11 @@ const BookingDialog = ({ isOpen, onClose, service, creatorProfileId, creatorName
               <span className="font-medium capitalize">{serviceName}</span>
             </div>
             
-            {/* Pricing - different display for consultation vs direct */}
+            {/* Pricing note */}
             <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">
-                {requiresConsultation ? "Pricing:" : "Base Price:"}
-              </span>
-              <span className="font-medium">
-                {requiresConsultation ? "Contact for quote" : `$${basePrice.toFixed(0)}`}
-              </span>
+              <span className="text-sm text-muted-foreground">Pricing:</span>
+              <span className="font-medium text-sm">Discuss in chat</span>
             </div>
-            
-            {/* Stories upsell included indicator */}
-            {includeStories && hasStoriesUpsell && (
-              <div className="flex justify-between text-primary">
-                <span className="text-sm">+ Instagram Stories:</span>
-                <span className="font-medium">+${storiesPrice}</span>
-              </div>
-            )}
-            
-            {/* Total if different from base */}
-            {includeStories && hasStoriesUpsell && (
-              <div className="flex justify-between border-t pt-2">
-                <span className="text-sm font-medium">Total:</span>
-                <span className="font-bold">${price}</span>
-              </div>
-            )}
             
             {/* Delivery days - only for at-home packages */}
             {isHomePackage && service.delivery_days > 0 && (

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Send, MessageSquare, ArrowLeft, Circle, FileText, RefreshCw } from "lucide-react";
+import { Send, MessageSquare, ArrowLeft, Circle, FileText, RefreshCw, DollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -21,6 +21,9 @@ import CounterOfferDialog from "@/components/chat/CounterOfferDialog";
 import { type NegotiationData } from "@/components/chat/NegotiationMessage";
 import { safeNativeAsync, isNativePlatform } from "@/lib/supabase-native";
 import { getMessagePreview } from "@/lib/message-preview";
+import PricingRequestMessage, { isPricingRequest } from "@/components/chat/PricingRequestMessage";
+import PricingResponseMessage, { isPricingResponse } from "@/components/chat/PricingResponseMessage";
+import SendPricingDialog from "@/components/chat/SendPricingDialog";
 
 interface Conversation {
   id: string;
@@ -53,6 +56,7 @@ const MessagesTab = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showOfferDialog, setShowOfferDialog] = useState(false);
   const [showCounterDialog, setShowCounterDialog] = useState(false);
+  const [showPricingDialog, setShowPricingDialog] = useState(false);
   const [activeNegotiation, setActiveNegotiation] = useState<NegotiationData | null>(null);
   const [prefillPackageData, setPrefillPackageData] = useState<{
     serviceType: string;
@@ -307,6 +311,34 @@ const MessagesTab = () => {
     }
   };
 
+  const handleSendPricing = async (packages: { service_type: string; price_cents: number; delivery_days: number }[]) => {
+    if (!selectedConversation || !userId) return;
+    const content = JSON.stringify({ type: "pricing_response", packages });
+    const tempMessage: Message = {
+      id: `temp-pr-${Date.now()}`,
+      sender_id: userId,
+      content,
+      created_at: new Date().toISOString(),
+      is_read: false,
+    };
+    setMessages((prev) => [...prev, tempMessage]);
+    try {
+      const { error } = await supabase.from("messages").insert({
+        conversation_id: selectedConversation,
+        sender_id: userId,
+        content,
+        message_type: "pricing_response",
+      });
+      if (error) throw error;
+      setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
+      toast.success("Pricing shared");
+    } catch (error) {
+      console.error("Error sending pricing:", error);
+      setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
+      toast.error("Failed to send pricing");
+    }
+  };
+
   const handleBackToList = () => {
     setSelectedConversation(null);
     setMessages([]);
@@ -519,6 +551,8 @@ const MessagesTab = () => {
                   const isPackageInquiryMsg = isPackageInquiry(msg.content);
                   const isOffer = isOfferMessage(msg.content);
                   const isAgreement = msg.message_type === "agreement";
+                  const isPricingReq = isPricingRequest(msg.content);
+                  const isPricingRes = isPricingResponse(msg.content);
                   
                   // Parse agreement content if it's an agreement message
                   let agreementContent = null;
@@ -552,6 +586,17 @@ const MessagesTab = () => {
                           messageContent={agreementContent}
                           isOwnMessage={isOwn}
                           onAgreementUpdated={() => fetchMessages(selectedConversation || "")}
+                        />
+                      ) : isPricingReq ? (
+                        <PricingRequestMessage
+                          notes={(() => { try { return JSON.parse(msg.content).notes; } catch { return undefined; } })()}
+                          isOwn={isOwn}
+                          onSendPricing={!isOwn ? () => setShowPricingDialog(true) : undefined}
+                        />
+                      ) : isPricingRes ? (
+                        <PricingResponseMessage
+                          packages={(() => { try { return JSON.parse(msg.content).packages || []; } catch { return []; } })()}
+                          isOwn={isOwn}
                         />
                       ) : isOffer ? (
                         <OfferMessage 
@@ -609,6 +654,15 @@ const MessagesTab = () => {
             >
               <FileText className="h-4 w-4" />
             </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowPricingDialog(true)}
+              title="Send Pricing"
+              className="shrink-0"
+            >
+              <DollarSign className="h-4 w-4" />
+            </Button>
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
@@ -653,6 +707,16 @@ const MessagesTab = () => {
               fetchMessages(selectedConversation);
               setActiveNegotiation(null);
             }}
+          />
+        )}
+
+        {/* Send Pricing Dialog */}
+        {creatorProfileId && (
+          <SendPricingDialog
+            open={showPricingDialog}
+            onOpenChange={setShowPricingDialog}
+            creatorProfileId={creatorProfileId}
+            onSend={handleSendPricing}
           />
         )}
       </div>

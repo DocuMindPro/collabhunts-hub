@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Send, MessageSquare, ArrowLeft, Circle, ScrollText } from "lucide-react";
+import { Send, MessageSquare, ArrowLeft, Circle, ScrollText, DollarSign } from "lucide-react";
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import FeatureLockedCard from "./FeatureLockedCard";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -23,6 +23,8 @@ import SendAgreementDialog from "@/components/agreements/SendAgreementDialog";
 import { type NegotiationData } from "@/components/chat/NegotiationMessage";
 import { getMessagePreview } from "@/lib/message-preview";
 import MessagingLimitBanner from "./MessagingLimitBanner";
+import PricingRequestMessage, { isPricingRequest } from "@/components/chat/PricingRequestMessage";
+import PricingResponseMessage, { isPricingResponse } from "@/components/chat/PricingResponseMessage";
 
 interface Conversation {
   id: string;
@@ -391,6 +393,34 @@ const BrandMessagesTab = ({ registrationCompleted = true }: BrandMessagesTabProp
     }
   };
 
+  const sendPricingRequest = async () => {
+    if (!selectedConversation || !userId) return;
+    const content = JSON.stringify({ type: "pricing_request" });
+    const tempMessage: Message = {
+      id: `temp-pr-${Date.now()}`,
+      sender_id: userId,
+      content,
+      created_at: new Date().toISOString(),
+      is_read: false,
+    };
+    setMessages((prev) => [...prev, tempMessage]);
+    try {
+      const { error } = await supabase.from("messages").insert({
+        conversation_id: selectedConversation,
+        sender_id: userId,
+        content,
+        message_type: "pricing_request",
+      });
+      if (error) throw error;
+      setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
+      toast.success("Pricing request sent");
+    } catch (error) {
+      console.error("Error sending pricing request:", error);
+      setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
+      toast.error("Failed to send pricing request");
+    }
+  };
+
   const handleBackToList = () => {
     setSelectedConversation(null);
     setMessages([]);
@@ -597,6 +627,8 @@ const BrandMessagesTab = ({ registrationCompleted = true }: BrandMessagesTabProp
                   const isPackageInquiryMsg = isPackageInquiry(msg.content);
                   const isOffer = isOfferMessage(msg.content);
                   const isAgreement = msg.message_type === "agreement";
+                  const isPricingReq = isPricingRequest(msg.content);
+                  const isPricingRes = isPricingResponse(msg.content);
                   
                   let agreementContent = null;
                   if (isAgreement) {
@@ -629,6 +661,16 @@ const BrandMessagesTab = ({ registrationCompleted = true }: BrandMessagesTabProp
                           messageContent={agreementContent}
                           isOwnMessage={isOwn}
                           onAgreementUpdated={() => fetchMessages(selectedConversation || "")}
+                        />
+                      ) : isPricingReq ? (
+                        <PricingRequestMessage
+                          notes={(() => { try { return JSON.parse(msg.content).notes; } catch { return undefined; } })()}
+                          isOwn={isOwn}
+                        />
+                      ) : isPricingRes ? (
+                        <PricingResponseMessage
+                          packages={(() => { try { return JSON.parse(msg.content).packages || []; } catch { return []; } })()}
+                          isOwn={isOwn}
                         />
                       ) : isOffer ? (
                         <OfferMessage 
@@ -700,6 +742,16 @@ const BrandMessagesTab = ({ registrationCompleted = true }: BrandMessagesTabProp
         >
           <ScrollText className="h-4 w-4" />
           Send Agreement
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={sendPricingRequest}
+          title="Request Pricing"
+          className="shrink-0 gap-1.5 font-medium"
+        >
+          <DollarSign className="h-4 w-4" />
+          Request Pricing
         </Button>
         <Input
           value={newMessage}

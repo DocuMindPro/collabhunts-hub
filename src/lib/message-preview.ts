@@ -16,6 +16,12 @@ export const getMessagePreview = (content: string): string => {
     if (parsed.type === "agreement") {
       return `Agreement sent`;
     }
+    if (parsed.type === "pricing_request") {
+      return "Requested pricing";
+    }
+    if (parsed.type === "pricing_response") {
+      return `Shared pricing (${parsed.packages?.length || 0} packages)`;
+    }
     return content;
   } catch {
     return content;
