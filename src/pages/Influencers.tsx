@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import AdPlacement from "@/components/AdPlacement";
-import DimmedPriceRange from "@/components/DimmedPriceRange";
+import { Package } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import LocationSelect from "@/components/LocationSelect";
 import VettedBadge from "@/components/VettedBadge";
@@ -569,19 +569,11 @@ const Influencers = () => {
             </div>
           </div>
 
-          {/* Price & Location Bar - All prices visible now */}
+          {/* Package Count & Location Bar */}
           <div className="p-4 flex items-center justify-between">
-            <div>
-              {priceRange.min > 0 ? (
-                <DimmedPriceRange 
-                  minPrice={priceRange.min}
-                  maxPrice={priceRange.max}
-                  canViewPrice={true} 
-                  size="md"
-                />
-              ) : (
-                <span className="text-sm text-muted-foreground">Contact</span>
-              )}
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Package className="h-3.5 w-3.5" />
+              <span>{creator.services?.length || 0} package{(creator.services?.length || 0) !== 1 ? 's' : ''}</span>
             </div>
             <span className="text-xs text-muted-foreground truncate max-w-[100px]">
               {creator.location_country || "—"}

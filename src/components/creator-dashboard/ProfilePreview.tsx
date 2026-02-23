@@ -10,8 +10,6 @@ import { MapPin, Star, Instagram, Youtube, Twitter, Images, Image as ImageIcon, 
 import PortfolioGalleryModal from "@/components/PortfolioGalleryModal";
 import MobilePortfolioCarousel from "@/components/MobilePortfolioCarousel";
 import { useIsMobile } from "@/hooks/use-mobile";
-import DimmedPrice from "@/components/DimmedPrice";
-import DimmedPriceRange from "@/components/DimmedPriceRange";
 import VettedBadge from "@/components/VettedBadge";
 import VIPCreatorBadge from "@/components/VIPCreatorBadge";
 import FeaturedBadge from "@/components/FeaturedBadge";
@@ -454,13 +452,6 @@ const ProfilePreview = ({ creatorProfileId, onEdit, refreshKey = 0 }: ProfilePre
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2">
                               <h3 className="font-heading font-semibold">{packageInfo.name}</h3>
-                              <div className="flex-shrink-0 text-right">
-                                {packageType === 'competition' ? (
-                                  <p className="text-sm font-medium text-muted-foreground">Contact</p>
-                                ) : (
-                                  <DimmedPrice price={service.price_cents} canViewPrice={true} size="md" />
-                                )}
-                              </div>
                             </div>
                             <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">{packageInfo.description}</p>
                             {packageInfo.duration && <Badge variant="outline" className="mt-1.5 text-xs">{packageInfo.duration}</Badge>}
@@ -478,7 +469,7 @@ const ProfilePreview = ({ creatorProfileId, onEdit, refreshKey = 0 }: ProfilePre
                                     {CONTENT_TYPES[d.content_type as ContentType] || d.content_type}
                                     {durLabel && <span className="text-muted-foreground"> ({durLabel})</span>}
                                   </span>
-                                  <span className="font-medium">${(d.price_cents / 100).toLocaleString()}</span>
+                                  
                                 </div>
                               );
                             })}
@@ -511,17 +502,10 @@ const ProfilePreview = ({ creatorProfileId, onEdit, refreshKey = 0 }: ProfilePre
                 <p className="text-2xl font-heading font-bold">{creator.social_accounts.length}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Price</p>
-                {creator.services.length > 0 ? (
-                  <DimmedPriceRange
-                    minPrice={Math.min(...creator.services.map(s => s.price_cents))}
-                    maxPrice={Math.max(...creator.services.map(s => s.price_cents))}
-                    canViewPrice={true}
-                    size="lg"
-                  />
-                ) : (
-                  <p className="text-2xl font-heading font-bold text-muted-foreground">N/A</p>
-                )}
+                <p className="text-sm text-muted-foreground mb-1">Packages</p>
+                <p className="text-2xl font-heading font-bold">
+                  {creator.services.length}
+                </p>
               </div>
             </CardContent>
           </Card>

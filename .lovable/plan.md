@@ -1,5 +1,5 @@
 
-# Hide Public Pricing -- Move to Chat-Based Price Sharing
+# Hide Public Pricing -- Move to Chat-Based Price Sharing ✅ IMPLEMENTED
 
 ## What Changes
 

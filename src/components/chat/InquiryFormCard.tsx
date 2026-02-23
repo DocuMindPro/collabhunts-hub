@@ -117,7 +117,7 @@ const InquiryFormCard = ({ packageData, onSend, onDismiss, loading }: InquiryFor
           <div>
             <p className="font-semibold text-sm">{serviceName}</p>
             <p className="text-xs text-muted-foreground">
-              Starting at ${(packageData.price_cents / 100).toFixed(0)}
+              Request pricing in chat
             </p>
           </div>
         </div>

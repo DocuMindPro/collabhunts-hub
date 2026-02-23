@@ -18,8 +18,6 @@ import MessageDialog from "@/components/MessageDialog";
 import PortfolioGalleryModal from "@/components/PortfolioGalleryModal";
 import MobilePortfolioCarousel from "@/components/MobilePortfolioCarousel";
 import { useIsMobile } from "@/hooks/use-mobile";
-import DimmedPrice from "@/components/DimmedPrice";
-import DimmedPriceRange from "@/components/DimmedPriceRange";
 import VettedBadge from "@/components/VettedBadge";
 import VIPCreatorBadge from "@/components/VIPCreatorBadge";
 import FeaturedBadge from "@/components/FeaturedBadge";
@@ -903,17 +901,6 @@ const CreatorProfile = () => {
                                   <h3 className="font-heading font-semibold">
                                     {packageInfo.name}
                                   </h3>
-                                  <div className="flex-shrink-0 text-right">
-                                    {packageType === 'competition' ? (
-                                      <p className="text-sm font-medium text-muted-foreground">Contact</p>
-                                    ) : (
-                                      <DimmedPrice 
-                                        price={service.price_cents} 
-                                        canViewPrice={canViewPrice} 
-                                        size="md"
-                                      />
-                                    )}
-                                  </div>
                                 </div>
                                 <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">
                                   {packageInfo.description}
@@ -939,7 +926,7 @@ const CreatorProfile = () => {
                                         {CONTENT_TYPES[d.content_type as ContentType] || d.content_type}
                                         {durLabel && <span className="text-muted-foreground"> ({durLabel})</span>}
                                       </span>
-                                      <span className="font-medium">${(d.price_cents / 100).toLocaleString()}</span>
+                                      
                                     </div>
                                   );
                                 })}
@@ -987,19 +974,10 @@ const CreatorProfile = () => {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Price</p>
-                    {creator.services.length > 0 ? (
-                      <DimmedPriceRange 
-                        minPrice={Math.min(...creator.services.map(s => s.price_cents))}
-                        maxPrice={Math.max(...creator.services.map(s => s.price_cents))}
-                        canViewPrice={canViewPrice} 
-                        size="lg"
-                      />
-                    ) : (
-                      <p className="text-2xl font-heading font-bold text-muted-foreground">
-                        N/A
-                      </p>
-                    )}
+                    <p className="text-sm text-muted-foreground mb-1">Packages</p>
+                    <p className="text-2xl font-heading font-bold">
+                      {creator.services.length}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -1017,9 +995,7 @@ const CreatorProfile = () => {
               size="lg"
               className="flex-1 gradient-hero hover:opacity-90 shadow-lg"
               onClick={() => {
-                const lowestService = creator.services.reduce((min, s) => 
-                  s.price_cents < min.price_cents ? s : min, creator.services[0]);
-                if (lowestService) handleBookService(lowestService);
+                handleBookService(creator.services[0]);
               }}
             >
               <MessageCircle className="h-5 w-5 mr-2" />
