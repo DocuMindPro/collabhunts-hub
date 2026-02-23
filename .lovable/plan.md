@@ -1,154 +1,110 @@
 
-# Architecture & Scalability Review — CollabHunts
+# Hide Public Pricing -- Move to Chat-Based Price Sharing
 
-This is a candid, full-stack audit of where the platform is solid, where it will hit walls as you grow, and what improvements would meaningfully move the needle. No fluff.
+## What Changes
 
----
-
-## Overall Verdict
-
-The platform is **well above average for a Lovable-built app** and would survive a proper early-stage launch. The core architecture — web marketing shell + native app workspace + backend-as-a-service — is a legitimate pattern used by real startups. However, there are **7 specific areas** that need work before you scale past a few hundred active users.
+Currently, creator prices are visible everywhere: on creator cards in the Influencers listing, on creator profile pages, in the booking dialog, and in the profile preview. The goal is to remove all public-facing prices and instead let brands **request pricing** in chat, and let creators **send their pricing** in chat on demand.
 
 ---
 
-## What Is Already Solid
+## All Touchpoints That Need Changing
 
-**1. Architecture Separation (Strong)**
-The web/native split is clean. Lazy loading on the web, eager loading only for native-critical paths, a proper `NativeAppGate` auth orchestrator — this shows genuine architectural thinking, not just copy-paste.
+### 1. Influencers Listing Page (`src/pages/Influencers.tsx`)
 
-**2. Database Design (Good)**
-Over 100+ migration files, 60+ tables with proper foreign keys, RLS policies, and a `backup_history` + automated S3 backup system. The schema handles complex flows: disputes, deliverables, affiliate earnings, delegate access — this is not a toy database.
+**Remove price from creator cards.** Currently lines 572-584 show a `DimmedPriceRange` on every creator card. Replace the price section with a "Request Pricing" label or simply show the package count (e.g., "3 packages").
 
-**3. Backend Functions (Solid)**
-30+ edge functions cover: push notifications, AI draft agreements, image optimization, scheduled jobs (cron), S3 backup, mass messaging, dispute deadlines. This is production-grade backend surface area.
+### 2. Creator Profile Page (`src/pages/CreatorProfile.tsx`)
 
-**4. iOS/Android CI (Now Fixed)**
-The workflow split (iOS manual, Android auto) is the right call. Build badges are in place.
+**Hide prices from package cards.** Lines 906-914 show `DimmedPrice` next to each package name. Remove the price display but keep the package name, description, and "Inquire" button. The "Inquire" button already opens a conversation -- it just won't pre-fill a price anymore.
 
-**5. Real-time Notifications**
-Postgres `LISTEN/NOTIFY` via Supabase Realtime is correctly wired for notifications with sound + browser notification fallback. This scales fine to thousands of concurrent users on Supabase's infrastructure.
+**Remove price from sidebar.** Lines 990-1002 show a `DimmedPriceRange` in the "Quick Stats" sidebar. Remove the entire "Price" stat row.
+
+**Remove price from mobile floating button logic.** Lines 1019-1022 reference `price_cents` to find the "lowest price" service. Change to just pick the first service instead.
+
+**Update BookingDialog.** Lines 232-256 in `BookingDialog.tsx` show "Base Price" and total. Remove price display from the dialog since prices are now private. The dialog should just show the package name and let the brand message the creator.
+
+### 3. Creator Profile Preview (`src/components/creator-dashboard/ProfilePreview.tsx`)
+
+**Hide prices from the creator's own preview.** Lines 457-462 show `DimmedPrice` on each package. Remove price display. Lines 514-521 show `DimmedPriceRange` in sidebar -- remove that stat row.
+
+**Remove prices from custom deliverables.** Lines 469-485 show `$xx` per deliverable in the "Content Menu". Remove the price column from this display.
+
+### 4. Creator Services Tab (`src/components/creator-dashboard/ServicesTab.tsx`)
+
+**Keep prices in the creator's own management view.** Creators still set prices internally -- they just aren't shown publicly. No changes needed to how creators enter prices. The ServicesTab is their private dashboard, so prices remain visible here.
+
+### 5. Brand Chat -- Add "Request Pricing" Button (`src/components/brand-dashboard/BrandMessagesTab.tsx`)
+
+**Add a "Request Pricing" button** in the brand's chat message input area (next to the existing "Send Agreement" button). When clicked, it sends a structured message (type: `pricing_request`) that appears as a styled card in the chat asking the creator for their rates.
+
+### 6. Creator Chat -- Add "Send Pricing" Button (`src/components/creator-dashboard/MessagesTab.tsx`)
+
+**Add a "Send Pricing" button** next to the existing "Send Offer" button in the creator's chat input. When clicked, it opens a dialog showing the creator's active packages with their prices. The creator selects which packages to share, and a styled pricing card is sent as a structured message (type: `pricing_response`) displaying the selected packages and prices.
+
+### 7. New Chat Components
+
+- **`PricingRequestMessage.tsx`** -- Renders a styled card for the brand's pricing request (e.g., "Pricing Requested" with a note). On the creator's side, it shows a "Send My Pricing" button that triggers the pricing share flow.
+- **`PricingResponseMessage.tsx`** -- Renders a styled card showing the creator's shared packages and prices, with an "Inquire" button for the brand to start the negotiation.
+- **`SendPricingDialog.tsx`** -- Dialog for creators to select which packages/prices to share in chat.
+
+### 8. Inquiry Form Card (`src/components/chat/InquiryFormCard.tsx`)
+
+**Remove price pre-fill.** Lines 119-120 show "Starting at $xx". Remove this reference since prices are no longer public. The budget field stays (brands propose their own budget).
+
+### 9. Package Inquiry Message (`src/components/chat/PackageInquiryMessage.tsx`)
+
+No changes needed -- this already handles negotiation data with proposed budgets. It will continue working since brands propose budgets, not reference public prices.
+
+### 10. Send Offer Dialog (`src/components/chat/SendOfferDialog.tsx`)
+
+The creator's "Send Offer" dialog already fetches their own services and pre-fills their private price. This stays as-is since it's the creator sharing their price in context of an offer. No changes needed.
+
+### 11. Creator Onboarding (`src/pages/NativeCreatorOnboarding.tsx`)
+
+**Keep price input during onboarding.** Creators still set prices during signup -- those prices are stored in the database for their own reference and for sharing via chat. The onboarding form stays unchanged.
 
 ---
 
-## The 7 Issues That Will Bite You at Scale
+## New Message Types
 
----
+Two new structured message types flow through the existing `messages` table:
 
-### Issue 1: CRITICAL — Stripe Is Still a Mock
-
-**Current state:** `src/lib/stripe-mock.ts` is 200 lines of simulated payment logic. The `confirmMockPayment` function literally uses `setTimeout` to fake processing. `createCheckoutSession` returns `{ success: true, message: "Mock checkout session created" }`. There is no real money moving.
-
-**Why it matters:** This means brand subscriptions ($99/yr Basic, $299/yr Pro) are recorded in the database as if they were paid, but no actual payment was charged. If you have live users on "paid" plans right now, they are on free plans with paid-tier features. As you add more paying customers, this debt compounds.
-
-**What needs to happen:** Integrate real Stripe Checkout (or Stripe Billing for subscriptions). This requires:
-- A real Stripe account and API key (`STRIPE_SECRET_KEY` as a secret)
-- A new edge function `create-checkout-session` that calls Stripe's API
-- A webhook endpoint `stripe-webhook` to handle `checkout.session.completed`, `invoice.payment_failed`, `customer.subscription.deleted`
-- The existing `brand_subscriptions` table stays — just gets populated by the webhook instead of mock code
-
-This is the single most important gap. Everything else is optimization.
-
----
-
-### Issue 2: HIGH — Admin Page Loads ALL Data at Once
-
-**Current state:** `Admin.tsx` `fetchProfiles()` runs:
+**Pricing Request** (sent by brand):
+```json
+{
+  "type": "pricing_request",
+  "notes": "I'd like to know your rates for Instagram content"
+}
 ```
-supabase.from("profiles").select("*") // ALL users
-supabase.from("creator_profiles").select(...) // ALL creators  
-supabase.from("brand_profiles").select(...) // ALL brands
-supabase.from("bookings").select(...) // ALL bookings
-supabase.from("creator_social_accounts").select(...) // ALL social accounts
+
+**Pricing Response** (sent by creator):
+```json
+{
+  "type": "pricing_response",
+  "packages": [
+    { "service_type": "unbox_review", "price_cents": 15000, "delivery_days": 7 },
+    { "service_type": "social_boost", "price_cents": 30000 }
+  ]
+}
 ```
-All in one shot, all joined in JavaScript memory.
 
-**Why it matters:** Supabase has a **1000-row default limit**. Right now this silently truncates your data — you may already be missing users/creators/bookings in the admin view without knowing it. And as you scale to 2,000+ users, this page will start failing or timing out entirely because it's doing all filtering client-side in JavaScript arrays.
-
-**Fix:** Add `.range()` pagination to each query and move filtering to server-side `ilike()` queries instead of JavaScript `.filter()`.
+These use the existing `messages` table with `message_type` column. No database changes are needed.
 
 ---
 
-### Issue 3: HIGH — No React Query Caching on Dashboards
+## Summary of Files to Change
 
-**Current state:** `CreatorDashboard` fetches the creator profile in a raw `useEffect` with no caching. `NativeBrandDashboard` passes data down as props from `NativeAppGate`. Individual tab components (`BookingsTab`, `MessagesTab`, etc.) each have their own `useEffect` fetches with no coordination.
+| File | Action |
+|---|---|
+| `src/pages/Influencers.tsx` | Remove `DimmedPriceRange` from creator cards, show package count instead |
+| `src/pages/CreatorProfile.tsx` | Remove `DimmedPrice` from packages, remove price sidebar stat, update mobile CTA logic |
+| `src/components/creator-dashboard/ProfilePreview.tsx` | Remove prices from packages and sidebar |
+| `src/components/BookingDialog.tsx` | Remove price display from dialog |
+| `src/components/chat/InquiryFormCard.tsx` | Remove "Starting at $xx" reference |
+| `src/components/brand-dashboard/BrandMessagesTab.tsx` | Add "Request Pricing" button to message input |
+| `src/components/creator-dashboard/MessagesTab.tsx` | Add "Send Pricing" button to message input |
+| `src/components/chat/PricingRequestMessage.tsx` | **New** -- renders pricing request card in chat |
+| `src/components/chat/PricingResponseMessage.tsx` | **New** -- renders pricing response card in chat |
+| `src/components/chat/SendPricingDialog.tsx` | **New** -- creator selects packages to share |
 
-**Why it matters:** Every tab switch re-fetches data from the server. On mobile with spotty connections (Lebanon, etc.), this creates visible loading states on EVERY tab switch. More importantly, there's no cache invalidation — if a booking status changes in one tab, another tab shows stale data.
-
-**What's ironic:** `@tanstack/react-query` is already installed and used in `StorageMonitorCard` — but dashboards don't use it. The solution is to wrap dashboard queries in `useQuery()` with proper `queryKey` arrays so data is cached for 30-60 seconds and shared across tabs.
-
----
-
-### Issue 4: MEDIUM — `CreatorDashboard.tsx` Still Has `pb-20` on Line 97
-
-**Current state:** From the file we just read:
-```tsx
-<div className={`min-h-screen flex flex-col ${isNative ? 'pb-20' : ''}`}>
-```
-The plan from the previous session fixed `App.tsx` and `NativeBrandDashboard.tsx` but **`CreatorDashboard.tsx` line 97 still has the old `pb-20`**. This means the creator dashboard content on newer iPhones is still clipped.
-
-**Fix:** Change line 97 from `pb-20` to use inline safe-area calc, same as the other files.
-
----
-
-### Issue 5: MEDIUM — Messaging Counter Has a Race Condition
-
-**Current state:** `incrementMessagingCounter` in `subscription-utils.ts` does:
-```typescript
-const { data: brand } = await supabase.from('brand_profiles').select('creators_messaged_this_month')...
-// then:
-await supabase.from('brand_profiles').update({ creators_messaged_this_month: brand.creators_messaged_this_month + 1 })
-```
-This is a read-then-write (non-atomic) operation. Two simultaneous messages from the same brand (rare but possible) could both read `5`, both write `6` — and the counter only increments by 1 instead of 2.
-
-**Fix:** Replace with a database-side increment:
-```sql
-UPDATE brand_profiles SET creators_messaged_this_month = creators_messaged_this_month + 1 WHERE id = $1
-```
-This is a one-line SQL fix via a new migration using Supabase's `rpc()` call or a raw `UPDATE` with no `SELECT` first.
-
----
-
-### Issue 6: MEDIUM — `package.json` Version Is `0.0.0`
-
-**Current state:** `"version": "0.0.0"` in `package.json`. The `__APP_VERSION__` we just wired up to `vite.config.ts` will display `v0.0.0` in the app.
-
-**Fix:** Bump to `"version": "1.0.0"` (or whatever your real version is). Also, the Android CI workflow bumps the build number in `android/app/build.gradle` but doesn't update `package.json` — so `__APP_VERSION__` will always show `1.0.0` regardless of how many builds you ship. Add a step to the iOS workflow to set this properly before building.
-
----
-
-### Issue 7: LOW — `safe-area-top` Is a Custom Class with No Tailwind Definition
-
-**Current state:** Throughout native files: `className="safe-area-top"`, `className="safe-area-bottom"`. But looking at `tailwind.config.ts` — these classes are **not defined** in the Tailwind config. They must be defined somewhere in `index.css` or they fall back to nothing.
-
-Let me check what's actually in the CSS for these...
-
-From `index.css`, these classes are defined as custom utilities using `env(safe-area-inset-top)` — so they work. But they're raw CSS utilities, not Tailwind classes, which means they won't tree-shake properly and can't be composed with Tailwind modifiers like `md:safe-area-top`. Not a breaking issue today, but worth noting.
-
----
-
-## Summary Priority Table
-
-| # | Issue | Impact | Effort | When to Fix |
-|---|---|---|---|---|
-| 1 | Stripe is mocked — no real payments | Critical | High | Before monetizing |
-| 2 | Admin loads all rows, hits 1000-row limit | High | Medium | Before 1,000 users |
-| 3 | No React Query caching on dashboards | High | Medium | Next sprint |
-| 4 | `CreatorDashboard.tsx` still has `pb-20` | Medium | 5 min | Now |
-| 5 | Messaging counter race condition | Medium | 30 min | Before heavy use |
-| 6 | `package.json` version is `0.0.0` | Low | 2 min | Now |
-| 7 | `safe-area-*` custom class definitions | Low | Cosmetic | Later |
-
----
-
-## What I Can Fix Right Now
-
-Items 4 and 6 are tiny — I can fix both in this session:
-- `CreatorDashboard.tsx` line 97: `pb-20` → inline safe-area calc
-- `package.json`: `0.0.0` → `1.0.0`
-
-Items 3 and 5 require a focused session each.
-
-Item 1 (Stripe) is a dedicated feature that requires your Stripe API keys and is the most important thing on this list.
-
-Item 2 (Admin pagination) is a dedicated session once you're approaching 500+ users.
-
+No database migrations needed. No edge function changes needed.
